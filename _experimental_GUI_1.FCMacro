@@ -1,7 +1,7 @@
 # import statements
 from PySide import QtGui, QtCore
 import re
-
+import os
 
 class OpenEMS:
 	def getOpenEMSObjects():
@@ -166,11 +166,6 @@ class ExampleModalGuiClass(QtGui.QDialog):
 		self.textInput2.setFixedWidth(190)
 		self.textInput2.move(700, 520)
 
-		self.treeWidget = QtGui.QTreeWidget(self)
-		self.treeWidget.setColumnCount(1)
-		self.treeWidget.setGeometry(700,10,400,500)
-		self.treeWidget.setHeaderLabels(["column 1", "column 2", "column3"])
-
 		#
 		#  LuboJ Tree Widget 2
 		#
@@ -181,20 +176,42 @@ class ExampleModalGuiClass(QtGui.QDialog):
 
 		objList = OpenEMS.getOpenEMSObjects()
 
-		"""
-		items = []
+		print("Curr python path: " + os.getcwd())
+		#os.chdir("c:\\Users\\H364387\\Documents\\FreeCAD-FEM-Simulations\\viscosious tube")
+		print("Curr python path: " + os.getcwd())
+
+		items3 = []
 		for i in range(3):
 			childItem = QtGui.QTreeWidgetItem([str(i)+" item1", str(i)+" item2", str(i)+" item3"])
-			childItem.setData(0, QtCore.Qt.UserRole, str(i)+" item user data")			
-			items.append(childItem)
-		items2 = []
+			childItem.setData(0, QtCore.Qt.UserRole, str(i)+" XXX item user data")			
+			#childItem.setIcon(0, QtGui.QIcon.fromTheme("edit-undo"))
+			childItem.setIcon(0, QtGui.QIcon(".\\img\\atom.png"))
+			childItem.setIcon(2, QtGui.QIcon(".\\img\\icon.png"))
+			items3.append(childItem)
+		items4 = []
 		for i in range(3):
-			childItem = QtGui.QTreeWidgetItem([str(i)+" child1", str(i)+" child2", str(i)+" child3"])
+			childItem = QtGui.QTreeWidgetItem([str(i)+" sub1", str(i)+" sub2", str(i)+" sub3"])
 			childItem.setData(0, QtCore.Qt.UserRole, str(i)+" child item user data")			
-			items2.append(childItem)
-		"""
+			items4.append(childItem)
+		items31 = []
+		for i in range(3):
+			childItem = QtGui.QTreeWidgetItem([str(i)+" item31", str(i)+" item32", str(i)+" item33"])
+			childItem.setData(0, QtCore.Qt.UserRole, str(i)+" XXX item user data")			
+			childItem.setIcon(1, QtGui.QIcon.fromTheme("edit-undo"))
+			items31.append(childItem)
 
-		self.treeWidget2.insertTopLevelItems(1, items)
+		self.treeWidget2.insertTopLevelItems(0, items3)
+		self.treeWidget2.insertTopLevelItems(2, items31)
+
+		#this return item at x,y coordinates, but coords are taken as graphic coords what means in pixels where they are pointing, ie. 0px 30px
+		#itemPos = QtCore.QPoint(0,0)
+		#self.treeWidget2.itemAt(0,30).addChildren(items4)
+		self.treeWidget2.topLevelItem(3).addChildren(items4)
+
+		print(self.treeWidget2.itemAt(0,0).data(0, QtCore.Qt.UserRole))
+		
+		auxItem = self.treeWidget2.itemAt(2,0)
+		self.textInput2.setText(auxItem.data(0,QtCore.Qt.UserRole))
 
 
 		#
@@ -225,6 +242,9 @@ class ExampleModalGuiClass(QtGui.QDialog):
 		# now make the window visible
 		self.show()
 		#
+
+
+
 
 	def onMoveLeft(self):
 		print("Button << clicked.")
