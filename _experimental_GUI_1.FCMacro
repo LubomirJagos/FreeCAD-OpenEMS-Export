@@ -62,6 +62,16 @@ class ExampleModalGuiClass(QtGui.QDialog):
 		self.tab4 = QtGui.QWidget()
 		self.tabWidget.addTab(self.tab4, "Excitation Settings")
 
+		#setting layout for each tab
+		self.tab1.setLayout(QtGui.QHBoxLayout())
+		self.tab2.setLayout(QtGui.QHBoxLayout())
+		self.tab3.setLayout(QtGui.QHBoxLayout())
+		self.tab4.setLayout(QtGui.QHBoxLayout())
+
+		#######################################################################################
+		#  OBJECT ASSIGNEMNTS TAB
+		#######################################################################################
+
 		#
 		#  LuboJ Tree Widget
 		#
@@ -137,6 +147,36 @@ class ExampleModalGuiClass(QtGui.QDialog):
 		moveRightButton.setAutoDefault(True)
 		moveRightButton.setGeometry(460,330,40,30)
 		moveRightButton.setParent(self.tab1)
+
+		#######################################################################################
+		#  GRID SETTINGS TAB
+		#######################################################################################
+
+		self.gridObjectsTreeWidget = QtGui.QTreeWidget(self)
+		self.gridObjectsTreeWidget.setMinimumWidth(400)
+		self.gridObjectsTreeWidget.setMinimumHeight(500)
+		self.gridObjectsTreeWidget.setHeaderLabels(["Grid settings"])
+		self.tab2.layout().addWidget(self.gridObjectsTreeWidget)
+
+		self.gridObjectSettingsWidget = QtGui.QWidget(self)
+		self.gridObjectSettingsWidget.setMinimumWidth(400)
+		self.gridObjectSettingsWidget.setMinimumHeight(500)
+		self.gridObjectSettingsWidget.setLayout(QtGui.QVBoxLayout())
+
+		self.tab2.layout().addWidget(self.gridObjectSettingsWidget)
+
+		#these here are just test layout
+		button1 = QtGui.QPushButton("One")
+		button2 = QtGui.QPushButton("Two")
+		button3 = QtGui.QPushButton("Three")
+		button4 = QtGui.QPushButton("Four")
+		button5 = QtGui.QPushButton("Five")
+		self.gridObjectSettingsWidget.layout().addWidget(button1)
+		self.gridObjectSettingsWidget.layout().addWidget(button2)
+		self.gridObjectSettingsWidget.layout().addWidget(button3)
+		self.gridObjectSettingsWidget.layout().addWidget(button4)
+		self.gridObjectSettingsWidget.layout().addWidget(button5)
+		
 
 		# now make the window visible
 		self.show()
