@@ -1,0 +1,97 @@
+from PySide import QtGui
+import FreeCAD,FreeCADGui,Part, os
+ 
+# CHANGE THE LINE BELOW
+path_to_ui = ".\\ui\\dialog.ui"
+path_to_ui = "C:\\Users\\H364387\\Documents\\FreeCAD\\FreeCAD-OpenEMS-Export\\ui\\dialog.ui"
+
+class OpenEMS:
+	def getOpenEMSObjects():
+		currentObjects = App.ActiveDocument.Objects
+		
+		objToExport = []
+		
+		for obj in currentObjects:
+			if (re.search('openEMS', obj.Label)):
+				objToExport.append(obj)
+	
+		return objToExport
+
+	def getAllObjects():
+		currentObjects = App.ActiveDocument.Objects	
+		objList = []
+		for obj in currentObjects:
+			item = QtGui.QTreeWidgetItem([obj.Label])
+			item.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+			objList.append(item)
+		return objList
+
+
+class BoxTaskPanel:
+	def __init__(self):
+		#
+		# Change current path to script file folder
+		#
+		abspath = os.path.abspath(__file__)
+		dname = os.path.dirname(abspath)
+		os.chdir(dname)
+
+		# this will create a Qt widget from our ui file
+		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui)
+
+		#
+		# TOP LEVEL ITEMS (excitation, grid, materials, ...)
+		#
+
+		# MATERIALS
+		topItem = QtGui.QTreeWidgetItem(["Materials"])
+		topItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
+		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+
+		# EXCITATION
+		topItem = QtGui.QTreeWidgetItem(["Excitation"])
+		topItem.setIcon(0, QtGui.QIcon(".\\img\\bulb.png"))
+		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+
+		# GRID
+		topItem = QtGui.QTreeWidgetItem(["Grid"])
+		topItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
+		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+
+		#
+		# Default items for each section
+		#
+		topItem = self.form.treeWidget2.itemAt(0,0)
+		defaultMaterialItem = QtGui.QTreeWidgetItem(["Default"])
+		defaultExcitationItem = QtGui.QTreeWidgetItem(["Default"])
+		defaultGridItem = QtGui.QTreeWidgetItem(["Default"])
+
+		self.form.treeWidget2.topLevelItem(0).addChildren([defaultMaterialItem])
+		self.form.treeWidget2.topLevelItem(1).addChildren([defaultExcitationItem])
+		self.form.treeWidget2.topLevelItem(2).addChildren([defaultGridItem])
+
+		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
+		self.form.moveRightButton.clicked.connect(self.onMoveRight)
+
+		items = OpenEMS.getAllObjects()
+		#items = OpenEMS.getOpenEMSObjects()
+		self.form.treeWidget.insertTopLevelItems(0, items)
+
+	def show(self):
+		self.form.show()
+
+	def onMoveLeft(self):
+		print("Button << clicked.")
+
+	def onMoveRight(self):
+		print("Button >> clicked.")
+		leftItem = self.form.treeWidget.selectedItems()[0].clone()
+		rightItem = self.form.treeWidget2.selectedItems()[0]
+		print(leftItem.text(0))
+		print(rightItem.text(0))
+
+		rightItem.addChild(leftItem)
+ 
+panel = BoxTaskPanel()
+#FreeCADGui.Control.showDialog(panel)
+panel.show()

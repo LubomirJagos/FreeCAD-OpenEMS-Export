@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>808</width>
+    <height>650</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>10</y>
+     <width>771</width>
+     <height>591</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="objectAssignmentTab">
+    <attribute name="title">
+     <string>Object Assignments</string>
+    </attribute>
+    <widget class="QTreeWidget" name="treeWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>281</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="moveRightButton">
+     <property name="geometry">
+      <rect>
+       <x>320</x>
+       <y>210</y>
+       <width>80</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&gt;&gt;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="moveLeftButton">
+     <property name="geometry">
+      <rect>
+       <x>320</x>
+       <y>240</y>
+       <width>80</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;&lt;</string>
+     </property>
+    </widget>
+    <widget class="QTreeWidget" name="treeWidget2">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>10</y>
+       <width>331</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="gridSettingsTab">
+    <attribute name="title">
+     <string>Grid Settings</string>
+    </attribute>
+    <widget class="QTreeWidget" name="gridSettingsTreeView">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>281</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>10</y>
+       <width>441</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Grid settings</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput"/>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Z</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="fixedCountRadioButton">
+        <property name="text">
+         <string>Fixed count</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>units</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="fixedDistanceRadioButton">
+        <property name="text">
+         <string>Fixed distance</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Y</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput"/>
+      </item>
+      <item row="2" column="4">
+       <widget class="QComboBox" name="fixedDistanceUnitsNumberInput">
+        <property name="currentText">
+         <string>m</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>m</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>cm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>mm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>um</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>nm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>pm</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>X</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="userDefinedRadioButton">
+        <property name="text">
+         <string>User defined</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QPushButton" name="gridSettingAddButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="gridSettingRemoveButton">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>-</string>
+     </property>
+    </widget>
+    <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>200</y>
+       <width>441</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="tabChangesFocus">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_5">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>180</y>
+       <width>441</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>User defined grid lines</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="displayGridLinesInModelButton">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>350</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Display grid lines in model</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>330</y>
+       <width>441</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Additional functions</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="materialSettingsTab">
+    <attribute name="title">
+     <string>Material Settings</string>
+    </attribute>
+    <widget class="QTreeWidget" name="materialSettingsTreeView">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>281</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>10</y>
+       <width>451</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Material Settings</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="1" column="3">
+       <widget class="QDoubleSpinBox" name="materialSigmaNumberInput"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="materialMueNumberInput"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="materialKappaNumberInput"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Epsilon</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Mue</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Kappa</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Sigma</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QPushButton" name="materialSettingsRemoveButton">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>-</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="materialSettingsAddButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="excitationSettingsTab">
+    <attribute name="title">
+     <string>Excitation Settings</string>
+    </attribute>
+    <widget class="QTreeWidget" name="excitationSettingsTreeView">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>281</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>10</y>
+       <width>451</width>
+       <height>271</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Excitation Settings</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="gaussianExcitationRadioButton">
+        <property name="text">
+         <string>Gaussian</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
+        <property name="text">
+         <string>Sinusodial</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>f0</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="3">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>units</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QRadioButton" name="customExcitationRadioButton">
+        <property name="text">
+         <string>Custom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>User Defined Functio e(t)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>fc</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>fc</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="3">
+       <widget class="QComboBox" name="excitationUnitsNumberInput">
+        <property name="currentText">
+         <string>Hz</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Hz</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>kHz</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MHz</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>GHz</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="sinusodialExcitationFcNumberInput">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>23</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput"/>
+      </item>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput"/>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="customExcitationTextInput"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QPushButton" name="excitationSettingsAddButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="excitationSettingsRemoveButton">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>-</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="portSettingsTab">
+    <attribute name="title">
+     <string>Port Settings</string>
+    </attribute>
+    <widget class="QTreeWidget" name="portSettingsTreeView">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>281</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="portSettingsAddButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="portSettingsRemoveButton">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>460</y>
+       <width>31</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>-</string>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>10</y>
+       <width>441</width>
+       <height>151</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Port Settings</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="lumpedPortRadioButton">
+        <property name="text">
+         <string>Lumped</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="microstripPortRadioButton">
+        <property name="text">
+         <string>Microstrip</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+        <property name="text">
+         <string>Circular Waveguide</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+        <property name="text">
+         <string>Rectangular Waveguide</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="postprocessingTab">
+    <attribute name="title">
+     <string>Postprocessing</string>
+    </attribute>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
