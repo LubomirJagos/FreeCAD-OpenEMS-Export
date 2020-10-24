@@ -1,4 +1,4 @@
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import FreeCAD,FreeCADGui,Part, os
  
 # CHANGE THE LINE BELOW
@@ -26,6 +26,24 @@ class OpenEMS:
 			objList.append(item)
 		return objList
 
+class GridSettingsItem:
+	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0, 'units':''}, userDefined = ""):
+		self.name = name
+		self.type = type
+		self.fixedCount = fixedCount
+		self.fixedDistance = fixedDistance
+		self.userDefined = userDefined
+
+	def serializeToString(self):
+		serializedString = "{'type': '" + self.type + "', 'def': "
+		if (self.type == "Fixed Count"):
+			serializedString += str(self.fixedCount)
+		if (self.type == "Fixed Distance"):
+			serializedString += str(self.fixedDistance)
+		if (self.type == "User Defined"):
+			serializedString += "'" + str(self.userDefined) + "'"
+		serializedString += "}"
+		return serializedString
 
 class BoxTaskPanel:
 	def __init__(self):
@@ -46,36 +64,51 @@ class BoxTaskPanel:
 		# MATERIALS
 		topItem = QtGui.QTreeWidgetItem(["Materials"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
-		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# EXCITATION
 		topItem = QtGui.QTreeWidgetItem(["Excitation"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\bulb.png"))
-		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# GRID
 		topItem = QtGui.QTreeWidgetItem(["Grid"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
-		self.form.treeWidget2.insertTopLevelItem(0, topItem)
+		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
+
+		# PORTS
+		topItem = QtGui.QTreeWidgetItem(["Ports"])
+		topItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
+		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		#
 		# Default items for each section
 		#
-		topItem = self.form.treeWidget2.itemAt(0,0)
+		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
 		defaultMaterialItem = QtGui.QTreeWidgetItem(["Default"])
 		defaultExcitationItem = QtGui.QTreeWidgetItem(["Default"])
 		defaultGridItem = QtGui.QTreeWidgetItem(["Default"])
 
-		self.form.treeWidget2.topLevelItem(0).addChildren([defaultMaterialItem])
-		self.form.treeWidget2.topLevelItem(1).addChildren([defaultExcitationItem])
-		self.form.treeWidget2.topLevelItem(2).addChildren([defaultGridItem])
+		self.form.objectAssignmentRightTreeWidget.topLevelItem(0).addChildren([defaultMaterialItem])
+		self.form.objectAssignmentRightTreeWidget.topLevelItem(1).addChildren([defaultExcitationItem])
+		self.form.objectAssignmentRightTreeWidget.topLevelItem(2).addChildren([defaultGridItem])
 
 		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
 
 		items = OpenEMS.getAllObjects()
 		#items = OpenEMS.getOpenEMSObjects()
-		self.form.treeWidget.insertTopLevelItems(0, items)
+		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, items)
+
+		#
+		# SETTINGS FOR BUTTONS CLICK, functions assignements
+		#
+		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
+		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
+
+		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
+		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
+		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
 
 	def show(self):
 		self.form.show()
@@ -85,12 +118,110 @@ class BoxTaskPanel:
 
 	def onMoveRight(self):
 		print("Button >> clicked.")
-		leftItem = self.form.treeWidget.selectedItems()[0].clone()
-		rightItem = self.form.treeWidget2.selectedItems()[0]
+		leftItem = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
+		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 		print(leftItem.text(0))
 		print(rightItem.text(0))
 
 		rightItem.addChild(leftItem)
+
+	def displayMessage(self, msgText):
+		msgBox = QtGui.QMessageBox()
+		msgBox.setText(msgText)
+		msgBox.exec()
+
+	def fixedCountRadioButtonClicked(self):
+		self.form.userDefinedGridLinesTextInput.setEnabled(False)
+
+	def fixedDistanceRadioButtonClicked(self):
+		self.form.userDefinedGridLinesTextInput.setEnabled(False)
+
+	def userDefinedRadioButtonClicked(self):
+		self.form.userDefinedGridLinesTextInput.setEnabled(True)
+
+	def gridSettingsAddButtonClicked(self):
+		name = self.form.gridSettingsNameInput.text()
+		gridType = ""
+		gridX = 0
+		gridY = 0
+		gridZ = 0
+		gridUnits = ""
+		gridUserDefined = ""
+
+		gridItem = GridSettingsItem()
+		gridItem.name = name
+
+		if (self.form.fixedCountRadioButton.isChecked()):
+			gridType = "Fixed Count"
+			gridX = self.form.fixedCountXNumberInput.value()
+			gridY = self.form.fixedCountYNumberInput.value()
+			gridZ = self.form.fixedCountZNumberInput.value()
+
+			gridItem.type = gridType
+			gridItem.fixedDistance['x'] = gridX
+			gridItem.fixedDistance['y'] = gridY
+			gridItem.fixedDistance['z'] = gridZ
+
+		if (self.form.fixedDistanceRadioButton.isChecked()):
+			gridType = "Fixed Distance"
+			gridX = self.form.fixedDistanceXNumberInput.value()
+			gridY = self.form.fixedDistanceYNumberInput.value()
+			gridZ = self.form.fixedDistanceZNumberInput.value()
+			gridUnits = self.form.fixedDistanceUnitsInput.currentText()
+
+			gridItem.type = gridType
+			gridItem.fixedDistance['x'] = gridX
+			gridItem.fixedDistance['y'] = gridY
+			gridItem.fixedDistance['z'] = gridZ
+			gridItem.fixedDistance['units'] = gridUnits
+
+		if (self.form.userDefinedRadioButton.isChecked()):
+			gridType = "User Defined"
+			gridUserDefined = self.form.userDefinedGridLinesTextInput.toPlainText()
+
+			gridItem.type = gridType
+			gridItem.userDefined = gridUserDefined
+
+		"""
+		self.displayMessage(						\
+			"Grid Settings \"" + name + "\":\n"	\
+			"\n"									\
+			"type: " + str(gridType) + "\n" +	\
+			"X: " + str(gridX) + "\n" +			\
+			"Y: " + str(gridY) + "\n" +			\
+			"Z: " + str(gridZ) + "\n" +			\
+			"units: " + gridUnits + "\n"			\
+			"userDef: " + gridUserDefined		\
+		)
+		"""
+		
+		self.displayMessage(gridItem.serializeToString())		
+
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = False
+		iterator = QtGui.QTreeWidgetItemIterator(self.form.gridSettingsTreeView, QtGui.QTreeWidgetItemIterator.All)
+		while iterator.value():
+			item = iterator.value()
+			if item.text(0) == gridItem.name:
+				isDuplicityName = True
+				self.displayMessage("Please change name, item with this name already exists.")
+			iterator +=1
+
+		#if everything is OK, item is added into tree
+		if (not isDuplicityName):
+			treeGridItem = QtGui.QTreeWidgetItem([gridItem.name])
+			treeGridItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
+			treeGridItem.setData(0, QtCore.Qt.UserRole, gridItem)
+	
+			self.form.gridSettingsTreeView.insertTopLevelItem(0, treeGridItem)
+
+	def gridSettingsRemoveButtonClicked(self):
+		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
+		self.displayMessage(selectedItem.serializeToString())
+
+####################################################################################################################################################################
+# End of PANEL definition
+####################################################################################################################################################################
  
 panel = BoxTaskPanel()
 #FreeCADGui.Control.showDialog(panel)
