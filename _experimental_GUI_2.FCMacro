@@ -3,7 +3,6 @@ import FreeCAD,FreeCADGui,Part, os
  
 # CHANGE THE LINE BELOW
 path_to_ui = ".\\ui\\dialog.ui"
-path_to_ui = "C:\\Users\\H364387\\Documents\\FreeCAD\\FreeCAD-OpenEMS-Export\\ui\\dialog.ui"
 
 class OpenEMS:
 	def getOpenEMSObjects():
@@ -26,7 +25,18 @@ class OpenEMS:
 			objList.append(item)
 		return objList
 
-class GridSettingsItem:
+# parent class for following settings items, it contains all function common for all classes
+#
+class SettingsItem:
+	def serializeToString(self):
+		return "{}"
+
+# Grid settings
+#	Fixed Count    - fixed number per axes
+#	Fixed Distance - gridlines have fixed distance between them
+#	User Defined   - user has to provide coordinates where lines should be
+#
+class GridSettingsItem(SettingsItem):
 	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0, 'units':''}, userDefined = ""):
 		self.name = name
 		self.type = type
@@ -35,7 +45,7 @@ class GridSettingsItem:
 		self.userDefined = userDefined
 
 	def serializeToString(self):
-		serializedString = "{'type': '" + self.type + "', 'def': "
+		serializedString = "{'name': '" + self.name + "', 'type': '" + self.type + "', 'def': "
 		if (self.type == "Fixed Count"):
 			serializedString += str(self.fixedCount)
 		if (self.type == "Fixed Distance"):
@@ -45,6 +55,81 @@ class GridSettingsItem:
 		serializedString += "}"
 		return serializedString
 
+# Material settings, basic are epsilon and mue, kappa and sigma are extended
+#	epsilon - permitivity
+#	mue     - permeability
+#	kappa   - susceptibility, coupling coeficient
+#	sigma   - VSWR, coductivity, surface charfe
+#
+class MaterialSettingsItem(SettingsItem):
+	def __init__(self, name = "", type = "", constants = {'epsilon':1, 'mue':1, 'kappa':None, 'sigma': None}):
+		self.name = name
+		self.constants = constants
+
+	def serializeToString(self):
+		serializedString = "{'name': '" + self.name
+		serializedString += ", 'epsilon': " + str(self.epsilon)
+		serializedString += ", 'mue': " + str(self.mue)
+		serializedString += ", 'kappa': " + str(self.kappa)
+		serializedString += ", 'sigma': " + str(self.sigma)
+		serializedString += "}"
+		return serializedString
+
+# Excitation settings, for input power where energy is floating into model
+#	Sinusodial - input port is excitated by sinusodial electric field
+#	Gaussian   - gaussian impulse at input port
+#	Custom     - user has to define function of electric field at input port
+#
+class ExcitationSettingsItem(SettingsItem):
+	def __init__(self, name = "", type = "", sinusodial = {'f0': 0, 'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0'}, units = "mm"):
+		self.name = name
+		self.type = type
+		self.sinusodial = sinusodial
+		self.gaussian = gaussian
+		self.custom = custom
+		self.units = units
+		return
+
+	def serializeToString(self):
+		serializedString = "{'name': '" + self.name
+		if (self.type == "sinusodial"):
+			serializedString += str(self.sinusodial)
+		if (self.type == "gaussian"):
+			serializedString += str(self.gaussian)
+		if (self.type == "custom"):
+			serializedString += str(self.custom)
+		serializedString += ", 'units': \"" + self.units + "\""
+		serializedString += "}"
+		return serializedString
+
+# Port settings
+#	There are just few ports typoe of ports defined in OpenEMS:
+#		- lumped
+#		- microstrip
+#		- circular waveguide
+#		- rectangular waveguide
+class PortSettingsItem(SettingsItem):
+	def __init__(self, name = "", type = ""):
+		self.name = name
+		self.type = type
+		return
+
+	def serializeToString(self):
+		serializedString = "{'name': '" + self.name
+		if (self.type == "lumped"):
+			serializedString += ", 'type': 'lumped'"
+		if (self.type == "microstrip"):
+			serializedString += ", 'type': 'microstrip'"
+		if (self.type == "circular waveguide"):
+			serializedString += ", 'type': 'circular waveguide'"
+		if (self.type == "rectangular waveguide"):
+			serializedString += ", 'type': 'rectangular waveguide'"
+		serializedString += "}"
+		return serializedString
+
+#
+# Main GUI panel class
+#
 class BoxTaskPanel:
 	def __init__(self):
 		#
@@ -81,6 +166,9 @@ class BoxTaskPanel:
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
+		#select first item
+		self.form.objectAssignmentRightTreeWidget.setCurrentItem(topItem)
+
 		#
 		# Default items for each section
 		#
@@ -100,12 +188,28 @@ class BoxTaskPanel:
 		#items = OpenEMS.getOpenEMSObjects()
 		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, items)
 
+		#select first item
+		if (len(items) > 0):
+			self.form.objectAssignmentLeftTreeWidget.setCurrentItem(items[0])
+
 		#
 		# SETTINGS FOR BUTTONS CLICK, functions assignements
 		#
 		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
 		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
 
+		self.form.materialSettingsAddButton.clicked.connect(self.materialSettingsAddButtonClicked)
+		self.form.materialSettingsRemoveButton.clicked.connect(self.materialSettingsRemoveButtonClicked)
+
+		self.form.excitationSettingsAddButton.clicked.connect(self.excitationSettingsAddButtonClicked)
+		self.form.excitationSettingsRemoveButton.clicked.connect(self.excitationSettingsRemoveButtonClicked)
+
+		self.form.portSettingsAddButton.clicked.connect(self.portSettingsAddButtonClicked)
+		self.form.portSettingsRemoveButton.clicked.connect(self.portSettingsRemoveButtonClicked)
+
+		#
+		# Handle function for grid radio buttons click
+		#
 		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
 		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
@@ -195,29 +299,133 @@ class BoxTaskPanel:
 		)
 		"""
 		
-		self.displayMessage(gridItem.serializeToString())		
+		# display message box with current settings for grid item
+		#self.displayMessage(gridItem.serializeToString())		
 
 		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = False
-		iterator = QtGui.QTreeWidgetItemIterator(self.form.gridSettingsTreeView, QtGui.QTreeWidgetItemIterator.All)
-		while iterator.value():
-			item = iterator.value()
-			if item.text(0) == gridItem.name:
-				isDuplicityName = True
-				self.displayMessage("Please change name, item with this name already exists.")
-			iterator +=1
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
 
 		#if everything is OK, item is added into tree
 		if (not isDuplicityName):
 			treeGridItem = QtGui.QTreeWidgetItem([gridItem.name])
-			treeGridItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
+			treeGridItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
 			treeGridItem.setData(0, QtCore.Qt.UserRole, gridItem)
 	
 			self.form.gridSettingsTreeView.insertTopLevelItem(0, treeGridItem)
 
+	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
+		isDuplicityName = False
+		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
+		while iterator.value():
+			item = iterator.value()
+			if item.text(0) == itemName:
+				isDuplicityName = True
+				self.displayMessage("Please change name, item with this name already exists.")
+			iterator +=1
+		return isDuplicityName
+
 	def gridSettingsRemoveButtonClicked(self):
+		"""
+		NEED TO BE DONE!
+		"""
 		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
 		self.displayMessage(selectedItem.serializeToString())
+
+	def materialSettingsAddButtonClicked(self):
+		name = self.form.materialSettingsNameInput.text()
+		epsilon = self.form.materialEpsilonNumberInput.value()
+		mue = self.form.materialMueNumberInput.value()
+		kappa = self.form.materialKappaNumberInput.value()
+		sigma = self.form.materialSigmaNumberInput.value()
+		
+		materialItem = MaterialSettingsItem()
+		materialItem.name = name
+		materialItem.epsilon = epsilon
+		materialItem.mue = mue
+		materialItem.kappa = kappa
+		materialItem	.sigma = sigma	
+
+		# display message box with current material settings to be added
+		#self.displayMessage(materialItem.serializeToString())
+
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.materialSettingsTreeView, materialItem.name)
+
+		if (not isDuplicityName):
+			treeMaterialItem = QtGui.QTreeWidgetItem([materialItem.name])
+			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
+			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
+	
+			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
+
+	def materialSettingsRemoveButtonClicked(self):
+		"""
+		NEED TO BE DONE!
+		"""
+		return
+
+	def excitationSettingsAddButtonClicked(self):
+		name = self.form.excitationSettingsNameInput.text()
+
+		excitationItem = ExcitationSettingsItem()
+		excitationItem.name = name
+
+		if (self.form.sinusodialExcitationRadioButton.isChecked()):
+			excitationItem.sinusodial['fc'] = self.form.sinusodialExcitationFcNumberInput.value()
+		if (self.form.gaussianExcitationRadioButton.isChecked()):
+			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
+			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
+		if (self.form.customExcitationRadioButton.isChecked()):
+			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
+
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
+
+		if (not isDuplicityName):
+			treeExcitationItem = QtGui.QTreeWidgetItem([excitationItem.name])
+			treeExcitationItem.setIcon(0, QtGui.QIcon(".\\img\\excitation.png"))
+			treeExcitationItem.setData(0, QtCore.Qt.UserRole, excitationItem)
+	
+			self.form.excitationSettingsTreeView.insertTopLevelItem(0, treeExcitationItem)
+
+	def excitationSettingsRemoveButtonClicked(self):
+		#
+		# NEED TO BE DONE!
+		#
+		return
+
+	def portSettingsAddButtonClicked(self):
+		name = self.form.portSettingsNameInput.text()
+
+		portItem = ExcitationSettingsItem()
+		portItem.name = name
+
+		if (self.form.lumpedPortRadioButton.isChecked()):
+			portItem.type = "lumped"
+		if (self.form.microstripPortRadioButton.isChecked()):
+			portItem.type = "microstrip"
+		if (self.form.circularWaveguidePortRadioButton.isChecked()):
+			portItem.type = "circular waveguide"
+		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
+			portItem.type = "rectangular waveguide"
+
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
+
+		if (not isDuplicityName):
+			treePortItem = QtGui.QTreeWidgetItem([portItem.name])
+			treePortItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
+			treePortItem.setData(0, QtCore.Qt.UserRole, portItem)
+	
+			self.form.portSettingsTreeView.insertTopLevelItem(0, treePortItem)
+
+		return
+
+	def portSettingsRemoveButtonClicked(self):
+		#
+		# NEED TO BE DONE!
+		#
+		return
 
 ####################################################################################################################################################################
 # End of PANEL definition

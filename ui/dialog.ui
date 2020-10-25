@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -494,22 +494,22 @@
       <string>Excitation Settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_14">
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_13">
         <property name="text">
          <string>fc</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="gaussianExcitationRadioButton">
         <property name="text">
-         <string>Sinusodial</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
+         <string>Gaussian</string>
         </property>
        </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput"/>
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="sinusodialExcitationFcNumberInput">
@@ -531,51 +531,41 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_13">
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput"/>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>User Defined Function e(t)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_14">
         <property name="text">
          <string>fc</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="gaussianExcitationRadioButton">
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
         <property name="text">
-         <string>Gaussian</string>
+         <string>Sinusodial</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput"/>
-      </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput"/>
-      </item>
-      <item row="4" column="1">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>User Defined Functio e(t)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QRadioButton" name="customExcitationRadioButton">
-        <property name="text">
-         <string>Custom</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1" rowspan="2">
-       <widget class="QLineEdit" name="customExcitationTextInput"/>
-      </item>
-      <item row="6" column="2">
+      <item row="7" column="2">
        <widget class="QLabel" name="label_15">
         <property name="text">
          <string>units</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="2">
+      <item row="8" column="2">
        <widget class="QComboBox" name="excitationUnitsNumberInput">
         <property name="currentText">
          <string>Hz</string>
@@ -600,6 +590,16 @@
           <string>GHz</string>
          </property>
         </item>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="customExcitationTextInput"/>
+      </item>
+      <item row="5" column="0">
+       <widget class="QRadioButton" name="customExcitationRadioButton">
+        <property name="text">
+         <string>Custom</string>
+        </property>
        </widget>
       </item>
      </layout>
