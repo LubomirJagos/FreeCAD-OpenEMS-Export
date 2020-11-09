@@ -184,16 +184,6 @@ class BoxTaskPanel:
 
 		#select first item
 		self.form.objectAssignmentRightTreeWidget.setCurrentItem(topItem)
-		#select first item
-		self.form.objectAssignmentRightTreeWidget.setCurrentItem(topItem)
-
-		#
-		# Default items for each section
-		#
-		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
-		defaultMaterialItem = QtGui.QTreeWidgetItem(["Default"])
-		defaultExcitationItem = QtGui.QTreeWidgetItem(["Default"])
-		defaultGridItem = QtGui.QTreeWidgetItem(["Default"])
 
 		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
@@ -340,7 +330,6 @@ class BoxTaskPanel:
 				isDuplicityName = True
 				self.displayMessage("Please change name, item with this name already exists.")
 			iterator +=1
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
 		return isDuplicityName
 
 	def gridSettingsRemoveButtonClicked(self):
@@ -386,9 +375,6 @@ class BoxTaskPanel:
 			treeMaterialItem = QtGui.QTreeWidgetItem([materialItem.name])
 			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
 			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
-			treeGridItem = QtGui.QTreeWidgetItem([gridItem.name])
-			treeGridItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
-			treeGridItem.setData(0, QtCore.Qt.UserRole, gridItem)
 	
 			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
 
@@ -397,23 +383,6 @@ class BoxTaskPanel:
 			#
 			materialGroup = self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)
 			materialGroup[0].addChild(treeMaterialItem.clone())
-	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
-		isDuplicityName = False
-		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
-		while iterator.value():
-			item = iterator.value()
-			if item.text(0) == itemName:
-				isDuplicityName = True
-				self.displayMessage("Please change name, item with this name already exists.")
-			iterator +=1
-		return isDuplicityName
-
-	def gridSettingsRemoveButtonClicked(self):
-		"""
-		NEED TO BE DONE!
-		"""
-		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
-		self.displayMessage(selectedItem.serializeToString())
 
 	def materialSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.materialSettingsTreeView.selectedItems()[0]
@@ -521,102 +490,6 @@ class BoxTaskPanel:
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
 
-		return
-
-	def materialSettingsAddButtonClicked(self):
-		name = self.form.materialSettingsNameInput.text()
-		epsilon = self.form.materialEpsilonNumberInput.value()
-		mue = self.form.materialMueNumberInput.value()
-		kappa = self.form.materialKappaNumberInput.value()
-		sigma = self.form.materialSigmaNumberInput.value()
-		
-		materialItem = MaterialSettingsItem()
-		materialItem.name = name
-		materialItem.epsilon = epsilon
-		materialItem.mue = mue
-		materialItem.kappa = kappa
-		materialItem	.sigma = sigma	
-
-		# display message box with current material settings to be added
-		#self.displayMessage(materialItem.serializeToString())
-
-		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.materialSettingsTreeView, materialItem.name)
-
-		if (not isDuplicityName):
-			treeMaterialItem = QtGui.QTreeWidgetItem([materialItem.name])
-			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
-			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
-	
-			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
-
-	def materialSettingsRemoveButtonClicked(self):
-		"""
-		NEED TO BE DONE!
-		"""
-		return
-
-	def excitationSettingsAddButtonClicked(self):
-		name = self.form.excitationSettingsNameInput.text()
-
-		excitationItem = ExcitationSettingsItem()
-		excitationItem.name = name
-
-		if (self.form.sinusodialExcitationRadioButton.isChecked()):
-			excitationItem.sinusodial['fc'] = self.form.sinusodialExcitationFcNumberInput.value()
-		if (self.form.gaussianExcitationRadioButton.isChecked()):
-			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
-			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
-		if (self.form.customExcitationRadioButton.isChecked()):
-			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
-
-		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
-
-		if (not isDuplicityName):
-			treeExcitationItem = QtGui.QTreeWidgetItem([excitationItem.name])
-			treeExcitationItem.setIcon(0, QtGui.QIcon(".\\img\\excitation.png"))
-			treeExcitationItem.setData(0, QtCore.Qt.UserRole, excitationItem)
-	
-			self.form.excitationSettingsTreeView.insertTopLevelItem(0, treeExcitationItem)
-
-	def excitationSettingsRemoveButtonClicked(self):
-		#
-		# NEED TO BE DONE!
-		#
-		return
-
-	def portSettingsAddButtonClicked(self):
-		name = self.form.portSettingsNameInput.text()
-
-		portItem = ExcitationSettingsItem()
-		portItem.name = name
-
-		if (self.form.lumpedPortRadioButton.isChecked()):
-			portItem.type = "lumped"
-		if (self.form.microstripPortRadioButton.isChecked()):
-			portItem.type = "microstrip"
-		if (self.form.circularWaveguidePortRadioButton.isChecked()):
-			portItem.type = "circular waveguide"
-		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
-			portItem.type = "rectangular waveguide"
-
-		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
-
-		if (not isDuplicityName):
-			treePortItem = QtGui.QTreeWidgetItem([portItem.name])
-			treePortItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
-			treePortItem.setData(0, QtCore.Qt.UserRole, portItem)
-	
-			self.form.portSettingsTreeView.insertTopLevelItem(0, treePortItem)
-
-		return
-
-	def portSettingsRemoveButtonClicked(self):
-		#
-		# NEED TO BE DONE!
-		#
 		return
 
 ####################################################################################################################################################################
