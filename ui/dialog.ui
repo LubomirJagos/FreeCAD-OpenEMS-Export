@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -84,6 +84,19 @@
        <string notr="true">1</string>
       </property>
      </column>
+    </widget>
+    <widget class="QPushButton" name="objectAssignmentShowSettingsButton">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>460</y>
+       <width>111</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>PushButton</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="gridSettingsTab">

@@ -81,7 +81,7 @@ class MaterialSettingsItem(SettingsItem):
 #	Custom     - user has to define function of electric field at input port
 #
 class ExcitationSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", sinusodial = {'f0': 0, 'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0'}, units = "mm"):
+	def __init__(self, name = "", type = "", sinusodial = {'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0'}, units = "Hz"):
 		self.name = name
 		self.type = type
 		self.sinusodial = sinusodial
@@ -91,14 +91,16 @@ class ExcitationSettingsItem(SettingsItem):
 		return
 
 	def serializeToString(self):
-		serializedString = "{'name': '" + self.name
+		serializedString = "{'name': '" + self.name + "', "
+		serializedString += "'type': '" + self.type + "', "
 		if (self.type == "sinusodial"):
-			serializedString += str(self.sinusodial)
+			serializedString += "'fc': '" + str(self.sinusodial['fc']) + "', "
 		if (self.type == "gaussian"):
-			serializedString += str(self.gaussian)
+			serializedString += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
 		if (self.type == "custom"):
-			serializedString += str(self.custom)
-		serializedString += ", 'units': \"" + self.units + "\""
+			serializedString += "'f': '" + str(self.custom['functionStr']) + "' "
+
+		serializedString += "'units': \"" + self.units + "\""
 		serializedString += "}"
 		return serializedString
 
@@ -217,6 +219,34 @@ class BoxTaskPanel:
 		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
 		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
+
+		#
+		# Show simulation settings, BUTTON IN OBJECT ASSIGNMENT
+		#
+		self.form.objectAssignmentShowSettingsButton.clicked.connect(self.objectAssignmentShowSettingsButtonClicked)
+
+	def objectAssignmentShowSettingsButtonClicked(self):
+		print("objectAssignmentShowSettingsButtonClicked entered")
+
+		#get reference to each category item
+		allItems = []
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Ports", QtCore.Qt.MatchExactly)[0])
+
+		#go through categories children
+		#output their data inside
+		for m in range(len(allItems)):
+			currItem = allItems[m]
+			for k in range(currItem.childCount()):
+				item = currItem.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				print("User datatype: " + item.text(0) + " - " + str(type(itemData)))
+				if (itemData):
+					print(itemData.serializeToString())
+
+		return
 
 	def show(self):
 		self.form.show()
@@ -363,7 +393,7 @@ class BoxTaskPanel:
 		materialItem.epsilon = epsilon
 		materialItem.mue = mue
 		materialItem.kappa = kappa
-		materialItem	.sigma = sigma	
+		materialItem.sigma = sigma	
 
 		# display message box with current material settings to be added
 		#self.displayMessage(materialItem.serializeToString())
@@ -405,13 +435,17 @@ class BoxTaskPanel:
 
 		excitationItem = ExcitationSettingsItem()
 		excitationItem.name = name
+		excitationItem.units = self.form.excitationUnitsNumberInput.currentText()
 
 		if (self.form.sinusodialExcitationRadioButton.isChecked()):
+			excitationItem.type = 'sinusodial'
 			excitationItem.sinusodial['fc'] = self.form.sinusodialExcitationFcNumberInput.value()
 		if (self.form.gaussianExcitationRadioButton.isChecked()):
+			excitationItem.type = 'gaussian'
 			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
 			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
 		if (self.form.customExcitationRadioButton.isChecked()):
+			excitationItem.type = 'custom'
 			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
 
 		#check for duplicity in names if there is some warning message displayed
