@@ -1,6 +1,7 @@
 from PySide import QtGui, QtCore
 import FreeCAD,FreeCADGui,Part, os
- 
+import re 
+
 # CHANGE THE LINE BELOW
 path_to_ui = ".\\ui\\dialog.ui"
 
@@ -28,8 +29,33 @@ class OpenEMS:
 # parent class for following settings items, it contains all function common for all classes
 #
 class SettingsItem:
-	def serializeToString(self):
+
+	# initializer
+	def serializeToString(self, name = "", type = ""):
+		self.name = name
+		self.type = type
 		return "{}"
+
+	# basic type property common for all kind of settings
+	def getType(self):
+		return self.type
+
+	# basic type property common for all kind of settings
+	def getName(self):
+		return self.name
+
+# FreeCAD part object
+#
+class FreeCADSettingsItem(SettingsItem):
+	def __init__(self, name = "", type = "FreeCADSettingItem"):
+		self.name = name
+		self.type = type
+		return
+
+	def serializeToString(self):
+		serializedString = "{'name': '" + self.name #+ "', 'type': '
+		serializedString += "}"
+		return serializedString
 
 # Grid settings
 #	Fixed Count    - fixed number per axes
@@ -55,6 +81,15 @@ class GridSettingsItem(SettingsItem):
 		serializedString += "}"
 		return serializedString
 
+	#Return xyz distances, count or user defined array based what user asked for.
+	def getXYZ(self):
+		if (self.type == "Fixed Count"):
+			return self.fixedCount
+		if (self.type == "Fixed Distance"):
+			return self.fixedDistance
+		if (self.type == "User Defined"):
+			return self.userDefined
+
 # Material settings, basic are epsilon and mue, kappa and sigma are extended
 #	epsilon - permitivity
 #	mue     - permeability
@@ -64,6 +99,7 @@ class GridSettingsItem(SettingsItem):
 class MaterialSettingsItem(SettingsItem):
 	def __init__(self, name = "", type = "", constants = {'epsilon':1, 'mue':1, 'kappa':None, 'sigma': None}):
 		self.name = name
+		self.type = type
 		self.constants = constants
 
 	def serializeToString(self):
@@ -152,10 +188,18 @@ class BoxTaskPanel:
 		# Default items for each section
 		#
 		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
-		defaultMaterialItem = QtGui.QTreeWidgetItem(["Default"])
-		defaultExcitationItem = QtGui.QTreeWidgetItem(["Default"])
-		defaultGridItem = QtGui.QTreeWidgetItem(["Default"])
-		defaultPortItem = QtGui.QTreeWidgetItem(["Default"])
+		defaultMaterialItem = QtGui.QTreeWidgetItem(["Material Default"])
+		defaultExcitationItem = QtGui.QTreeWidgetItem(["Excitation Default"])
+		defaultGridItem = QtGui.QTreeWidgetItem(["Grid Default"])
+		defaultPortItem = QtGui.QTreeWidgetItem(["Port Default"])
+
+		#
+		# Default items in each subsection have user data FreeCADSttingsItem classes to have just basic information like genereal freecad object
+		#
+		defaultMaterialItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Material Default"))
+		defaultExcitationItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Excitation Default"))
+		defaultGridItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Grid Default"))
+		defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
 
 		# MATERIALS
 		topItem = QtGui.QTreeWidgetItem(["Materials"])
@@ -190,13 +234,47 @@ class BoxTaskPanel:
 		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
 
-		items = OpenEMS.getAllObjects()
-		#items = OpenEMS.getOpenEMSObjects()
-		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, items)
+		#########################################################################################################
+		#	Left Column FreeCAD objects added in list
+		#########################################################################################################
+
+		"""		
+		itemsLabels = OpenEMS.getAllObjects()
+		for label in itemsLabels:
+			topItem = QtGui.QTreeWidgetItem([label])
+			itemData = FreeCADSettingsItem(label)
+			topItem.setData(0, QtCore.Qt.UserRole, itemData)
+			self.form.objectAssignmentLeftTreeWidget.insertTopLevelItem(0, topItem)
+		"""
+
+		items = OpenEMS.getOpenEMSObjects()
+		treeItems = []
+		for i in items:
+			print("openEMS object to export:" + i.Label)
+
+			# FIRST METHOD raw including just labeled items
+			#
+			#item = QtGui.QTreeWidgetItem([i.Label])
+			#item.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+			#treeItems.append(item)
+
+			# ADDING ITEMS with UserData object which storethem in intelligent way
+			#
+			topItem = QtGui.QTreeWidgetItem([i.Label])
+			itemData = FreeCADSettingsItem(i.Label)
+			topItem.setData(0, QtCore.Qt.UserRole, itemData)
+			topItem.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+			treeItems.append(topItem)
+		
+		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
 
 		#select first item
-		if (len(items) > 0):
-			self.form.objectAssignmentLeftTreeWidget.setCurrentItem(items[0])
+		#if (len(itemsLabels) > 0):
+		#	self.form.objectAssignmentLeftTreeWidget.setCurrentItem(itemsLabels[0])
+
+		#########################################################################################################
+		#########################################################################################################
+		#########################################################################################################
 
 		#
 		# SETTINGS FOR BUTTONS CLICK, functions assignements
@@ -223,9 +301,14 @@ class BoxTaskPanel:
 		#
 		# Show simulation settings, BUTTON IN OBJECT ASSIGNMENT
 		#
-		self.form.objectAssignmentShowSettingsButton.clicked.connect(self.objectAssignmentShowSettingsButtonClicked)
+		self.form.saveCurrentSettingsButton.clicked.connect(self.saveCurrentSettingsButtonClicked)
 
-	def objectAssignmentShowSettingsButtonClicked(self):
+		#
+		# Clicked on "Generate OpenEMS Script"
+		#		
+		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
+
+	def saveCurrentSettingsButtonClicked(self):
 		print("objectAssignmentShowSettingsButtonClicked entered")
 
 		#get reference to each category item
@@ -248,6 +331,221 @@ class BoxTaskPanel:
 
 		return
 
+	#########################################################################################################################
+	#                                  _                       _       _          _ _      _            _ 
+	#                                 | |                     (_)     | |        | (_)    | |          | |
+	#   __ _  ___ _ __   ___ _ __ __ _| |_ ___   ___  ___ _ __ _ _ __ | |_    ___| |_  ___| | _____  __| |
+	#  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \ / __|/ __| '__| | '_ \| __|  / __| | |/ __| |/ / _ \/ _` |
+	# | (_| |  __/ | | |  __/ | | (_| | ||  __/ \__ \ (__| |  | | |_) | |_  | (__| | | (__|   <  __/ (_| |
+	#  \__, |\___|_| |_|\___|_|  \__,_|\__\___| |___/\___|_|  |_| .__/ \__|  \___|_|_|\___|_|\_\___|\__,_|
+	#   __/ |                                                   | |                                       
+	#  |___/                    
+	#
+	#	GENERATE SCRIPT CLICKED
+	#
+	def generateOpenEMSScriptButtonClicked(self):
+		print("generateOpenEMSScriptButtonClicked() Hello.")
+
+		#get reference to each category item
+		#
+		# HERE IS ORDER IN WHICH LIST WILL BE EXECUTED AND ITEMS WILL BE TRANSLATED STEP BY STEP based on their type
+		#
+		allItems = []
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Ports", QtCore.Qt.MatchExactly)[0])
+
+		#go through categories children, output their data inside
+		"""
+		for m in range(len(allItems)):
+			currItem = allItems[m]
+			for k in range(currItem.childCount()):
+				item = currItem.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				print("User datatype: " + item.text(0) + " - " + str(type(itemData)))
+				if (itemData):
+					print(itemData.serializeToString())
+		"""
+
+		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
+		print("======================== REPORT BEGIN ========================\n")
+		for m in range(len(allItems)):
+			currItem = allItems[m]
+			for k in range(currItem.childCount()):
+				item = currItem.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				if (itemData):
+					#
+					#	EXCITATION
+					#  ________   _______ _____ _______    _______ _____ ____  _   _                                   _           _                 _      
+					# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |                                 | |         | |               | |     
+					# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| |   __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
+					# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
+					# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  | | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
+					# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
+					#                                                                   __/ |                                                               
+					#                                                                  |___/                                                                
+					if (itemData.__class__.__name__ is "ExcitationSettingsItem"):
+						print("Excitation Settings detected")
+						currSetting = item.data(0, QtCore.Qt.UserRole)
+						print("#")
+						print("#EXCITATION")
+						if (currSetting.getName() != 'Excitation Default'):
+							print("#name: " + currSetting.getName())
+							print("#type: " + currSetting.getType())
+						else:
+							print("#Excitation Default")
+							print("---")
+
+						pass
+
+					#
+					#	PORT
+					#  ____    ____  _____ _______                                   _           _                 _      
+					# |  __ \ / __ \|  __ \__   __|                                 | |         | |               | |     
+					# | |__) | |  | | |__) | | |      __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
+					# |  ___/| |  | |  _  /  | |     / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
+					# | |    | |__| | | \ \  | |    | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
+					# |_|     \____/|_|  \_\ |_|     \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
+					#                                 __/ |                                                               
+					#                                |___/                                                                
+					#
+					elif (itemData.__class__.__name__ is "PortSettingsItem"):
+						print("Port Settings detected")
+						currSetting = item.data(0, QtCore.Qt.UserRole)
+						print("#")
+						print("#PORT")
+						if (currSetting.getName() != 'Port Default'):
+							print("#name: " + currSetting.getName())
+							print("#type: " + currSetting.getType())
+						else:
+							print("#Port Default")
+							print("---")
+
+						pass
+
+					#
+					#	GRID SETTINGS
+					#   _____ _____  _____ _____                                    _           _                 _      
+					#  / ____|  __ \|_   _|  __ \                                  | |         | |               | |     
+					# | |  __| |__) | | | | |  | |   __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
+					# | | |_ |  _  /  | | | |  | |  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
+					# | |__| | | \ \ _| |_| |__| | | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
+					#  \_____|_|  \_\_____|_____/   \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
+					#                                __/ |                                                               
+					#                               |___/                                                                
+					#
+					elif (itemData.__class__.__name__ is "GridSettingsItem"):
+						print("Grid Settings detected")
+						currentObjects = App.ActiveDocument.Objects						
+						if (str(item.parent().text(0)) == "Grid"):
+							print("Current item is GRID setting")
+							currSetting = item.data(0, QtCore.Qt.UserRole)
+							print("/* THIS IS FOR OpenEMS First really open-source lectromagnetic Solver toolchain */\n")
+
+							#debug artifact, just fun
+							#print("FUCK IT  ASDDSA: " + currSetting.serializeToString())
+
+							#
+							# OCTAVE SCRIPT GOES HERE...
+							#
+							print("#")
+							print("#GRID " + currSetting.getType())
+							print("#name " + currSetting.getName())
+							print("#")
+							if (currSetting.getType() == "Fixed Count"):
+								print("#--> x: " + str(currSetting.getXYZ()['x']))
+								print("#--> y: " + str(currSetting.getXYZ()['y']))
+								print("#--> z: " + str(currSetting.getXYZ()['z']))
+							if (currSetting.getType() == "Fixed Distance"):
+								print("#--> x: " + str(currSetting.getXYZ()['x']))
+								print("#--> y: " + str(currSetting.getXYZ()['y']))
+								print("#--> z: " + str(currSetting.getXYZ()['z']))
+								print("#")
+								print("#--> units: " + str(currSetting.getXYZ()['units']))
+							if (currSetting.getType() == "User Defined"):
+								print("#--> userDefined: " + str(currSetting.getXYZ()))
+							print("#")
+
+							pass
+
+					#
+					# MATERIALS
+					#  __  __       _______ ______ _____  _____          _                                        _           _                 _      
+					# |  \/  |   /\|__   __|  ____|  __ \|_   _|   /\   | |                                      | |         | |               | |     
+					# | \  / |  /  \  | |  | |__  | |__) | | |    /  \  | |        __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
+					# | |\/| | / /\ \ | |  |  __| |  _  /  | |   / /\ \ | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
+					# | |  | |/ ____ \| |  | |____| | \ \ _| |_ / ____ \| |____  | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
+					# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
+					#                                                              __/ |                                                               
+					#                                                             |___/                                                               					#                                                                                                                                                                                                                                         
+					elif (itemData.__class__.__name__ is "MaterialSettingsItem"):
+						currSetting = item.data(0, QtCore.Qt.UserRole)
+						print(currSetting)
+						if (currSetting.getName() != 'Material Default'):
+							print("#")
+							print("#MATERIAL")
+							print("#name: " + currSetting.getName())
+							print("#epsilon, mue, kappa, sigma")
+							print("#" + str(currSetting.epsilon) + ", " + str(currSetting.mue) + ", " + str(currSetting.kappa) + ", " + str(currSetting.sigma))
+						else:
+							print("#Material Default")
+							print("---")
+
+						pass
+
+					#
+					#	 FreeCAD item detection everywhere in Main Tree!!! need to get rid this, now it's tolerated during development!
+					#
+					#  ______              _____          _____    _ _                   _                    
+					# |  ____|            / ____|   /\   |  __ \  (_) |                 | |                   
+					# | |__ _ __ ___  ___| |       /  \  | |  | |  _| |_ ___ _ __ ___   | |_ _   _ _ __   ___ 
+					# |  __| '__/ _ \/ _ \ |      / /\ \ | |  | | | | __/ _ \ '_ ` _ \  | __| | | | '_ \ / _ \
+					# | |  | | |  __/  __/ |____ / ____ \| |__| | | | ||  __/ | | | | | | |_| |_| | |_) |  __/
+					# |_|  |_|  \___|\___|\_____/_/    \_\_____/  |_|\__\___|_| |_| |_|  \__|\__, | .__/ \___|
+					#                                                                         __/ | |         
+					#                                                                        |___/|_|        
+					#
+					elif (itemData.__class__.__name__ is "FreeCADSettingsItem"):
+						print("FreeCAD Settings detected")
+
+						#
+						#	GET PARENT NODE DATATYPE
+						#
+						print("#")
+						print("#FREECAD OBJ.")
+						if (str(item.parent().text(0)) == "Grid"):
+							print("name: Grid Default")
+							print("type: FreeCADSettingsItem")
+							pass
+						elif (str(item.parent().text(0)) == "Ports"):
+							print("name: Port Default")
+							print("type: FreeCADSettingsItem")
+							pass
+						elif (str(item.parent().text(0)) == "Excitation"):
+							print("name: Excitation Default")
+							print("type: FreeCADSettingsItem")
+							pass
+						elif (str(item.parent().text(0)) == "Materials"):
+							print("name: Material Default")
+							print("type: FreeCADSettingsItem")
+							pass
+						else:
+							print("Parent of FreeCADSettingItem UNKNOWN")
+							pass
+
+					else:
+						print("unknown: " + itemData.__class__.__name__)
+						pass
+				else:
+					print("object not defined")
+					pass
+				print("\n")
+
+		print("======================== REPORT END ========================\n")
+		return
+
 	def show(self):
 		self.form.show()
 
@@ -268,6 +566,26 @@ class BoxTaskPanel:
 		msgBox.setText(msgText)
 		msgBox.exec()
 
+	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
+		isDuplicityName = False
+		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
+		while iterator.value():
+			item = iterator.value()
+			if item.text(0) == itemName:
+				isDuplicityName = True
+				self.displayMessage("Please change name, item with this name already exists.")
+			iterator +=1
+		return isDuplicityName
+
+
+	# GRID SETTINGS
+	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
+	#  / ____|  __ \|_   _|  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | |  __| |__) | | | | |  | | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	# | | |_ |  _  /  | | | |  | |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	# | |__| | | \ \ _| |_| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	#  \_____|_|  \_\_____|_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#
 	def fixedCountRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(False)
 
@@ -351,17 +669,6 @@ class BoxTaskPanel:
 			gridGroup = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)
 			gridGroup[0].addChild(treeGridItem.clone())
 
-	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
-		isDuplicityName = False
-		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
-		while iterator.value():
-			item = iterator.value()
-			if item.text(0) == itemName:
-				isDuplicityName = True
-				self.displayMessage("Please change name, item with this name already exists.")
-			iterator +=1
-		return isDuplicityName
-
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
 		#self.displayMessage(selectedItem.serializeToString())
@@ -381,6 +688,15 @@ class BoxTaskPanel:
 
 		return
 
+	#
+	# MATERIAL SETTINGS
+	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
+	# |  \/  |   /\|__   __|  ____|  __ \|_   _|   /\   | |       / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | \  / |  /  \  | |  | |__  | |__) | | |    /  \  | |      | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	# | |\/| | / /\ \ | |  |  __| |  _  /  | |   / /\ \ | |       \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	# | |  | |/ ____ \| |  | |____| | \ \ _| |_ / ____ \| |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#                                                                                                                     
 	def materialSettingsAddButtonClicked(self):
 		name = self.form.materialSettingsNameInput.text()
 		epsilon = self.form.materialEpsilonNumberInput.value()
@@ -430,6 +746,14 @@ class BoxTaskPanel:
 
 		return
 
+	# EXCITATION SETTINGS
+	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
+	# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#                                                                                                                          
 	def excitationSettingsAddButtonClicked(self):
 		name = self.form.excitationSettingsNameInput.text()
 
@@ -482,7 +806,7 @@ class BoxTaskPanel:
 	def portSettingsAddButtonClicked(self):
 		name = self.form.portSettingsNameInput.text()
 
-		portItem = ExcitationSettingsItem()
+		portItem = PortSettingsItem()
 		portItem.name = name
 
 		if (self.form.lumpedPortRadioButton.isChecked()):

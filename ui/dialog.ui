@@ -19,7 +19,7 @@
      <x>20</x>
      <y>10</y>
      <width>771</width>
-     <height>591</height>
+     <height>551</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -84,19 +84,6 @@
        <string notr="true">1</string>
       </property>
      </column>
-    </widget>
-    <widget class="QPushButton" name="objectAssignmentShowSettingsButton">
-     <property name="geometry">
-      <rect>
-       <x>420</x>
-       <y>460</y>
-       <width>111</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>PushButton</string>
-     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="gridSettingsTab">
@@ -787,6 +774,35 @@
      <string>Postprocessing</string>
     </attribute>
    </widget>
+  </widget>
+  <widget class="QPushButton" name="generateOpenEMSScriptButton">
+   <property name="geometry">
+    <rect>
+     <x>630</x>
+     <y>570</y>
+     <width>161</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Generate OpenEMS Script</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="saveCurrentSettingsButton">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>570</y>
+     <width>161</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save Current ettings</string>
+   </property>
   </widget>
  </widget>
  <resources/>
