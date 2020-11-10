@@ -478,6 +478,17 @@ class BoxTaskPanel:
 									print('\t--> y: ' + str(obj.Placement.Base.y))
 									print('\t--> z: ' + str(obj.Placement.Base.z))
 
+									#BOUNDING BOX
+									bbCoords = obj.Shape.BoundBox
+									print(type(bbCoords))
+									print(str(dir(bbCoords)))
+									print('\t--> BB x: ' + str(bbCoords.XLength))
+									print('\t--> BB y: ' + str(bbCoords.YLength))
+									print('\t--> BB z: ' + str(bbCoords.ZLength))
+									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
+									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
+									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
+
 							pass
 
 					#
