@@ -442,10 +442,6 @@ class BoxTaskPanel:
 						if (str(item.parent().text(0)) == "Grid"):
 							print("Current item is GRID setting")
 							currSetting = item.data(0, QtCore.Qt.UserRole)
-							print("/* THIS IS FOR OpenEMS First really open-source lectromagnetic Solver toolchain */\n")
-
-							#debug artifact, just fun
-							#print("FUCK IT  ASDDSA: " + currSetting.serializeToString())
 
 							#
 							# OCTAVE SCRIPT GOES HERE...
@@ -467,6 +463,20 @@ class BoxTaskPanel:
 							if (currSetting.getType() == "User Defined"):
 								print("#--> userDefined: " + str(currSetting.getXYZ()))
 							print("#")
+
+							objs = FreeCAD.ActiveDocument.Objects
+							for k in range(item.childCount()):
+								childName = item.child(k).text(0)
+								print("##Children:")
+								print("\t" + childName)
+								freecadObjects = [i for i in objs if (i.Label) == childName] 
+
+								#print(freecadObjects)
+								for obj in freecadObjects:
+									#print('\t--> ' + str(dir(obj.Placement.Base)))
+									print('\t--> x: ' + str(obj.Placement.Base.x))
+									print('\t--> y: ' + str(obj.Placement.Base.y))
+									print('\t--> z: ' + str(obj.Placement.Base.z))
 
 							pass
 
