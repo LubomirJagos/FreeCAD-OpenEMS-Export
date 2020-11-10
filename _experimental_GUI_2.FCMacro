@@ -1,6 +1,7 @@
 from PySide import QtGui, QtCore
 import FreeCAD,FreeCADGui,Part, os
-import re 
+import re
+import Mesh
 
 # CHANGE THE LINE BELOW
 path_to_ui = ".\\ui\\dialog.ui"
@@ -465,6 +466,9 @@ class BoxTaskPanel:
 							print("#")
 
 							objs = FreeCAD.ActiveDocument.Objects
+							objsExport = []
+
+							#item = current GRID ITEM
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
 								print("##Children:")
@@ -473,6 +477,8 @@ class BoxTaskPanel:
 
 								#print(freecadObjects)
 								for obj in freecadObjects:
+									# obj = FreeCAD Object class
+
 									#print('\t--> ' + str(dir(obj.Placement.Base)))
 									print('\t--> x: ' + str(obj.Placement.Base.x))
 									print('\t--> y: ' + str(obj.Placement.Base.y))
@@ -480,14 +486,21 @@ class BoxTaskPanel:
 
 									#BOUNDING BOX
 									bbCoords = obj.Shape.BoundBox
-									print(type(bbCoords))
-									print(str(dir(bbCoords)))
+									#print(type(bbCoords))
+									#print(str(dir(bbCoords)))
 									print('\t--> BB x: ' + str(bbCoords.XLength))
 									print('\t--> BB y: ' + str(bbCoords.YLength))
 									print('\t--> BB z: ' + str(bbCoords.ZLength))
 									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
 									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
 									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
+
+									#ADD PART TO LIST TO EXPORT AS .stl
+									partToExport = FreeCAD.ActiveDocument.getObject(obj.Name)
+									objsExport.append(partToExport)
+									print(partToExport)
+
+							Mesh.export(objsExport,u"C:/TEMP/__gen_experiemnt_1.stl")
 
 							pass
 
