@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -226,6 +226,43 @@
         <property name="text">
          <string>User defined</string>
         </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
+       <widget class="QComboBox" name="userDefinedUnitsInput">
+        <property name="currentText">
+         <string>m</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>m</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>cm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>mm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>um</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>nm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>pm</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
