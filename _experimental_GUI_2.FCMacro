@@ -355,6 +355,30 @@ class BoxTaskPanel:
 
 		return
 
+	def getSimParamsUnitsStr(self):
+		units = self.form.simParamsUnitsNumberInput.currentText()
+		if (units == 'Hz'):
+			units2 = ''
+			pass
+		elif(units == "kHz"):
+			units2 = 'e3'
+			pass
+		elif(units == "MHz"):
+			units2 = 'e6'
+			pass
+		elif(units == "GHz"):
+			units2 = 'e9'
+			pass
+		return units2
+
+	def getSimParamsFcStr(self):
+		units = self.getSimParamsUnitsStr()
+		return str(self.form.simParamFcNumberInput.value()) + units
+
+	def getSimParamsF0Str(self):
+		units = self.getSimParamsUnitsStr()
+		return str(self.form.simParamF0NumberInput.value()) + units
+
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
 	#                                 | |                     (_)     | |        | (_)    | |          | |
@@ -421,9 +445,22 @@ class BoxTaskPanel:
 		genScript += "%openEMS_opts = '--debug-PEC --no-simulation';\n"
 		genScript += "openEMS_opts = '';\n"
 		genScript += "\n"
+
+
+
+
+		#
+		# IMPORTANT
+		#
 		genScript += "%% setup the simulation\n"
 		genScript += "physical_constants;\n"
 		genScript += "unit = 1e-3; % all length in mm\n"
+
+
+
+
+
+
 		genScript += "\n"
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
@@ -432,10 +469,28 @@ class BoxTaskPanel:
 		genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
 		genScript += "\n"
 		genScript += "%% setup FDTD parameter & excitation function\n"
-		genScript += "max_timesteps = 8e6;\n"
-		genScript += "min_decrement = 1e-5; % equivalent to -50 dB\n"
-		genScript += "f0 = 1.6e9; % center frequency\n"
-		genScript += "fc = 800e6; % 20 dB corner frequency\n"
+
+
+
+
+		#
+		# IMPORTANT, OK!
+		#
+		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
+		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % equivalent to -50 dB\n"
+
+
+
+
+
+		#
+		# IMPORTANT, OK!
+		#
+		genScript += "f0 = " + self.getSimParamsF0Str() + "; % center frequency\n"
+		genScript += "fc = " + self.getSimParamsFcStr() + "; % 20 dB corner frequency\n"
+
+
+
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
 		genScript += "\n"
 		genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
@@ -449,7 +504,19 @@ class BoxTaskPanel:
 		genScript += "\n"
 		genScript += "%% setup CSXCAD geometry & mesh\n"
 		genScript += "% currently, openEMS cannot automatically generate a mesh\n"
+
+
+
+
+
+
+		#
+		# IMPORTANT
+		#
 		genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
+
+
+
 		genScript += "\n"
 		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
@@ -560,14 +627,79 @@ class BoxTaskPanel:
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
 						print("#PORT")
-						if (currSetting.getName() != 'Port Default'):
+						if (currSetting.getName() != 'Lumped Port'):    # !!!!!!!!!!!!!!!!!!!!! NEED TO CHECK IF REALLY THIS CONDITION IS GOOD
 							print("#name: " + currSetting.getName())
 							print("#type: " + currSetting.getType())
-						else:
-							print("#Port Default")
-							print("---")
 
+							portName = "port_" + str(100*m+k)
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% PORT\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+							objs = FreeCAD.ActiveDocument.Objects
+
+							for k in range(item.childCount()):
+								childName = item.child(k).text(0)
+								print("##Children:")
+								print("\t" + childName)
+								freecadObjects = [i for i in objs if (i.Label) == childName] 
+
+								#print(freecadObjects)
+								for obj in freecadObjects:
+									bbCoords = obj.Shape.BoundBox
+
+									print('\t--> Xlength: ' + str(bbCoords.XLength))
+									print('\t--> Ylength: ' + str(bbCoords.YLength))
+									print('\t--> Zlength: ' + str(bbCoords.ZLength))
+									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
+									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
+									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
+
+									start = "[" +  str(bbCoords.XMin) + ", " + str(bbCoords.YMin)  + ", " + str(bbCoords.ZMin)  + "]"
+									stop = "[" +  str(bbCoords.XMax) + ", " + str(bbCoords.YMax)  + ", " + str(bbCoords.ZMax)  + "]"
+
+									rotX = obj.Placement.Rotation.Axis.x
+									rotY = obj.Placement.Rotation.Axis.y
+									rotZ = obj.Placement.Rotation.Axis.z
+									print("#obj axis: [" + str(rotX) + " " + str(rotY) + " " + str(rotZ) + "]")
+
+									#
+									# PORT openEMS GENERATION INTO VARIABLE
+									#
+									if (currSetting.getType() == 'lumped'):
+										genScript += "%% lumped port\n"
+										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
+										# value 50ohm is resistance, NEED BE IN GUI
+										genScript += "[CSX port] = AddLumpedPort(CSX, 5 ,1 , 50, " + start + ", " + stop + ", [" + str(rotX) + " " + str(rotY) + " " + str(rotZ) + "], true);"
+										genScript += "\n"
+										pass
+									elif (currSetting.getType() == 'microstrip'):
+										genScript += "%% MICROSTRIP PORT\n"
+										# adding microstrip openEMS code line										
+										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
+										genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);"
+										genScript += "\n"
+										pass
+									elif (currSetting.getType() == 'circular waveguide'):
+										# adding openEMS code line
+										genScript += "%% circular port openEMS code should be here\n"
+										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
+										pass
+									elif (currSetting.getType() == 'rectangular waveguide'):
+										# adding openEMS code line
+										genScript += "%% rectangular port openEMS code should be here\n"
+										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
+										pass
+
+							portList.append(portName)
+
+							pass
+						else:
+							print("#Excitation Default")
+							print("---")
+							pass
 						pass
+
 
 					#
 					#	GRID SETTINGS
