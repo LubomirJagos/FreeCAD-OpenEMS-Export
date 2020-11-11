@@ -138,6 +138,7 @@ class MaterialSettingsItem(SettingsItem):
 #
 class ExcitationSettingsItem(SettingsItem):
 	def __init__(self, name = "", type = "", sinusodial = {'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0'}, units = "Hz"):
+		SettingsItem.__init__(self)
 		self.name = name
 		self.type = type
 		self.sinusodial = sinusodial
@@ -159,6 +160,9 @@ class ExcitationSettingsItem(SettingsItem):
 		serializedString += "'units': \"" + self.units + "\""
 		serializedString += "}"
 		return serializedString
+
+	def getType(self):
+		return self.type
 
 # Port settings
 #	There are just few ports typoe of ports defined in OpenEMS:
@@ -452,6 +456,8 @@ class BoxTaskPanel:
 		genScript += "\n"
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
+		portList = []																					# <------------ PORT LIST
+
 		print("======================== REPORT BEGIN ========================\n")
 		for m in range(len(allItems)):
 			currItem = allItems[m]
@@ -477,10 +483,65 @@ class BoxTaskPanel:
 						if (currSetting.getName() != 'Excitation Default'):
 							print("#name: " + currSetting.getName())
 							print("#type: " + currSetting.getType())
+
+							portName = "port_" + str(100*m+k)
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% EXCITATION\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "CSX = AddDump( CSX, '" + portName + "', 'DumpType', 0, 'DumpMode', 2); % cell interpolated\n"
+
+							objs = FreeCAD.ActiveDocument.Objects
+
+							for k in range(item.childCount()):
+								childName = item.child(k).text(0)
+								print("##Children:")
+								print("\t" + childName)
+								freecadObjects = [i for i in objs if (i.Label) == childName] 
+
+								#print(freecadObjects)
+								for obj in freecadObjects:
+									bbCoords = obj.Shape.BoundBox
+
+									print('\t--> Xlength: ' + str(bbCoords.XLength))
+									print('\t--> Ylength: ' + str(bbCoords.YLength))
+									print('\t--> Zlength: ' + str(bbCoords.ZLength))
+									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
+									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
+									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
+
+									#
+									# EXCITATION openEMS GENERATION INTO VARIABLE
+									#
+									if (currSetting.getType() == 'sinusodial'):
+										genScript += "/* sinusodial */\n"
+										# TBD
+										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
+										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
+										genScript += "\n"
+										pass
+									elif (currSetting.getType() == 'gaussian'):
+										genScript += "/* gaussian */\n"
+										# TBD
+										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
+										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
+										genScript += "\n"
+										pass
+									elif (currSetting.getType() == 'custom'):
+										genScript += "/* custom */\n"
+										# TBD
+										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
+										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
+										genScript += "\n"
+										pass
+
+							genScript += "CSX = AddBox( CSX, '" + portName + "', 0, start, stop );\n"
+							portList.append(portName)
+
+							pass
 						else:
 							print("#Excitation Default")
 							print("---")
-
+							pass
 						pass
 
 					#
@@ -614,74 +675,6 @@ class BoxTaskPanel:
 									genScript += "\n"
 									"""
 
-									"""
-									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-									genScript += "% GEOMETRY\n"
-									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-									genScript += "\n"
-									genScript += "% GEOMETRY\n"
-									genScript += "CSX = AddMetal( CSX, 'wilkinson' );\n"
-									genScript += "CSX = ImportSTL(CSX, 'wilkinson',10, [currDir '\\model\\wilkinson.stl'],'Transform',{'Scale', 1});\n"
-									genScript += "CSX = AddMaterial( CSX, 'substrate' );\n"
-									genScript += "CSX = SetMaterialProperty( CSX, 'substrate', 'Epsilon', substrate.epsR, 'Kappa', substrate.kappa );\n"
-									genScript += "CSX = ImportSTL(CSX, 'substrate',10, [currDir '\\model\\substrate.stl'],'Transform',{'Scale', 1});\n"
-									genScript += "CSX = AddMetal( CSX, 'gnd' );\n"
-									genScript += "CSX = ImportSTL(CSX, 'gnd',10, [currDir '\\model\\gnd.stl'],'Transform',{'Scale', 1});\n"
-									genScript += "\n"
-									genScript += "%% EXCITATION, PORT 1\n"
-									genScript += "%[CSX] = AddExcitation(CSX, 'Excitation', 0, [0 0 1]);\n"
-									genScript += "start = [feed.posX feed.posY-0.1 0+35e-6];\n"
-									genScript += "stop  = [feed.posX+feed.width feed.posY-0.2 -substrate.thickness-35e-6];\n"
-									genScript += "[CSX port{1}] = AddLumpedPort(CSX, 5 ,1 ,feed.R, start, stop, [0 0 1], true);\n"
-									genScript += "%% OUTPUT PORT 2\n"
-									genScript += "start = outputPort.A.start;\n"
-									genScript += "stop  = outputPort.A.end;\n"
-									genScript += "[CSX port{2}] = AddLumpedPort(CSX, 5 ,2 ,feed.R, start, stop, [0 0 1]);\n"
-									genScript += "%% OUTPUT PORT 3\n"
-									genScript += "start = outputPort.B.start;\n"
-									genScript += "stop  = outputPort.B.end;\n"
-									genScript += "[CSX port{3}] = AddLumpedPort(CSX, 5 ,3 ,feed.R, start, stop, [0 0 1]);\n"
-									genScript += "\n"
-									genScript += "%% RESISTOR\n"
-									genScript += "%first add element to list that it's there in model\n"
-									genScript += "[CSX] = AddLumpedElement(CSX, 'Resistor', 2, 'Caps', 1, 'R', 100);\n"
-									genScript += "%volume coordinates\n"
-									genScript += "##start = [-0.937893 -7.956 0];\n"
-									genScript += "##stop = [0.937893 -8.874228 2];  %due resistor is in Z direction it must contains at least 2 grid lines in that direction os it's set higher than minimal grid Y \n"
-									genScript += "start = [-0.837893 -7.956 0];\n"
-									genScript += "stop = [0.837893 -8.874228 2];  %due resistor is in Z direction it must contains at least 2 grid lines in that direction os it's set higher than minimal grid Y \n"
-									genScript += "%second add space volume which is assigned to that element defined previously\n"
-									genScript += "[CSX] = AddBox(CSX, 'Resistor', 0, start, stop);\n"
-									genScript += "\n"
-									genScript += "%% H-FIELD MONITOR\n"
-									genScript += "CSX = AddDump( CSX, 'Ht_', 'DumpType', 1, 'DumpMode', 2); % cell interpolated\n"
-									genScript += "start = [substrate.start.x substrate.start.y 1];\n"
-									genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
-									genScript += "CSX = AddBox( CSX, 'Ht_', 0, start, stop );\n"
-									genScript += "\n"
-									genScript += "%% E-FIELD MONITOR\n"
-									genScript += "CSX = AddDump( CSX, 'Et_', 'DumpType', 0, 'DumpMode', 2); % cell interpolated\n"
-									genScript += "start = [substrate.start.x substrate.start.y 1];\n"
-									genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
-									genScript += "CSX = AddBox( CSX, 'Et_', 0, start, stop );\n"
-									genScript += "\n"
-									genScript += "\n"
-									genScript += "%%NF2FF CALCULATION\n"
-									genScript += "%[CSX nf2ff] = CreateNF2FFBox(CSX, 'nf2ff', -SimBox/2, SimBox/2);\n"
-									genScript += "\n"
-									genScript += "    %% write openEMS compatible xml-file\n"
-									genScript += "    WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
-									genScript += "\n"
-									genScript += "    %% show the structure\n"
-									genScript += "    CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
-									genScript += "\n"
-									genScript += "if (postprocessing_only==0)\n"
-									genScript += "    %% run openEMS\n"
-									genScript += "    RunOpenEMS( Sim_Path, Sim_CSX, openEMS_opts );\n"
-									genScript += "end\n"
-									genScript += "\n"
-									"""
-
 									#ADD PART TO LIST TO EXPORT AS .stl
 									partToExport = FreeCAD.ActiveDocument.getObject(obj.Name)
 									objsExport.append(partToExport)
@@ -728,9 +721,10 @@ class BoxTaskPanel:
 
 								materialName = "metal"
 								partFileName = "somePartName"
+								# THE NUBER IN IMPORTSTL WILL BE PROBABLY PRIORITY NUMBER
 								genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "',10, [currDir '\\model\\" + childName + ".stl'],'Transform',{'Scale', 1});\n"
 
-							pass
+								pass
 						else:
 							print("#Material Default")
 							print("---")
@@ -1056,6 +1050,14 @@ class BoxTaskPanel:
 
 		return
 
+	# PORT SETTINGS
+	#  _____   ____  _____ _______    _____ ______ _______ _______ _____ _   _  _____  _____ 
+	# |  __ \ / __ \|  __ \__   __|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | |__) | |  | | |__) | | |    | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	# |  ___/| |  | |  _  /  | |     \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	# | |    | |__| | | \ \  | |     ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	# |_|     \____/|_|  \_\ |_|    |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#                                                                                        
 	def portSettingsAddButtonClicked(self):
 		name = self.form.portSettingsNameInput.text()
 
