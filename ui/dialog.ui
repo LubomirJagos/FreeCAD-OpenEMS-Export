@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>FreeCADopenEMSPlugin</class>
+ <widget class="QDialog" name="FreeCADopenEMSPlugin">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>808</width>
+    <width>1143</width>
     <height>650</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>FreeCAD to OpenEMS Export Plugin</string>
   </property>
   <widget class="QTabWidget" name="simulationParamTabWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>10</y>
-     <width>771</width>
+     <width>1111</width>
      <height>551</height>
     </rect>
    </property>
@@ -958,9 +958,9 @@
   <widget class="QPushButton" name="generateOpenEMSScriptButton">
    <property name="geometry">
     <rect>
-     <x>630</x>
+     <x>920</x>
      <y>570</y>
-     <width>161</width>
+     <width>211</width>
      <height>41</height>
     </rect>
    </property>
@@ -974,14 +974,30 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>450</x>
+     <x>720</x>
      <y>570</y>
-     <width>161</width>
+     <width>191</width>
      <height>41</height>
     </rect>
    </property>
    <property name="text">
     <string>Save Current ettings</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="loadCurrentSettingsButton">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>570</y>
+     <width>211</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Load Current ettings</string>
    </property>
   </widget>
  </widget>

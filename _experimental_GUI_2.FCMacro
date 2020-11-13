@@ -3,6 +3,8 @@ import FreeCAD,FreeCADGui,Part, os
 import re
 import Mesh
 
+from PySide.QtCore import QSettings
+
 # CHANGE THE LINE BELOW
 path_to_ui = ".\\ui\\dialog.ui"
 
@@ -323,14 +325,20 @@ class BoxTaskPanel:
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
 
 		#
-		# Show simulation settings, BUTTON IN OBJECT ASSIGNMENT
-		#
-		self.form.saveCurrentSettingsButton.clicked.connect(self.saveCurrentSettingsButtonClicked)
-
-		#
 		# Clicked on "Generate OpenEMS Script"
 		#		
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
+
+		#
+		# Material item changed.
+		#		
+		self.form.materialSettingsTreeView.currentItemChanged.connect(self.materialTreeWidgetItemChanged)	
+
+		####################################################################################################
+		# GUI SAVE/LOAD from file
+		####################################################################################################
+		self.form.saveCurrentSettingsButton.clicked.connect(self.saveCurrentSettingsButtonClicked)
+		self.form.loadCurrentSettingsButton.clicked.connect(self.loadCurrentSettingsButtonClicked)
 
 	def saveCurrentSettingsButtonClicked(self):
 		print("objectAssignmentShowSettingsButtonClicked entered")
@@ -1235,6 +1243,55 @@ class BoxTaskPanel:
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
 
+		return
+
+	def materialTreeWidgetItemChanged(self, current, previous):
+		print("Material item changed.")
+		currSetting = self.form.materialSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		prevSetting = previous.data(0, QtCore.Qt.UserRole)
+		print(currSetting.constants['epsilon'])
+		print(prevSetting.constants['epsilon'])
+		self.form.materialSettingsNameInput.setText(currSetting.name)
+		self.form.materialEpsilonNumberInput.setValue(int(currSetting.constants['epsilon']))
+		self.form.materialMueNumberInput.setValue(currSetting.constants['mue'])
+		self.form.materialKappaNumberInput.setValue(currSetting.constants['kappa'])
+		self.form.materialSigmaNumberInput.setValue(currSetting.constants['sigma'])
+		return
+
+	####################################################################################################################################################################
+	# GUI SAVE/LOAD buttons
+	####################################################################################################################################################################
+	def saveCurrentSettingsButtonClicked(self):
+		print("Saving current values into file.")
+		programname = os.path.basename(__file__)
+		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+		settings = QtCore.QSettings("company", programbase)    
+		#settings.setValue("geometry", self.saveGeometry())  # save window geometry
+		#settings.setValue("state", self.saveState(UI_VERSION))   # save settings (UI_VERSION is a constant you should increment when your UI changes significantly to prevent attempts to restore an invalid state.)
+		
+		# save ui values, so they can be restored next time
+		"""
+		settings.setValue("lineEditUser", self.lineEditUser.text());
+		settings.setValue("lineEditPass", self.lineEditPass.text());
+		
+		settings.setValue("checkBoxReplace", self.checkBoxReplace.checkState());
+		settings.setValue("checkBoxFirst", self.checkBoxFirst.checkState());
+		
+		settings.setValue("radioButton1", self.radioButton1.isChecked());
+		sys.exit()  # prevents second call
+		"""
+
+		# I just need to save items in each tab, no current text fields values or checkboxes
+		# state, so here will be just saving items as JSON objects into file
+		
+		#
+		# NEW CODE GOES HERE.
+		#
+
+		return
+
+	def loadCurrentSettingsButtonClicked(self):
+		print("Load current values from file.")
 		return
 
 ####################################################################################################################################################################
