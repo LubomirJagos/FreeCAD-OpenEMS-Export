@@ -5,6 +5,7 @@ import Mesh
 import random
 
 from PySide.QtCore import QSettings
+import json
 
 # CHANGE THE LINE BELOW
 path_to_ui = ".\\ui\\dialog.ui"
@@ -206,6 +207,24 @@ class PortSettingsItem(SettingsItem):
 		serializedString += "}"
 		return serializedString
 
+# Smulation settings
+#	f0
+#	fc
+#
+class SimulationSettingsItem(SettingsItem):
+	def __init__(self, name = "", params='{"f0": 0, "fc": 0, "units": "Hz", "max_timestamps": 1e6, "min_decrement": 0}'):
+		self.name = name
+		self.params = {}
+		self.params = json.loads(params)
+		return
+
+	def serializeToString(self):
+		jsonStr = ""
+		jsonStr +=  '{"name": "' + self.name + '", "params": '
+		jsonStr +=  json.dumps(self.params)
+		jsonStr +=  '}'
+		return jsonStr
+
 #
 # Main GUI panel class
 #
@@ -250,7 +269,7 @@ class BoxTaskPanel:
 		defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
 
 		# MATERIALS
-		topItem = QtGui.QTreeWidgetItem(["Materials"])
+		topItem = QtGui.QTreeWidgetItem(["Material"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
 		topItem.addChildren([defaultMaterialItem])
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
@@ -271,7 +290,7 @@ class BoxTaskPanel:
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# PORTS
-		topItem = QtGui.QTreeWidgetItem(["Ports"])
+		topItem = QtGui.QTreeWidgetItem(["Port"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
 		topItem.addChildren([defaultPortItem])
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
@@ -411,6 +430,37 @@ class BoxTaskPanel:
 	def getSimParamsF0Str(self):
 		units = self.getSimParamsUnitsStr()
 		return str(self.form.simParamF0NumberInput.value()) + units
+
+	#
+	# Universal function to add items into categories in GUI.
+	#
+	def addSettingsItemGui(self, settingsItem):
+		treeItemName = settingsItem.name
+		treeItem = QtGui.QTreeWidgetItem([treeItemName])
+
+		itemTypeReg = re.search("__main__.(.*)SettingsItem", str(type(settingsItem)))
+		typeStr = itemTypeReg.group(1)
+		print(typeStr)
+
+		treeItem.setIcon(0, QtGui.QIcon(".\\img\\" + typeStr.lower() + ".png"))
+		treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+
+		#add item into excitation list
+		if (typeStr.lower() == "excitation"):
+			self.form.excitationSettingsTreeView.insertTopLevelItem(0, treeItem)
+		elif (typeStr.lower() == "port"):
+			self.form.portSettingsTreeView.insertTopLevelItem(0, treeItem)
+		elif (typeStr.lower() == "grid"):
+			self.form.gridSettingsTreeView.insertTopLevelItem(0, treeItem)
+		elif (typeStr.lower() == "material"):
+			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeItem)
+		else:
+			print('cannot assign item ' + typeStr)
+			return
+
+		#adding excitation also into OBJCET ASSIGNMENT WINDOW
+		targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
+		targetGroup[0].addChild(treeItem.clone())
 
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
@@ -1023,6 +1073,7 @@ class BoxTaskPanel:
 			gridZ = self.form.fixedCountZNumberInput.value()
 
 			gridItem.type = gridType
+			gridItem.fixedCount = {}
 			gridItem.fixedCount['x'] = gridX
 			gridItem.fixedCount['y'] = gridY
 			gridItem.fixedCount['z'] = gridZ
@@ -1038,6 +1089,7 @@ class BoxTaskPanel:
 			gridUnits = self.form.fixedDistanceUnitsInput.currentText()
 
 			gridItem.type = gridType
+			gridItem.fixedDistance = {}
 			gridItem.fixedDistance['x'] = gridX
 			gridItem.fixedDistance['y'] = gridY
 			gridItem.fixedDistance['z'] = gridZ
@@ -1118,6 +1170,7 @@ class BoxTaskPanel:
 		
 		materialItem = MaterialSettingsItem()
 		materialItem.name = name
+		materialItem.constants = {}	# !!! <--- THIS MUST BE HERE, OTHERWISE ALL CONSTANTS IN ALL MATERIAL ITEMS AHVE SAME VALUE LIKE REFERENCING SAME OBJECT
 		materialItem.constants['epsilon'] = epsilon
 		materialItem.constants['mue'] = mue
 		materialItem.constants['kappa'] = kappa
@@ -1134,7 +1187,10 @@ class BoxTaskPanel:
 			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
 			#treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
 			print("Adding material item with epsilon: " + str(materialItem.constants['epsilon']))
+
 			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)	
+			#itemOrder = self.form.materialSettingsTreeView.topLevelItemCount()
+			#treeMaterialItem.setData(itemOrder, QtCore.Qt.UserRole, materialItem)	
 
 			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
 
@@ -1168,6 +1224,7 @@ class BoxTaskPanel:
 	# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
 	# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
 	#                                                                                                                          
+
 	def excitationSettingsAddButtonClicked(self):
 		name = self.form.excitationSettingsNameInput.text()
 
@@ -1177,29 +1234,23 @@ class BoxTaskPanel:
 
 		if (self.form.sinusodialExcitationRadioButton.isChecked()):
 			excitationItem.type = 'sinusodial'
+			excitationItem.sinusodial = {}
 			excitationItem.sinusodial['fc'] = self.form.sinusodialExcitationFcNumberInput.value()
 		if (self.form.gaussianExcitationRadioButton.isChecked()):
 			excitationItem.type = 'gaussian'
+			excitationItem.gaussian = {}
 			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
 			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
 		if (self.form.customExcitationRadioButton.isChecked()):
 			excitationItem.type = 'custom'
+			excitationItem.custom = {}
 			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
 
 		if (not isDuplicityName):
-			treeExcitationItem = QtGui.QTreeWidgetItem([excitationItem.name])
-			treeExcitationItem.setIcon(0, QtGui.QIcon(".\\img\\excitation.png"))
-			treeExcitationItem.setData(0, QtCore.Qt.UserRole, excitationItem)
-	
-			#add item into excitation list
-			self.form.excitationSettingsTreeView.insertTopLevelItem(0, treeExcitationItem)
-
-			#adding excitation also into OBJCET ASSIGNMENT WINDOW
-			excitationGroup = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)
-			excitationGroup[0].addChild(treeExcitationItem.clone())
+			self.addExcitationItemGui(excitationItem)
 
 	def excitationSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.excitationSettingsTreeView.selectedItems()[0]
@@ -1275,14 +1326,12 @@ class BoxTaskPanel:
 	def materialTreeWidgetItemChanged(self, current, previous):
 		print("Material item changed.")
 		currSetting = self.form.materialSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
-		prevSetting = previous.data(0, QtCore.Qt.UserRole)
-		print(currSetting.constants['epsilon'])
-		print(prevSetting.constants['epsilon'])
 		self.form.materialSettingsNameInput.setText(currSetting.name)
-		self.form.materialEpsilonNumberInput.setValue(int(currSetting.constants['epsilon']))
-		self.form.materialMueNumberInput.setValue(currSetting.constants['mue'])
-		self.form.materialKappaNumberInput.setValue(currSetting.constants['kappa'])
-		self.form.materialSigmaNumberInput.setValue(currSetting.constants['sigma'])
+		#ATTENTIONS there is ocnversion to float() used BELOW
+		self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
+		self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
+		self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
+		self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
 		return
 
 	####################################################################################################################################################################
@@ -1291,24 +1340,141 @@ class BoxTaskPanel:
 	def saveCurrentSettingsButtonClicked(self):
 		programname = os.path.basename(__file__)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		settings = QtCore.QSettings(programbase + "_settings.ini", QtCore.QSettings.IniFormat)    
+		outFile = programbase + "_settings.ini"
+		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
-		settings.setValue("random_number", random.randint(10000000,100000000));
+		#SAE MATERIAL SETTINGS INTO FILE
 		materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
 		for k in range(len(materialList)):
+			print("Save new MATERIAL constants into file: ")
 			print(materialList[k].constants)
-			settings.beginGroup(materialList[k].getName())
-			settings.setValue("material_epsilon", materialList[k].constants['epsilon']);
-			settings.setValue("material_mue", materialList[k].constants['mue']);
-			settings.setValue("material_kappa", materialList[k].constants['kappa']);
-			settings.setValue("material_sigma", materialList[k].constants['sigma']);
+	
+			settings.beginGroup("MATERIAL-" + materialList[k].getName())
+			settings.setValue("material_epsilon", materialList[k].constants['epsilon'])
+			settings.setValue("material_mue", materialList[k].constants['mue'])
+			settings.setValue("material_kappa", materialList[k].constants['kappa'])
+			settings.setValue("material_sigma", materialList[k].constants['sigma'])
 			settings.endGroup()
 
+		#SAVE GRID INTO FILE
+		gridList = self.openEMSObj.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
+		for k in range(len(gridList)):
+			print("Save new GRID constants into file: " + gridList[k].getName())
+	
+			settings.beginGroup("GRID-" + gridList[k].getName())
+			settings.setValue("type", gridList[k].type)
+			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
+			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
+			settings.setValue("userDefined", gridList[k].userDefined)
+			settings.endGroup()
+
+		#SAVE EXCITATION INTO FILE
+		excitationList = self.openEMSObj.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
+		for k in range(len(excitationList)):
+			print("Save new EXCITATION constants into file: " + excitationList[k].getName())
+	
+			settings.beginGroup("EXCITATION-" + excitationList[k].getName())
+			settings.setValue("type", excitationList[k].type)
+			settings.setValue("sinusodial", json.dumps(excitationList[k].sinusodial))
+			settings.setValue("gaussian", json.dumps(excitationList[k].gaussian))
+			settings.setValue("custom", json.dumps(excitationList[k].custom))
+			settings.endGroup()
+
+		#SAVE PORT SETTINGS INTO FILE
+		portList = self.openEMSObj.getAllTreeWidgetItems(self.form.portSettingsTreeView)
+		for k in range(len(portList)):
+			print("Save new PORT constants into file: " + portList[k].getName())
+	
+			settings.beginGroup("PORT-" + portList[k].getName())
+			settings.setValue("type", portList[k].type)
+			settings.endGroup()
+
+		#SIMULATION PARAMS SAVE INTO FILE
+		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
+		simulationSettings.params['f0'] = self.form.simParamF0NumberInput.value()
+		simulationSettings.params['fc'] = self.form.simParamFcNumberInput.value()
+		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
+		simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
+
+		settings.beginGroup("SIMULATION-" + simulationSettings.name)
+		settings.setValue("params", json.dumps(simulationSettings.serializeToString()))
+		settings.endGroup()
+
 		#sys.exit()  # prevents second call
+		print("Current values saved into file: " + outFile)
 		return
 
 	def loadCurrentSettingsButtonClicked(self):
 		print("Load current values from file.")
+
+		#
+		# DEBUG: now read hardwired file name with __file__ + "_settings.ini"
+		#
+		programname = os.path.basename(__file__)
+		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+		outFile = programbase + "_settings.ini"
+		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
+
+		#
+		# LOADING ITEMS FROM SETTINGS FILE
+		#
+		print("Settings file groups:", end="")
+		print(settings.childGroups())
+		for settingsGroup in settings.childGroups():
+
+			#extract category nme from ini name
+			itemNameReg = re.search("-(.*)", settingsGroup)
+			itemName = itemNameReg.group(1)
+
+			if (re.compile("EXCITATION").search(settingsGroup)):
+				print("Excitation item settings found.")
+				settings.beginGroup(settingsGroup)
+				categorySettings = ExcitationSettingsItem()
+				categorySettings.name = itemName
+				categorySettings.type = settings.value('type')
+				categorySettings.sinusodial = json.loads(settings.value('sinusodial'))
+				categorySettings.gaussian = json.loads(settings.value('gaussian'))
+				categorySettings.custom = json.loads(settings.value('custom'))
+				settings.endGroup()
+
+			elif (re.compile("GRID").search(settingsGroup)):
+				print("GRID item settings found.")
+				settings.beginGroup(settingsGroup)
+				categorySettings = GridSettingsItem()
+				categorySettings.name = itemName
+				categorySettings.type = settings.value('type')
+				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
+				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
+				categorySettings.userDefined = settings.value('userDefined')
+				settings.endGroup()
+
+			elif (re.compile("PORT").search(settingsGroup)):
+				print("PORT item settings found.")
+				settings.beginGroup(settingsGroup)
+				categorySettings = PortSettingsItem()
+				categorySettings.name = itemName
+				categorySettings.type = settings.value('type')
+				settings.endGroup()
+
+			elif (re.compile("MATERIAL").search(settingsGroup)):
+				print("Material item settings found.")
+				settings.beginGroup(settingsGroup)
+				categorySettings = MaterialSettingsItem()
+				categorySettings.name = itemName
+				categorySettings.type = settings.value('type')
+				categorySettings.constants = {}
+				categorySettings.constants['epsilon'] = settings.value('material_epsilon')
+				categorySettings.constants['mue'] = settings.value('material_mue')
+				categorySettings.constants['kappa'] = settings.value('material_kappa')
+				categorySettings.constants['sigma'] = settings.value('material_sigma')
+				settings.endGroup()
+			else:
+				#if no item recognized then conitnue next run, at the end there is adding into object assignment tab
+				#and if category is not known it's need to goes for another one
+				continue
+
+			self.addSettingsItemGui(categorySettings)		#better more universal way to add things to gui
+
 		return
 
 ####################################################################################################################################################################
