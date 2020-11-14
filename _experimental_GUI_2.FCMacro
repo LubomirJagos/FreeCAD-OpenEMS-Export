@@ -2,6 +2,7 @@ from PySide import QtGui, QtCore
 import FreeCAD,FreeCADGui,Part, os
 import re
 import Mesh
+import random
 
 from PySide.QtCore import QSettings
 
@@ -9,7 +10,7 @@ from PySide.QtCore import QSettings
 path_to_ui = ".\\ui\\dialog.ui"
 
 class OpenEMS:
-	def getOpenEMSObjects():
+	def getOpenEMSObjects(self):
 		currentObjects = App.ActiveDocument.Objects
 		
 		objToExport = []
@@ -20,7 +21,7 @@ class OpenEMS:
 	
 		return objToExport
 
-	def getAllObjects():
+	def getAllObjects(self):
 		currentObjects = App.ActiveDocument.Objects	
 		objList = []
 		for obj in currentObjects:
@@ -28,6 +29,17 @@ class OpenEMS:
 			item.setIcon(0, QtGui.QIcon(".\\img\\object.png")) 
 			objList.append(item)
 		return objList
+
+	#return all items, at leas all top level
+	def getAllTreeWidgetItems(self, treeWidget):
+		root = treeWidget.invisibleRootItem()
+		child_count = root.childCount()
+		itemList = []
+		for i in range(child_count):
+			print('Copying tree widget item ' + root.child(i).data(0, QtCore.Qt.UserRole).getName())
+			item = root.child(i)
+			itemList.append(item.data(0, QtCore.Qt.UserRole))
+		return itemList
 
 # parent class for following settings items, it contains all function common for all classes
 #
@@ -133,6 +145,9 @@ class MaterialSettingsItem(SettingsItem):
 		serializedString += "}"
 		return serializedString
 
+	#def getAllItems(self):
+	#	return super(MaterialSettingItem, self).getAllItems()
+
 # Excitation settings, for input power where energy is floating into model
 #	Sinusodial - input port is excitated by sinusodial electric field
 #	Gaussian   - gaussian impulse at input port
@@ -196,6 +211,13 @@ class PortSettingsItem(SettingsItem):
 #
 class BoxTaskPanel:
 	def __init__(self):
+
+		#
+		# LOCAL OPENEMS OBJECT
+		#
+		self.openEMSObj = OpenEMS()
+
+
 		#
 		# Change current path to script file folder
 		#
@@ -272,8 +294,11 @@ class BoxTaskPanel:
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
 			self.form.objectAssignmentLeftTreeWidget.insertTopLevelItem(0, topItem)
 		"""
+		
+		openEMSObj = OpenEMS()
 
-		items = OpenEMS.getOpenEMSObjects()
+
+		items = openEMSObj.getOpenEMSObjects()
 		treeItems = []
 		for i in items:
 			print("openEMS object to export:" + i.Label)
@@ -1107,8 +1132,10 @@ class BoxTaskPanel:
 		if (not isDuplicityName):
 			treeMaterialItem = QtGui.QTreeWidgetItem([materialItem.name])
 			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
-			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
-	
+			#treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
+			print("Adding material item with epsilon: " + str(materialItem.constants['epsilon']))
+			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)	
+
 			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
 
 			#			
@@ -1262,32 +1289,22 @@ class BoxTaskPanel:
 	# GUI SAVE/LOAD buttons
 	####################################################################################################################################################################
 	def saveCurrentSettingsButtonClicked(self):
-		print("Saving current values into file.")
 		programname = os.path.basename(__file__)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		settings = QtCore.QSettings("company", programbase)    
-		#settings.setValue("geometry", self.saveGeometry())  # save window geometry
-		#settings.setValue("state", self.saveState(UI_VERSION))   # save settings (UI_VERSION is a constant you should increment when your UI changes significantly to prevent attempts to restore an invalid state.)
-		
-		# save ui values, so they can be restored next time
-		"""
-		settings.setValue("lineEditUser", self.lineEditUser.text());
-		settings.setValue("lineEditPass", self.lineEditPass.text());
-		
-		settings.setValue("checkBoxReplace", self.checkBoxReplace.checkState());
-		settings.setValue("checkBoxFirst", self.checkBoxFirst.checkState());
-		
-		settings.setValue("radioButton1", self.radioButton1.isChecked());
-		sys.exit()  # prevents second call
-		"""
+		settings = QtCore.QSettings(programbase + "_settings.ini", QtCore.QSettings.IniFormat)    
 
-		# I just need to save items in each tab, no current text fields values or checkboxes
-		# state, so here will be just saving items as JSON objects into file
-		
-		#
-		# NEW CODE GOES HERE.
-		#
+		settings.setValue("random_number", random.randint(10000000,100000000));
+		materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
+		for k in range(len(materialList)):
+			print(materialList[k].constants)
+			settings.beginGroup(materialList[k].getName())
+			settings.setValue("material_epsilon", materialList[k].constants['epsilon']);
+			settings.setValue("material_mue", materialList[k].constants['mue']);
+			settings.setValue("material_kappa", materialList[k].constants['kappa']);
+			settings.setValue("material_sigma", materialList[k].constants['sigma']);
+			settings.endGroup()
 
+		#sys.exit()  # prevents second call
 		return
 
 	def loadCurrentSettingsButtonClicked(self):
