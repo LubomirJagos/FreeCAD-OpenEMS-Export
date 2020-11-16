@@ -33,7 +33,7 @@ class OpenEMS:
 			objList.append(item)
 		return objList
 
-	#return all items, at leas all top level
+	#return all items, at least all top level
 	def getAllTreeWidgetItems(self, treeWidget):
 		root = treeWidget.invisibleRootItem()
 		child_count = root.childCount()
@@ -136,7 +136,7 @@ class GridSettingsItem(SettingsItem):
 # Material settings, basic are epsilon and mue, kappa and sigma are extended
 #	epsilon - permitivity
 #	mue     - permeability
-#	kappa   - susceptibility, coupling coeficient
+#	kappa   - susceptibility, coupling coefficient
 #	sigma   - VSWR, coductivity, surface charfe
 #
 class MaterialSettingsItem(SettingsItem):
@@ -191,7 +191,7 @@ class ExcitationSettingsItem(SettingsItem):
 		return self.type
 
 # Port settings
-#	There are just few ports typoe of ports defined in OpenEMS:
+#	There are just few types of ports defined in OpenEMS:
 #		- lumped
 #		- microstrip
 #		- circular waveguide
@@ -350,7 +350,7 @@ class BoxTaskPanel:
 		#########################################################################################################
 
 		#
-		# SETTINGS FOR BUTTONS CLICK, functions assignements
+		# SETTINGS FOR BUTTONS CLICK, functions assignments
 		#
 		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
 		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
@@ -1430,7 +1430,7 @@ class BoxTaskPanel:
 		
 		materialItem = MaterialSettingsItem()
 		materialItem.name = name
-		materialItem.constants = {}	# !!! <--- THIS MUST BE HERE, OTHERWISE ALL CONSTANTS IN ALL MATERIAL ITEMS AHVE SAME VALUE LIKE REFERENCING SAME OBJECT
+		materialItem.constants = {}	# !!! <--- THIS MUST BE HERE, OTHERWISE ALL CONSTANTS IN ALL MATERIAL ITEMS HAVE SAME VALUE LIKE REFERENCING SAME OBJECT
 		materialItem.constants['epsilon'] = epsilon
 		materialItem.constants['mue'] = mue
 		materialItem.constants['kappa'] = kappa
