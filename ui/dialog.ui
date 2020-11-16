@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>5</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -546,7 +546,11 @@
        </widget>
       </item>
       <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput"/>
+       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="sinusodialExcitationFcNumberInput">
@@ -559,6 +563,9 @@
           <height>0</height>
          </size>
         </property>
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="2" column="1">
@@ -569,7 +576,11 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput"/>
+       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="4" column="1">
        <widget class="QLabel" name="label_11">

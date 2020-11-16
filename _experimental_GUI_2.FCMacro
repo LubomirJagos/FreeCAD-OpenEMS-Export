@@ -17,8 +17,9 @@ class OpenEMS:
 		objToExport = []
 		
 		for obj in currentObjects:
-			if (re.search('openEMS', obj.Label)):
-				objToExport.append(obj)
+#			if (re.search('openEMS', obj.Label)):
+#				objToExport.append(obj)
+			objToExport.append(obj)
 	
 		return objToExport
 
@@ -936,7 +937,13 @@ class BoxTaskPanel:
 							objsExport = []
 
 							genScript += "CSX = AddMaterial( CSX, '" + currSetting.getName() + "' );\n"
-							genScript += "CSX = SetMaterialProperty( CSX, 'MaterialName', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Mue', " + str(currSetting.constants['mue']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ", 'Sigma', " + str(currSetting.constants['sigma']) + ");\n"
+
+							#full material definition all 4 params epsilon, mue, kappa and sigma							
+							#genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Mue', " + str(currSetting.constants['mue']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ", 'Sigma', " + str(currSetting.constants['sigma']) + ");\n"
+
+							#this is running now, just epsilon and kappa generated
+							genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ");\n"
+
 							#item = current GRID ITEM
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
@@ -1436,10 +1443,20 @@ class BoxTaskPanel:
 	####################################################################################################################################################################
 	# GUI SAVE/LOAD buttons
 	####################################################################################################################################################################
+
+	#   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____ 
+	#  / ____|  /\ \    / /  ____|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | (___   /  \ \  / /| |__    | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	#  \___ \ / /\ \ \/ / |  __|    \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	#  ____) / ____ \  /  | |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	# |_____/_/    \_\/   |______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#
 	def saveCurrentSettingsButtonClicked(self):
-		programname = os.path.basename(__file__)
+		programname = os.path.basename(App.ActiveDocument.FileName)
+		programdir = os.path.dirname(App.ActiveDocument.FileName)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		outFile = programbase + "_settings.ini"
+		outFile = programdir + '/' + programbase + "_settings.ini"
+		print("Saving data from file: " + outFile)
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
 		#SAE MATERIAL SETTINGS INTO FILE
@@ -1530,15 +1547,24 @@ class BoxTaskPanel:
 		print("Current values saved into file: " + outFile)
 		return
 
+	#  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
+	# | |    / __ \   /\   |  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+	# | |   | |  | | /  \  | |  | | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+	# | |   | |  | |/ /\ \ | |  | |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+	# | |___| |__| / ____ \| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+	# |______\____/_/    \_\_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	#                                                                                       
 	def loadCurrentSettingsButtonClicked(self):
 		print("Load current values from file.")
 
 		#
 		# DEBUG: now read hardwired file name with __file__ + "_settings.ini"
 		#
-		programname = os.path.basename(__file__)
+		programname = os.path.basename(App.ActiveDocument.FileName)
+		programdir = os.path.dirname(App.ActiveDocument.FileName)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		outFile = programbase + "_settings.ini"
+		outFile = programdir + '/' + programbase + "_settings.ini"
+		print("Loading data from file: " + outFile)
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
 		#
