@@ -482,10 +482,10 @@ class BoxTaskPanel:
 		# HERE IS ORDER IN WHICH LIST WILL BE EXECUTED AND ITEMS WILL BE TRANSLATED STEP BY STEP based on their type
 		#
 		allItems = []
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Material", QtCore.Qt.MatchExactly)[0])
 		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)[0])
 		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Ports", QtCore.Qt.MatchExactly)[0])
+		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Port", QtCore.Qt.MatchExactly)[0])
 
 		#go through categories children, output their data inside
 		"""
@@ -521,7 +521,7 @@ class BoxTaskPanel:
 		genScript += "draw_3d_pattern = 0; % this may take a while...\n"
 		genScript += "use_pml = 0;         % use pml boundaries instead of mur\n"
 		genScript += "\n"
-		genScript += "currDir = strrep(pwd(), '\', '\\');\n"
+		genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
 		genScript += "\n"
 		genScript += "%LuboJ, JUST TO SEE RESULT\n"
 		genScript += "%openEMS_opts = '--no-simulation';\n"
@@ -860,22 +860,25 @@ class BoxTaskPanel:
 									genScript += "% MESH\n"
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 									if (currSetting.getType() == 'Fixed Distance'):
-										genScript += "unit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+										#UNIT FOR MESH										
+										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
 										genScript += "mesh.x = [(" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ")];\n"
 										genScript += "mesh.y = [(" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ")];\n"
 										genScript += "mesh.z = [(" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ")];\n"
-										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
+										#UNIT FOR MESH										
 										genScript += "mesh.x = [linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ")];\n"
 										genScript += "mesh.y = [linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ")];\n"
 										genScript += "mesh.z = [linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['z']) + ")];\n"
-										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
 										pass
 									elif (currSetting.getType() == 'User Defined'):
-										genScript += "unit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+										#UNIT FOR MESH										
+										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
 										genScript += "mesh = " + currSetting.getXYZ() + ";\n"
-										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
 										pass
 
 									"""
@@ -895,7 +898,7 @@ class BoxTaskPanel:
 									objsExport.append(partToExport)
 									print(partToExport)
 
-							Mesh.export(objsExport,u"C:/TEMP/__gen_experiemnt_1.stl")
+							Mesh.export(objsExport,u"C:/TEMP/__gen_experiment_1.stl")
 
 							pass
 
@@ -999,6 +1002,11 @@ class BoxTaskPanel:
 		#
 		# WRITE GENERATED SCRIPT INTO FILE
 		#
+		genScript += "CSX = ImportSTL(CSX, 'Baryium',10, [currDir '\\\\__gen_experiment_1.stl'],'Transform',{'Scale', 1});\n"
+		genScript += "WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
+		genScript += "CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
+
+
 		f = open("C:\\temp\\_gen_openEMS.m", "w")
 		f.write(genScript)
 		f.close()
@@ -1400,6 +1408,32 @@ class BoxTaskPanel:
 		settings.setValue("params", json.dumps(simulationSettings.serializeToString()))
 		settings.endGroup()
 
+
+		#SAVE OBJECT ASSIGNMENTS		
+		topItemsCount = self.form.objectAssignmentRightTreeWidget.topLevelItemCount()
+		objCounter = 0
+		for k in range(topItemsCount):
+			topItem = self.form.objectAssignmentRightTreeWidget.topLevelItem(k)
+			topItemName = topItem.text(0)
+			print("---> topItem: " + topItem.text(0))
+			for m in range(topItem.childCount()):
+				childItem = topItem.child(m)
+				childItemName = childItem.text(0)
+				print("Save new OBJECT ASSIGNMENTS for catgeroy -> settings profile: ")
+				print("\t" + topItemName + " --> " + childItemName)
+				for n in range(childItem.childCount()):
+					objItem = childItem.child(n)
+					objItemName = objItem.text(0)
+	
+					settings.beginGroup("OBJECT" + str(objCounter) + "-" + objItemName)
+					settings.setValue("type", "FreeCadObj")
+					settings.setValue("parent", childItemName)
+					settings.setValue("category", topItemName)
+					settings.endGroup()
+
+					objCounter += 1
+
+
 		#sys.exit()  # prevents second call
 		print("Current values saved into file: " + outFile)
 		return
@@ -1468,6 +1502,31 @@ class BoxTaskPanel:
 				categorySettings.constants['kappa'] = settings.value('material_kappa')
 				categorySettings.constants['sigma'] = settings.value('material_sigma')
 				settings.endGroup()
+
+			elif (re.compile("OBJECT").search(settingsGroup)):
+				print("FreeCadObject item settings found.")
+				settings.beginGroup(settingsGroup)
+				objParent = settings.value('parent')
+				objCategory = settings.value('category')
+				settings.endGroup()
+
+				#adding excitation also into OBJCET ASSIGNMENT WINDOW
+				targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(objCategory, QtCore.Qt.MatchExactly)
+				for k in range(len(targetGroup)):					
+					for m in range(targetGroup[k].childCount()):
+						if (targetGroup[k].child(m).text(0) == objParent):
+							settingsItem = FreeCADSettingsItem(itemName)
+
+							#treeItem = QtGui.QTreeWidgetItem([itemName])
+							treeItem = QtGui.QTreeWidgetItem()
+							treeItem.setText(0, itemName)
+							treeItem.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+
+							targetGroup[k].child(m).addChild(treeItem)
+							
+				continue #items is already added into tree widget nothing more needed
+
 			else:
 				#if no item recognized then conitnue next run, at the end there is adding into object assignment tab
 				#and if category is not known it's need to goes for another one
