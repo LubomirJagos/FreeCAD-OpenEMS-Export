@@ -374,9 +374,12 @@ class BoxTaskPanel:
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
-		# Material item changed.
+		# Material, Grid, Excitation, ... item changed handler functions.
 		#		
 		self.form.materialSettingsTreeView.currentItemChanged.connect(self.materialTreeWidgetItemChanged)	
+		self.form.excitationSettingsTreeView.currentItemChanged.connect(self.excitationTreeWidgetItemChanged)	
+		self.form.gridSettingsTreeView.currentItemChanged.connect(self.gridTreeWidgetItemChanged)	
+		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)	
 
 		####################################################################################################
 		# GUI SAVE/LOAD from file
@@ -663,28 +666,28 @@ class BoxTaskPanel:
 									# EXCITATION openEMS GENERATION INTO VARIABLE
 									#
 									if (currSetting.getType() == 'sinusodial'):
-										genScript += "/* sinusodial */\n"
+										genScript += "%sinusodial\n"
 										# TBD
 										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
 										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
 										genScript += "\n"
 										pass
 									elif (currSetting.getType() == 'gaussian'):
-										genScript += "/* gaussian */\n"
+										genScript += "%gaussian\n"
 										# TBD
 										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
 										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
 										genScript += "\n"
 										pass
 									elif (currSetting.getType() == 'custom'):
-										genScript += "/* custom */\n"
+										genScript += "%custom\n"
 										# TBD
 										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
 										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
 										genScript += "\n"
 										pass
 
-							genScript += "CSX = AddBox( CSX, '" + portName + "', 0, start, stop );\n"
+							#genScript += "CSX = AddBox( CSX, '" + portName + "', 0, start, stop );\n"
 							portList.append(portName)
 
 							pass
@@ -1331,15 +1334,60 @@ class BoxTaskPanel:
 
 		return
 
+
+	#   _____________   ____________  ___    __       _____ _______________________   _____________
+	#  / ____/ ____/ | / / ____/ __ \/   |  / /      / ___// ____/_  __/_  __/  _/ | / / ____/ ___/
+	# / / __/ __/ /  |/ / __/ / /_/ / /| | / /       \__ \/ __/   / /   / /  / //  |/ / / __ \__ \ 
+	#/ /_/ / /___/ /|  / /___/ _, _/ ___ |/ /___    ___/ / /___  / /   / / _/ // /|  / /_/ /___/ / 
+	#\____/_____/_/ |_/_____/_/ |_/_/  |_/_____/   /____/_____/ /_/   /_/ /___/_/ |_/\____//____/  
+	#
 	def materialTreeWidgetItemChanged(self, current, previous):
 		print("Material item changed.")
 		currSetting = self.form.materialSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.materialSettingsNameInput.setText(currSetting.name)
+
 		#ATTENTIONS there is ocnversion to float() used BELOW
 		self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
 		self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
 		self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
 		self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
+		return
+
+	def gridTreeWidgetItemChanged(self, current, previous):
+		print("Grid item changed.")
+		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.gridSettingsNameInput.setText(currSetting.name)
+		self.form.gridSettingsNameInput.setText(currSetting.name)
+		if (currSetting.type == "Fixed Distance"):
+			self.form.fixedDistanceRadioButton.click()
+			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
+			self.form.fixedDistanceYNumberInput.setValue(currSetting.fixedDistance['y'])
+			self.form.fixedDistanceZNumberInput.setValue(currSetting.fixedDistance['z'])
+		elif (currSetting.type == "Fixed Count"):
+			self.form.fixedCountRadioButton.click()
+			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
+			self.form.fixedCountYNumberInput.setValue(currSetting.fixedCount['y'])
+			self.form.fixedCountZNumberInput.setValue(currSetting.fixedCount['z'])
+			pass
+		elif (currSetting.type == "User Defined"):
+			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined)
+			self.form.userDefinedRadioButton.click()
+			pass
+		else:
+			pass
+			
+		return
+
+	def excitationTreeWidgetItemChanged(self, current, previous):
+		print("Excitation item changed.")
+		return
+
+	def portTreeWidgetItemChanged(self, current, previous):
+		print("Port item changed.")
+		return
+
+	def simulationTreeWidgetItemChanged(self, current, previous):
+		print("Simulation params changed.")
 		return
 
 	####################################################################################################################################################################
@@ -1433,7 +1481,6 @@ class BoxTaskPanel:
 
 					objCounter += 1
 
-
 		#sys.exit()  # prevents second call
 		print("Current values saved into file: " + outFile)
 		return
@@ -1502,6 +1549,19 @@ class BoxTaskPanel:
 				categorySettings.constants['kappa'] = settings.value('material_kappa')
 				categorySettings.constants['sigma'] = settings.value('material_sigma')
 				settings.endGroup()
+
+			elif (re.compile("SIMULATION").search(settingsGroup)):
+				print("Simulation params item settings found.")
+				settings.beginGroup(settingsGroup)
+				simulationSettings = SimulationSettingsItem()
+				simulationSettings.name = itemName
+				simulationSettings.type = settings.value('type')
+				simulationSettings.params = json.loads(settings.value('params'))
+				#print('SIMULATION PARAMS:')
+				#print(simulationSettings.params)
+				settings.endGroup()
+
+				continue	#there is no tree widget to add item to
 
 			elif (re.compile("OBJECT").search(settingsGroup)):
 				print("FreeCadObject item settings found.")
