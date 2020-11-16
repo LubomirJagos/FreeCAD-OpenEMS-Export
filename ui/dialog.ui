@@ -832,8 +832,11 @@
         <property name="decimals">
          <number>3</number>
         </property>
+        <property name="maximum">
+         <double>10000000000.000000000000000</double>
+        </property>
         <property name="singleStep">
-         <double>0.010000000000000</double>
+         <double>0.100000000000000</double>
         </property>
        </widget>
       </item>
@@ -849,8 +852,11 @@
         <property name="decimals">
          <number>3</number>
         </property>
+        <property name="maximum">
+         <double>10000000000.000000000000000</double>
+        </property>
         <property name="singleStep">
-         <double>0.010000000000000</double>
+         <double>0.100000000000000</double>
         </property>
        </widget>
       </item>
@@ -917,8 +923,11 @@
         <property name="decimals">
          <number>10</number>
         </property>
+        <property name="maximum">
+         <double>10000000000.000000000000000</double>
+        </property>
         <property name="singleStep">
-         <double>0.000001000000000</double>
+         <double>1.000000000000000</double>
         </property>
        </widget>
       </item>

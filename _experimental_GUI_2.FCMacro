@@ -212,7 +212,7 @@ class PortSettingsItem(SettingsItem):
 #	fc
 #
 class SimulationSettingsItem(SettingsItem):
-	def __init__(self, name = "", params='{"f0": 0, "fc": 0, "units": "Hz", "max_timestamps": 1e6, "min_decrement": 0}'):
+	def __init__(self, name = "DefaultSimlationName", params='{"f0": 0, "fc": 0, "units": "Hz", "max_timestamps": 1e6, "min_decrement": 0}'):
 		self.name = name
 		self.params = {}
 		self.params = json.loads(params)
@@ -449,17 +449,21 @@ class BoxTaskPanel:
 		treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
 		#add item into excitation list
+		treeWidgetRef = {}
 		if (typeStr.lower() == "excitation"):
-			self.form.excitationSettingsTreeView.insertTopLevelItem(0, treeItem)
+			treeWidgetRef = self.form.excitationSettingsTreeView
 		elif (typeStr.lower() == "port"):
-			self.form.portSettingsTreeView.insertTopLevelItem(0, treeItem)
+			treeWidgetRef = self.form.portSettingsTreeView
 		elif (typeStr.lower() == "grid"):
-			self.form.gridSettingsTreeView.insertTopLevelItem(0, treeItem)
+			treeWidgetRef = self.form.gridSettingsTreeView
 		elif (typeStr.lower() == "material"):
-			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeItem)
+			treeWidgetRef = self.form.materialSettingsTreeView
 		else:
 			print('cannot assign item ' + typeStr)
 			return
+
+		treeWidgetRef.insertTopLevelItem(0, treeItem)
+		treeWidgetRef.setCurrentItem(treeWidgetRef.topLevelItem(0))
 
 		#adding excitation also into OBJCET ASSIGNMENT WINDOW
 		targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
@@ -1261,7 +1265,7 @@ class BoxTaskPanel:
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
 
 		if (not isDuplicityName):
-			self.addExcitationItemGui(excitationItem)
+			self.addSettingsItemGui(excitationItem)
 
 	def excitationSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.excitationSettingsTreeView.selectedItems()[0]
@@ -1306,15 +1310,7 @@ class BoxTaskPanel:
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
 
 		if (not isDuplicityName):
-			treePortItem = QtGui.QTreeWidgetItem([portItem.name])
-			treePortItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
-			treePortItem.setData(0, QtCore.Qt.UserRole, portItem)
-	
-			self.form.portSettingsTreeView.insertTopLevelItem(0, treePortItem)
-
-			# MAIN TREE WIDGET, add into ObjectAssignment
-			portGroup = self.form.objectAssignmentRightTreeWidget.findItems("Ports", QtCore.Qt.MatchExactly)
-			portGroup[0].addChild(treePortItem.clone())
+			self.addSettingsItemGui(portItem)
 
 		return
 
@@ -1357,12 +1353,14 @@ class BoxTaskPanel:
 		print("Grid item changed.")
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.gridSettingsNameInput.setText(currSetting.name)
-		self.form.gridSettingsNameInput.setText(currSetting.name)
 		if (currSetting.type == "Fixed Distance"):
 			self.form.fixedDistanceRadioButton.click()
 			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
 			self.form.fixedDistanceYNumberInput.setValue(currSetting.fixedDistance['y'])
 			self.form.fixedDistanceZNumberInput.setValue(currSetting.fixedDistance['z'])
+			index = self.form.fixedDistanceUnitsInput.findText(currSetting.fixedDistance['units'], QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.fixedDistanceUnitsInput.setCurrentIndex(index)
 		elif (currSetting.type == "Fixed Count"):
 			self.form.fixedCountRadioButton.click()
 			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
@@ -1370,8 +1368,12 @@ class BoxTaskPanel:
 			self.form.fixedCountZNumberInput.setValue(currSetting.fixedCount['z'])
 			pass
 		elif (currSetting.type == "User Defined"):
-			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined)
 			self.form.userDefinedRadioButton.click()
+			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
+
+			index = self.form.userDefinedUnitsInput.findText(currSetting.userDefined['units'], QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.userDefinedUnitsInput.setCurrentIndex(index)
 			pass
 		else:
 			pass
@@ -1380,10 +1382,51 @@ class BoxTaskPanel:
 
 	def excitationTreeWidgetItemChanged(self, current, previous):
 		print("Excitation item changed.")
+		currSetting = self.form.excitationSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.excitationSettingsNameInput.setText(currSetting.name)
+		if (currSetting.type == "sinusodial"):
+			self.form.sinusodialExcitationRadioButton.click()
+			self.form.sinusodialExcitationFcNumberInput.setValue(currSetting.sinusodial['fc'])
+		elif (currSetting.type == "gaussian"):
+			self.form.gaussianExcitationRadioButton.click()
+			self.form.gaussianExcitationF0NumberInput.setValue(currSetting.gaussian['f0'])
+			self.form.gaussianExcitationFcNumberInput.setValue(currSetting.gaussian['fc'])
+			pass
+		elif (currSetting.type == "custom"):
+			self.form.customExcitationRadioButton.click()
+			self.form.customExcitationTextInput.setText(currSetting.custom['functionStr'])
+			index = self.form.excitationUnitsNumberInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.excitationUnitsNumberInput.setCurrentIndex(index)
+			pass
+		else:
+			return #no gui update
+			
+		index = self.form.excitationUnitsNumberInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.excitationUnitsNumberInput.setCurrentIndex(index)
+
 		return
 
 	def portTreeWidgetItemChanged(self, current, previous):
 		print("Port item changed.")
+		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.portSettingsNameInput.setText(currSetting.name)
+		if (currSetting.type.lower() == "lumped"):
+			self.form.lumpedPortRadioButton.click()
+			pass
+		elif (currSetting.type.lower() == "microstrip"):
+			self.form.microstripPortRadioButton.click()
+			pass
+		elif (currSetting.type.lower() == "circular waveguide"):
+			self.form.circularWaveguidePortRadioButton.click()
+			pass
+		elif (currSetting.type.lower() == "rectangular waveguide"):
+			self.form.rectangularWaveguidePortRadioButton.click()
+			pass
+		else:
+			return #no gui update
+
 		return
 
 	def simulationTreeWidgetItemChanged(self, current, previous):
@@ -1421,7 +1464,7 @@ class BoxTaskPanel:
 			settings.setValue("type", gridList[k].type)
 			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
 			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
-			settings.setValue("userDefined", gridList[k].userDefined)
+			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
 			settings.endGroup()
 
 		#SAVE EXCITATION INTO FILE
@@ -1434,6 +1477,7 @@ class BoxTaskPanel:
 			settings.setValue("sinusodial", json.dumps(excitationList[k].sinusodial))
 			settings.setValue("gaussian", json.dumps(excitationList[k].gaussian))
 			settings.setValue("custom", json.dumps(excitationList[k].custom))
+			settings.setValue("units", excitationList[k].units)
 			settings.endGroup()
 
 		#SAVE PORT SETTINGS INTO FILE
@@ -1453,7 +1497,8 @@ class BoxTaskPanel:
 		simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
 
 		settings.beginGroup("SIMULATION-" + simulationSettings.name)
-		settings.setValue("params", json.dumps(simulationSettings.serializeToString()))
+		settings.setValue("name", simulationSettings.name)
+		settings.setValue("params", json.dumps(simulationSettings.params))
 		settings.endGroup()
 
 
@@ -1516,6 +1561,7 @@ class BoxTaskPanel:
 				categorySettings.sinusodial = json.loads(settings.value('sinusodial'))
 				categorySettings.gaussian = json.loads(settings.value('gaussian'))
 				categorySettings.custom = json.loads(settings.value('custom'))
+				categorySettings.units = settings.value('units')
 				settings.endGroup()
 
 			elif (re.compile("GRID").search(settingsGroup)):
@@ -1526,7 +1572,7 @@ class BoxTaskPanel:
 				categorySettings.type = settings.value('type')
 				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
 				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
-				categorySettings.userDefined = settings.value('userDefined')
+				categorySettings.userDefined = json.loads(settings.value('userDefined'))
 				settings.endGroup()
 
 			elif (re.compile("PORT").search(settingsGroup)):
@@ -1557,9 +1603,18 @@ class BoxTaskPanel:
 				simulationSettings.name = itemName
 				simulationSettings.type = settings.value('type')
 				simulationSettings.params = json.loads(settings.value('params'))
-				#print('SIMULATION PARAMS:')
-				#print(simulationSettings.params)
+				print('SIMULATION PARAMS:')
+				print(simulationSettings.params)
 				settings.endGroup()
+
+				self.form.simParamF0NumberInput.setValue(float(simulationSettings.params['f0']))
+				self.form.simParamFcNumberInput.setValue(float(simulationSettings.params['fc']))
+				self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
+				self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
+
+				index = self.form.simParamsUnitsNumberInput.findText(simulationSettings.params['units'], QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.simParamsUnitsNumberInput.setCurrentIndex(index)
 
 				continue	#there is no tree widget to add item to
 
