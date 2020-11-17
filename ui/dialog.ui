@@ -757,7 +757,7 @@
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>70</y>
+       <y>120</y>
        <width>431</width>
        <height>241</height>
       </rect>
@@ -835,6 +835,75 @@
        <height>21</height>
       </rect>
      </property>
+    </widget>
+    <widget class="QLabel" name="label_27">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>70</y>
+       <width>151</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Port Resistance</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="portResistanceInput">
+     <property name="geometry">
+      <rect>
+       <x>581</x>
+       <y>70</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <double>10000000000.000000000000000</double>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="portResistanceUnitsInput">
+     <property name="geometry">
+      <rect>
+       <x>670</x>
+       <y>70</y>
+       <width>75</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>Ohm</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>uOhm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mOhm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Ohm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>kOhm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>MOhm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>GOhm</string>
+      </property>
+     </item>
     </widget>
    </widget>
    <widget class="QWidget" name="tab">

@@ -61,6 +61,27 @@ class SettingsItem:
 	def getName(self):
 		return self.name
 
+	def getUnitsAsNumber(self, units):
+		if (units in ('pOhm','pH','pF', 'pm')):
+			outNumber = 1e-9
+		elif (units in ('uOhm','uH','uF', 'um')):
+			outNumber = 1e-6
+		elif (units in ('mOhm','mH','mF', 'mm')):
+			outNumber = 1e-3
+		elif (units in ('cm')):
+			outNumber = 1e-2
+		elif (units in ('Ohm','H','F', 'm')):
+			outNumber = 1
+		elif (units in ('kOhm','kH','kF', 'km')):
+			outNumber = 1e3
+		elif (units in ('MOhm','MH','MF')):
+			outNumber = 1e6
+		elif (units in ('GOhm','GH','GF')):
+			outNumber = 1e9
+		else:
+			outNumber = 0
+		return outNumber
+
 # FreeCAD part object
 #
 class FreeCADSettingsItem(SettingsItem):
@@ -109,22 +130,7 @@ class GridSettingsItem(SettingsItem):
 			return self.userDefined
 	
 	def getUnitAsScriptLine(self):
-		if (self.units == 'm'):
-			return "1e0"
-		elif (self.units == 'cm'):
-			return "1e-2"
-		elif (self.units == 'mm'):
-			return "1e-3"
-		elif (self.units == 'um'):
-			return "1e-6"
-		elif (self.units == 'nm'):
-			return "1e-9"
-		elif (self.units == 'pm'):
-			return "1e-12"
-		else:
-			pass
-
-		return "/* unknown unit */"
+		return str(self.getUnitsAsNumber(self.units))
 
 # Material settings, basic are epsilon and mue, kappa and sigma are extended
 #	epsilon - permitivity
@@ -190,13 +196,17 @@ class ExcitationSettingsItem(SettingsItem):
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = ""):
+	def __init__(self, name = "", type = "", R = 0, RUnits = ""):
 		self.name = name
 		self.type = type
+		self.R = R
+		self.RUnits = RUnits
 		return
 
 	def serializeToString(self):
 		serializedString = "{'name': '" + self.name
+		serializedString += ", 'R': " + self.R
+		serializedString += ", 'RUnits': '" + self.RUnits + "'"
 		if (self.type == "lumped"):
 			serializedString += ", 'type': 'lumped'"
 		if (self.type == "microstrip"):
@@ -207,6 +217,9 @@ class PortSettingsItem(SettingsItem):
 			serializedString += ", 'type': 'rectangular waveguide'"
 		serializedString += "}"
 		return serializedString
+
+	def getRUnits(self):
+		return self.getUnitsAsNumber(self.RUnits)
 
 # Smulation settings
 #	f0
@@ -240,7 +253,7 @@ class LumpedPartSettingsItem(SettingsItem):
 		jsonStr +=  '}'
 		return jsonStr
 
-	def getType():
+	def getType(self):
 		typeStr = ''
 		if (self.params['LEnabled']):
 			typeStr += 'L'
@@ -249,6 +262,46 @@ class LumpedPartSettingsItem(SettingsItem):
 		if (self.params['CEnabled']):
 			typeStr += 'C'
 		return typeStr
+
+	def getUnits(self, type = ''):
+		units = ''
+		type = type.lower()
+		if ('r' in type):
+			units = self.params['RUnits'] 
+		elif ('l' in type):
+			units = self.params['LUnits'] 
+		elif ('c' in type):
+			units = self.params['CUnits'] 
+		return self.getUnitsAsNumber(units)
+
+	def getUnitsAsNumber(self, units):
+		if (units in ('pOhm','pH','pF')):
+			outNumber = 1e-9
+		elif (units in ('uOhm','uH','uF')):
+			outNumber = 1e-6
+		elif (units in ('mOhm','mH','mF')):
+			outNumber = 1e-3
+		elif (units in ('Ohm','H','F')):
+			outNumber = 1
+		elif (units in ('kOhm','kH','kF')):
+			outNumber = 1e3
+		elif (units in ('MOhm','MH','MF')):
+			outNumber = 1e6
+		elif (units in ('GOhm','GH','GF')):
+			outNumber = 1e9
+		else:
+			outNumber = 0
+		return outNumber
+
+	def getR(self):
+		outStr = str(self.params['R']) + "*" + str(self.getUnits('R'))
+		return outStr
+	def getL(self):
+		outStr = str(self.params['L']) + "*" + str(self.getUnits('L'))
+		return outStr
+	def getC(self):
+		outStr = str(self.params['C']) + "*" + str(self.getUnits('C'))
+		return outStr
 
 #
 # Main GUI panel class
@@ -679,7 +732,6 @@ class BoxTaskPanel:
 		genScript += "\n"
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
-		portList = []																					# <------------ PORT LIST
 
 		print("======================== REPORT BEGIN ========================\n")
 		for m in range(len(allItems)):
@@ -760,8 +812,6 @@ class BoxTaskPanel:
 										pass
 
 							#genScript += "CSX = AddBox( CSX, '" + portName + "', 0, start, stop );\n"
-							portList.append(portName)
-
 							pass
 						else:
 							print("#Excitation Default")
@@ -789,14 +839,12 @@ class BoxTaskPanel:
 							print("#name: " + currSetting.getName())
 							print("#type: " + currSetting.getType())
 
-							portName = "port_" + str(100*m+k)
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							genScript += "% PORT\n"
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-
 							objs = FreeCAD.ActiveDocument.Objects
-
 							for k in range(item.childCount()):
+								genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+								genScript += "% PORT\n"
+								genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
 								childName = item.child(k).text(0)
 								print("##Children:")
 								print("\t" + childName)
@@ -804,52 +852,42 @@ class BoxTaskPanel:
 
 								#print(freecadObjects)
 								for obj in freecadObjects:
+									#BOUNDING BOX
 									bbCoords = obj.Shape.BoundBox
-
-									print('\t--> Xlength: ' + str(bbCoords.XLength))
-									print('\t--> Ylength: ' + str(bbCoords.YLength))
-									print('\t--> Zlength: ' + str(bbCoords.ZLength))
-									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
-									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
-									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
-
-									start = "[" +  str(bbCoords.XMin) + ", " + str(bbCoords.YMin)  + ", " + str(bbCoords.ZMin)  + "]"
-									stop = "[" +  str(bbCoords.XMax) + ", " + str(bbCoords.YMax)  + ", " + str(bbCoords.ZMax)  + "]"
-
-									rotX = obj.Placement.Rotation.Axis.x
-									rotY = obj.Placement.Rotation.Axis.y
-									rotZ = obj.Placement.Rotation.Axis.z
-									print("#obj axis: [" + str(rotX) + " " + str(rotY) + " " + str(rotZ) + "]")
-
+	
+									#PLACEMENT BOX
+									print(obj.Placement)
+									#print(dir(obj.Placement.Rotation.Axis))
+									axisX = obj.Placement.Rotation.Axis.x
+									axisY = obj.Placement.Rotation.Axis.y
+									axisZ = obj.Placement.Rotation.Axis.z
+	
 									#
 									# PORT openEMS GENERATION INTO VARIABLE
 									#
 									if (currSetting.getType() == 'lumped'):
-										genScript += "%% lumped port\n"
-										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
-										# value 50ohm is resistance, NEED BE IN GUI
-										genScript += "[CSX port] = AddLumpedPort(CSX, 5 ,1 , 50, " + start + ", " + stop + ", [" + str(rotX) + " " + str(rotY) + " " + str(rotZ) + "], true);"
-										genScript += "\n"
-										pass
+										genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+										genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+										genScript += 'portR = ' + str(currentSetting.params['R']) + ';\n'
+										genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+										genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+										genScript += '[CSX port{' + str(k+1) + '}] = AddLumpedPort(CSX, 5 ,3 , portR*portUnits, portStart, portStop, portDirection);\n'
 									elif (currSetting.getType() == 'microstrip'):
-										genScript += "%% MICROSTRIP PORT\n"
-										# adding microstrip openEMS code line										
-										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
-										genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);"
-										genScript += "\n"
-										pass
+										genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
 									elif (currSetting.getType() == 'circular waveguide'):
-										# adding openEMS code line
 										genScript += "%% circular port openEMS code should be here\n"
-										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
-										pass
 									elif (currSetting.getType() == 'rectangular waveguide'):
-										# adding openEMS code line
 										genScript += "%% rectangular port openEMS code should be here\n"
-										# DECISION NEEDED about field direction NEED TO BE DONE BASED ON SOME VARIABLES!
-										pass
-
-							portList.append(portName)
+									elif (currSetting.getType() == 'et dump'):
+										genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+										genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+										genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+										genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+									elif (currSetting.getType() == 'ht dump'):
+										genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+										genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+										genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+										genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 
 							pass
 						else:
@@ -1125,6 +1163,49 @@ class BoxTaskPanel:
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 						genScript += "% LUMPED PART\n"
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+						#read current category settings
+						currentSetting = item.data(0, QtCore.Qt.UserRole)
+
+						#traverse throug all children item for this particular lumped part settings
+						objs = FreeCAD.ActiveDocument.Objects
+						objsExport = []
+						for k in range(item.childCount()):
+							childName = item.child(k).text(0)
+							print("#")
+							print("#LUMPED PART " + currentSetting.getType())
+							print("#name " + currentSetting.getName())
+							print("#")
+
+							freecadObjects = [i for i in objs if (i.Label) == childName] 
+							for obj in freecadObjects:
+								# obj = FreeCAD Object class
+
+								#BOUNDING BOX
+								bbCoords = obj.Shape.BoundBox
+
+								#PLACEMENT BOX
+								print(obj.Placement)
+
+								genScript += 'lumpedPartStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + ']\n'
+								genScript += 'lumpedPartStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + ']\n'
+
+								lumpedPartName = currentSetting.name
+								lumpedPartParams = ''
+								if ('r' in currentSetting.getType().lower()):
+									lumpedPartParams += ",'R', " + str(currentSetting.getR())
+								if ('l' in currentSetting.getType().lower()):
+									lumpedPartParams += ",'L', " + str(currentSetting.getL())
+								if ('c' in currentSetting.getType().lower()):
+									lumpedPartParams += ",'C', " + str(currentSetting.getC())
+								lumpedPartParams = lumpedPartParams.strip(',')
+
+								#WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
+								genScript += "[CSX] = AddLumpedElement(CSX, '" + lumpedPartName + "', 2, 'Caps', 1, " + lumpedPartParams + ");\n"
+								genScript += "[CSX] = AddBox(CSX, '" + lumpedPartName + "', 0, lumpedPartStart, lumpedPartStop);\n"
+
+
+
 						pass
 
 					#  _____ _______ ______ __  __   _    _ _   _ _  ___   _  ______          ___   _ 
@@ -1604,6 +1685,15 @@ class BoxTaskPanel:
 		print("Port item changed.")
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)
+		self.form.portResistanceInput.setValue(float(currSetting.R))
+
+		index = self.form.portResistanceUnitsInput.findText(currSetting.RUnits, QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.portResistanceUnitsInput.setCurrentIndex(index)
+
+		self.form.portResistanceInput.setEnabled(True)
+		self.form.portResistanceUnitsInput.setEnabled(True)
+
 		if (currSetting.type.lower() == "lumped"):
 			self.form.lumpedPortRadioButton.click()
 			pass
@@ -1617,9 +1707,13 @@ class BoxTaskPanel:
 			self.form.rectangularWaveguidePortRadioButton.click()
 			pass
 		elif (currSetting.type.lower() == "et dump"):
+			self.form.portResistanceInput.setEnabled(False)
+			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.etDumpPortRadioButton.click()
 			pass
 		elif (currSetting.type.lower() == "ht dump"):
+			self.form.portResistanceInput.setEnabled(False)
+			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.htDumpPortRadioButton.click()
 			pass
 		else:
@@ -1727,6 +1821,8 @@ class BoxTaskPanel:
 	
 			settings.beginGroup("PORT-" + portList[k].getName())
 			settings.setValue("type", portList[k].type)
+			settings.setValue("R", portList[k].R)
+			settings.setValue("RUnits", portList[k].RUnits)
 			settings.endGroup()
 
 		#SIMULATION PARAMS SAVE INTO FILE
@@ -1846,6 +1942,8 @@ class BoxTaskPanel:
 				categorySettings = PortSettingsItem()
 				categorySettings.name = itemName
 				categorySettings.type = settings.value('type')
+				categorySettings.R = settings.value('R')
+				categorySettings.RUnits = settings.value('RUnits')
 				settings.endGroup()
 
 			elif (re.compile("MATERIAL").search(settingsGroup)):
