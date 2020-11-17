@@ -414,6 +414,16 @@ class BoxTaskPanel:
 
 		return
 
+	def getCurrDir(self):
+		programname = os.path.basename(App.ActiveDocument.FileName)
+		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+		programDir = os.path.dirname(App.ActiveDocument.FileName)
+		programNameBase = programDir + '/' + programbase
+
+		print('--->' + programNameBase)
+		print('--->' + programDir)
+		return [programDir, programNameBase]
+
 	def getSimParamsUnitsStr(self):
 		units = self.form.simParamsUnitsNumberInput.currentText()
 		if (units == 'Hz'):
@@ -649,7 +659,8 @@ class BoxTaskPanel:
 							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 							genScript += "% EXCITATION\n"
 							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							genScript += "CSX = AddDump( CSX, '" + portName + "', 'DumpType', 0, 'DumpMode', 2); % cell interpolated\n"
+							#NEED REWORK, NOW COMMENTED TO NOT CAUSED PROBLEMS, NEED TO BE DONE, TBD
+							#genScript += "CSX = AddDump( CSX, '" + portName + "', 'DumpType', 0, 'DumpMode', 2); % cell interpolated\n"
 
 							objs = FreeCAD.ActiveDocument.Objects
 
@@ -904,16 +915,27 @@ class BoxTaskPanel:
 									genScript += "\n"
 									"""
 
+									#   _____ _______ _                                        _   _             
+									#  / ____|__   __| |                                      | | (_)            
+									# | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __  
+									#  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \ 
+									#  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
+									# |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
+									#                           __/ |                                            
+									#                          |___/                                            
+									#
 									#ADD PART TO LIST TO EXPORT AS .stl
 									partToExport = FreeCAD.ActiveDocument.getObject(obj.Name)
 									objsExport.append(partToExport)
 									print(partToExport)
+									[currDir, nameBase] = self.getCurrDir()
+									outFile = currDir + "/" + partToExport.Label + "_gen_model.stl"
+									Mesh.export(objsExport,outFile)
 
-							programname = os.path.basename(App.ActiveDocument.FileName)
-							programdir = os.path.dirname(App.ActiveDocument.FileName)
-							programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-							outFile = programdir + '/' + programbase + "_gen_model.stl"
-							Mesh.export(objsExport,outFile)
+								#for now all magic in local dir to not have to solve local permission needed to create dir and ismilar bullshit
+								#[currDir, nameBase] = self.getCurrDir()
+								#outFile = currDir + "/" + "myName" + "_gen_model.stl"
+								#Mesh.export(objsExport,outFile)
 
 							pass
 
@@ -937,6 +959,9 @@ class BoxTaskPanel:
 							print("#epsilon, mue, kappa, sigma")
 							print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
 
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% MATERIAL\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 							#
 							# GRID openEMS GENERATION INTO VARIABLE
 							#
@@ -961,7 +986,10 @@ class BoxTaskPanel:
 								materialName = "metal"
 								partFileName = "somePartName"
 								# THE NUBER IN IMPORTSTL WILL BE PROBABLY PRIORITY NUMBER
-								genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "',10, [currDir '\\model\\" + childName + ".stl'],'Transform',{'Scale', 1});\n"
+
+								currDir, baseName = self.getCurrDir()
+								stlModelFileName = childName + "_gen_model.stl"
+								genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "',10, [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', 1});\n"
 
 								pass
 						else:
@@ -1023,14 +1051,18 @@ class BoxTaskPanel:
 		#
 		# WRITE GENERATED SCRIPT INTO FILE
 		#
-		genScript += "CSX = ImportSTL(CSX, 'Baryium',10, [currDir '\\\\__gen_experiment_1.stl'],'Transform',{'Scale', 1});\n"
 		genScript += "WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
 		genScript += "CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
 
-
-		f = open("C:\\temp\\_gen_openEMS.m", "w")
+		#
+		# WRITE OpenEMS Script file into current dir
+		#
+		currDir, nameBase = self.getCurrDir()
+		fileName = nameBase + "_openEMS.m"
+		f = open(fileName, "w")
 		f.write(genScript)
 		f.close()
+		print('Simulation file written into: ' + fileName)
 
 		return
 
