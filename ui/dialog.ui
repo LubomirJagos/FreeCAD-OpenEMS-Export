@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -33,9 +33,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
+       <y>50</y>
        <width>281</width>
-       <height>441</height>
+       <height>401</height>
       </rect>
      </property>
      <column>
@@ -84,6 +84,42 @@
        <string notr="true">1</string>
       </property>
      </column>
+    </widget>
+    <widget class="QPlainTextEdit" name="objectAssignmentFilterLeft">
+     <property name="geometry">
+      <rect>
+       <x>60</x>
+       <y>10</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_28">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>47</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Filter</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="objectAssignmentFilterLeftButton">
+     <property name="geometry">
+      <rect>
+       <x>240</x>
+       <y>10</y>
+       <width>51</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Filter</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="gridSettingsTab">
@@ -765,7 +801,7 @@
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>120</y>
+       <y>150</y>
        <width>431</width>
        <height>241</height>
       </rect>
@@ -880,7 +916,7 @@
       </rect>
      </property>
      <property name="currentText">
-      <string>Ohm</string>
+      <string>uOhm</string>
      </property>
      <item>
       <property name="text">
@@ -912,6 +948,19 @@
        <string>GOhm</string>
       </property>
      </item>
+    </widget>
+    <widget class="QCheckBox" name="portActive">
+     <property name="geometry">
+      <rect>
+       <x>580</x>
+       <y>120</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>port is active</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tab">
@@ -1159,19 +1208,19 @@
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>160</width>
-       <height>61</height>
+       <width>411</width>
+       <height>71</height>
       </rect>
      </property>
-     <layout class="QFormLayout" name="formLayout">
-      <item row="1" column="0">
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
        <widget class="QLabel" name="label_21">
         <property name="text">
          <string>f0</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="simParamF0NumberInput">
         <property name="decimals">
          <number>3</number>
@@ -1184,14 +1233,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_20">
         <property name="text">
          <string>fc</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="simParamFcNumberInput">
         <property name="decimals">
          <number>3</number>
@@ -1209,8 +1258,8 @@
     <widget class="QLabel" name="label_22">
      <property name="geometry">
       <rect>
-       <x>180</x>
-       <y>60</y>
+       <x>370</x>
+       <y>90</y>
        <width>53</width>
        <height>27</height>
       </rect>
@@ -1222,8 +1271,8 @@
     <widget class="QComboBox" name="simParamsUnitsNumberInput">
      <property name="geometry">
       <rect>
-       <x>180</x>
-       <y>93</y>
+       <x>370</x>
+       <y>123</y>
        <width>53</width>
        <height>22</height>
       </rect>
@@ -1255,23 +1304,17 @@
     <widget class="QWidget" name="formLayoutWidget_2">
      <property name="geometry">
       <rect>
-       <x>20</x>
+       <x>10</x>
        <y>160</y>
-       <width>401</width>
-       <height>85</height>
+       <width>411</width>
+       <height>81</height>
       </rect>
      </property>
-     <layout class="QFormLayout" name="formLayout_2">
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="simParamsMinDecrement">
-        <property name="decimals">
-         <number>10</number>
-        </property>
-        <property name="maximum">
-         <double>10000000000.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>1.000000000000000</double>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_23">
+        <property name="text">
+         <string>max timesteps</string>
         </property>
        </widget>
       </item>
@@ -1285,17 +1328,23 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_23">
-        <property name="text">
-         <string>max timesteps</string>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_25">
         <property name="text">
          <string>min decrement</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="simParamsMinDecrement">
+        <property name="decimals">
+         <number>10</number>
+        </property>
+        <property name="maximum">
+         <double>10000000000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>1.000000000000000</double>
         </property>
        </widget>
       </item>

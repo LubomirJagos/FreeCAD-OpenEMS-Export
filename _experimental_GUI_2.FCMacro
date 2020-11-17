@@ -11,15 +11,16 @@ import json
 path_to_ui = ".\\ui\\dialog.ui"
 
 class OpenEMS:
-	def getOpenEMSObjects(self):
+	def getOpenEMSObjects(self, filterStr = ""):
 		currentObjects = App.ActiveDocument.Objects
 		
 		objToExport = []
 		
 		for obj in currentObjects:
-#			if (re.search('openEMS', obj.Label)):
-#				objToExport.append(obj)
-			objToExport.append(obj)
+			if (len(filterStr) > 0 and re.search(filterStr, obj.Label)):
+				objToExport.append(obj)
+			elif (len(filterStr) == 0):
+				objToExport.append(obj)
 	
 		return objToExport
 
@@ -196,17 +197,19 @@ class ExcitationSettingsItem(SettingsItem):
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", R = 0, RUnits = ""):
+	def __init__(self, name = "", type = "", R = 0, RUnits = "", isActive = False):
 		self.name = name
 		self.type = type
 		self.R = R
 		self.RUnits = RUnits
+		self.isActive = isActive
 		return
 
 	def serializeToString(self):
 		serializedString = "{'name': '" + self.name
 		serializedString += ", 'R': " + self.R
 		serializedString += ", 'RUnits': '" + self.RUnits + "'"
+		serializedString += ", 'isActive': " + str(self.isActive)
 		if (self.type == "lumped"):
 			serializedString += ", 'type': 'lumped'"
 		if (self.type == "microstrip"):
@@ -340,42 +343,7 @@ class BoxTaskPanel:
 		#	Left Column FreeCAD objects added in list
 		#########################################################################################################
 
-		"""		
-		itemsLabels = OpenEMS.getAllObjects()
-		for label in itemsLabels:
-			topItem = QtGui.QTreeWidgetItem([label])
-			itemData = FreeCADSettingsItem(label)
-			topItem.setData(0, QtCore.Qt.UserRole, itemData)
-			self.form.objectAssignmentLeftTreeWidget.insertTopLevelItem(0, topItem)
-		"""
-		
-		openEMSObj = OpenEMS()
-
-
-		items = openEMSObj.getOpenEMSObjects()
-		treeItems = []
-		for i in items:
-			print("openEMS object to export:" + i.Label)
-
-			# FIRST METHOD raw including just labeled items
-			#
-			#item = QtGui.QTreeWidgetItem([i.Label])
-			#item.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
-			#treeItems.append(item)
-
-			# ADDING ITEMS with UserData object which storethem in intelligent way
-			#
-			topItem = QtGui.QTreeWidgetItem([i.Label])
-			itemData = FreeCADSettingsItem(i.Label)
-			topItem.setData(0, QtCore.Qt.UserRole, itemData)
-			topItem.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
-			treeItems.append(topItem)
-		
-		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
-
-		#select first item
-		#if (len(itemsLabels) > 0):
-		#	self.form.objectAssignmentLeftTreeWidget.setCurrentItem(itemsLabels[0])
+		self.initLeftColumnTopLevelItems()		
 
 		#########################################################################################################
 		#########################################################################################################
@@ -425,6 +393,41 @@ class BoxTaskPanel:
 		####################################################################################################
 		self.form.saveCurrentSettingsButton.clicked.connect(self.saveCurrentSettingsButtonClicked)
 		self.form.loadCurrentSettingsButton.clicked.connect(self.loadCurrentSettingsButtonClicked)
+
+		#
+		# FILTER LEFT COLUMN ITEMS
+		#
+		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
+
+	def initLeftColumnTopLevelItems(self, filterStr = ""):
+		self.form.objectAssignmentLeftTreeWidget.clear()
+		openEMSObj = OpenEMS()
+
+		items = openEMSObj.getOpenEMSObjects(filterStr)
+		treeItems = []
+		for i in items:
+			print("openEMS object to export:" + i.Label)
+
+			# FIRST METHOD raw including just labeled items
+			#
+			#item = QtGui.QTreeWidgetItem([i.Label])
+			#item.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+			#treeItems.append(item)
+
+			# ADDING ITEMS with UserData object which storethem in intelligent way
+			#
+			topItem = QtGui.QTreeWidgetItem([i.Label])
+			itemData = FreeCADSettingsItem(i.Label)
+			topItem.setData(0, QtCore.Qt.UserRole, itemData)
+			topItem.setIcon(0, QtGui.QIcon(".\\img\\object.png"))
+			treeItems.append(topItem)
+		
+		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
+
+	def objectAssignmentFilterLeftButtonClicked(self):
+		print("Filter left column")
+		filterStr = self.form.objectAssignmentFilterLeft.toPlainText()
+		self.initLeftColumnTopLevelItems(filterStr)
 
 	def initRightColumnTopLevelItems(self):
 		#
@@ -872,7 +875,12 @@ class BoxTaskPanel:
 										genScript += 'portR = ' + str(currentSetting.params['R']) + ';\n'
 										genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 										genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
-										genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, 5, ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection);\n'
+
+										genScript_isActive = ""
+										if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+											genScript_isActive = " , true"
+
+										genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, 5, ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
 
 										genScriptPortCount += 1
 									elif (currSetting.getType() == 'microstrip'):
@@ -1233,6 +1241,11 @@ class BoxTaskPanel:
 		#
 		genScript += "WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
 		genScript += "CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
+		genScript += "\n"
+		genScript += "if (postprocessing_only==0)\n"
+		genScript += "    %% run openEMS\n"
+		genScript += "    RunOpenEMS( Sim_Path, Sim_CSX, openEMS_opts );\n"
+		genScript += "end\n"
 
 		#
 		# WRITE OpenEMS Script file into current dir
@@ -1720,7 +1733,9 @@ class BoxTaskPanel:
 			self.form.htDumpPortRadioButton.click()
 			pass
 		else:
-			return #no gui update
+			pass #no gui update
+
+		self.form.portActive.setChecked(currSetting.isActive in ('true', 'True', '1', 'yes'))	#convert value from INI file to bool
 
 		return
 
@@ -1826,6 +1841,7 @@ class BoxTaskPanel:
 			settings.setValue("type", portList[k].type)
 			settings.setValue("R", portList[k].R)
 			settings.setValue("RUnits", portList[k].RUnits)
+			settings.setValue("isActive", portList[k].isActive)
 			settings.endGroup()
 
 		#SIMULATION PARAMS SAVE INTO FILE
@@ -1857,7 +1873,7 @@ class BoxTaskPanel:
 					objItem = childItem.child(n)
 					objItemName = objItem.text(0)
 	
-					settings.beginGroup("OBJECT" + str(objCounter) + "-" + objItemName)
+					settings.beginGroup("_OBJECT" + str(objCounter) + "-" + objItemName)
 					settings.setValue("type", "FreeCadObj")
 					settings.setValue("parent", childItemName)
 					settings.setValue("category", topItemName)
@@ -1947,6 +1963,7 @@ class BoxTaskPanel:
 				categorySettings.type = settings.value('type')
 				categorySettings.R = settings.value('R')
 				categorySettings.RUnits = settings.value('RUnits')
+				categorySettings.isActive = settings.value('isActive')
 				settings.endGroup()
 
 			elif (re.compile("MATERIAL").search(settingsGroup)):
@@ -1984,17 +2001,22 @@ class BoxTaskPanel:
 
 				continue	#there is no tree widget to add item to
 
-			elif (re.compile("OBJECT").search(settingsGroup)):
+			elif (re.compile("_OBJECT").search(settingsGroup)):
 				print("FreeCadObject item settings found.")
 				settings.beginGroup(settingsGroup)
 				objParent = settings.value('parent')
 				objCategory = settings.value('category')
+				print("\t" + objParent)
+				print("\t" + objCategory)
 				settings.endGroup()
 
 				#adding excitation also into OBJCET ASSIGNMENT WINDOW
 				targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(objCategory, QtCore.Qt.MatchExactly)
+				print("\t" + str(targetGroup))
 				for k in range(len(targetGroup)):					
+					print("\t" + targetGroup[k].text(0))
 					for m in range(targetGroup[k].childCount()):
+						print("\t" + targetGroup[k].child(m).text(0))
 						if (targetGroup[k].child(m).text(0) == objParent):
 							settingsItem = FreeCADSettingsItem(itemName)
 
@@ -2005,6 +2027,7 @@ class BoxTaskPanel:
 							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
 							targetGroup[k].child(m).addChild(treeItem)
+							print("\tItem added")
 							
 				continue #items is already added into tree widget nothing more needed
 
