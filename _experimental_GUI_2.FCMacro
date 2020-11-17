@@ -732,6 +732,7 @@ class BoxTaskPanel:
 		genScript += "\n"
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
+		genScriptPortCount = 1
 
 		print("======================== REPORT BEGIN ========================\n")
 		for m in range(len(allItems)):
@@ -871,7 +872,9 @@ class BoxTaskPanel:
 										genScript += 'portR = ' + str(currentSetting.params['R']) + ';\n'
 										genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 										genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
-										genScript += '[CSX port{' + str(k+1) + '}] = AddLumpedPort(CSX, 5 ,3 , portR*portUnits, portStart, portStop, portDirection);\n'
+										genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, 5, ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection);\n'
+
+										genScriptPortCount += 1
 									elif (currSetting.getType() == 'microstrip'):
 										genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
 									elif (currSetting.getType() == 'circular waveguide'):
