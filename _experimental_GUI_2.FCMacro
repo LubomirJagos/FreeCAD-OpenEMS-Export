@@ -226,6 +226,20 @@ class SimulationSettingsItem(SettingsItem):
 		jsonStr +=  '}'
 		return jsonStr
 
+class LumpedPartSettingsItem(SettingsItem):
+	def __init__(self, name = "DefaultSimlationName", params='{"R": 0, "RUnits": "Ohm", "L": 0, "LUnits": "uH", "C": 0, "CUnits": "pF"}'):
+		self.name = name
+		self.params = {}
+		self.params = json.loads(params)
+		return
+
+	def serializeToString(self):
+		jsonStr = ""
+		jsonStr +=  '{"name": "' + self.name + '", "params": '
+		jsonStr +=  json.dumps(self.params)
+		jsonStr +=  '}'
+		return jsonStr
+
 #
 # Main GUI panel class
 #
@@ -319,6 +333,9 @@ class BoxTaskPanel:
 		self.form.portSettingsAddButton.clicked.connect(self.portSettingsAddButtonClicked)
 		self.form.portSettingsRemoveButton.clicked.connect(self.portSettingsRemoveButtonClicked)
 
+		self.form.lumpedPartSettingsAddButton.clicked.connect(self.lumpedPartSettingsAddButtonClicked)
+		self.form.lumpedPartSettingsRemoveButton.clicked.connect(self.lumpedPartSettingsRemoveButtonClicked)
+
 		#
 		# Handle function for grid radio buttons click
 		#
@@ -354,6 +371,7 @@ class BoxTaskPanel:
 		defaultExcitationItem = QtGui.QTreeWidgetItem(["Excitation Default"])
 		defaultGridItem = QtGui.QTreeWidgetItem(["Grid Default"])
 		defaultPortItem = QtGui.QTreeWidgetItem(["Port Default"])
+		defaultLumpedPartItem = QtGui.QTreeWidgetItem(["LumpedPart Default"])
 
 		#
 		# Default items in each subsection have user data FreeCADSttingsItem classes to have just basic information like genereal freecad object
@@ -362,6 +380,7 @@ class BoxTaskPanel:
 		defaultExcitationItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Excitation Default"))
 		defaultGridItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Grid Default"))
 		defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
+		defaultLumpedPartItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("LumpedPart Default"))
 
 		# MATERIALS
 		topItem = QtGui.QTreeWidgetItem(["Material"])
@@ -389,6 +408,13 @@ class BoxTaskPanel:
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
 		topItem.addChildren([defaultPortItem])
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
+
+		# LUMPED PART
+		topItem = QtGui.QTreeWidgetItem(["LumpedPart"])
+		topItem.setIcon(0, QtGui.QIcon(".\\img\\lumpedpart.png"))
+		topItem.addChildren([defaultLumpedPartItem])
+		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
+
 		return
 
 	def saveCurrentSettingsButtonClicked(self):
@@ -396,10 +422,9 @@ class BoxTaskPanel:
 
 		#get reference to each category item
 		allItems = []
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Ports", QtCore.Qt.MatchExactly)[0])
+		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		for k in range(childCount):
+			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
 
 		#go through categories children
 		#output their data inside
@@ -472,6 +497,8 @@ class BoxTaskPanel:
 			treeWidgetRef = self.form.gridSettingsTreeView
 		elif (typeStr.lower() == "material"):
 			treeWidgetRef = self.form.materialSettingsTreeView
+		elif (typeStr.lower() == "lumpedpart"):
+			treeWidgetRef = self.form.lumpedPartTreeView
 		else:
 			print('cannot assign item ' + typeStr)
 			return
@@ -502,11 +529,17 @@ class BoxTaskPanel:
 		#
 		# HERE IS ORDER IN WHICH LIST WILL BE EXECUTED AND ITEMS WILL BE TRANSLATED STEP BY STEP based on their type
 		#
+		#   _____ ______ _______     _____ ______ _   _ ______ _____         _______ ______ _____     _____       _______ ______ _____  ____  _____  _____ ______  _____ 
+		#  / ____|  ____|__   __|   / ____|  ____| \ | |  ____|  __ \     /\|__   __|  ____|  __ \   / ____|   /\|__   __|  ____/ ____|/ __ \|  __ \|_   _|  ____|/ ____|
+		# | (___ | |__     | |     | |  __| |__  |  \| | |__  | |__) |   /  \  | |  | |__  | |  | | | |       /  \  | |  | |__ | |  __| |  | | |__) | | | | |__  | (___  
+		#  \___ \|  __|    | |     | | |_ |  __| | . ` |  __| |  _  /   / /\ \ | |  |  __| | |  | | | |      / /\ \ | |  |  __|| | |_ | |  | |  _  /  | | |  __|  \___ \ 
+		#  ____) | |____   | |     | |__| | |____| |\  | |____| | \ \  / ____ \| |  | |____| |__| | | |____ / ____ \| |  | |___| |__| | |__| | | \ \ _| |_| |____ ____) |
+		# |_____/|______|  |_|      \_____|______|_| \_|______|_|  \_\/_/    \_\_|  |______|_____/   \_____/_/    \_\_|  |______\_____|\____/|_|  \_\_____|______|_____/ 
+		#                                                                                                                                                               
 		allItems = []
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Material", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchExactly)[0])
-		allItems.append(self.form.objectAssignmentRightTreeWidget.findItems("Port", QtCore.Qt.MatchExactly)[0])
+		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		for k in range(childCount):
+			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
 
 		#go through categories children, output their data inside
 		"""
@@ -1068,11 +1101,33 @@ class BoxTaskPanel:
 							print("Parent of FreeCADSettingItem UNKNOWN")
 							pass
 
+						pass
+					#  _     _    _ __  __ _____  ______ _____    _____        _____ _______ 
+					# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|
+					# | |   | |  | | \  / | |__) | |__  | |  | | | |__) /  \  | |__) | | |   
+					# | |   | |  | | |\/| |  ___/|  __| | |  | | |  ___/ /\ \ |  _  /  | |   
+					# | |___| |__| | |  | | |    | |____| |__| | | |  / ____ \| | \ \  | |   
+					# |______\____/|_|  |_|_|    |______|_____/  |_| /_/    \_\_|  \_\ |_|   
+					#                                                                        
+					elif (itemData.__class__.__name__ is "LumpedPartSettingsItem"):
+						print("LumpedPart Settings detected")
+						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+						genScript += "% LUMPED PART\n"
+						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+						pass
+
+					#  _____ _______ ______ __  __   _    _ _   _ _  ___   _  ______          ___   _ 
+					# |_   _|__   __|  ____|  \/  | | |  | | \ | | |/ / \ | |/ __ \ \        / / \ | |
+					#   | |    | |  | |__  | \  / | | |  | |  \| | ' /|  \| | |  | \ \  /\  / /|  \| |
+					#   | |    | |  |  __| | |\/| | | |  | | . ` |  < | . ` | |  | |\ \/  \/ / | . ` |
+					#  _| |_   | |  | |____| |  | | | |__| | |\  | . \| |\  | |__| | \  /\  /  | |\  |
+					# |_____|  |_|  |______|_|  |_|  \____/|_| \_|_|\_\_| \_|\____/   \/  \/   |_| \_|
+					#                                                                                                          
 					else:
-						print("unknown: " + itemData.__class__.__name__)
+						print("unknown: " + itemData.__class__.__name__ + "\n")
 						pass
 				else:
-					print("object not defined")
+					print("Object has no UserRole data inside defined")
 					pass
 				print("\n")
 
@@ -1289,7 +1344,7 @@ class BoxTaskPanel:
 		materialGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
 		materialGroupItem = None
 		for item in materialGroupWidgetItems:
-			if (item.parent().text(0) == "Materials"):
+			if (item.parent().text(0) == "Material"):
 				materialGroupItem = item
 		print("Currently removing material item: " + materialGroupItem.text(0))
 
@@ -1388,7 +1443,7 @@ class BoxTaskPanel:
 		portGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
 		portGroupItem = None
 		for item in portGroupWidgetItems:
-			if (item.parent().text(0) == "Ports"):
+			if (item.parent().text(0) == "Port"):
 				portGroupItem = item
 		print("Currently removing port item: " + portGroupItem.text(0))
 
@@ -1396,6 +1451,50 @@ class BoxTaskPanel:
 		portGroupItem.parent().removeChild(portGroupItem)
 
 		return
+
+
+	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _                 
+	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
+	# | |   | |  | | \  / | |__) | |__  | |  | | | |__) /  \  | |__) | | |     ___  ___| |_| |_ _ _ __   __ _ ___ 
+	# | |   | |  | | |\/| |  ___/|  __| | |  | | |  ___/ /\ \ |  _  /  | |    / __|/ _ \ __| __| | '_ \ / _` / __|
+	# | |___| |__| | |  | | |    | |____| |__| | | |  / ____ \| | \ \  | |    \__ \  __/ |_| |_| | | | | (_| \__ \
+	# |______\____/|_|  |_|_|    |______|_____/  |_| /_/    \_\_|  \_\ |_|    |___/\___|\__|\__|_|_| |_|\__, |___/
+	#                                                                                                    __/ |    
+	#                                                                                                   |___/    
+	#
+	def lumpedPartSettingsAddButtonClicked(self):
+		name = self.form.lumpedPartSettingsNameInput.text()
+
+		lumpedPartItem = LumpedPartSettingsItem()
+		lumpedPartItem.name = name
+
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.lumpedPartTreeView, lumpedPartItem.name)
+		if (not isDuplicityName):
+			self.addSettingsItemGui(lumpedPartItem)
+
+		return
+
+	def lumpedPartSettingsRemoveButtonClicked(self):
+		selectedItem = self.form.lumpedPartTreeView.selectedItems()[0]
+		print("Selected lumpedpart name: " + selectedItem.text(0))
+
+		lumpedPartGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		lumpedPartGroupItem = None
+		for item in lumpedPartGroupWidgetItems:
+			if (item.parent().text(0).lower() == "lumpedpart"):
+				lumpedPartGroupItem = item
+		print("Currently removing lumped part item: " + lumpedPartGroupItem.text(0))
+
+		self.form.lumpedPartTreeView.invisibleRootItem().removeChild(selectedItem)
+		lumpedPartGroupItem.parent().removeChild(lumpedPartGroupItem)
+
+		return
+
+
+
+
+
 
 
 	#   _____________   ____________  ___    __       _____ _______________________   _____________
@@ -1602,6 +1701,18 @@ class BoxTaskPanel:
 
 					objCounter += 1
 
+		#SAVE LUMPED PART SETTINGS INTO FILE
+		lumpedPartList = self.openEMSObj.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
+		print(str(len(lumpedPartList)))
+		for k in range(len(lumpedPartList)):
+			print("Save new LUMPE PART constants into file: " + lumpedPartList[k].getName())
+	
+			settings.beginGroup("LUMPEDPART-" + lumpedPartList[k].getName())
+			settings.setValue("params", json.dumps(lumpedPartList[k].params))
+			settings.endGroup()
+
+
+
 		#sys.exit()  # prevents second call
 		print("Current values saved into file: " + outFile)
 		return
@@ -1730,6 +1841,14 @@ class BoxTaskPanel:
 							targetGroup[k].child(m).addChild(treeItem)
 							
 				continue #items is already added into tree widget nothing more needed
+
+			elif (re.compile("LUMPEDPART").search(settingsGroup)):
+				print("LumpedPart item settings found.")
+				settings.beginGroup(settingsGroup)
+				categorySettings = LumpedPartSettingsItem()
+				categorySettings.name = itemName
+				categorySettings.params = json.loads(settings.value('params'))
+				settings.endGroup()
 
 			else:
 				#if no item recognized then conitnue next run, at the end there is adding into object assignment tab
