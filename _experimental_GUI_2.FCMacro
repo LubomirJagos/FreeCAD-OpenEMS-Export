@@ -227,7 +227,7 @@ class SimulationSettingsItem(SettingsItem):
 		return jsonStr
 
 class LumpedPartSettingsItem(SettingsItem):
-	def __init__(self, name = "DefaultSimlationName", params='{"R": 0, "RUnits": "Ohm", "L": 0, "LUnits": "uH", "C": 0, "CUnits": "pF"}'):
+	def __init__(self, name = "DefaultSimlationName", params='{"R": 0, "RUnits": "Ohm", "REnabled": 0, "L": 0, "LUnits": "uH", "LEnabled": 0, "C": 0, "CUnits": "pF", "CEnabled": 0}'):
 		self.name = name
 		self.params = {}
 		self.params = json.loads(params)
@@ -239,6 +239,16 @@ class LumpedPartSettingsItem(SettingsItem):
 		jsonStr +=  json.dumps(self.params)
 		jsonStr +=  '}'
 		return jsonStr
+
+	def getType():
+		typeStr = ''
+		if (self.params['LEnabled']):
+			typeStr += 'L'
+		if (self.params['REnabled']):
+			typeStr += 'R'
+		if (self.params['CEnabled']):
+			typeStr += 'C'
+		return typeStr
 
 #
 # Main GUI panel class
@@ -355,6 +365,7 @@ class BoxTaskPanel:
 		self.form.excitationSettingsTreeView.currentItemChanged.connect(self.excitationTreeWidgetItemChanged)	
 		self.form.gridSettingsTreeView.currentItemChanged.connect(self.gridTreeWidgetItemChanged)	
 		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)	
+		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 
 		####################################################################################################
 		# GUI SAVE/LOAD from file
@@ -1427,6 +1438,10 @@ class BoxTaskPanel:
 			portItem.type = "circular waveguide"
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
+		if (self.form.etDumpPortRadioButton.isChecked()):
+			portItem.type = "et dump"
+		if (self.form.htDumpPortRadioButton.isChecked()):
+			portItem.type = "ht dump"
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
@@ -1467,6 +1482,19 @@ class BoxTaskPanel:
 
 		lumpedPartItem = LumpedPartSettingsItem()
 		lumpedPartItem.name = name
+
+		if (self.form.lumpedPartLEnable.isChecked()):
+			lumpedPartItem.params['L'] = self.form.lumpedPartLInput.value()
+			lumpedPartItem.params['LUnits'] = self.form.lumpedPartLUnits.currentText()
+			lumpedPartItem.params['LEnabled'] = 1
+		if (self.form.lumpedPartREnable.isChecked()):
+			lumpedPartItem.params['R'] = self.form.lumpedPartRInput.value()
+			lumpedPartItem.params['RUnits'] = self.form.lumpedPartRUnits.currentText()
+			lumpedPartItem.params['REnabled'] = 1
+		if (self.form.lumpedPartCEnable.isChecked()):
+			lumpedPartItem.params['C'] = self.form.lumpedPartCInput.value()
+			lumpedPartItem.params['CUnits'] = self.form.lumpedPartCUnits.currentText()
+			lumpedPartItem.params['CEnabled'] = 1
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.lumpedPartTreeView, lumpedPartItem.name)
@@ -1588,6 +1616,12 @@ class BoxTaskPanel:
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
 			pass
+		elif (currSetting.type.lower() == "et dump"):
+			self.form.etDumpPortRadioButton.click()
+			pass
+		elif (currSetting.type.lower() == "ht dump"):
+			self.form.htDumpPortRadioButton.click()
+			pass
 		else:
 			return #no gui update
 
@@ -1595,6 +1629,37 @@ class BoxTaskPanel:
 
 	def simulationTreeWidgetItemChanged(self, current, previous):
 		print("Simulation params changed.")
+		return
+
+	def lumpedPartTreeWidgetItemChanged(self, current, previous):
+		print("Lumped part item changed.")
+		currSetting = self.form.lumpedPartTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.lumpedPartSettingsNameInput.setText(currSetting.name)
+
+		self.form.lumpedPartLEnable.setChecked(False)
+		self.form.lumpedPartREnable.setChecked(False)
+		self.form.lumpedPartCEnable.setChecked(False)
+		if (currSetting.params['LEnabled']):
+			self.form.lumpedPartLEnable.setChecked(True)
+		if (currSetting.params['REnabled']):
+			self.form.lumpedPartREnable.setChecked(True)
+		if (currSetting.params['CEnabled']):
+			self.form.lumpedPartCEnable.setChecked(True)
+
+		self.form.lumpedPartLInput.setValue(currSetting.params['L'])
+		self.form.lumpedPartRInput.setValue(currSetting.params['R'])
+		self.form.lumpedPartCInput.setValue(currSetting.params['C'])
+
+		index = self.form.lumpedPartLUnits.findText(currSetting.params['LUnits'], QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.lumpedPartLUnits.setCurrentIndex(index)
+		index = self.form.lumpedPartRUnits.findText(currSetting.params['RUnits'], QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.lumpedPartRUnits.setCurrentIndex(index)
+		index = self.form.lumpedPartCUnits.findText(currSetting.params['CUnits'], QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.lumpedPartCUnits.setCurrentIndex(index)
+
 		return
 
 	####################################################################################################################################################################

@@ -759,13 +759,20 @@
        <x>310</x>
        <y>70</y>
        <width>431</width>
-       <height>161</height>
+       <height>241</height>
       </rect>
      </property>
      <property name="title">
       <string>Port Settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <item row="4" column="0">
+       <widget class="QRadioButton" name="etDumpPortRadioButton">
+        <property name="text">
+         <string>Et Dump</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QRadioButton" name="lumpedPortRadioButton">
         <property name="text">
@@ -783,6 +790,13 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+        <property name="text">
+         <string>Rectangular Waveguide</string>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="0">
        <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
         <property name="text">
@@ -790,10 +804,10 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+      <item row="5" column="0">
+       <widget class="QRadioButton" name="htDumpPortRadioButton">
         <property name="text">
-         <string>Rectangular Waveguide</string>
+         <string>Ht Dump</string>
         </property>
        </widget>
       </item>
