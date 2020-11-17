@@ -109,7 +109,7 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>70</y>
+       <y>100</y>
        <width>441</width>
        <height>161</height>
       </rect>
@@ -118,21 +118,33 @@
       <string>Grid settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput"/>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_3">
+      <item row="0" column="1">
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>Z</string>
+         <string>X</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput"/>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Y</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>units</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0">
        <widget class="QRadioButton" name="fixedCountRadioButton">
@@ -144,10 +156,24 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
-       <widget class="QLabel" name="label_4">
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="userDefinedRadioButton">
         <property name="text">
-         <string>units</string>
+         <string>User defined</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -161,108 +187,32 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Y</string>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
       <item row="2" column="3">
-       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput"/>
-      </item>
-      <item row="2" column="4">
-       <widget class="QComboBox" name="fixedDistanceUnitsInput">
-        <property name="currentText">
-         <string>m</string>
+       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
-        <item>
-         <property name="text">
-          <string>m</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>cm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>um</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>nm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>pm</string>
-         </property>
-        </item>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label">
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>X</string>
+         <string>Z</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="userDefinedRadioButton">
-        <property name="text">
-         <string>User defined</string>
+      <item row="1" column="3">
+       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
-       </widget>
-      </item>
-      <item row="3" column="4">
-       <widget class="QComboBox" name="userDefinedUnitsInput">
-        <property name="currentText">
-         <string>m</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>m</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>cm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>um</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>nm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>pm</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>
@@ -300,7 +250,7 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>260</y>
+       <y>280</y>
        <width>441</width>
        <height>111</height>
       </rect>
@@ -313,7 +263,7 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>240</y>
+       <y>260</y>
        <width>441</width>
        <height>20</height>
       </rect>
@@ -372,6 +322,62 @@
      </property>
      <property name="text">
       <string>Grid Settings Name</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="gridUnitsInput">
+     <property name="geometry">
+      <rect>
+       <x>660</x>
+       <y>70</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>m</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>m</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>cm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>um</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>nm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>pm</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_24">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>70</y>
+       <width>151</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Grid Units</string>
      </property>
     </widget>
    </widget>

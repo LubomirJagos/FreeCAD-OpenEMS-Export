@@ -80,9 +80,10 @@ class FreeCADSettingsItem(SettingsItem):
 #	User Defined   - user has to provide coordinates where lines should be
 #
 class GridSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0, 'units':''}, userDefined = {'data':"", 'units':"mm"}):
+	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0}, userDefined = {'data':""}, units = ""):
 		self.name = name
 		self.type = type
+		self.units = units
 		self.fixedCount = fixedCount
 		self.fixedDistance = fixedDistance
 		self.userDefined = userDefined
@@ -108,19 +109,18 @@ class GridSettingsItem(SettingsItem):
 			return self.userDefined
 	
 	def getUnitAsScriptLine(self):
-		if (self.type == "Fixed Distance"):
-			if (self.fixedDistance['units'] == 'm'):
-				return "1e0"
-			elif (self.fixedDistance['units'] == 'cm'):
-				return "1e-2"
-			elif (self.fixedDistance['units'] == 'mm'):
-				return "1e-3"
-			elif (self.fixedDistance['units'] == 'um'):
-				return "1e-6"
-			elif (self.fixedDistance['units'] == 'nm'):
-				return "1e-9"
-			elif (self.fixedDistance['units'] == 'pm'):
-				return "1e-12"
+		if (self.units == 'm'):
+			return "1e0"
+		elif (self.units == 'cm'):
+			return "1e-2"
+		elif (self.units == 'mm'):
+			return "1e-3"
+		elif (self.units == 'um'):
+			return "1e-6"
+		elif (self.units == 'nm'):
+			return "1e-9"
+		elif (self.units == 'pm'):
+			return "1e-12"
 		else:
 			pass
 
@@ -625,6 +625,14 @@ class BoxTaskPanel:
 		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
 		genScript += "\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% MESH definition variables\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "mesh.x = [];\n"
+		genScript += "mesh.y = [];\n"
+		genScript += "mesh.z = [];\n"
+		genScript += "\n"
+		genScript += "\n"
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
 		portList = []																					# <------------ PORT LIST
@@ -632,6 +640,7 @@ class BoxTaskPanel:
 		print("======================== REPORT BEGIN ========================\n")
 		for m in range(len(allItems)):
 			currItem = allItems[m]
+
 			for k in range(currItem.childCount()):
 				item = currItem.child(k)
 				itemData = item.data(0, QtCore.Qt.UserRole)
@@ -839,10 +848,9 @@ class BoxTaskPanel:
 								print("#--> x: " + str(currSetting.getXYZ()['x']))
 								print("#--> y: " + str(currSetting.getXYZ()['y']))
 								print("#--> z: " + str(currSetting.getXYZ()['z']))
-								print("#")
-								print("#--> units: " + str(currSetting.getXYZ()['units']))
 							if (currSetting.getType() == "User Defined"):
 								print("#--> userDefined: " + str(currSetting.getXYZ()))
+							print("#--> units: " + str(currSetting.units))
 							print("#")
 
 							objs = FreeCAD.ActiveDocument.Objects
@@ -875,6 +883,26 @@ class BoxTaskPanel:
 									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
 									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
 
+									#PLACEMENT BOX
+									print(obj.Placement)
+									#print(dir(obj.Placement.Base))
+									offsetX = 0
+									offsetY = 0
+									offsetZ = 0
+
+									#COORDS ARE GETTING FROM BOUNDING BOX SO THERE SHOULDN'T BE NEEDET TO ADD OFFSET?
+									"""
+									if (obj.Placement):
+										offsetX += obj.Placement.Base.x
+										offsetY += obj.Placement.Base.y
+										offsetZ += obj.Placement.Base.z
+										pass
+									"""
+
+									#print("\tplacement X: " + str(offsetX))
+									#print("\tplacement Y: " + str(offsetY))
+									#print("\tplacement Z: " + str(offsetZ))
+
 									#
 									# GRID openEMS GENERATION INTO VARIABLE
 									#
@@ -883,24 +911,23 @@ class BoxTaskPanel:
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
-										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-										genScript += "mesh.x = [(" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ")];\n"
-										genScript += "mesh.y = [(" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ")];\n"
-										genScript += "mesh.z = [(" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ")];\n"
-										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
+										genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+										genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+										genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
 										#UNIT FOR MESH										
-										genScript += "mesh.x = [linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ")];\n"
-										genScript += "mesh.y = [linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ")];\n"
-										genScript += "mesh.z = [linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['z']) + ")];\n"
-										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
+										genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+										genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+										genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'User Defined'):
 										#UNIT FOR MESH										
 										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
 										genScript += "mesh = " + currSetting.getXYZ() + ";\n"
-										genScript += "CSX = DefineRectGrid(CSX, meshUnit, mesh);\n"
+										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 
 									"""
@@ -924,13 +951,16 @@ class BoxTaskPanel:
 									#                           __/ |                                            
 									#                          |___/                                            
 									#
+
 									#ADD PART TO LIST TO EXPORT AS .stl
 									partToExport = FreeCAD.ActiveDocument.getObject(obj.Name)
-									objsExport.append(partToExport)
 									print(partToExport)
 									[currDir, nameBase] = self.getCurrDir()
 									outFile = currDir + "/" + partToExport.Label + "_gen_model.stl"
-									Mesh.export(objsExport,outFile)
+									Mesh.export([partToExport],outFile)
+
+									#APPEND OBJECT TO ARRAY ATO EXPORT
+									objsExport.append(partToExport)
 
 								#for now all magic in local dir to not have to solve local permission needed to create dir and ismilar bullshit
 								#[currDir, nameBase] = self.getCurrDir()
@@ -1162,14 +1192,12 @@ class BoxTaskPanel:
 			gridX = self.form.fixedDistanceXNumberInput.value()
 			gridY = self.form.fixedDistanceYNumberInput.value()
 			gridZ = self.form.fixedDistanceZNumberInput.value()
-			gridUnits = self.form.fixedDistanceUnitsInput.currentText()
 
 			gridItem.type = gridType
 			gridItem.fixedDistance = {}
 			gridItem.fixedDistance['x'] = gridX
 			gridItem.fixedDistance['y'] = gridY
 			gridItem.fixedDistance['z'] = gridZ
-			gridItem.fixedDistance['units'] = gridUnits
 
 		if (self.form.userDefinedRadioButton.isChecked()):
 			gridType = "User Defined"
@@ -1190,6 +1218,7 @@ class BoxTaskPanel:
 			"userDef: " + gridUserDefined		\
 		)
 		"""
+		gridItem.units = self.form.gridUnitsInput.currentText()
 		
 		# display message box with current settings for grid item
 		#self.displayMessage(gridItem.serializeToString())		
@@ -1199,15 +1228,7 @@ class BoxTaskPanel:
 
 		#if everything is OK, item is added into tree
 		if (not isDuplicityName):
-			treeGridItem = QtGui.QTreeWidgetItem([gridItem.name])
-			treeGridItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
-			treeGridItem.setData(0, QtCore.Qt.UserRole, gridItem)
-	
-			self.form.gridSettingsTreeView.insertTopLevelItem(0, treeGridItem)
-
-			# MAIN TREE WIDGET, add into ObjectAssignment
-			gridGroup = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchExactly)
-			gridGroup[0].addChild(treeGridItem.clone())
+			self.addSettingsItemGui(gridItem)
 
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
@@ -1259,22 +1280,7 @@ class BoxTaskPanel:
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.materialSettingsTreeView, materialItem.name)
 
 		if (not isDuplicityName):
-			treeMaterialItem = QtGui.QTreeWidgetItem([materialItem.name])
-			treeMaterialItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
-			#treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)
-			print("Adding material item with epsilon: " + str(materialItem.constants['epsilon']))
-
-			treeMaterialItem.setData(0, QtCore.Qt.UserRole, materialItem)	
-			#itemOrder = self.form.materialSettingsTreeView.topLevelItemCount()
-			#treeMaterialItem.setData(itemOrder, QtCore.Qt.UserRole, materialItem)	
-
-			self.form.materialSettingsTreeView.insertTopLevelItem(0, treeMaterialItem)
-
-			#			
-			# MAIN TREE WIDGET, add into ObjectAssignment
-			#
-			materialGroup = self.form.objectAssignmentRightTreeWidget.findItems("Materials", QtCore.Qt.MatchExactly)
-			materialGroup[0].addChild(treeMaterialItem.clone())
+			self.addSettingsItemGui(materialItem)
 
 	def materialSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.materialSettingsTreeView.selectedItems()[0]
@@ -1414,14 +1420,16 @@ class BoxTaskPanel:
 		print("Grid item changed.")
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.gridSettingsNameInput.setText(currSetting.name)
+
+		index = self.form.gridUnitsInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.gridUnitsInput.setCurrentIndex(index)
+
 		if (currSetting.type == "Fixed Distance"):
 			self.form.fixedDistanceRadioButton.click()
 			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
 			self.form.fixedDistanceYNumberInput.setValue(currSetting.fixedDistance['y'])
 			self.form.fixedDistanceZNumberInput.setValue(currSetting.fixedDistance['z'])
-			index = self.form.fixedDistanceUnitsInput.findText(currSetting.fixedDistance['units'], QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.fixedDistanceUnitsInput.setCurrentIndex(index)
 		elif (currSetting.type == "Fixed Count"):
 			self.form.fixedCountRadioButton.click()
 			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
@@ -1431,10 +1439,6 @@ class BoxTaskPanel:
 		elif (currSetting.type == "User Defined"):
 			self.form.userDefinedRadioButton.click()
 			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
-
-			index = self.form.userDefinedUnitsInput.findText(currSetting.userDefined['units'], QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.userDefinedUnitsInput.setCurrentIndex(index)
 			pass
 		else:
 			pass
@@ -1533,6 +1537,7 @@ class BoxTaskPanel:
 	
 			settings.beginGroup("GRID-" + gridList[k].getName())
 			settings.setValue("type", gridList[k].type)
+			settings.setValue("units", gridList[k].units)
 			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
 			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
 			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
@@ -1653,6 +1658,7 @@ class BoxTaskPanel:
 				categorySettings = GridSettingsItem()
 				categorySettings.name = itemName
 				categorySettings.type = settings.value('type')
+				categorySettings.units = settings.value('units')
 				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
 				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
 				categorySettings.userDefined = json.loads(settings.value('userDefined'))
