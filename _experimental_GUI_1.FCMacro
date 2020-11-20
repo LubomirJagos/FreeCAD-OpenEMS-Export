@@ -69,7 +69,7 @@ class ExampleModalGuiClass(QtGui.QDialog):
 		self.tab4.setLayout(QtGui.QHBoxLayout())
 
 		#######################################################################################
-		#  OBJECT ASSIGNEMNTS TAB
+		#  OBJECT ASSIGNMENTS TAB
 		#######################################################################################
 
 		#

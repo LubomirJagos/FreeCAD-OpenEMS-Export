@@ -33,7 +33,7 @@ class OpenEMS:
 			objList.append(item)
 		return objList
 
-	#return all items, at leas all top level
+	#return all items, at least all top level
 	def getAllTreeWidgetItems(self, treeWidget):
 		root = treeWidget.invisibleRootItem()
 		child_count = root.childCount()
@@ -136,7 +136,7 @@ class GridSettingsItem(SettingsItem):
 # Material settings, basic are epsilon and mue, kappa and sigma are extended
 #	epsilon - permitivity
 #	mue     - permeability
-#	kappa   - susceptibility, coupling coeficient
+#	kappa   - susceptibility, coupling coefficient
 #	sigma   - VSWR, coductivity, surface charfe
 #
 class MaterialSettingsItem(SettingsItem):
@@ -191,7 +191,7 @@ class ExcitationSettingsItem(SettingsItem):
 		return self.type
 
 # Port settings
-#	There are just few ports typoe of ports defined in OpenEMS:
+#	There are just few types of ports defined in OpenEMS:
 #		- lumped
 #		- microstrip
 #		- circular waveguide
@@ -350,7 +350,7 @@ class BoxTaskPanel:
 		#########################################################################################################
 
 		#
-		# SETTINGS FOR BUTTONS CLICK, functions assignements
+		# SETTINGS FOR BUTTONS CLICK, functions assignments
 		#
 		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
 		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
@@ -456,7 +456,7 @@ class BoxTaskPanel:
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		#LuboJ
-		self.MaterialsItem = topItem	#aux item materials item to have some reference here to be sure for future acces it
+		self.MaterialsItem = topItem	#aux item materials item to have some reference here to be sure for future access it
 
 		# EXCITATION
 		topItem = QtGui.QTreeWidgetItem(["Excitation"])
@@ -1108,7 +1108,7 @@ class BoxTaskPanel:
 
 								materialName = "metal"
 								partFileName = "somePartName"
-								# THE NUBER IN IMPORTSTL WILL BE PROBABLY PRIORITY NUMBER
+								# THE NUMBER IN IMPORTSTL WILL BE PROBABLY PRIORITY NUMBER
 
 								currDir, baseName = self.getCurrDir()
 								stlModelFileName = childName + "_gen_model.stl"
@@ -1178,7 +1178,7 @@ class BoxTaskPanel:
 						#read current category settings
 						currentSetting = item.data(0, QtCore.Qt.UserRole)
 
-						#traverse throug all children item for this particular lumped part settings
+						#traverse through all children item for this particular lumped part settings
 						objs = FreeCAD.ActiveDocument.Objects
 						objsExport = []
 						for k in range(item.childCount()):
@@ -1293,9 +1293,9 @@ class BoxTaskPanel:
 			iterator +=1
 		return isDuplicityName
 
-	#this should erase all items from tree widgets and everything before load new configuration to everything pass right
-	#	tree widget is just important to erase becasue all items contains userdata items which contains its configuration and whole
-	#	gui si generating code based on these informations, so when items are erased and new ones created everything is ok
+	#this should erase all items from tree widgets and everything before loading new configuration to everything pass right
+	#	tree widget is just important to erase because all items contains userdata items which contains its configuration and whole
+	#	gui is generating code based on these information, so when items are erased and new ones created everything is ok
 	def deleteAllSettings(self):
 		self.form.objectAssignmentRightTreeWidget.clear()		#init right column as at startup to have default structure cleared
 		self.initRightColumnTopLevelItems()					#rerecreate default simulation structure
@@ -1430,7 +1430,7 @@ class BoxTaskPanel:
 		
 		materialItem = MaterialSettingsItem()
 		materialItem.name = name
-		materialItem.constants = {}	# !!! <--- THIS MUST BE HERE, OTHERWISE ALL CONSTANTS IN ALL MATERIAL ITEMS AHVE SAME VALUE LIKE REFERENCING SAME OBJECT
+		materialItem.constants = {}	# !!! <--- THIS MUST BE HERE, OTHERWISE ALL CONSTANTS IN ALL MATERIAL ITEMS HAVE SAME VALUE LIKE REFERENCING SAME OBJECT
 		materialItem.constants['epsilon'] = epsilon
 		materialItem.constants['mue'] = mue
 		materialItem.constants['kappa'] = kappa
