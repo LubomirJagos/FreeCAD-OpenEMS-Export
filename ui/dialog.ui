@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -154,24 +154,17 @@
       <string>Grid settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="1">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>X</string>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Y</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>units</string>
+      <item row="1" column="3">
+       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -179,6 +172,27 @@
        <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
         <property name="maximum">
          <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="gridXEnable">
+        <property name="text">
+         <string>X</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="userDefinedRadioButton">
+        <property name="text">
+         <string>User defined</string>
         </property>
        </widget>
       </item>
@@ -199,34 +213,10 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="userDefinedRadioButton">
+      <item row="0" column="3">
+       <widget class="QCheckBox" name="gridZEnable">
         <property name="text">
-         <string>User defined</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QRadioButton" name="fixedDistanceRadioButton">
-        <property name="text">
-         <string>Fixed distance</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
+         <string>Z</string>
         </property>
        </widget>
       </item>
@@ -237,17 +227,20 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_3">
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="gridYEnable">
         <property name="text">
-         <string>Z</string>
+         <string>Y</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="fixedDistanceRadioButton">
+        <property name="text">
+         <string>Fixed distance</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -416,6 +409,19 @@
       <string>Grid Units</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="gridSettingsRewriteButton">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>460</y>
+       <width>71</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Rewrite</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="materialSettingsTab">
     <attribute name="title">
@@ -442,58 +448,75 @@
        <x>300</x>
        <y>70</y>
        <width>441</width>
-       <height>101</height>
+       <height>131</height>
       </rect>
      </property>
      <property name="title">
       <string>Material Settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="materialSigmaNumberInput"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
-      </item>
       <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="materialMueNumberInput">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="materialKappaNumberInput">
-        <property name="decimals">
-         <number>9</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Epsilon</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>Mue</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Epsilon</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="materialMueNumberInput">
+        <property name="decimals">
+         <number>3</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
+      </item>
+      <item row="1" column="2">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>Kappa</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="3">
+      <item row="2" column="3">
+       <widget class="QDoubleSpinBox" name="materialSigmaNumberInput"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="materialKappaNumberInput">
+        <property name="decimals">
+         <number>9</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
        <widget class="QLabel" name="label_10">
         <property name="text">
          <string>Sigma</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="materialMetalRadioButton">
+        <property name="text">
+         <string>Metal</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QRadioButton" name="materialUserDefinedRadioButton">
+        <property name="text">
+         <string>UserDefined</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -1203,104 +1226,6 @@
     <attribute name="title">
      <string>Simulation Params</string>
     </attribute>
-    <widget class="QWidget" name="formLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>411</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_21">
-        <property name="text">
-         <string>f0</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="simParamF0NumberInput">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="maximum">
-         <double>10000000000.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_20">
-        <property name="text">
-         <string>fc</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="simParamFcNumberInput">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="maximum">
-         <double>10000000000.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QLabel" name="label_22">
-     <property name="geometry">
-      <rect>
-       <x>370</x>
-       <y>90</y>
-       <width>53</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>units</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="simParamsUnitsNumberInput">
-     <property name="geometry">
-      <rect>
-       <x>370</x>
-       <y>123</y>
-       <width>53</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="currentText">
-      <string>Hz</string>
-     </property>
-     <item>
-      <property name="text">
-       <string>Hz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>kHz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>MHz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>GHz</string>
-      </property>
-     </item>
-    </widget>
     <widget class="QWidget" name="formLayoutWidget_2">
      <property name="geometry">
       <rect>

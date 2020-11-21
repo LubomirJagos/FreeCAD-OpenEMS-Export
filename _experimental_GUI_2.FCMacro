@@ -102,24 +102,16 @@ class FreeCADSettingsItem(SettingsItem):
 #	User Defined   - user has to provide coordinates where lines should be
 #
 class GridSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0}, userDefined = {'data':""}, units = ""):
+	def __init__(self, name = "", type = "", fixedCount = {'x':0, 'y':0, 'z':0}, fixedDistance = {'x':0, 'y':0, 'z':0}, userDefined = {'data':""}, units = "", xenabled = True, yenabled = True, zenabled = True):
 		self.name = name
 		self.type = type
 		self.units = units
+		self.xenabled = xenabled
+		self.yenabled = yenabled
+		self.zenabled = zenabled
 		self.fixedCount = fixedCount
 		self.fixedDistance = fixedDistance
 		self.userDefined = userDefined
-
-	def serializeToString(self):
-		serializedString = "{'name': '" + self.name + "', 'type': '" + self.type + "', 'def': "
-		if (self.type == "Fixed Count"):
-			serializedString += str(self.fixedCount)
-		if (self.type == "Fixed Distance"):
-			serializedString += str(self.fixedDistance)
-		if (self.type == "User Defined"):
-			serializedString += "'" + str(self.userDefined) + "'"
-		serializedString += "}"
-		return serializedString
 
 	#Return xyz distances, count or user defined array based what user asked for.
 	def getXYZ(self):
@@ -229,7 +221,7 @@ class PortSettingsItem(SettingsItem):
 #	fc
 #
 class SimulationSettingsItem(SettingsItem):
-	def __init__(self, name = "DefaultSimlationName", params='{"f0": 0, "fc": 0, "units": "Hz", "max_timestamps": 1e6, "min_decrement": 0}'):
+	def __init__(self, name = "DefaultSimlationName", params='{"max_timestamps": 1e6, "min_decrement": 0}'):
 		self.name = name
 		self.params = {}
 		self.params = json.loads(params)
@@ -354,6 +346,7 @@ class BoxTaskPanel:
 		#
 		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
 		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
+		self.form.gridSettingsRewriteButton.clicked.connect(self.gridSettingsRewriteButtonClicked)
 
 		self.form.materialSettingsAddButton.clicked.connect(self.materialSettingsAddButtonClicked)
 		self.form.materialSettingsRemoveButton.clicked.connect(self.materialSettingsRemoveButtonClicked)
@@ -373,6 +366,9 @@ class BoxTaskPanel:
 		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
 		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
+
+		# Handle function for MATERIAL RADIO BUTTONS
+		self.form.materialUserDefinedRadioButton.toggled.connect(self.materialUserDeinedRadioButtonToggled)	
 
 		#
 		# Clicked on "Generate OpenEMS Script"
@@ -423,6 +419,18 @@ class BoxTaskPanel:
 			treeItems.append(topItem)
 		
 		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
+
+	def materialUserDeinedRadioButtonToggled(self):
+		if (self.form.materialUserDefinedRadioButton.isChecked()):
+			self.form.materialEpsilonNumberInput.setEnabled(True)
+			self.form.materialMueNumberInput.setEnabled(True)
+			self.form.materialKappaNumberInput.setEnabled(True)
+			self.form.materialSigmaNumberInput.setEnabled(True)
+		else:
+			self.form.materialEpsilonNumberInput.setEnabled(False)
+			self.form.materialMueNumberInput.setEnabled(False)
+			self.form.materialKappaNumberInput.setEnabled(False)
+			self.form.materialSigmaNumberInput.setEnabled(False)
 
 	def objectAssignmentFilterLeftButtonClicked(self):
 		print("Filter left column")
@@ -650,21 +658,17 @@ class BoxTaskPanel:
 		genScript += "openEMS_opts = '';\n"
 		genScript += "\n"
 
-
-
-
 		#
 		# IMPORTANT
 		#
 		genScript += "%% setup the simulation\n"
 		genScript += "physical_constants;\n"
-		genScript += "unit = 1e-3; % all length in mm\n"
+		#genScript += "unit = " +  + "; % all length in mm\n"
+		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
 
-
-
-
-
-
+		#
+		# SIMULATION SETTING, OK
+		#
 		genScript += "\n"
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
@@ -673,65 +677,81 @@ class BoxTaskPanel:
 		genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
 		genScript += "\n"
 		genScript += "%% setup FDTD parameter & excitation function\n"
-
-
-
-
-		#
-		# IMPORTANT, OK!
-		#
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
 		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % equivalent to -50 dB\n"
-
-
-
-
-
-		#
-		# IMPORTANT, OK!
-		#
-		genScript += "f0 = " + self.getSimParamsF0Str() + "; % center frequency\n"
-		genScript += "fc = " + self.getSimParamsFcStr() + "; % 20 dB corner frequency\n"
-
-
-
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
 		genScript += "\n"
-		genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
-		genScript += "%FDTD = SetSinusExcite(FDTD,f0); %LuboJ try sinus excitation\n"
-		genScript += "\n"
+
+		#default structure for mesh
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% MESH\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "mesh.x = [];\n"
+		genScript += "mesh.y = [];\n"
+		genScript += "mesh.z = [];\n"
+
+		#
+		#	EXCITATION
+		#  ________   _______ _____ _______    _______ _____ ____  _   _                                   _           _                 _      
+		# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |                                 | |         | |               | |     
+		# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| |   __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
+		# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
+		# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  | | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
+		# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
+		#                                                                   __/ |                                                               
+		#                                                                  |___/                                                                
+		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+		if len(excitationCategory) >= 0:
+			print("Excitation Settings detected")
+			print("#")
+			print("#EXCITATION")
+
+			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
+			item = excitationCategory[0].child(1)
+			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
+			if (currSetting.getName() != 'Excitation Default'):
+				print("#name: " + currSetting.getName())
+				print("#type: " + currSetting.getType())
+
+				#DON'T KNOW WHY I HAD THS IN EXCITATION BEFORE, I WILL SEE
+				#portName = "port_" + str(100*m+k)
+
+				#
+				# EXCITATION openEMS GENERATION INTO VARIABLE
+				#
+				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+				genScript += "% EXCITATION\n"
+				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+				if (currSetting.getType() == 'sinusodial'):
+					genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
+					pass
+				elif (currSetting.getType() == 'gaussian'):
+					genScript += "f0 = " + str(currSetting.gaussian['f0']) + ";\n"
+					genScript += "fc = " + str(currSetting.gaussian['fc']) + ";\n"
+					genScript += "FDTD = SetGaussExcite(FDTD, f0, fc );\n"
+					pass
+				elif (currSetting.getType() == 'custom'):
+					genScript += "%custom\n"
+					pass
+				pass
+			else:
+				print("#Excitation Default")
+				print("---")
+				pass
+			pass
+
+		#
+		# BOUNDARY CONDITIONS SETTING, OK
+		#
 		genScript += "BC = {'MUR' 'MUR' 'MUR' 'MUR' 'MUR' 'MUR'}; % boundary conditions\n"
 		genScript += "if (use_pml>0)\n"
 		genScript += "    BC = {'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8'}; % use pml instead of mur\n"
 		genScript += "end\n"
 		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
 		genScript += "\n"
-		genScript += "%% setup CSXCAD geometry & mesh\n"
-		genScript += "% currently, openEMS cannot automatically generate a mesh\n"
-
-
-
-
-
-
-		#
-		# IMPORTANT
-		#
-		genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
-
-
-
-		genScript += "\n"
 		genScript += "CSX = InitCSX();\n"
-		genScript += "\n"
-		genScript += "\n"
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% MESH definition variables\n"
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "mesh.x = [];\n"
-		genScript += "mesh.y = [];\n"
-		genScript += "mesh.z = [];\n"
-		genScript += "\n"
 		genScript += "\n"
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
@@ -746,84 +766,6 @@ class BoxTaskPanel:
 				itemData = item.data(0, QtCore.Qt.UserRole)
 				if (itemData):
 					#
-					#	EXCITATION
-					#  ________   _______ _____ _______    _______ _____ ____  _   _                                   _           _                 _      
-					# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |                                 | |         | |               | |     
-					# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| |   __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
-					# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
-					# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  | | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
-					# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
-					#                                                                   __/ |                                                               
-					#                                                                  |___/                                                                
-					if (itemData.__class__.__name__ is "ExcitationSettingsItem"):
-						print("Excitation Settings detected")
-						currSetting = item.data(0, QtCore.Qt.UserRole)
-						print("#")
-						print("#EXCITATION")
-						if (currSetting.getName() != 'Excitation Default'):
-							print("#name: " + currSetting.getName())
-							print("#type: " + currSetting.getType())
-
-							portName = "port_" + str(100*m+k)
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							genScript += "% EXCITATION\n"
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							#NEED REWORK, NOW COMMENTED TO NOT CAUSED PROBLEMS, NEED TO BE DONE, TBD
-							#genScript += "CSX = AddDump( CSX, '" + portName + "', 'DumpType', 0, 'DumpMode', 2); % cell interpolated\n"
-
-							objs = FreeCAD.ActiveDocument.Objects
-
-							for k in range(item.childCount()):
-								childName = item.child(k).text(0)
-								print("##Children:")
-								print("\t" + childName)
-								freecadObjects = [i for i in objs if (i.Label) == childName] 
-
-								#print(freecadObjects)
-								for obj in freecadObjects:
-									bbCoords = obj.Shape.BoundBox
-
-									print('\t--> Xlength: ' + str(bbCoords.XLength))
-									print('\t--> Ylength: ' + str(bbCoords.YLength))
-									print('\t--> Zlength: ' + str(bbCoords.ZLength))
-									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
-									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
-									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
-
-									#
-									# EXCITATION openEMS GENERATION INTO VARIABLE
-									#
-									if (currSetting.getType() == 'sinusodial'):
-										genScript += "%sinusodial\n"
-										# TBD
-										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
-										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
-										genScript += "\n"
-										pass
-									elif (currSetting.getType() == 'gaussian'):
-										genScript += "%gaussian\n"
-										# TBD
-										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
-										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
-										genScript += "\n"
-										pass
-									elif (currSetting.getType() == 'custom'):
-										genScript += "%custom\n"
-										# TBD
-										#genScript += "start = [substrate.start.x substrate.start.y 1];\n"
-										#genScript += "stop  = [substrate.end.x  substrate.end.y 1];\n"
-										genScript += "\n"
-										pass
-
-							#genScript += "CSX = AddBox( CSX, '" + portName + "', 0, start, stop );\n"
-							pass
-						else:
-							print("#Excitation Default")
-							print("---")
-							pass
-						pass
-
-					#
 					#	PORT
 					#  ____    ____  _____ _______                                   _           _                 _      
 					# |  __ \ / __ \|  __ \__   __|                                 | |         | |               | |     
@@ -834,7 +776,7 @@ class BoxTaskPanel:
 					#                                 __/ |                                                               
 					#                                |___/                                                                
 					#
-					elif (itemData.__class__.__name__ is "PortSettingsItem"):
+					if (itemData.__class__.__name__ is "PortSettingsItem"):
 						print("Port Settings detected")
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
@@ -984,12 +926,12 @@ class BoxTaskPanel:
 									offsetZ = 0
 
 									#COORDS ARE GETTING FROM BOUNDING BOX SO THERE SHOULDN'T BE NEEDET TO ADD OFFSET?
+
 									"""
 									if (obj.Placement):
 										offsetX += obj.Placement.Base.x
 										offsetY += obj.Placement.Base.y
 										offsetZ += obj.Placement.Base.z
-										pass
 									"""
 
 									#print("\tplacement X: " + str(offsetX))
@@ -1010,10 +952,25 @@ class BoxTaskPanel:
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
-										#UNIT FOR MESH										
-										genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
-										genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
-										genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+										#if just one line is defined then is place in middle										
+										if (currSetting.xenabled):
+											if (not currSetting.getXYZ()['x'] == 1):
+												genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+											else:
+												genScript += "mesh.x = [mesh.x " + str((bbCoords.XMin + bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
+
+										if (currSetting.yenabled):
+											if (not currSetting.getXYZ()['y'] == 1):
+												genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+											else:
+												genScript += "mesh.y = [mesh.y " + str((bbCoords.YMin + bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
+
+										if (currSetting.zenabled):
+											if (not currSetting.getXYZ()['z'] == 1):
+												genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+											else:
+												genScript += "mesh.z = [mesh.z " + str((bbCoords.ZMin + bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
+
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'User Defined'):
@@ -1091,13 +1048,17 @@ class BoxTaskPanel:
 							objs = FreeCAD.ActiveDocument.Objects
 							objsExport = []
 
-							genScript += "CSX = AddMaterial( CSX, '" + currSetting.getName() + "' );\n"
+							#when material metal use just AddMetal for simulator
+							if (currSetting.type == 'metal'):
+								genScript += "CSX = AddMetal( CSX, '" + currSetting.getName() + "' );\n"
+							elif (currSetting.type == 'userdefined'):
+								genScript += "CSX = AddMaterial( CSX, '" + currSetting.getName() + "' );\n"
 
-							#full material definition all 4 params epsilon, mue, kappa and sigma							
-							#genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Mue', " + str(currSetting.constants['mue']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ", 'Sigma', " + str(currSetting.constants['sigma']) + ");\n"
-
-							#this is running now, just epsilon and kappa generated
-							genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ");\n"
+								#full material definition all 4 params epsilon, mue, kappa and sigma							
+								#genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Mue', " + str(currSetting.constants['mue']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ", 'Sigma', " + str(currSetting.constants['sigma']) + ");\n"
+	
+								#this is running now, just epsilon and kappa generated
+								genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ");\n"
 
 							#item = current GRID ITEM
 							for k in range(item.childCount()):
@@ -1323,7 +1284,7 @@ class BoxTaskPanel:
 	def userDefinedRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(True)
 
-	def gridSettingsAddButtonClicked(self):
+	def getGridItemFromGui(self):
 		name = self.form.gridSettingsNameInput.text()
 		gridType = ""
 		gridX = 0
@@ -1334,6 +1295,13 @@ class BoxTaskPanel:
 
 		gridItem = GridSettingsItem()
 		gridItem.name = name
+
+		xenabled = self.form.gridXEnable.isChecked()
+		yenabled = self.form.gridYEnable.isChecked()
+		zenabled = self.form.gridZEnable.isChecked()
+		gridItem.xenabled = xenabled
+		gridItem.yenabled = yenabled
+		gridItem.zenabled = zenabled
 
 		if (self.form.fixedCountRadioButton.isChecked()):
 			gridType = "Fixed Count"
@@ -1369,22 +1337,11 @@ class BoxTaskPanel:
 			gridItem.type = gridType
 			gridItem.userDefined = gridUserDefined
 
-		"""
-		self.displayMessage(						\
-			"Grid Settings \"" + name + "\":\n"	\
-			"\n"									\
-			"type: " + str(gridType) + "\n" +	\
-			"X: " + str(gridX) + "\n" +			\
-			"Y: " + str(gridY) + "\n" +			\
-			"Z: " + str(gridZ) + "\n" +			\
-			"units: " + gridUnits + "\n"			\
-			"userDef: " + gridUserDefined		\
-		)
-		"""
 		gridItem.units = self.form.gridUnitsInput.currentText()
-		
-		# display message box with current settings for grid item
-		#self.displayMessage(gridItem.serializeToString())		
+		return gridItem
+
+	def gridSettingsAddButtonClicked(self):		
+		gridItem = self.getGridItemFromGui()
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
@@ -1412,6 +1369,18 @@ class BoxTaskPanel:
 
 		return
 
+	def gridSettingsRewriteButtonClicked(self):
+		gridSetting = self.getGridItemFromGui()
+
+		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0]
+		selectedItem.setData(0, QtCore.Qt.UserRole, gridSetting)
+
+		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		gridGroupItem = None
+		for item in gridGroupWidgetItems:
+			if (item.parent().text(0) == "Grid"):
+				item.setData(0, QtCore.Qt.UserRole, gridSetting)
+
 	#
 	# MATERIAL SETTINGS
 	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1435,6 +1404,11 @@ class BoxTaskPanel:
 		materialItem.constants['mue'] = mue
 		materialItem.constants['kappa'] = kappa
 		materialItem.constants['sigma'] = sigma	
+
+		if (self.form.materialMetalRadioButton.value() == 1):
+			materialItem.type = "metal"
+		elif (self.form.materialUserDefinedRadioButton.value() == 1):
+			materialItem.type = "userdefined"
 
 		# display message box with current material settings to be added
 		#self.displayMessage(materialItem.serializeToString())
@@ -1493,9 +1467,15 @@ class BoxTaskPanel:
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
+		isMoreThanOne = self.form.excitationSettingsTreeView.topLevelItemCount() > 0
 
-		if (not isDuplicityName):
-			self.addSettingsItemGui(excitationItem)
+		if (isDuplicityName):
+			return
+		if (isMoreThanOne):
+			self.displayMessage("There could be just one excitation!")
+			return
+		
+		self.addSettingsItemGui(excitationItem)
 
 	def excitationSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.excitationSettingsTreeView.selectedItems()[0]
@@ -1634,6 +1614,11 @@ class BoxTaskPanel:
 		self.form.materialSettingsNameInput.setText(currSetting.name)
 
 		#ATTENTIONS there is ocnversion to float() used BELOW
+		if (currSetting.type == 'metal'):
+			self.form.materialMetalRadioButton.click()
+		elif (currSetting.type == 'userdefined'):
+			self.form.materialUserDefinedRadioButton.click()
+
 		self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
 		self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
 		self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
@@ -1667,6 +1652,10 @@ class BoxTaskPanel:
 		else:
 			pass
 			
+		self.form.gridXEnable.setChecked(currSetting.xenabled in ('true', 'True', '1', 'yes', True))
+		self.form.gridYEnable.setChecked(currSetting.yenabled in ('true', 'True', '1', 'yes', True))
+		self.form.gridZEnable.setChecked(currSetting.zenabled in ('true', 'True', '1', 'yes', True))
+
 		return
 
 	def excitationTreeWidgetItemChanged(self, current, previous):
@@ -1791,6 +1780,7 @@ class BoxTaskPanel:
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
 		outFile = programdir + '/' + programbase + "_settings.ini"
 		print("Saving data from file: " + outFile)
+		os.remove(outFile)	#if there is aready settings file erase to not cause problems with already written objects inside
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
 		#SAE MATERIAL SETTINGS INTO FILE
@@ -1800,6 +1790,7 @@ class BoxTaskPanel:
 			print(materialList[k].constants)
 	
 			settings.beginGroup("MATERIAL-" + materialList[k].getName())
+			settings.setValue("type", materialList[k].type)
 			settings.setValue("material_epsilon", materialList[k].constants['epsilon'])
 			settings.setValue("material_mue", materialList[k].constants['mue'])
 			settings.setValue("material_kappa", materialList[k].constants['kappa'])
@@ -1814,6 +1805,9 @@ class BoxTaskPanel:
 			settings.beginGroup("GRID-" + gridList[k].getName())
 			settings.setValue("type", gridList[k].type)
 			settings.setValue("units", gridList[k].units)
+			settings.setValue("xenabled", gridList[k].xenabled)
+			settings.setValue("yenabled", gridList[k].yenabled)
+			settings.setValue("zenabled", gridList[k].zenabled)
 			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
 			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
 			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
@@ -1846,8 +1840,6 @@ class BoxTaskPanel:
 
 		#SIMULATION PARAMS SAVE INTO FILE
 		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
-		simulationSettings.params['f0'] = self.form.simParamF0NumberInput.value()
-		simulationSettings.params['fc'] = self.form.simParamFcNumberInput.value()
 		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
 		simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
 
@@ -1949,6 +1941,9 @@ class BoxTaskPanel:
 				categorySettings = GridSettingsItem()
 				categorySettings.name = itemName
 				categorySettings.type = settings.value('type')
+				categorySettings.xenabled = settings.value('xenabled')
+				categorySettings.yenabled = settings.value('yenabled')
+				categorySettings.zenabled = settings.value('zenabled')
 				categorySettings.units = settings.value('units')
 				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
 				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
@@ -1990,14 +1985,8 @@ class BoxTaskPanel:
 				print(simulationSettings.params)
 				settings.endGroup()
 
-				self.form.simParamF0NumberInput.setValue(float(simulationSettings.params['f0']))
-				self.form.simParamFcNumberInput.setValue(float(simulationSettings.params['fc']))
 				self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
 				self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
-
-				index = self.form.simParamsUnitsNumberInput.findText(simulationSettings.params['units'], QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.simParamsUnitsNumberInput.setCurrentIndex(index)
 
 				continue	#there is no tree widget to add item to
 
