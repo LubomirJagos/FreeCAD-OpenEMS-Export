@@ -63,21 +63,21 @@ class SettingsItem:
 		return self.name
 
 	def getUnitsAsNumber(self, units):
-		if (units in ('pOhm','pH','pF', 'pm')):
+		if (units in ('pOhm','pH','pF', 'pm', 'pHz')):
 			outNumber = 1e-9
-		elif (units in ('uOhm','uH','uF', 'um')):
+		elif (units in ('uOhm','uH','uF', 'um', 'uHz')):
 			outNumber = 1e-6
-		elif (units in ('mOhm','mH','mF', 'mm')):
+		elif (units in ('mOhm','mH','mF', 'mm', 'mHz')):
 			outNumber = 1e-3
 		elif (units in ('cm')):
 			outNumber = 1e-2
-		elif (units in ('Ohm','H','F', 'm')):
+		elif (units in ('Ohm','H','F', 'm', 'Hz')):
 			outNumber = 1
-		elif (units in ('kOhm','kH','kF', 'km')):
+		elif (units in ('kOhm','kH','kF', 'km', 'kHz')):
 			outNumber = 1e3
-		elif (units in ('MOhm','MH','MF')):
+		elif (units in ('MOhm','MH','MF', 'MHz')):
 			outNumber = 1e6
-		elif (units in ('GOhm','GH','GF')):
+		elif (units in ('GOhm','GH','GF', 'GHz')):
 			outNumber = 1e9
 		else:
 			outNumber = 0
@@ -564,6 +564,7 @@ class BoxTaskPanel:
 
 		#add item into excitation list
 		treeWidgetRef = {}
+		itemChangedRef = {}
 		if (typeStr.lower() == "excitation"):
 			treeWidgetRef = self.form.excitationSettingsTreeView
 		elif (typeStr.lower() == "port"):
@@ -634,12 +635,12 @@ class BoxTaskPanel:
 		#
 		# Generating script beginning
 		#
-		genScript += "% EXAMPLE / circular polarized patch antenna\n"
+		genScript += "% EXAMPLE / generated file for openEMS from FreeCAD\n"
 		genScript += "%\n"
-		genScript += "% This example demonstrates how to:\n"
-		genScript += "%  - calculate the reflection coefficient of a circular polarized patch antenna\n"
+		genScript += "% This is generated file\n"
 		genScript += "%\n"
-		genScript += "% 2020 Lubomir Jagos\n"
+		genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos\n"
+		genScript += "%\n"
 		genScript += "\n"
 		genScript += "close all\n"
 		genScript += "clear\n"
@@ -672,7 +673,7 @@ class BoxTaskPanel:
 		genScript += "\n"
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
-		genScript += "Sim_CSX = 'wiklinson.xml';\n"
+		genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
 		genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"
 		genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
 		genScript += "\n"
@@ -720,7 +721,7 @@ class BoxTaskPanel:
 				# EXCITATION openEMS GENERATION INTO VARIABLE
 				#
 				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-				genScript += "% EXCITATION\n"
+				genScript += "% EXCITATION " + currSetting.getName() + "\n"
 				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
 				if (currSetting.getType() == 'sinusodial'):
@@ -728,7 +729,7 @@ class BoxTaskPanel:
 					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
 					pass
 				elif (currSetting.getType() == 'gaussian'):
-					genScript += "f0 = " + str(currSetting.gaussian['f0']) + ";\n"
+					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "fc = " + str(currSetting.gaussian['fc']) + ";\n"
 					genScript += "FDTD = SetGaussExcite(FDTD, f0, fc );\n"
 					pass
@@ -781,74 +782,68 @@ class BoxTaskPanel:
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
 						print("#PORT")
-						if (currSetting.getName() != 'Lumped Port'):    # !!!!!!!!!!!!!!!!!!!!! NEED TO CHECK IF REALLY THIS CONDITION IS GOOD
-							print("#name: " + currSetting.getName())
-							print("#type: " + currSetting.getType())
+						print("#name: " + currSetting.getName())
+						print("#type: " + currSetting.getType())
 
-							objs = FreeCAD.ActiveDocument.Objects
-							for k in range(item.childCount()):
-								genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-								genScript += "% PORT\n"
-								genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+						objs = FreeCAD.ActiveDocument.Objects
+						for k in range(item.childCount()):
+							childName = item.child(k).text(0)
 
-								childName = item.child(k).text(0)
-								print("##Children:")
-								print("\t" + childName)
-								freecadObjects = [i for i in objs if (i.Label) == childName] 
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
-								#print(freecadObjects)
-								for obj in freecadObjects:
-									#BOUNDING BOX
-									bbCoords = obj.Shape.BoundBox
-	
-									#PLACEMENT BOX
-									print(obj.Placement)
-									#print(dir(obj.Placement.Rotation.Axis))
-									axisX = obj.Placement.Rotation.Axis.x
-									axisY = obj.Placement.Rotation.Axis.y
-									axisZ = obj.Placement.Rotation.Axis.z
-	
-									#
-									# PORT openEMS GENERATION INTO VARIABLE
-									#
-									if (currSetting.getType() == 'lumped'):
-										genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-										genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-										genScript += 'portR = ' + str(currentSetting.params['R']) + ';\n'
-										genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-										genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+							print("##Children:")
+							print("\t" + childName)
+							freecadObjects = [i for i in objs if (i.Label) == childName] 
 
-										genScript_isActive = ""
-										if (currSetting.isActive in ('True', 'true', '1', 'yes')):
-											genScript_isActive = " , true"
+							#print(freecadObjects)
+							for obj in freecadObjects:
+								#BOUNDING BOX
+								bbCoords = obj.Shape.BoundBox
 
-										genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, 5, ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+								#PLACEMENT BOX
+								print(obj.Placement)
+								#print(dir(obj.Placement.Rotation.Axis))
+								axisX = obj.Placement.Rotation.Axis.x
+								axisY = obj.Placement.Rotation.Axis.y
+								axisZ = obj.Placement.Rotation.Axis.z
 
-										genScriptPortCount += 1
-									elif (currSetting.getType() == 'microstrip'):
-										genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
-									elif (currSetting.getType() == 'circular waveguide'):
-										genScript += "%% circular port openEMS code should be here\n"
-									elif (currSetting.getType() == 'rectangular waveguide'):
-										genScript += "%% rectangular port openEMS code should be here\n"
-									elif (currSetting.getType() == 'et dump'):
-										genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-										genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-										genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-										genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-									elif (currSetting.getType() == 'ht dump'):
-										genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-										genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-										genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-										genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								#
+								# PORT openEMS GENERATION INTO VARIABLE
+								#
+								if (currSetting.getType() == 'lumped'):
+									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portR = ' + str(currSetting.R) + ';\n'
+									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
 
-							pass
-						else:
-							print("#Excitation Default")
-							print("---")
-							pass
-						pass
+									genScript_isActive = ""
+									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+										genScript_isActive = " , true"
 
+									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, 5, ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+
+									genScriptPortCount += 1
+								elif (currSetting.getType() == 'microstrip'):
+									genScript += "%% AddMSLPort(CSX, 5 ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
+								elif (currSetting.getType() == 'circular waveguide'):
+									genScript += "%% circular port openEMS code should be here\n"
+								elif (currSetting.getType() == 'rectangular waveguide'):
+									genScript += "%% rectangular port openEMS code should be here\n"
+								elif (currSetting.getType() == 'et dump'):
+									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								elif (currSetting.getType() == 'ht dump'):
+									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								else:
+									genScript += '% Unknown port type. Nothing was generated. \n'
 
 					#
 					#	GRID SETTINGS
@@ -942,7 +937,7 @@ class BoxTaskPanel:
 									# GRID openEMS GENERATION INTO VARIABLE
 									#
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-									genScript += "% MESH\n"
+									genScript += "% MESH - " + currSetting.getName() + " - " + childName + "\n"
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
@@ -980,43 +975,6 @@ class BoxTaskPanel:
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 
-									"""
-									genScript += "\n"
-									genScript += "mesh = AddPML( mesh, [8 8 8 8 8 8] ); % add equidistant cells (air around the structure)\n"
-									genScript += "\n"
-									genScript += "%add grid lines for thin routes LuboJ.\n"
-									genScript += "dGrid = 0.007;\n"
-									genScript += "\n"
-									genScript += "% GRID\n"
-									genScript += "CSX = DefineRectGrid( CSX, unit, mesh );\n"
-									genScript += "\n"
-									"""
-
-									#   _____ _______ _                                        _   _             
-									#  / ____|__   __| |                                      | | (_)            
-									# | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __  
-									#  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \ 
-									#  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
-									# |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
-									#                           __/ |                                            
-									#                          |___/                                            
-									#
-
-									#ADD PART TO LIST TO EXPORT AS .stl
-									partToExport = FreeCAD.ActiveDocument.getObject(obj.Name)
-									print(partToExport)
-									[currDir, nameBase] = self.getCurrDir()
-									outFile = currDir + "/" + partToExport.Label + "_gen_model.stl"
-									Mesh.export([partToExport],outFile)
-
-									#APPEND OBJECT TO ARRAY ATO EXPORT
-									objsExport.append(partToExport)
-
-								#for now all magic in local dir to not have to solve local permission needed to create dir and ismilar bullshit
-								#[currDir, nameBase] = self.getCurrDir()
-								#outFile = currDir + "/" + "myName" + "_gen_model.stl"
-								#Mesh.export(objsExport,outFile)
-
 							pass
 
 					#
@@ -1040,13 +998,8 @@ class BoxTaskPanel:
 							print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
 
 							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							genScript += "% MATERIAL\n"
+							genScript += "% MATERIAL - " + currSetting.getName() + "\n"
 							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							#
-							# GRID openEMS GENERATION INTO VARIABLE
-							#
-							objs = FreeCAD.ActiveDocument.Objects
-							objsExport = []
 
 							#when material metal use just AddMetal for simulator
 							if (currSetting.type == 'metal'):
@@ -1060,22 +1013,32 @@ class BoxTaskPanel:
 								#this is running now, just epsilon and kappa generated
 								genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ");\n"
 
-							#item = current GRID ITEM
+							#item = current MATERIAL ITEM
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
 								print("##Children:")
 								print("\t" + childName)
-								freecadObjects = [i for i in objs if (i.Label) == childName] 
-
-								materialName = "metal"
-								partFileName = "somePartName"
-								# THE NUMBER IN IMPORTSTL WILL BE PROBABLY PRIORITY NUMBER
 
 								currDir, baseName = self.getCurrDir()
 								stlModelFileName = childName + "_gen_model.stl"
 								genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "',10, [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', 1});\n"
 
-								pass
+								#   _____ _______ _                                        _   _             
+								#  / ____|__   __| |                                      | | (_)            
+								# | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __  
+								#  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \ 
+								#  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
+								# |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
+								#                           __/ |                                            
+								#                          |___/                                            
+								#
+								#going through each concrete material items and generate their .stl files
+								partToExport = [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName] 
+								currDir = os.path.dirname(App.ActiveDocument.FileName)
+								exportFileName = currDir + "/" + stlModelFileName
+								Mesh.export(partToExport,exportFileName)
+								print("Material object exported as STL into: " + stlModelFileName)
+
 						else:
 							print("#Material Default")
 							print("---")
@@ -1133,7 +1096,7 @@ class BoxTaskPanel:
 					elif (itemData.__class__.__name__ is "LumpedPartSettingsItem"):
 						print("LumpedPart Settings detected")
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-						genScript += "% LUMPED PART\n"
+						genScript += "% LUMPED PART " + currSetting.getName() + "\n"
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
 						#read current category settings
@@ -1405,9 +1368,9 @@ class BoxTaskPanel:
 		materialItem.constants['kappa'] = kappa
 		materialItem.constants['sigma'] = sigma	
 
-		if (self.form.materialMetalRadioButton.value() == 1):
+		if (self.form.materialMetalRadioButton.isChecked() == 1):
 			materialItem.type = "metal"
-		elif (self.form.materialUserDefinedRadioButton.value() == 1):
+		elif (self.form.materialUserDefinedRadioButton.isChecked() == 1):
 			materialItem.type = "userdefined"
 
 		# display message box with current material settings to be added
@@ -1688,6 +1651,7 @@ class BoxTaskPanel:
 
 	def portTreeWidgetItemChanged(self, current, previous):
 		print("Port item changed.")
+
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)
 		self.form.portResistanceInput.setValue(float(currSetting.R))
@@ -1780,7 +1744,10 @@ class BoxTaskPanel:
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
 		outFile = programdir + '/' + programbase + "_settings.ini"
 		print("Saving data from file: " + outFile)
-		os.remove(outFile)	#if there is aready settings file erase to not cause problems with already written objects inside
+
+		if (os.path.exists(outFile)):
+			os.remove(outFile)	#if there is aready settings file erase to not cause problems with already written objects inside
+
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
 		#SAE MATERIAL SETTINGS INTO FILE
