@@ -441,26 +441,30 @@ class BoxTaskPanel:
 		#
 		# Default items for each section
 		#
+		""" NO DEFAULT ITEMS!
 		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
 		defaultMaterialItem = QtGui.QTreeWidgetItem(["Material Default"])
 		defaultExcitationItem = QtGui.QTreeWidgetItem(["Excitation Default"])
 		defaultGridItem = QtGui.QTreeWidgetItem(["Grid Default"])
 		defaultPortItem = QtGui.QTreeWidgetItem(["Port Default"])
 		defaultLumpedPartItem = QtGui.QTreeWidgetItem(["LumpedPart Default"])
+		"""
 
 		#
 		# Default items in each subsection have user data FreeCADSttingsItem classes to have just basic information like genereal freecad object
 		#
+		""" NO DEFAULT ITEMS!
 		defaultMaterialItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Material Default"))
 		defaultExcitationItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Excitation Default"))
 		defaultGridItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Grid Default"))
 		defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
 		defaultLumpedPartItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("LumpedPart Default"))
+		"""
 
 		# MATERIALS
 		topItem = QtGui.QTreeWidgetItem(["Material"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\material.png"))
-		topItem.addChildren([defaultMaterialItem])
+		#topItem.addChildren([defaultMaterialItem])	#NO DEFAULT ITEM
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		#LuboJ
@@ -469,25 +473,25 @@ class BoxTaskPanel:
 		# EXCITATION
 		topItem = QtGui.QTreeWidgetItem(["Excitation"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\bulb.png"))
-		topItem.addChildren([defaultExcitationItem])
+		#topItem.addChildren([defaultExcitationItem])	#NO DEFAULT ITEM
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# GRID
 		topItem = QtGui.QTreeWidgetItem(["Grid"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\grid.png"))
-		topItem.addChildren([defaultGridItem])
+		#topItem.addChildren([defaultGridItem])	#NO DEFAULT ITEM
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# PORTS
 		topItem = QtGui.QTreeWidgetItem(["Port"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\port.png"))
-		topItem.addChildren([defaultPortItem])
+		#topItem.addChildren([defaultPortItem])	#NO DEFAULT ITEM
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		# LUMPED PART
 		topItem = QtGui.QTreeWidgetItem(["LumpedPart"])
 		topItem.setIcon(0, QtGui.QIcon(".\\img\\lumpedpart.png"))
-		topItem.addChildren([defaultLumpedPartItem])
+		#topItem.addChildren([defaultLumpedPartItem])	#NO DEFAULT ITEM
 		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
 		return
@@ -1196,10 +1200,34 @@ class BoxTaskPanel:
 		print("Button >> clicked.")
 		leftItem = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
-		print(leftItem.text(0))
-		print(rightItem.text(0))
 
+		#check if item is type of SettingsItem based on its class name and if yes then add subitems into it
+		reResult = re.search("__main__.(.*)SettingsItem", str(type(rightItem.data(0, QtCore.Qt.UserRole))))
+		if (reResult):
+			if (reResult.group(1).lower() == 'excitation'):
+				self.displayMessage("Excitation doesn't accept any objects.")
+				return
+			if (reResult.group(1).lower() == 'freecad'):
+				self.displayMessage("FreeCAD object cannot have child item.")
+				return
+			else:
+				print("Item ")
+				print(leftItem.text(0))
+				print("added into ")
+				print(rightItem.text(0))
+	
+			rightItem.addChild(leftItem)
+		else:
+				self.displayMessage("Item must be added into some settings inside category.")
+
+		"""
+		print("Item ")
+		print(leftItem.text(0))
+		print("added into ")
+		print(rightItem.text(0))
 		rightItem.addChild(leftItem)
+		"""	
+
 
 	def displayMessage(self, msgText):
 		msgBox = QtGui.QMessageBox()
