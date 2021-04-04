@@ -33,6 +33,22 @@ class OpenEMS:
 			objList.append(item)
 		return objList
 
+	def getIconByCategory(self, categoryName):
+		if 'Material' in categoryName:
+			iconPath = ".\\img\\material.png"
+		elif 'Excitation' in categoryName:
+			iconPath = ".\\img\\excitation.png"
+		elif 'Grid' in categoryName:
+			iconPath = ".\\img\\grid.png"
+		elif 'LumpedPart' in categoryName:
+			iconPath = ".\\img\\lumpedpart.png"
+		elif 'Port' in categoryName:
+			iconPath = ".\\img\\port.png"
+		else:
+			iconPath = ".\\img\\error.png"
+
+		return QtGui.QIcon(iconPath)
+
 	#return all items, at least all top level
 	def getAllTreeWidgetItems(self, treeWidget):
 		root = treeWidget.invisibleRootItem()
@@ -49,9 +65,12 @@ class OpenEMS:
 class SettingsItem:
 
 	# initializer
-	def serializeToString(self, name = "", type = ""):
+	def __init__(self, name = "", type = "", priority = 0):
 		self.name = name
 		self.type = type
+		self.priority = priority
+
+	def serializeToString(self):
 		return "{}"
 
 	# basic type property common for all kind of settings
@@ -376,6 +395,13 @@ class BoxTaskPanel:
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
+		# Clicked on "Autoset priorities"
+		#		
+		self.form.autosetPrioritiesButton.clicked.connect(self.autosetPrioritiesButtonClicked)
+		self.form.moveupPriorityButton.clicked.connect(self.moveupPriorityButtonClicked)
+		self.form.movedownPriorityButton.clicked.connect(self.movedownPriorityButtonClicked)
+
+		#
 		# Material, Grid, Excitation, ... item changed handler functions.
 		#		
 		self.form.materialSettingsTreeView.currentItemChanged.connect(self.materialTreeWidgetItemChanged)	
@@ -434,7 +460,7 @@ class BoxTaskPanel:
 
 	def objectAssignmentFilterLeftButtonClicked(self):
 		print("Filter left column")
-		filterStr = self.form.objectAssignmentFilterLeft.toPlainText()
+		filterStr = self.form.objectAssignmentFilterLeft.text()
 		self.initLeftColumnTopLevelItems(filterStr)
 
 	def initRightColumnTopLevelItems(self):
@@ -551,6 +577,18 @@ class BoxTaskPanel:
 	def getSimParamsF0Str(self):
 		units = self.getSimParamsUnitsStr()
 		return str(self.form.simParamF0NumberInput.value()) + units
+
+	#
+	# Button 'Autoset priorities' on FRONT PANEL clicked
+	#
+	def autosetPrioritiesButtonClicked(self):
+		#
+		#	Here items in priority tree view reorderd to approximate order which should be right:
+		#		1. ports
+		#		2. materials
+		#
+		
+		return
 
 	#
 	# Universal function to add items into categories in GUI.
@@ -712,7 +750,7 @@ class BoxTaskPanel:
 			print("#EXCITATION")
 
 			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-			item = excitationCategory[0].child(1)
+			item = excitationCategory[0].child(0)
 			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
 			if (currSetting.getName() != 'Excitation Default'):
 				print("#name: " + currSetting.getName())
@@ -1190,15 +1228,45 @@ class BoxTaskPanel:
 	def show(self):
 		self.form.show()
 
+	#
+	#	Button >> to assign object from FreeCAD to OpenEMS solver structure
+	#
 	def onMoveLeft(self):
 		print("Button << clicked.")
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
+
+		#
+		#	REMOVE FROM PRIORITY ASSIGNMENT tree view
+		#
+		prioritySettingsItemName = rightItem.parent().parent().text(0) + ", " + rightItem.parent().text(0) + ", " + rightItem.text(0)
+		print("Removing item " + prioritySettingsItemName + " from priority list.")
+
+		#going through items in priority list and searching for name, when matched it's removed from list
+		itemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
+		for k in range(itemsCount):
+			priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
+			if prioritySettingsItemName in priorityItem.text(0):
+				self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
+				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
+
+		#
+		#	REMOVE ITEM FROM OpenEMS Simulation assignements tree view
+		#
 		rightItem.parent().removeChild(rightItem)
+
 		return
 
+	#
+	#	Button << to remove object assignment
+	#
 	def onMoveRight(self):
 		print("Button >> clicked.")
+
+		# here are created 2 clones of item in left column to be putted into right column into some category
+		# as material, port or something and there is also priority list where another clone is inserted
 		leftItem = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
+		leftItem2 = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
+
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 
 		#check if item is type of SettingsItem based on its class name and if yes then add subitems into it
@@ -1211,12 +1279,46 @@ class BoxTaskPanel:
 				self.displayMessage("FreeCAD object cannot have child item.")
 				return
 			else:
-				print("Item ")
-				print(leftItem.text(0))
-				print("added into ")
-				print(rightItem.text(0))
+				print("Item " + leftItem.text(0) + " added into " + rightItem.text(0))
 	
+			#
+			# ADD ITEM INTO RIGHT LIST, first clone is inserted
+			#
 			rightItem.addChild(leftItem)
+
+			#
+			# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
+			#
+			addItemToPriorityList = True
+
+			newAddedItemName = leftItem2.text(0)
+			leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.parent().text(0))
+	
+			#
+			#	Check if item is already in priority list, must be in same category as material, port or so to be not added due it will be duplicate
+			#
+			priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName,  QtCore.Qt.MatchFixedString)
+			for priorityItem in priorityListItems:
+				priorityItemCategory = priorityItem.data(0, QtCore.Qt.UserRole)
+				if priorityItemCategory in rightItem.parent().text(0):
+					addItemToPriorityList = False
+				
+			
+			if addItemToPriorityList:
+				#	Item is gonna be added into list:
+				#		1. copy icon of object category in right list to know what is added (PORT, MATERIAL, Excitation, ...)
+				#		2. add item into priority list with according icon and category				
+				leftItem2.setText(0, rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0))
+				self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
+				leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
+				print("Object " + leftItem2.text(0)+ " added into priority list")
+			else:
+				#
+				#	NO ITEM WOULD BE ADDED BECAUSE ALREADY IS IN LIST
+				#
+				print("Object " + leftItem2.text(0)+ " in category " + rightItem.parent().text(0) + " already in priority list")
+
+
 		else:
 				self.displayMessage("Item must be added into some settings inside category.")
 
@@ -1228,6 +1330,26 @@ class BoxTaskPanel:
 		rightItem.addChild(leftItem)
 		"""	
 
+	#
+	#	PRIORITY LIST move item UP
+	#
+	def moveupPriorityButtonClicked(self):
+		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
+		if currItemIndex > 0:
+			takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(currItemIndex)
+			self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(currItemIndex-1, takenItem)
+			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
+
+	#
+	#	PRIORITY LIST move item DOWN
+	#
+	def movedownPriorityButtonClicked(self):
+		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
+		countAllItems = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
+		if currItemIndex < countAllItems-1:
+			takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(currItemIndex)
+			self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
+			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
 
 	def displayMessage(self, msgText):
 		msgBox = QtGui.QMessageBox()
@@ -1256,6 +1378,7 @@ class BoxTaskPanel:
 		self.form.materialSettingsTreeView.clear()			#delete MATERIAL setting
 		self.form.portSettingsTreeView.clear()				#delete PORT setting
 		self.form.excitationSettingsTreeView.clear()			#delete EXCITATION setting
+		self.form.objectAssignmentPriorityTreeView.clear()			#delete EXCITATION setting
 		return
 
 	# GRID SETTINGS
@@ -1868,15 +1991,32 @@ class BoxTaskPanel:
 
 					objCounter += 1
 
+
+
+
 		#SAVE LUMPED PART SETTINGS INTO FILE
 		lumpedPartList = self.openEMSObj.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
-		print(str(len(lumpedPartList)))
+		print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
 		for k in range(len(lumpedPartList)):
-			print("Save new LUMPE PART constants into file: " + lumpedPartList[k].getName())
+			print("Saving new LUMPED PART " + lumpedPartList[k].getName())
 	
 			settings.beginGroup("LUMPEDPART-" + lumpedPartList[k].getName())
 			settings.setValue("params", json.dumps(lumpedPartList[k].params))
 			settings.endGroup()
+
+
+
+		#SAVE PRIORITY OBJECT LIST SETTINGS INTO FILE
+		settings.beginGroup("PRIORITYLIST-DefaultName")
+		priorityObjList = self.form.objectAssignmentPriorityTreeView.invisibleRootItem()
+
+		print("Priority list contains " + str(priorityObjList.childCount()) + " items.")
+		for k in range(priorityObjList.childCount()):
+			priorityObjName = priorityObjList.child(k).text(0)
+			priorityObjCategory = priorityObjList.child(k).data(0, QtCore.Qt.UserRole)
+			print("Saving new PRIORITY for " + priorityObjName + ", category " + priorityObjCategory)	
+			settings.setValue(priorityObjName + "_" + priorityObjCategory, str(k))
+		settings.endGroup()
 
 
 
@@ -1914,7 +2054,7 @@ class BoxTaskPanel:
 		print(settings.childGroups())
 		for settingsGroup in settings.childGroups():
 
-			#extract category nme from ini name
+			#extract category name from ini name
 			itemNameReg = re.search("-(.*)", settingsGroup)
 			itemName = itemNameReg.group(1)
 
@@ -2022,6 +2162,31 @@ class BoxTaskPanel:
 				categorySettings.name = itemName
 				categorySettings.params = json.loads(settings.value('params'))
 				settings.endGroup()
+
+			elif (re.compile("PRIORITYLIST").search(settingsGroup)):
+				print("PriorityList group settings found.")
+
+				#start reading priority objects configuration in ini file
+				settings.beginGroup(settingsGroup)
+
+				#add each priority item from ini file into GUI tree widget
+				topItemsList = [0 for i in range(len(settings.childKeys()))]
+				print("Priority list array initialized with size " +  str(len(topItemsList)))
+				for prioritySettingsKey in settings.childKeys():
+					prioritySettingsOrder = int(settings.value(prioritySettingsKey))
+					prioritySettingsName, prioritySettingsValue = prioritySettingsKey.split('_')
+					print("Priority list adding item " + prioritySettingsName + ", type " + prioritySettingsValue + ", order: " + str(prioritySettingsOrder))
+
+					#adding item into priority list
+					topItem = QtGui.QTreeWidgetItem([prioritySettingsName])
+					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsValue)
+					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsValue))
+					topItemsList[prioritySettingsOrder] = topItem
+
+				self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0,topItemsList)
+
+				settings.endGroup()
+				continue
 
 			else:
 				#if no item recognized then conitnue next run, at the end there is adding into object assignment tab

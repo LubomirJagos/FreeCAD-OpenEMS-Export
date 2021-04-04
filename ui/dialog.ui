@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="objectAssignmentTab">
     <attribute name="title">
@@ -33,14 +33,14 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>50</y>
+       <y>40</y>
        <width>281</width>
-       <height>401</height>
+       <height>411</height>
       </rect>
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">FreeCAD objects list</string>
       </property>
      </column>
     </widget>
@@ -79,29 +79,22 @@
        <height>441</height>
       </rect>
      </property>
+     <attribute name="headerVisible">
+      <bool>true</bool>
+     </attribute>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">OpenEMS Simulation Assignments</string>
       </property>
      </column>
-    </widget>
-    <widget class="QPlainTextEdit" name="objectAssignmentFilterLeft">
-     <property name="geometry">
-      <rect>
-       <x>60</x>
-       <y>10</y>
-       <width>161</width>
-       <height>31</height>
-      </rect>
-     </property>
     </widget>
     <widget class="QLabel" name="label_28">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>47</width>
-       <height>31</height>
+       <width>41</width>
+       <height>16</height>
       </rect>
      </property>
      <property name="text">
@@ -114,11 +107,78 @@
        <x>240</x>
        <y>10</y>
        <width>51</width>
-       <height>31</height>
+       <height>21</height>
       </rect>
      </property>
      <property name="text">
       <string>Filter</string>
+     </property>
+    </widget>
+    <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
+     <property name="geometry">
+      <rect>
+       <x>820</x>
+       <y>10</y>
+       <width>271</width>
+       <height>401</height>
+      </rect>
+     </property>
+     <attribute name="headerVisible">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string notr="true">Objects priority</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="autosetPrioritiesButton">
+     <property name="geometry">
+      <rect>
+       <x>980</x>
+       <y>420</y>
+       <width>111</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Autoset Priorities</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="moveupPriorityButton">
+     <property name="geometry">
+      <rect>
+       <x>820</x>
+       <y>420</y>
+       <width>61</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>up</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="movedownPriorityButton">
+     <property name="geometry">
+      <rect>
+       <x>880</x>
+       <y>420</y>
+       <width>61</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>down</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="objectAssignmentFilterLeft">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>10</y>
+       <width>191</width>
+       <height>21</height>
+      </rect>
      </property>
     </widget>
    </widget>
@@ -137,7 +197,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">Grid Settings List</string>
       </property>
      </column>
     </widget>
@@ -438,7 +498,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">Material Settings List</string>
       </property>
      </column>
     </widget>
@@ -587,7 +647,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">Excitation Settings List</string>
       </property>
      </column>
     </widget>
@@ -790,7 +850,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">Port Settings List</string>
       </property>
      </column>
     </widget>
@@ -1014,7 +1074,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string notr="true">LumpedPart Settings List</string>
       </property>
      </column>
     </widget>
@@ -1280,6 +1340,24 @@
     <attribute name="title">
      <string>Postprocessing</string>
     </attribute>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>551</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>This panel not implemented yet. This is just placeholder.</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QPushButton" name="generateOpenEMSScriptButton">
