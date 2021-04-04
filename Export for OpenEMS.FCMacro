@@ -1831,6 +1831,11 @@ class BoxTaskPanel:
 
 	def gridTreeWidgetItemChanged(self, current, previous):
 		print("Grid item changed.")
+
+		#if last item was erased from port list do nothing
+		if not self.form.gridSettingsTreeView.currentItem():
+			return
+
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.gridSettingsNameInput.setText(currSetting.name)
 
@@ -1864,6 +1869,11 @@ class BoxTaskPanel:
 
 	def excitationTreeWidgetItemChanged(self, current, previous):
 		print("Excitation item changed.")
+
+		#if last item was erased from port list do nothing
+		if not self.form.excitationSettingsTreeView.currentItem():
+			return
+
 		currSetting = self.form.excitationSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.excitationSettingsNameInput.setText(currSetting.name)
 		if (currSetting.type == "sinusodial"):
@@ -1943,6 +1953,11 @@ class BoxTaskPanel:
 
 	def lumpedPartTreeWidgetItemChanged(self, current, previous):
 		print("Lumped part item changed.")
+
+		#if last item was erased from port list do nothing
+		if not self.form.lumpedPartTreeView.currentItem():
+			return
+
 		currSetting = self.form.lumpedPartTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.lumpedPartSettingsNameInput.setText(currSetting.name)
 
@@ -2268,13 +2283,13 @@ class BoxTaskPanel:
 				print("Priority list array initialized with size " +  str(len(topItemsList)))
 				for prioritySettingsKey in settings.childKeys():
 					prioritySettingsOrder = int(settings.value(prioritySettingsKey))
-					prioritySettingsName, prioritySettingsValue = prioritySettingsKey.split('_')
-					print("Priority list adding item " + prioritySettingsName + ", type " + prioritySettingsValue + ", order: " + str(prioritySettingsOrder))
+					prioritySettingsType = prioritySettingsKey.split(", ")
+					print("Priority list adding item " + prioritySettingsKey)
 
 					#adding item into priority list
-					topItem = QtGui.QTreeWidgetItem([prioritySettingsName])
-					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsValue)
-					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsValue))
+					topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
+					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
+					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
 					topItemsList[prioritySettingsOrder] = topItem
 
 				self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0,topItemsList)
