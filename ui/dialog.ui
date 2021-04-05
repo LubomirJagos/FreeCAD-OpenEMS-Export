@@ -80,7 +80,7 @@
       </rect>
      </property>
      <attribute name="headerVisible">
-      <bool>false</bool>
+      <bool>true</bool>
      </attribute>
      <column>
       <property name="text">
@@ -124,7 +124,7 @@
       </rect>
      </property>
      <attribute name="headerVisible">
-      <bool>false</bool>
+      <bool>true</bool>
      </attribute>
      <column>
       <property name="text">
@@ -1369,9 +1369,9 @@
   <widget class="QPushButton" name="generateOpenEMSScriptButton">
    <property name="geometry">
     <rect>
-     <x>920</x>
+     <x>700</x>
      <y>570</y>
-     <width>211</width>
+     <width>210</width>
      <height>41</height>
     </rect>
    </property>
@@ -1385,9 +1385,9 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>720</x>
+     <x>500</x>
      <y>570</y>
-     <width>191</width>
+     <width>190</width>
      <height>41</height>
     </rect>
    </property>
@@ -1409,6 +1409,19 @@
    </property>
    <property name="text">
     <string>Load Current ettings</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="generateOpenEMSShowResultScriptButton">
+   <property name="geometry">
+    <rect>
+     <x>920</x>
+     <y>570</y>
+     <width>211</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Generate OpenEMS Show Result Script</string>
    </property>
   </widget>
  </widget>

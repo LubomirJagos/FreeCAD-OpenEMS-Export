@@ -395,6 +395,11 @@ class BoxTaskPanel:
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
+		# Clicked on "Generate OpenEMS Script"
+		#		
+		self.form.generateOpenEMSShowResultScriptButton.clicked.connect(self.generateOpenEMSShowResultScriptButtonClicked)
+
+		#
 		# Clicked on "Autoset priorities"
 		#		
 		self.form.autosetPrioritiesButton.clicked.connect(self.autosetPrioritiesButtonClicked)
@@ -1283,6 +1288,15 @@ class BoxTaskPanel:
 
 		return
 
+	#
+	#	POSTPORCESSING Script Generation Part
+	#
+	def generateOpenEMSShowResultScriptButtonClicked(self):
+		#
+		#	...code to display simulation result generation...
+		#
+		self.displayMessage("generateOpenEMSShowResultScriptButtonClicked() response message, placeholder")
+
 	def show(self):
 		self.form.show()
 
@@ -2117,14 +2131,13 @@ class BoxTaskPanel:
 
 		#SAVE PRIORITY OBJECT LIST SETTINGS INTO FILE
 		settings.beginGroup("PRIORITYLIST-DefaultName")
-		priorityObjList = self.form.objectAssignmentPriorityTreeView.invisibleRootItem()
+		priorityObjList = self.form.objectAssignmentPriorityTreeView
 
-		print("Priority list contains " + str(priorityObjList.childCount()) + " items.")
-		for k in range(priorityObjList.childCount()):
-			priorityObjName = priorityObjList.child(k).text(0)
-			priorityObjCategory = priorityObjList.child(k).data(0, QtCore.Qt.UserRole)
-			print("Saving new PRIORITY for " + priorityObjName + ", category " + priorityObjCategory)	
-			settings.setValue(priorityObjName + "_" + priorityObjCategory, str(k))
+		print("Priority list contains " + str(priorityObjList.topLevelItemCount()) + " items.")
+		for k in range(priorityObjList.topLevelItemCount()):
+			priorityObjName = priorityObjList.topLevelItem(k).text(0)
+			print("Saving new PRIORITY for " + priorityObjName)	
+			settings.setValue(priorityObjName, str(k))
 		settings.endGroup()
 
 
