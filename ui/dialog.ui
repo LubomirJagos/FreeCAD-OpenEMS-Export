@@ -1346,22 +1346,56 @@
     <attribute name="title">
      <string>Postprocessing</string>
     </attribute>
-    <widget class="QLabel" name="label">
+    <widget class="QPushButton" name="abortSimulationButton">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>551</width>
+       <width>131</width>
        <height>31</height>
       </rect>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>16</pointsize>
-      </font>
+     <property name="text">
+      <string>ABORT simulation</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="drawS11Button">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
      </property>
      <property name="text">
-      <string>This panel not implemented yet. This is just placeholder.</string>
+      <string>Draw S11</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="drawS21Button">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>90</y>
+       <width>131</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Draw S21</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="generateJustPreviewCheckbox">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>10</y>
+       <width>261</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Generate just simulation preview</string>
      </property>
     </widget>
    </widget>
