@@ -476,7 +476,27 @@ class BoxTaskPanel:
 		f.close()
 
 	def drawS11ButtonClicked(self):
-		genScript = """%% postprocessing & do the plots
+		genScript = ""
+		
+		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+		if len(excitationCategory) >= 0:
+			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
+			item = excitationCategory[0].child(0)
+			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
+
+			if (currSetting.getType() == 'sinusodial'):
+				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				pass
+			elif (currSetting.getType() == 'gaussian'):
+				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				pass
+			elif (currSetting.getType() == 'custom'):
+				genScript += "%custom\n"
+				pass
+			pass
+
+		genScript += """%% postprocessing & do the plots
 freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
 U = ReadUI( {'port_ut1','et'}, 'tmp/', freq ); % time domain/freq domain voltage
 I = ReadUI( 'port_it1', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
