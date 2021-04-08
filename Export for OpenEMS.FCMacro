@@ -60,6 +60,11 @@ class OpenEMS:
 			itemList.append(item.data(0, QtCore.Qt.UserRole))
 		return itemList
 
+	def selectObjectByLabel(self, objLabel):
+		freecadObj = FreeCAD.ActiveDocument.getObjectsByLabel(objLabel)
+		if (freecadObj):
+			FreeCADGui.Selection.addSelection('Planar_Filter_1',freecadObj[0].Name,'')
+
 # parent class for following settings items, it contains all function common for all classes
 #
 class SettingsItem:
@@ -351,6 +356,11 @@ class BoxTaskPanel:
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
 
 		#########################################################################################################
+		#	RIGHT COLUMN
+		#########################################################################################################
+		self.form.objectAssignmentRightTreeWidget.itemSelectionChanged.connect(self.objectAssignmentRightTreeWidgetItemSelectionChanged)
+
+		#########################################################################################################
 		#	Left Column FreeCAD objects added in list
 		#########################################################################################################
 
@@ -436,6 +446,13 @@ class BoxTaskPanel:
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
+
+	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
+		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
+		print(currItemLabel)
+		if (currItemLabel):
+			FreeCADGui.Selection.clearSelection()
+			self.openEMSObj.selectObjectByLabel(currItemLabel)
 
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
