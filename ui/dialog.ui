@@ -184,6 +184,19 @@
       </rect>
      </property>
     </widget>
+    <widget class="QPushButton" name="eraseAuxGridButton">
+     <property name="geometry">
+      <rect>
+       <x>420</x>
+       <y>460</y>
+       <width>91</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Erase aux Grid</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="gridSettingsTab">
     <attribute name="title">
@@ -1426,7 +1439,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Save Current ettings</string>
+    <string>Save Current Settings</string>
    </property>
   </widget>
   <widget class="QPushButton" name="loadCurrentSettingsButton">
@@ -1442,7 +1455,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Load Current ettings</string>
+    <string>Load Current Settings</string>
    </property>
   </widget>
   <widget class="QPushButton" name="generateOpenEMSShowResultScriptButton">

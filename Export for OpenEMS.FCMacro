@@ -2,7 +2,9 @@ from PySide import QtGui, QtCore
 import FreeCAD,FreeCADGui,Part, os
 import re
 import Mesh
+import Draft
 import random
+import numpy as np
 
 from PySide.QtCore import QSettings
 import json
@@ -64,6 +66,23 @@ class OpenEMS:
 		freecadObj = FreeCAD.ActiveDocument.getObjectsByLabel(objLabel)
 		if (freecadObj):
 			FreeCADGui.Selection.addSelection('Planar_Filter_1',freecadObj[0].Name,'')
+
+	#
+	#	Draw line in Draft mode, this will be to show grid when going through object assigned to grid.
+	#		p1Array - line start point
+	#		p2Array - line end point
+	#		rotation hardwires now pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
+	#
+	def drawDraftLine(self, lineName, p1Array, p2Array):
+		pl = FreeCAD.Placement()
+		pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
+		pl.Base = FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2])
+		points = [FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2])]
+		line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None)
+		line.Label = lineName		#set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
+		Draft.autogroup(line)
+		FreeCAD.ActiveDocument.recompute()
+		#Gui.runCommand('Std_ActivateNextWindow',0)
 
 # parent class for following settings items, it contains all function common for all classes
 #
@@ -359,7 +378,8 @@ class BoxTaskPanel:
 		#	RIGHT COLUMN
 		#########################################################################################################
 		self.form.objectAssignmentRightTreeWidget.itemSelectionChanged.connect(self.objectAssignmentRightTreeWidgetItemSelectionChanged)
-
+		self.form.objectAssignmentRightTreeWidget.itemDoubleClicked.connect(self.objectAssignmentRightTreeWidgetItemDoubleClicked)
+ 
 		#########################################################################################################
 		#	Left Column FreeCAD objects added in list
 		#########################################################################################################
@@ -417,6 +437,11 @@ class BoxTaskPanel:
 		self.form.movedownPriorityButton.clicked.connect(self.movedownPriorityButtonClicked)
 
 		#
+		# Clicked on "Erase aux Grid"
+		#		
+		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)
+
+		#
 		# Clicked on "ABORT Simulation"
 		#		
 		self.form.abortSimulationButton.clicked.connect(self.abortSimulationButtonClicked)
@@ -447,6 +472,15 @@ class BoxTaskPanel:
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
 
+	def eraseAuxGridButtonClicked(self):
+		print("--> Start removing auxiliary gridlines from 3D view.")
+		auxGridLines = FreeCAD.ActiveDocument.Objects
+		for gridLine in auxGridLines:
+			print("--> Removing " + gridLine.Label + " from 3D view.")
+			if "auxGridLine" in gridLine.Label:
+				FreeCAD.ActiveDocument.removeObject(gridLine.Name)
+		print("--> End removing auxiliary gridlines from 3D view.")
+
 	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
 		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
 		print(currItemLabel)
@@ -454,9 +488,89 @@ class BoxTaskPanel:
 			FreeCADGui.Selection.clearSelection()
 			self.openEMSObj.selectObjectByLabel(currItemLabel)
 
+	def objectAssignmentRightTreeWidgetItemDoubleClicked(self):
+		#
+		#	Drawing auxiliary object grid for meshing.
+		#
+		#		example how to draw line for gird: self.openEMSObj.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
+		currSetting = self.form.objectAssignmentRightTreeWidget.currentItem().data(0, QtCore.Qt.UserRole)
+		genScript = ""
+
+		#	must be selected freecad object which is child of grid item which gridlines will be draw
+		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(self.form.objectAssignmentRightTreeWidget.currentItem().text(0))
+		if ("FreeCADSettingItem" in currSetting.type ):
+			if ("GridSettingsItem" in self.form.objectAssignmentRightTreeWidget.currentItem().parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
+				currSetting = self.form.objectAssignmentRightTreeWidget.currentItem().parent().data(0, QtCore.Qt.UserRole)
+			else:
+				return
+
+		bbCoords = gridObj[0].Shape.BoundBox
+		offsetX = 0	#units: mm
+		offsetY = 0
+		offsetZ = 0
+
+		if (currSetting.getType() == 'Fixed Distance'):
+
+			zAuxGridCoordList = []
+			if (currSetting.zenabled):
+				if int(currSetting.getXYZ()['z']) != 0:
+					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+					for zGridLine in zlines:
+						zAuxGridCoordList.append(zGridLine)
+			if len(zAuxGridCoordList) == 0:
+				zAuxGridCoordList.append(bbCoords.ZMax)
+
+			for zAuxGridCoord in zAuxGridCoordList:
+				#DRAW X LINES auxiliary grid in 3D view
+				if (currSetting.xenabled):
+					if int(currSetting.getXYZ()['x']) !=  0:
+						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+						for xGridLine in xlines:
+							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, -100, zAuxGridCoord], [xGridLine, 100, zAuxGridCoord])
+	
+				#DRAW Y LINES auxiliary grid in 3D view
+				if (currSetting.yenabled):
+					if int(currSetting.getXYZ()['y']) != 0:
+						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+						for yGridLine in ylines:
+							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+							self.openEMSObj.drawDraftLine("auxGridLine", [-100, yGridLine, zAuxGridCoord], [100, yGridLine, zAuxGridCoord])
+
+		elif (currSetting.getType() == 'Fixed Count'):
+			zAuxGridCoordList = []
+			if (currSetting.zenabled):
+				if int(currSetting.getXYZ()['z']) != 0:
+					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+					for zGridLine in zlines:
+						zAuxGridCoordList.append(zGridLine)
+			if len(zAuxGridCoordList) == 0:
+				zAuxGridCoordList.append(bbCoords.ZMax)
+
+			for zAuxGridCoord in zAuxGridCoordList:
+				#DRAW X LINES auxiliary grid in 3D view
+				if (currSetting.xenabled):
+					xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))
+					for xGridLine in xlines:
+						#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+						self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, -100, zAuxGridCoord], [xGridLine, 100, zAuxGridCoord])
+	
+				#DRAW Y LINES auxiliary grid in 3D view
+				if (currSetting.yenabled):
+					ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))
+					for yGridLine in ylines:
+						#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+						self.openEMSObj.drawDraftLine("auxGridLine", [-100, yGridLine, zAuxGridCoord], [100, yGridLine, zAuxGridCoord])
+
+		elif (currSetting.getType() == 'User Defined'):
+			#UNIT FOR MESH										
+			genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+			genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+		print("---> Aux grid drawing finished. \n" + genScript)
+
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
-		openEMSObj = OpenEMS()
+		openEMSObj = OpenEMS()									# <------------------- openEMS object initialization
 
 		items = openEMSObj.getOpenEMSObjects(filterStr)
 		treeItems = []
