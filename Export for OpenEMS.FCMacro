@@ -460,6 +460,11 @@ class BoxTaskPanel:
 		self.form.displaySimulationModelButton.clicked.connect(self.displaySimulationModelButtonClicked)
 
 		#
+		# Clicked on "Run Simulation"
+		#		
+		self.form.runSimulationButton.clicked.connect(self.runSimulationButtonClicked)
+
+		#
 		# Clicked Grid buttons "Display gridlines....", "Create userdef..."
 		#		
 		self.form.createUserdefGridLinesFromCurrentButton.clicked.connect(self.createUserdefGridLinesFromCurrentButtonClicked)
@@ -544,6 +549,20 @@ class BoxTaskPanel:
 		# run octave script using command shell
 		cmdToRun = 'octave "' + fileName + '"'
 		print('Running command: ' + cmdToRun)
+		result = os.system(cmdToRun)
+		print(result)
+
+	#
+	#	Run current model openEMS Simulation Script
+	#
+	def runSimulationButtonClicked(self):
+		currDir, nameBase = self.getCurrDir()
+		fileName = nameBase + "_openEMS.m"
+
+		# run octave script using command shell
+		cmdToRun = 'octave "' + fileName + '"'
+		print('Running command: ' + cmdToRun)
+		os.chdir(currDir)
 		result = os.system(cmdToRun)
 		print(result)
 
@@ -756,6 +775,8 @@ xlabel( 'frequency f / MHz' );
 ylabel( 'reflection coefficient |S_{11}|' );
 
 P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
+
+pause
 """
 	
 		#
@@ -767,6 +788,12 @@ P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
 		f.write(genScript)
 		f.close()
 		print('Draw result from simulation file written into: ' + fileName)
+
+		# run octave script using command shell
+		cmdToRun = 'octave -q --persist "' + fileName + '"'
+		print('Running command: ' + cmdToRun)
+		result = os.system(cmdToRun)
+		print(result)
 
 	def drawS21ButtonClicked(self):
 		self.displayMessage("Draw S21 placeholder")
@@ -1058,6 +1085,7 @@ P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
 		genScript += "use_pml = 0;         % use pml boundaries instead of mur\n"
 		genScript += "\n"
 		genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
+		genScript += "display(currDir);\n"
 		genScript += "\n"
 		genScript += "%LuboJ, JUST TO SEE RESULT\n"
 

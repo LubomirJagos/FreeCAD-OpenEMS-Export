@@ -1481,6 +1481,19 @@
       <string>Display Simulation Model</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="runSimulationButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>151</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Run Simulation</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QPushButton" name="generateOpenEMSScriptButton">
