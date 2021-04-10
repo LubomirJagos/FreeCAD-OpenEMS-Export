@@ -5,6 +5,7 @@ import Mesh
 import Draft
 import random
 import numpy as np
+import collections
 
 from PySide.QtCore import QSettings
 import json
@@ -73,13 +74,14 @@ class OpenEMS:
 	#		p2Array - line end point
 	#		rotation hardwires now pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
 	#
-	def drawDraftLine(self, lineName, p1Array, p2Array):
+	def drawDraftLine(self, lineName, p1Array, p2Array, gridLineStyle = "Solid"):
 		pl = FreeCAD.Placement()
 		pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
 		pl.Base = FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2])
 		points = [FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2])]
 		line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None)
 		line.Label = lineName		#set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
+		FreeCADGui.ActiveDocument.getObject(line.Name).DrawStyle = gridLineStyle		
 		Draft.autogroup(line)
 		FreeCAD.ActiveDocument.recompute()
 		#Gui.runCommand('Std_ActivateNextWindow',0)
@@ -442,15 +444,26 @@ class BoxTaskPanel:
 		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)
 
 		#
-		# Clicked on "ABORT Simulation"
+		# Clicked on "Write ABORT Simulation File"
 		#		
 		self.form.abortSimulationButton.clicked.connect(self.abortSimulationButtonClicked)
 
 		#
-		# Clicked on "Draw Sxx"
+		# Clicked on "Write Draw Sxx Script"
 		#		
 		self.form.drawS11Button.clicked.connect(self.drawS11ButtonClicked)
 		self.form.drawS21Button.clicked.connect(self.drawS21ButtonClicked)
+
+		#
+		# Clicked on "Write Draw Sxx Script"
+		#		
+		self.form.displaySimulationModelButton.clicked.connect(self.displaySimulationModelButtonClicked)
+
+		#
+		# Clicked Grid buttons "Display gridlines....", "Create userdef..."
+		#		
+		self.form.createUserdefGridLinesFromCurrentButton.clicked.connect(self.createUserdefGridLinesFromCurrentButtonClicked)
+		self.form.displayGridLinesInModelButton.clicked.connect(self.displayGridLinesInModelButtonClicked)
 
 		#
 		# Material, Grid, Excitation, ... item changed handler functions.
@@ -481,6 +494,59 @@ class BoxTaskPanel:
 				FreeCAD.ActiveDocument.removeObject(gridLine.Name)
 		print("--> End removing auxiliary gridlines from 3D view.")
 
+	def createUserdefGridLinesFromCurrentButtonClicked(self):
+		"""
+		print("--> Start creating user defined grid from 3D model.")
+		allObjects = FreeCAD.ActiveDocument.Objects
+		gridLineListX = []
+		gridLineListY = []
+		gridLineListZ = []
+		for gridLine in allObjects:
+			if "auxGridLine" in gridLine.Label:
+				gridLineDirection = abs(gridLine.End - gridLine.Start)
+				if (gridLineDirection[0] > 0):
+					gridLineListX.append(gridLine)
+		
+
+		print("Discovered " + str(len(gridLineList)) + " gridlines in model.")
+		print("--> End creating user defined grid from 3D model.")
+		"""
+		self.displayMessage("createUserdefGridLinesFromCurrentButtonClicked")
+
+	def displayGridLinesInModelButtonClicked(self):
+		gridCategory = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchFixedString)[0]
+		for gridItemIndex in range(gridCategory.childCount()):
+			for objIndex in range(gridCategory.child(gridItemIndex).childCount()):
+				currItem = gridCategory.child(gridItemIndex).child(objIndex)
+				print(currItem.text(0))
+				self.objectDrawGrid(currItem)
+
+	#
+	#	Generate Octave script which run openEMS AppCSXCAD to explore model, this is done using octave because path to openEMS folder should be known to octave
+	#
+	def displaySimulationModelButtonClicked(self):
+		runCmd = ""
+		runCmd += "modelFile = ['\"' '" + os.path.splitext(os.path.dirname(App.ActiveDocument.FileName))[0] + "/tmp/' '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml' '\"'];\n"
+		runCmd += 'runFile  = [dir_in_loadpath("openEMS/matlab","all"){1} "/../AppCSXCAD.exe " modelFile];'
+		runCmd += "\n";
+		runCmd += 'runFile = strrep(runFile, "/", filesep());'
+		runCmd += "\n";
+		runCmd += 'system(runFile);'
+		runCmd += "\n";
+
+		# store octave script to drive
+		currDir, nameBase = self.getCurrDir()
+		fileName = nameBase + "_runCmd_AppCSXCAD.m"
+		f = open(fileName, "w")
+		f.write(runCmd)
+		f.close()
+
+		# run octave script using command shell
+		cmdToRun = 'octave "' + fileName + '"'
+		print('Running command: ' + cmdToRun)
+		result = os.system(cmdToRun)
+		print(result)
+
 	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
 		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
 		print(currItemLabel)
@@ -488,19 +554,27 @@ class BoxTaskPanel:
 			FreeCADGui.Selection.clearSelection()
 			self.openEMSObj.selectObjectByLabel(currItemLabel)
 
+	#
+	#	Handler for DOUBLE CLICK on grid item in object assignment list
+	#
 	def objectAssignmentRightTreeWidgetItemDoubleClicked(self):
+		currItem = self.form.objectAssignmentRightTreeWidget.currentItem()
+		self.objectDrawGrid(currItem)
+
+	def objectDrawGrid(self, currItem):
 		#
 		#	Drawing auxiliary object grid for meshing.
 		#
 		#		example how to draw line for gird: self.openEMSObj.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
-		currSetting = self.form.objectAssignmentRightTreeWidget.currentItem().data(0, QtCore.Qt.UserRole)
+
+		currSetting = currItem.data(0, QtCore.Qt.UserRole)
 		genScript = ""
 
 		#	must be selected freecad object which is child of grid item which gridlines will be draw
-		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(self.form.objectAssignmentRightTreeWidget.currentItem().text(0))
+		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(currItem.text(0))
 		if ("FreeCADSettingItem" in currSetting.type ):
-			if ("GridSettingsItem" in self.form.objectAssignmentRightTreeWidget.currentItem().parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
-				currSetting = self.form.objectAssignmentRightTreeWidget.currentItem().parent().data(0, QtCore.Qt.UserRole)
+			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
+				currSetting = currItem.parent().data(0, QtCore.Qt.UserRole)
 			else:
 				return
 
@@ -508,6 +582,12 @@ class BoxTaskPanel:
 		offsetX = 0	#units: mm
 		offsetY = 0
 		offsetZ = 0
+
+		currGridAxis = self.form.auxGridAxis.currentText().lower()
+		print("Aux grid axis: " + currGridAxis)
+		axisList = collections.deque(['x', 'y', 'z'])
+		while axisList[0] != currGridAxis:
+			axisList.rotate()
 
 		if (currSetting.getType() == 'Fixed Distance'):
 

@@ -197,6 +197,44 @@
       <string>Erase aux Grid</string>
      </property>
     </widget>
+    <widget class="QComboBox" name="auxGridAxis">
+     <property name="geometry">
+      <rect>
+       <x>703</x>
+       <y>460</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>z</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>x</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label">
+     <property name="geometry">
+      <rect>
+       <x>586</x>
+       <y>460</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Auxiliar Grid Axis</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="gridSettingsTab">
     <attribute name="title">
@@ -379,13 +417,13 @@
     </widget>
     <widget class="QPushButton" name="displayGridLinesInModelButton">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>300</x>
-       <y>420</y>
-       <width>161</width>
+       <x>770</x>
+       <y>40</y>
+       <width>211</width>
        <height>31</height>
       </rect>
      </property>
@@ -399,9 +437,9 @@
     <widget class="QLabel" name="label_6">
      <property name="geometry">
       <rect>
-       <x>300</x>
-       <y>400</y>
-       <width>441</width>
+       <x>770</x>
+       <y>10</y>
+       <width>161</width>
        <height>20</height>
       </rect>
      </property>
@@ -499,6 +537,25 @@
      </property>
      <property name="text">
       <string>Rewrite</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="createUserdefGridLinesFromCurrentButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>770</x>
+       <y>80</y>
+       <width>211</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Create Userdef Grid Lines From Current</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </widget>
@@ -1364,12 +1421,12 @@
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>131</width>
+       <width>151</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
-      <string>ABORT simulation</string>
+      <string>Write ABORT simulation File</string>
      </property>
     </widget>
     <widget class="QPushButton" name="drawS11Button">
@@ -1377,12 +1434,12 @@
       <rect>
        <x>10</x>
        <y>50</y>
-       <width>131</width>
+       <width>151</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
-      <string>Draw S11</string>
+      <string>Write Draw S11 Script</string>
      </property>
     </widget>
     <widget class="QPushButton" name="drawS21Button">
@@ -1390,12 +1447,12 @@
       <rect>
        <x>10</x>
        <y>90</y>
-       <width>131</width>
+       <width>151</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
-      <string>Draw S21</string>
+      <string>Write Draw S21 Script</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="generateJustPreviewCheckbox">
@@ -1409,6 +1466,19 @@
      </property>
      <property name="text">
       <string>Generate just simulation preview</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="displaySimulationModelButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>130</y>
+       <width>151</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Display Simulation Model</string>
      </property>
     </widget>
    </widget>
