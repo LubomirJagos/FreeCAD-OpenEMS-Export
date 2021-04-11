@@ -796,7 +796,162 @@ pause
 		print(result)
 
 	def drawS21ButtonClicked(self):
-		self.displayMessage("Draw S21 placeholder")
+		genScript = ""
+		genScript += """close all
+clear
+clc
+
+Sim_Path = "tmp";
+CSX = InitCSX();
+
+"""
+		
+		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+		if len(excitationCategory) >= 0:
+			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
+			item = excitationCategory[0].child(0)
+			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
+
+			if (currSetting.getType() == 'sinusodial'):
+				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				pass
+			elif (currSetting.getType() == 'gaussian'):
+				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				pass
+			elif (currSetting.getType() == 'custom'):
+				genScript += "%custom\n"
+				pass
+			pass
+
+
+
+
+
+		genScriptPortCount = 1
+		allItems = []
+		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		for k in range(childCount):
+			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
+
+		for m in range(len(allItems)):
+			currItem = allItems[m]
+
+			for k in range(currItem.childCount()):
+				item = currItem.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				if (itemData):
+					if (itemData.__class__.__name__ is "PortSettingsItem"):
+						print("Port Settings detected")
+						currSetting = item.data(0, QtCore.Qt.UserRole)
+						print("#")
+						print("#PORT")
+						print("#name: " + currSetting.getName())
+						print("#type: " + currSetting.getType())
+
+						objs = FreeCAD.ActiveDocument.Objects
+						for k in range(item.childCount()):
+							childName = item.child(k).text(0)
+			
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+			
+							print("##Children:")
+							print("\t" + childName)
+							freecadObjects = [i for i in objs if (i.Label) == childName] 
+			
+							#print(freecadObjects)
+							for obj in freecadObjects:
+								#BOUNDING BOX
+								bbCoords = obj.Shape.BoundBox
+			
+								#PLACEMENT BOX
+								print(obj.Placement)
+								#print(dir(obj.Placement.Rotation.Axis))
+								axisX = obj.Placement.Rotation.Axis.x
+								axisY = obj.Placement.Rotation.Axis.y
+								axisZ = obj.Placement.Rotation.Axis.z
+			
+								#
+								#	getting item priority
+								#
+								priorityItemName = item.parent().text(0) + ", " + item.text(0)+ ", " + childName
+								priorityIndex = self.getItemPriority(priorityItemName)
+			
+								#
+								# PORT openEMS GENERATION INTO VARIABLE
+								#
+								if (currSetting.getType() == 'lumped'):
+									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portR = ' + str(currSetting.R) + ';\n'
+									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+			
+									genScript_isActive = ""
+									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+										genScript_isActive = " , true"
+			
+									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+			
+									genScriptPortCount += 1
+								elif (currSetting.getType() == 'microstrip'):
+									genScript += "%% AddMSLPort(CSX, " + str(priorityIndex) + " ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
+								elif (currSetting.getType() == 'circular waveguide'):
+									genScript += "%% circular port openEMS code should be here\n"
+								elif (currSetting.getType() == 'rectangular waveguide'):
+									genScript += "%% rectangular port openEMS code should be here\n"
+								elif (currSetting.getType() == 'et dump'):
+									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								elif (currSetting.getType() == 'ht dump'):
+									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								else:
+									genScript += '% Unknown port type. Nothing was generated. \n'
+
+
+
+
+
+
+		genScript += """%% postprocessing & do the plots
+freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
+
+port = calcPort( port, Sim_Path, freq);
+ 
+s11 = port{1}.uf.ref./ port{1}.uf.inc;
+s21 = port{2}.uf.ref./ port{1}.uf.inc;
+ 
+plot(freq/1e9,20*log10(abs(s11)),'k-','LineWidth',2);
+hold on;
+grid on;
+plot(freq/1e9,20*log10(abs(s21)),'r--','LineWidth',2);
+legend('S_{11}','S_{21}');
+ylabel('S-Parameter (dB)','FontSize',12);
+xlabel('frequency (GHz) \\rightarrow','FontSize',12);
+ylim([-40 2]);
+"""
+		#
+		# WRITE OpenEMS Script file into current dir
+		#
+		currDir, nameBase = self.getCurrDir()
+		fileName = nameBase + "_draw_S21.m"
+		f = open(fileName, "w")
+		f.write(genScript)
+		f.close()
+		print('Draw result from simulation file written into: ' + fileName)
+
+		# run octave script using command shell
+		cmdToRun = 'octave -q --persist "' + fileName + '"'
+		print('Running command: ' + cmdToRun)
+		result = os.system(cmdToRun)
+		print(result)
 
 	def materialUserDeinedRadioButtonToggled(self):
 		if (self.form.materialUserDefinedRadioButton.isChecked()):
@@ -1163,7 +1318,7 @@ pause
 				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
 				if (currSetting.getType() == 'sinusodial'):
-					genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+					genScript += "fc = " + str(currSetting.sinusodial['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
 					pass
 				elif (currSetting.getType() == 'gaussian'):
