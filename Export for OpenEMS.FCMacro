@@ -2065,6 +2065,10 @@ pause
 		portItem = PortSettingsItem()
 		portItem.name = name
 
+		portItem.R = self.form.portResistanceInput.value()
+		portItem.RUnits = self.form.portResistanceUnitsInput.currentText()
+		portItem.isActive = self.form.portActive.isChecked()
+
 		if (self.form.lumpedPortRadioButton.isChecked()):
 			portItem.type = "lumped"
 		if (self.form.microstripPortRadioButton.isChecked()):
@@ -2315,7 +2319,7 @@ pause
 		else:
 			pass #no gui update
 
-		self.form.portActive.setChecked(currSetting.isActive in ('true', 'True', '1', 'yes'))	#convert value from INI file to bool
+		self.form.portActive.setChecked(currSetting.isActive in ('true', 'True', '1', 'yes', True))	#convert value from INI file to bool
 
 		return
 
