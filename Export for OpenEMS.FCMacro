@@ -1540,9 +1540,12 @@ ylim([-40 2]);
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
-										genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
-										genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
-										genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+										if (currSetting.xenabled):
+											genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+										if (currSetting.yenabled):
+											genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+										if (currSetting.zenabled):
+											genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
