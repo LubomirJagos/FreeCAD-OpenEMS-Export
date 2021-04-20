@@ -479,6 +479,15 @@ class BoxTaskPanel:
 		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)	
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 
+
+		#PORT tab settings events handlers
+		self.form.lumpedPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.microstripPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.circularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.rectangularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.etDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.htDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+
 		####################################################################################################
 		# GUI SAVE/LOAD from file
 		####################################################################################################
@@ -1348,6 +1357,12 @@ ylim([-40 2]);
 		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
 
+		#
+		# DEFUALT MATERIAL definitions
+		#
+		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
+		genScript += "`\n"
+
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
 		genScriptPortCount = 1
 
@@ -1420,13 +1435,28 @@ ylim([-40 2]);
 
 									genScript_isActive = ""
 									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
-										genScript_isActive = " , true"
+										genScript_isActive = ", true"
 
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
 
 									genScriptPortCount += 1
 								elif (currSetting.getType() == 'microstrip'):
-									genScript += "%% AddMSLPort(CSX, " + str(priorityIndex) + " ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
+									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+
+									genScript_isActive = ""
+									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+										genScript_isActive = ", 'ExcitePort', true"
+
+									genScript_R = ""
+									if (currSetting.R > 0):
+										genScript_R = ", 'Feed_R', " + str(currSettings.R)
+
+									genScript += "AddMSLPort(CSX, " + str(priorityIndex) + " ," + str(genScriptPortCount) + " , 'PEC'," + portStart + ", " + portStop + ", portDirection" + genScript_isActive + genScript_R + ");\n"
+
+									genScriptPortCount += 1
 								elif (currSetting.getType() == 'circular waveguide'):
 									genScript += "%% circular port openEMS code should be here\n"
 								elif (currSetting.getType() == 'rectangular waveguide'):
@@ -2044,6 +2074,9 @@ ylim([-40 2]);
 			gridItem.userDefined = gridUserDefined
 
 		gridItem.units = self.form.gridUnitsInput.currentText()
+		gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
+		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
+
 		return gridItem
 
 	def gridSettingsAddButtonClicked(self):		
@@ -2231,8 +2264,13 @@ ylim([-40 2]);
 			portItem.type = "lumped"
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
+
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
+			portItem.modeName = self.form.portWaveguideModeName.currentText()
+			portItem.polarizationAngle = self.form.portWaveguidePolarizationAngle.currentText()
+			portItem.excitationAmplitude = self.form.portWaveguideExcitationAmplitude.value()
+
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
 		if (self.form.etDumpPortRadioButton.isChecked()):
@@ -2271,6 +2309,11 @@ ylim([-40 2]);
 
 		return
 
+	def portSettingsTypeChoosed(self):
+		if (self.form.circularWaveguidePortRadioButton.isChecked()):
+			self.form.waveguideSettingsGroup.setEnabled(True)
+		else:
+			self.form.waveguideSettingsGroup.setEnabled(False)
 
 	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _                 
 	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
@@ -2399,6 +2442,9 @@ ylim([-40 2]);
 		self.form.gridYEnable.setChecked(currSetting.yenabled in ('true', 'True', '1', 'yes', True))
 		self.form.gridZEnable.setChecked(currSetting.zenabled in ('true', 'True', '1', 'yes', True))
 
+		self.form.gridGenerateLinesInsideCheckbox.setChecked(currSetting.generateLinesInside in ('true', 'True', '1', 'yes', True))
+		self.form.gridTopPriorityLinesCheckbox.setChecked(currSetting.topPriorityLines in ('true', 'True', '1', 'yes', True))
+
 		return
 
 	def excitationTreeWidgetItemChanged(self, current, previous):
@@ -2460,6 +2506,19 @@ ylim([-40 2]);
 			pass
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()
+
+			#set mode, e.g. TE11, TM21, ...
+			index = self.form.portWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.portWaveguideModeName.setCurrentIndex(index)
+
+			#set polarization angle
+			index = self.form.portWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.portWaveguidePolarizationAngle.setCurrentIndex(index)
+
+			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
+
 			pass
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
@@ -2572,6 +2631,8 @@ ylim([-40 2]);
 			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
 			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
 			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
+			settings.setValue("generateLinesInside", json.dumps(gridList[k].generateLinesInside))
+			settings.setValue("topPriorityLines", json.dumps(gridList[k].topPriorityLines))
 			settings.endGroup()
 
 		#SAVE EXCITATION INTO FILE
@@ -2597,6 +2658,12 @@ ylim([-40 2]);
 			settings.setValue("R", portList[k].R)
 			settings.setValue("RUnits", portList[k].RUnits)
 			settings.setValue("isActive", portList[k].isActive)
+
+			if (portList[k].type == "circular waveguide"):
+				settings.setValue("modeName", portList[k].modeName)
+				settings.setValue("polarizationAngle", portList[k].polarizationAngle)
+				settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+
 			settings.endGroup()
 
 		#SIMULATION PARAMS SAVE INTO FILE
@@ -2729,6 +2796,8 @@ ylim([-40 2]);
 				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
 				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
 				categorySettings.userDefined = json.loads(settings.value('userDefined'))
+				categorySettings.generateLinesInside = settings.value('generateLinesInside')
+				categorySettings.topPriorityLines = settings.value('topPriorityLines')
 				settings.endGroup()
 
 			elif (re.compile("PORT").search(settingsGroup)):
@@ -2740,6 +2809,12 @@ ylim([-40 2]);
 				categorySettings.R = settings.value('R')
 				categorySettings.RUnits = settings.value('RUnits')
 				categorySettings.isActive = settings.value('isActive')
+
+				if (categorySettings.type == "circular waveguide"):
+					categorySettings.modeName = settings.value('modeName')
+					categorySettings.polarizationAngle = settings.value('polarizationAngle')
+					categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+
 				settings.endGroup()
 
 			elif (re.compile("MATERIAL").search(settingsGroup)):

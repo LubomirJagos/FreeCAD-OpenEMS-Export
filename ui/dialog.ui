@@ -261,15 +261,46 @@
        <x>300</x>
        <y>100</y>
        <width>441</width>
-       <height>161</height>
+       <height>131</height>
       </rect>
      </property>
      <property name="title">
       <string>Grid settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="gridXEnable">
+        <property name="text">
+         <string>X</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="gridYEnable">
+        <property name="text">
+         <string>Y</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="fixedDistanceRadioButton">
+        <property name="text">
+         <string>Fixed distance</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
         <property name="maximum">
          <double>1000000000000.000000000000000</double>
         </property>
@@ -282,17 +313,24 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
         <property name="maximum">
          <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="gridXEnable">
+      <item row="0" column="3">
+       <widget class="QCheckBox" name="gridZEnable">
         <property name="text">
-         <string>X</string>
+         <string>Z</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -317,44 +355,6 @@
         </property>
         <property name="checked">
          <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QCheckBox" name="gridZEnable">
-        <property name="text">
-         <string>Z</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="gridYEnable">
-        <property name="text">
-         <string>Y</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QRadioButton" name="fixedDistanceRadioButton">
-        <property name="text">
-         <string>Fixed distance</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -393,7 +393,7 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>280</y>
+       <y>340</y>
        <width>441</width>
        <height>111</height>
       </rect>
@@ -406,7 +406,7 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>260</y>
+       <y>320</y>
        <width>441</width>
        <height>20</height>
       </rect>
@@ -557,6 +557,45 @@
      <property name="checkable">
       <bool>false</bool>
      </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>300</x>
+       <y>240</y>
+       <width>441</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Special Grid Settings</string>
+     </property>
+     <widget class="QCheckBox" name="gridGenerateLinesInsideCheckbox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>211</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string> generate gridlines inside object</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="gridTopPriorityLinesCheckbox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>211</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>top priority, remove overlapping lines</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="materialSettingsTab">
@@ -731,9 +770,9 @@
      <property name="geometry">
       <rect>
        <x>300</x>
-       <y>70</y>
+       <y>100</y>
        <width>441</width>
-       <height>281</height>
+       <height>211</height>
       </rect>
      </property>
      <property name="title">
@@ -754,10 +793,10 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
+      <item row="4" column="1">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>User Defined Function e(t)</string>
         </property>
        </widget>
       </item>
@@ -777,13 +816,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>f0</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="1">
        <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
         <property name="maximum">
@@ -791,10 +823,20 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
-       <widget class="QLabel" name="label_11">
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="customExcitationTextInput"/>
+      </item>
+      <item row="5" column="0">
+       <widget class="QRadioButton" name="customExcitationRadioButton">
         <property name="text">
-         <string>User Defined Function e(t)</string>
+         <string>Custom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>f0</string>
         </property>
        </widget>
       </item>
@@ -815,47 +857,10 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="2">
-       <widget class="QLabel" name="label_15">
-        <property name="text">
-         <string>units</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="2">
-       <widget class="QComboBox" name="excitationUnitsNumberInput">
-        <property name="currentText">
-         <string>Hz</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>Hz</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>kHz</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MHz</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>GHz</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QLineEdit" name="customExcitationTextInput"/>
-      </item>
-      <item row="5" column="0">
-       <widget class="QRadioButton" name="customExcitationRadioButton">
-        <property name="text">
-         <string>Custom</string>
+      <item row="3" column="2">
+       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
+        <property name="maximum">
+         <double>1000000000000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -910,6 +915,52 @@
       </rect>
      </property>
     </widget>
+    <widget class="QComboBox" name="excitationUnitsNumberInput">
+     <property name="geometry">
+      <rect>
+       <x>682</x>
+       <y>70</y>
+       <width>61</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>Hz</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>Hz</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>kHz</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>MHz</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>GHz</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="label_15">
+     <property name="geometry">
+      <rect>
+       <x>630</x>
+       <y>70</y>
+       <width>41</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>units</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="portSettingsTab">
     <attribute name="title">
@@ -960,8 +1011,8 @@
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>150</y>
-       <width>431</width>
+       <y>190</y>
+       <width>171</width>
        <height>241</height>
       </rect>
      </property>
@@ -1039,87 +1090,246 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_27">
+    <widget class="QGroupBox" name="waveguideSettingsGroup">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>190</y>
+       <width>221</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Waveguide Settings</string>
+     </property>
+     <widget class="QComboBox" name="portWaveguidePolarizationAngle">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>50</y>
+        <width>74</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>pi/2</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QComboBox" name="portWaveguideModeName">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>20</y>
+        <width>74</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>TE11</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>TM21</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Polarization angle</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Excitation amplitude</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Mode Name</string>
+      </property>
+     </widget>
+     <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>80</y>
+        <width>71</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_7">
      <property name="geometry">
       <rect>
        <x>310</x>
        <y>70</y>
-       <width>151</width>
-       <height>21</height>
+       <width>291</width>
+       <height>111</height>
       </rect>
      </property>
-     <property name="text">
-      <string>Port Resistance</string>
+     <property name="title">
+      <string>General Settings</string>
      </property>
-    </widget>
-    <widget class="QDoubleSpinBox" name="portResistanceInput">
-     <property name="geometry">
-      <rect>
-       <x>581</x>
-       <y>70</y>
-       <width>81</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="maximum">
-      <double>10000000000.000000000000000</double>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="portResistanceUnitsInput">
-     <property name="geometry">
-      <rect>
-       <x>670</x>
-       <y>70</y>
-       <width>75</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="currentText">
-      <string>uOhm</string>
-     </property>
-     <item>
-      <property name="text">
-       <string>uOhm</string>
+     <widget class="QComboBox" name="portResistanceUnitsInput">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>20</y>
+        <width>75</width>
+        <height>21</height>
+       </rect>
       </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>mOhm</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
+      <property name="currentText">
        <string>Ohm</string>
       </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>kOhm</string>
+      <item>
+       <property name="text">
+        <string>Ohm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>uOhm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>mOhm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>kOhm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>MOhm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>GOhm</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_27">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
       </property>
-     </item>
-     <item>
       <property name="text">
-       <string>MOhm</string>
+       <string>Port Resistance</string>
       </property>
-     </item>
-     <item>
+     </widget>
+     <widget class="QDoubleSpinBox" name="portResistanceInput">
+      <property name="geometry">
+       <rect>
+        <x>111</x>
+        <y>20</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="maximum">
+       <double>10000000000.000000000000000</double>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="portDirectionInput">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>50</y>
+        <width>61</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="currentText">
+       <string>z</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>z</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>x</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>y</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label_29">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
       <property name="text">
-       <string>GOhm</string>
+       <string>Port Direction</string>
       </property>
-     </item>
-    </widget>
-    <widget class="QCheckBox" name="portActive">
-     <property name="geometry">
-      <rect>
-       <x>580</x>
-       <y>120</y>
-       <width>101</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>port is active</string>
-     </property>
+     </widget>
+     <widget class="QCheckBox" name="portActive">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>101</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>port is active</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab">
