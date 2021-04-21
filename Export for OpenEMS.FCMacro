@@ -465,10 +465,15 @@ class BoxTaskPanel:
 		self.form.runSimulationButton.clicked.connect(self.runSimulationButtonClicked)
 
 		#
-		# Clicked Grid buttons "Display gridlines....", "Create userdef..."
+		# GRID
+		#	- button "Display gridlines...."
+		#	- button "Create userdef..."
+		#	- select rectangular or cylindrical grid
 		#		
 		self.form.createUserdefGridLinesFromCurrentButton.clicked.connect(self.createUserdefGridLinesFromCurrentButtonClicked)
 		self.form.displayGridLinesInModelButton.clicked.connect(self.displayGridLinesInModelButtonClicked)
+		self.form.gridRectangularRadio.toggled.connect(self.gridCoordsTypeChoosed)
+		self.form.gridCylindricalRadio.toggled.connect(self.gridCoordsTypeChoosed)
 
 		#
 		# Material, Grid, Excitation, ... item changed handler functions.
@@ -850,7 +855,7 @@ CSX = InitCSX();
 				item = currItem.child(k)
 				itemData = item.data(0, QtCore.Qt.UserRole)
 				if (itemData):
-					if (itemData.__class__.__name__ is "PortSettingsItem"):
+					if (itemData.__class__.__name__ == "PortSettingsItem"):
 						print("Port Settings detected")
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
@@ -1059,6 +1064,21 @@ ylim([-40 2]);
 					print(itemData.serializeToString())
 
 		return
+
+	#
+	#	Get COORDINATION TPYE
+	#		this function traverse priority tree view and return coordination type of the most high item
+	#
+	#	returns string coords type
+	#
+	def getModelCoordsType(self):
+		for k in range(self.form.objectAssignmentPriorityTreeView.topLevelItemCount()):
+			priorityObjNameSplitted = self.form.objectAssignmentPriorityTreeView.topLevelItem(k).text(0).split(',')
+			if (priorityObjNameSplitted[0].strip() == "Grid"):
+				gridCategoryItem = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchFixedString)
+				gridObj = [gridCategoryItem[0].child(x) for x in range(gridCategoryItem[0].childCount()) if gridCategoryItem[0].child(x).text(0) == priorityObjNameSplitted[1].strip()]
+				return gridObj[0].data(0, QtCore.Qt.UserRole).coordsType
+		return ""
 
 	def getCurrDir(self):
 		programname = os.path.basename(App.ActiveDocument.FileName)
@@ -1287,7 +1307,7 @@ ylim([-40 2]);
 
 		#default structure for mesh
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% MESH\n"
+		genScript += "% MESH variable init\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		genScript += "mesh.x = [];\n"
 		genScript += "mesh.y = [];\n"
@@ -1354,14 +1374,35 @@ ylim([-40 2]);
 		genScript += "end\n"
 		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
 		genScript += "\n"
-		genScript += "CSX = InitCSX();\n"
+
+
+
+
+		#
+		# COORDINATION SYSTEM
+		#
+		gridCoordsType = self.getModelCoordsType()
+		if (gridCoordsType == "rectangular"):
+			genScript += "CSX = InitCSX();\n"
+		elif (gridCoordsType == "cylindrical"):
+			genScript += "CSX = InitCSX('CoordSystem',1);\n"
+		else:
+			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOW"				
+
 		genScript += "\n"
+
+
+
 
 		#
 		# DEFUALT MATERIAL definitions
 		#
 		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
-		genScript += "`\n"
+		genScript += "\n"
+
+
+
+
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
 		genScriptPortCount = 1
@@ -1385,7 +1426,7 @@ ylim([-40 2]);
 					#                                 __/ |                                                               
 					#                                |___/                                                                
 					#
-					if (itemData.__class__.__name__ is "PortSettingsItem"):
+					if (itemData.__class__.__name__ == "PortSettingsItem"):
 						print("Port Settings detected")
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
@@ -1485,7 +1526,7 @@ ylim([-40 2]);
 					#                                __/ |                                                               
 					#                               |___/                                                                
 					#
-					elif (itemData.__class__.__name__ is "GridSettingsItem"):
+					elif (itemData.__class__.__name__ == "GridSettingsItem"):
 						print("Grid Settings detected")
 						currentObjects = App.ActiveDocument.Objects						
 						if (str(item.parent().text(0)) == "Grid"):
@@ -1518,7 +1559,7 @@ ylim([-40 2]);
 							#item = current GRID ITEM
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
-								print("##Children:")
+								print("##GRID item children:")
 								print("\t" + childName)
 								freecadObjects = [i for i in objs if (i.Label) == childName] 
 
@@ -1531,7 +1572,10 @@ ylim([-40 2]);
 									#print('\t--> y: ' + str(obj.Placement.Base.y))
 									#print('\t--> z: ' + str(obj.Placement.Base.z))
 
-									#BOUNDING BOX
+									#BOUNDING BOX, if object has none then this iteration is skipped and going for next object
+									if (not "Shape" in dir(obj)):
+										continue
+
 									bbCoords = obj.Shape.BoundBox
 									#print(type(bbCoords))
 									#print(str(dir(bbCoords)))
@@ -1619,7 +1663,7 @@ ylim([-40 2]);
 					# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
 					#                                                              __/ |                                                               
 					#                                                             |___/                                                               					#                                                                                                                                                                                                                                         
-					elif (itemData.__class__.__name__ is "MaterialSettingsItem"):
+					elif (itemData.__class__.__name__ == "MaterialSettingsItem"):
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print(currSetting)
 						if (currSetting.getName() != 'Material Default'):
@@ -1696,7 +1740,7 @@ ylim([-40 2]);
 					#                                                                         __/ | |         
 					#                                                                        |___/|_|        
 					#
-					elif (itemData.__class__.__name__ is "FreeCADSettingsItem"):
+					elif (itemData.__class__.__name__ == "FreeCADSettingsItem"):
 						print("FreeCAD Settings detected")
 
 						#
@@ -1732,7 +1776,7 @@ ylim([-40 2]);
 					# | |___| |__| | |  | | |    | |____| |__| | | |  / ____ \| | \ \  | |   
 					# |______\____/|_|  |_|_|    |______|_____/  |_| /_/    \_\_|  \_\ |_|   
 					#                                                                        
-					elif (itemData.__class__.__name__ is "LumpedPartSettingsItem"):
+					elif (itemData.__class__.__name__ == "LumpedPartSettingsItem"):
 						print("LumpedPart Settings detected")
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 						genScript += "% LUMPED PART " + currSetting.getName() + "\n"
@@ -1841,7 +1885,7 @@ ylim([-40 2]);
 		self.form.show()
 
 	#
-	#	Button >> to assign object from FreeCAD to OpenEMS solver structure
+	#	Button << to assign object from FreeCAD to OpenEMS solver structure
 	#
 	def onMoveLeft(self):
 		print("Button << clicked.")
@@ -1869,7 +1913,7 @@ ylim([-40 2]);
 		return
 
 	#
-	#	Button << to remove object assignment
+	#	Button >> to remove object assignment
 	#
 	def onMoveRight(self):
 		print("Button >> clicked.")
@@ -1904,33 +1948,31 @@ ylim([-40 2]);
 			#	GRID ITEMS have no priority so when item is grid type next steps are skipped
 			#
 			###################################################
+			"""
 			if (reResult.group(1).lower() == 'grid'):
 				print("Move >> clicked, gird item detected skipping part to add items into priority list")
 				return
+			"""
 
 			#
 			# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
 			#
 			addItemToPriorityList = True
 
-			newAddedItemName = leftItem2.text(0)
-			leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.parent().text(0))
+			newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
+			leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.data(0, QtCore.Qt.UserRole))
 	
 			#
 			#	Check if item is already in priority list, must be in same category as material, port or so to be not added due it will be duplicate
 			#
-			priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName,  QtCore.Qt.MatchFixedString)
-			for priorityItem in priorityListItems:
-				priorityItemCategory = priorityItem.data(0, QtCore.Qt.UserRole)
-				if priorityItemCategory in rightItem.parent().text(0):
-					addItemToPriorityList = False
-				
+			priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
+			addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
 			
 			if addItemToPriorityList:
 				#	Item is gonna be added into list:
 				#		1. copy icon of object category in right list to know what is added (PORT, MATERIAL, Excitation, ...)
 				#		2. add item into priority list with according icon and category				
-				leftItem2.setText(0, rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0))
+				leftItem2.setText(0, newAddedItemName)
 				self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
 				leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
 				print("Object " + leftItem2.text(0)+ " added into priority list")
@@ -2039,6 +2081,11 @@ ylim([-40 2]);
 		gridItem.yenabled = yenabled
 		gridItem.zenabled = zenabled
 
+		if (self.form.gridRectangularRadio.isChecked()):
+			gridItem.coordsType = "rectangular"
+		if (self.form.gridCylindricalRadio.isChecked()):
+			gridItem.coordsType = "cylindrical"
+
 		if (self.form.fixedCountRadioButton.isChecked()):
 			gridType = "Fixed Count"
 			gridX = self.form.fixedCountXNumberInput.value()
@@ -2103,7 +2150,16 @@ ylim([-40 2]);
 				gridGroupItem = item
 		print("Currently removing port item: " + gridGroupItem.text(0))
 
-		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
+		###
+		#	Removing from Priority List
+		###
+		priorityName = gridGroupItem.parent().text(0) + ", " + gridGroupItem.text(0);
+		self.removePriorityName(priorityName)
+
+		###
+		#	Removing from Assigned Object
+		###
+		self.form.gridSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		gridGroupItem.parent().removeChild(gridGroupItem)
 
 		return
@@ -2119,6 +2175,24 @@ ylim([-40 2]);
 		for item in gridGroupWidgetItems:
 			if (item.parent().text(0) == "Grid"):
 				item.setData(0, QtCore.Qt.UserRole, gridSetting)
+
+	def gridCoordsTypeChoosed(self):
+		if (self.form.gridRectangularRadio.isChecked()):
+			self.form.gridUnitsInput.clear()
+			self.form.gridUnitsInput.addItem("mm")
+			self.form.gridUnitsInput.addItem("m")
+			self.form.gridUnitsInput.addItem("cm")
+			self.form.gridUnitsInput.addItem("nm")
+			self.form.gridUnitsInput.addItem("pm")
+			self.form.gridXEnable.setText("X")
+			self.form.gridYEnable.setText("Y")
+
+		if (self.form.gridCylindricalRadio.isChecked()):
+			self.form.gridUnitsInput.clear()
+			self.form.gridUnitsInput.addItem("rad")
+			self.form.gridUnitsInput.addItem("deg")
+			self.form.gridXEnable.setText("r")
+			self.form.gridYEnable.setText("a")
 
 	#
 	# MATERIAL SETTINGS
@@ -2420,6 +2494,11 @@ ylim([-40 2]);
 		if index >= 0:
 			self.form.gridUnitsInput.setCurrentIndex(index)
 
+		if (currSetting.coordsType == "rectangular"):
+			self.form.gridRectangularRadio.click()
+		if (currSetting.coordsType == "cylindrical"):
+			self.form.gridCylindricalRadio.click()
+
 		if (currSetting.type == "Fixed Distance"):
 			self.form.fixedDistanceRadioButton.click()
 			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
@@ -2623,6 +2702,7 @@ ylim([-40 2]);
 			print("Save new GRID constants into file: " + gridList[k].getName())
 	
 			settings.beginGroup("GRID-" + gridList[k].getName())
+			settings.setValue("coordsType", gridList[k].coordsType)
 			settings.setValue("type", gridList[k].type)
 			settings.setValue("units", gridList[k].units)
 			settings.setValue("xenabled", gridList[k].xenabled)
@@ -2631,8 +2711,8 @@ ylim([-40 2]);
 			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
 			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
 			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
-			settings.setValue("generateLinesInside", json.dumps(gridList[k].generateLinesInside))
-			settings.setValue("topPriorityLines", json.dumps(gridList[k].topPriorityLines))
+			settings.setValue("generateLinesInside", gridList[k].generateLinesInside)
+			settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
 			settings.endGroup()
 
 		#SAVE EXCITATION INTO FILE
@@ -2788,6 +2868,7 @@ ylim([-40 2]);
 				settings.beginGroup(settingsGroup)
 				categorySettings = GridSettingsItem()
 				categorySettings.name = itemName
+				categorySettings.coordsType = settings.value('coordsType')
 				categorySettings.type = settings.value('type')
 				categorySettings.xenabled = settings.value('xenabled')
 				categorySettings.yenabled = settings.value('yenabled')
