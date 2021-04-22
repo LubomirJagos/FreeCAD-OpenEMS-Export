@@ -6,1806 +6,2465 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1143</width>
-    <height>650</height>
+    <width>1130</width>
+    <height>722</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+    <horstretch>72</horstretch>
+    <verstretch>70</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1130</width>
+    <height>600</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>FreeCAD to OpenEMS Export Plugin</string>
   </property>
-  <widget class="QTabWidget" name="lumpedPartTabWidget">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>1111</width>
-     <height>551</height>
-    </rect>
+  <layout class="QGridLayout" name="gridLayout_6">
+   <property name="bottomMargin">
+    <number>10</number>
    </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <widget class="QWidget" name="objectAssignmentTab">
-    <attribute name="title">
-     <string>Object Assignments</string>
-    </attribute>
-    <widget class="QTreeWidget" name="objectAssignmentLeftTreeWidget">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>281</width>
-       <height>411</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">FreeCAD objects list</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QPushButton" name="moveRightButton">
-     <property name="geometry">
-      <rect>
-       <x>320</x>
-       <y>210</y>
-       <width>80</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>&gt;&gt;</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="moveLeftButton">
-     <property name="geometry">
-      <rect>
-       <x>320</x>
-       <y>240</y>
-       <width>80</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>&lt;&lt;</string>
-     </property>
-    </widget>
-    <widget class="QTreeWidget" name="objectAssignmentRightTreeWidget">
-     <property name="geometry">
-      <rect>
-       <x>420</x>
-       <y>10</y>
-       <width>331</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <attribute name="headerVisible">
-      <bool>true</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string notr="true">OpenEMS Simulation Assignments</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QLabel" name="label_28">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>41</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Filter</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="objectAssignmentFilterLeftButton">
-     <property name="geometry">
-      <rect>
-       <x>240</x>
-       <y>10</y>
-       <width>51</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Filter</string>
-     </property>
-    </widget>
-    <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
-     <property name="geometry">
-      <rect>
-       <x>820</x>
-       <y>10</y>
-       <width>271</width>
-       <height>401</height>
-      </rect>
-     </property>
-     <attribute name="headerVisible">
-      <bool>true</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string notr="true">Objects priority</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QPushButton" name="autosetPrioritiesButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>980</x>
-       <y>420</y>
-       <width>111</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Autoset Priorities</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="moveupPriorityButton">
-     <property name="geometry">
-      <rect>
-       <x>820</x>
-       <y>420</y>
-       <width>61</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>up</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="movedownPriorityButton">
-     <property name="geometry">
-      <rect>
-       <x>880</x>
-       <y>420</y>
-       <width>61</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>down</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="objectAssignmentFilterLeft">
-     <property name="geometry">
-      <rect>
-       <x>40</x>
-       <y>10</y>
-       <width>191</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="eraseAuxGridButton">
-     <property name="geometry">
-      <rect>
-       <x>420</x>
-       <y>460</y>
-       <width>91</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Erase aux Grid</string>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="auxGridAxis">
-     <property name="geometry">
-      <rect>
-       <x>703</x>
-       <y>460</y>
-       <width>51</width>
-       <height>22</height>
-      </rect>
-     </property>
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <property name="text">
-       <string>z</string>
-      </property>
+      <widget class="QTabWidget" name="openEMSTab">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="objectAssignmentTab">
+        <attribute name="title">
+         <string>Object Assignments</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="spacing">
+          <number>5</number>
+         </property>
+         <property name="leftMargin">
+          <number>10</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>10</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="label_28">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>50</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="objectAssignmentFilterLeft">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="objectAssignmentFilterLeftButton">
+                 <property name="text">
+                  <string>Filter</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="objectAssignmentLeftTreeWidget">
+               <column>
+                <property name="text">
+                 <string notr="true">FreeCAD objects list</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="moveRightButton">
+             <property name="font">
+              <font>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>&gt;&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="moveLeftButton">
+             <property name="text">
+              <string>&lt;&lt;</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="objectAssignmentRightTreeWidget">
+             <attribute name="headerVisible">
+              <bool>true</bool>
+             </attribute>
+             <column>
+              <property name="text">
+               <string notr="true">OpenEMS Simulation Assignments</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="eraseAuxGridButton">
+               <property name="text">
+                <string>Erase aux Grid</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Auxiliar Grid Axis</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="auxGridAxis">
+               <item>
+                <property name="text">
+                 <string>z</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>x</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>y</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
+             <attribute name="headerVisible">
+              <bool>true</bool>
+             </attribute>
+             <column>
+              <property name="text">
+               <string notr="true">Objects priority</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="moveupPriorityButton">
+               <property name="text">
+                <string>up</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="movedownPriorityButton">
+               <property name="text">
+                <string>down</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="autosetPrioritiesButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Autoset Priorities</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="gridSettingsTab">
+        <attribute name="title">
+         <string>Grid Settings</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="leftMargin">
+          <number>10</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>10</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="gridSettingsTreeView">
+             <column>
+              <property name="text">
+               <string notr="true">Grid Settings List</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="gridSettingsAddButton">
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="gridSettingsRemoveButton">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="gridSettingsRewriteButton">
+               <property name="text">
+                <string>Rewrite</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>Grid Settings Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="gridSettingsNameInput"/>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_8">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>250</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>GroupBox</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="QRadioButton" name="gridRectangularRadio">
+                <property name="text">
+                 <string>Rectangular Grid</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="gridCylindricalRadio">
+                <property name="text">
+                 <string>Cylindrical Grid</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_24">
+                <property name="text">
+                 <string>Grid Units</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="gridUnitsInput">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="currentText">
+                 <string>mm</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>mm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>m</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>cm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>um</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>nm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>pm</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox">
+             <property name="title">
+              <string>Grid settings</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout">
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QCheckBox" name="gridXEnable">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QCheckBox" name="gridYEnable">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QRadioButton" name="fixedDistanceRadioButton">
+                <property name="text">
+                 <string>Fixed distance</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QCheckBox" name="gridZEnable">
+                <property name="text">
+                 <string>Z</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QRadioButton" name="userDefinedRadioButton">
+                <property name="text">
+                 <string>User defined</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QRadioButton" name="fixedCountRadioButton">
+                <property name="text">
+                 <string>Fixed count</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_6">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>70</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Special Grid Settings</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_20">
+              <item>
+               <widget class="QCheckBox" name="gridGenerateLinesInsideCheckbox">
+                <property name="text">
+                 <string> generate gridlines inside object</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="gridTopPriorityLinesCheckbox">
+                <property name="text">
+                 <string>top priority, remove overlapping lines</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>User defined grid lines</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="tabChangesFocus">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Additional functions</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="createUserdefGridLinesFromCurrentButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Create Userdef Grid Lines From Current</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="displayGridLinesInModelButton">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Display grid lines in model</string>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="materialSettingsTab">
+        <attribute name="title">
+         <string>Material Settings</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="materialSettingsTreeView">
+             <column>
+              <property name="text">
+               <string notr="true">Material Settings List</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_12">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="materialSettingsAddButton">
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="materialSettingsRemoveButton">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_6">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Material Settings Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="materialSettingsNameInput"/>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_2">
+             <property name="title">
+              <string>Material Settings</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_13">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QRadioButton" name="materialMetalRadioButton">
+                  <property name="text">
+                   <string>Metal</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="materialUserDefinedRadioButton">
+                  <property name="text">
+                   <string>UserDefined</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_7">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Epsilon</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>Mue</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Sigma</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
+                </item>
+                <item row="0" column="5">
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>Kappa</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="QDoubleSpinBox" name="materialSigmaNumberInput"/>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QDoubleSpinBox" name="materialMueNumberInput">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="5">
+                 <widget class="QDoubleSpinBox" name="materialKappaNumberInput">
+                  <property name="decimals">
+                   <number>9</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="excitationSettingsTab">
+        <attribute name="title">
+         <string>Excitation Settings</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="excitationSettingsTreeView">
+             <column>
+              <property name="text">
+               <string notr="true">Excitation Settings List</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_15">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="excitationSettingsAddButton">
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="excitationSettingsRemoveButton">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_8">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_18">
+             <property name="text">
+              <string>Ecitation Settings Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="excitationSettingsNameInput"/>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <spacer name="horizontalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_15">
+               <property name="text">
+                <string>units</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="excitationUnitsNumberInput">
+               <property name="currentText">
+                <string>Hz</string>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Hz</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>kHz</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>MHz</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>GHz</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="title">
+              <string>Excitation Settings</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_3">
+              <item row="2" column="1">
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>f0</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>User Defined Function e(t)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QLineEdit" name="customExcitationTextInput"/>
+              </item>
+              <item row="5" column="0">
+               <widget class="QRadioButton" name="customExcitationRadioButton">
+                <property name="text">
+                 <string>Custom</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>fc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QRadioButton" name="gaussianExcitationRadioButton">
+                <property name="text">
+                 <string>Gaussian</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="3">
+               <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="sinusodialExcitationFcNumberInput">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>fc</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
+                <property name="text">
+                 <string>Sinusodial</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <spacer name="horizontalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="portSettingsTab">
+        <attribute name="title">
+         <string>Port Settings</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_21">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_18">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="portSettingsTreeView">
+             <column>
+              <property name="text">
+               <string notr="true">Port Settings List</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_22">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="portSettingsAddButton">
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="portSettingsRemoveButton">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_16">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_19">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_19">
+             <property name="text">
+              <string>Port Settings Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="portSettingsNameInput"/>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>120</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>General Settings</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_8">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_27">
+                <property name="text">
+                 <string>Port Resistance</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="portResistanceInput">
+                <property name="maximum">
+                 <double>10000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QComboBox" name="portResistanceUnitsInput">
+                <property name="currentText">
+                 <string>Ohm</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Ohm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>uOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>GOhm</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_29">
+                <property name="text">
+                 <string>Port Direction</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="portDirectionInput">
+                <property name="currentText">
+                 <string>z</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>z</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>x</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>y</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="portActive">
+                <property name="text">
+                 <string>port is active</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_4">
+             <property name="title">
+              <string>Port Settings</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_4">
+              <item row="4" column="0">
+               <widget class="QRadioButton" name="etDumpPortRadioButton">
+                <property name="text">
+                 <string>Et Dump</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QRadioButton" name="lumpedPortRadioButton">
+                <property name="text">
+                 <string>Lumped</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QRadioButton" name="microstripPortRadioButton">
+                <property name="text">
+                 <string>Microstrip</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                <property name="text">
+                 <string>Rectangular Waveguide</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                <property name="text">
+                 <string>Circular Waveguide</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QRadioButton" name="htDumpPortRadioButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Ht Dump</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="waveguideSettingsGroup">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>120</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Waveguide Settings</string>
+             </property>
+             <widget class="QComboBox" name="portWaveguidePolarizationAngle">
+              <property name="geometry">
+               <rect>
+                <x>130</x>
+                <y>50</y>
+                <width>74</width>
+                <height>22</height>
+               </rect>
+              </property>
+              <item>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>pi/2</string>
+               </property>
+              </item>
+             </widget>
+             <widget class="QComboBox" name="portWaveguideModeName">
+              <property name="geometry">
+               <rect>
+                <x>130</x>
+                <y>20</y>
+                <width>74</width>
+                <height>22</height>
+               </rect>
+              </property>
+              <item>
+               <property name="text">
+                <string>TE11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>TM21</string>
+               </property>
+              </item>
+             </widget>
+             <widget class="QLabel" name="label_3">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>50</y>
+                <width>101</width>
+                <height>21</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Polarization angle</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_4">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>80</y>
+                <width>101</width>
+                <height>21</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Excitation amplitude</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_2">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>20</y>
+                <width>101</width>
+                <height>21</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Mode Name</string>
+              </property>
+             </widget>
+             <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude">
+              <property name="geometry">
+               <rect>
+                <x>130</x>
+                <y>80</y>
+                <width>71</width>
+                <height>22</height>
+               </rect>
+              </property>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_10">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="lumpedPartSettingsTab">
+        <attribute name="title">
+         <string>Lumped Part</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_19">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_16">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QTreeWidget" name="lumpedPartTreeView">
+             <column>
+              <property name="text">
+               <string notr="true">LumpedPart Settings List</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_20">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="lumpedPartSettingsAddButton">
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="lumpedPartSettingsRemoveButton">
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_13">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_17">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_26">
+             <property name="text">
+              <string>Lumped Part Settings Name</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lumpedPartSettingsNameInput"/>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_5">
+             <property name="title">
+              <string>Lumped Part Settings</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_5">
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="lumpedPartREnable">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>R</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="lumpedPartCEnable">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>C</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="lumpedPartCInput"/>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="lumpedPartRInput"/>
+              </item>
+              <item row="0" column="2">
+               <widget class="QComboBox" name="lumpedPartRUnits">
+                <item>
+                 <property name="text">
+                  <string>uOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Ohm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MOhm</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>GOhm</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QComboBox" name="lumpedPartLUnits">
+                <item>
+                 <property name="text">
+                  <string>pH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>nH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>uH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>H</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MH</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>GH</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="0" column="4">
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="2">
+               <widget class="QComboBox" name="lumpedPartCUnits">
+                <item>
+                 <property name="text">
+                  <string>pF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>nF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>uF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>F</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>MF</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>GF</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="lumpedPartLInput"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QCheckBox" name="lumpedPartLEnable">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>L</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <spacer name="horizontalSpacer_15">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_9">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="simulationParamsTab">
+        <attribute name="title">
+         <string>Simulation Params</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_18">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_23">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>120</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>max timesteps</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <spacer name="verticalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_25">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>min decrement</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="simParamsMaxTimesteps">
+             <property name="maximum">
+              <number>1000000000</number>
+             </property>
+             <property name="singleStep">
+              <number>1000</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="simParamsMinDecrement">
+             <property name="decimals">
+              <number>10</number>
+             </property>
+             <property name="maximum">
+              <double>10000000000.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <spacer name="horizontalSpacer_12">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="postprocessingTab">
+        <attribute name="title">
+         <string>Postprocessing</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_17">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_14">
+           <item>
+            <widget class="QPushButton" name="abortSimulationButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>160</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Write ABORT simulation File</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="displaySimulationModelButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>160</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Display Simulation Model</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="runSimulationButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>160</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Run Simulation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="drawS21Button">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>160</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Write Draw S21 Script</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="drawS11Button">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>160</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Write Draw S11 Script</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_6">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_15">
+           <property name="leftMargin">
+            <number>10</number>
+           </property>
+           <property name="topMargin">
+            <number>10</number>
+           </property>
+           <property name="rightMargin">
+            <number>10</number>
+           </property>
+           <property name="bottomMargin">
+            <number>10</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="generateJustPreviewCheckbox">
+             <property name="text">
+              <string>Generate just simulation preview</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_11">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>x</string>
-      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMinimumSize</enum>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="loadCurrentSettingsButton">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Load Current Settings</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="saveCurrentSettingsButton">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Save Current Settings</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="generateOpenEMSScriptButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>140</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Generate OpenEMS Script</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="generateOpenEMSShowResultScriptButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Generate OpenEMS Show Result Script</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
-     <item>
-      <property name="text">
-       <string>y</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label">
-     <property name="geometry">
-      <rect>
-       <x>586</x>
-       <y>460</y>
-       <width>101</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Auxiliar Grid Axis</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="gridSettingsTab">
-    <attribute name="title">
-     <string>Grid Settings</string>
-    </attribute>
-    <widget class="QTreeWidget" name="gridSettingsTreeView">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>281</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">Grid Settings List</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>110</y>
-       <width>441</width>
-       <height>151</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Grid settings</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="gridXEnable">
-        <property name="text">
-         <string>X</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="gridYEnable">
-        <property name="text">
-         <string>Y</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QRadioButton" name="fixedDistanceRadioButton">
-        <property name="text">
-         <string>Fixed distance</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QCheckBox" name="gridZEnable">
-        <property name="text">
-         <string>Z</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="userDefinedRadioButton">
-        <property name="text">
-         <string>User defined</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="fixedCountRadioButton">
-        <property name="text">
-         <string>Fixed count</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QPushButton" name="gridSettingsAddButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>+</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="gridSettingsRemoveButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>-</string>
-     </property>
-    </widget>
-    <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>360</y>
-       <width>441</width>
-       <height>91</height>
-      </rect>
-     </property>
-     <property name="tabChangesFocus">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_5">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>340</y>
-       <width>141</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>User defined grid lines</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="displayGridLinesInModelButton">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>770</x>
-       <y>40</y>
-       <width>211</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Display grid lines in model</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_6">
-     <property name="geometry">
-      <rect>
-       <x>770</x>
-       <y>10</y>
-       <width>161</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Additional functions</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="gridSettingsNameInput">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>30</y>
-       <width>441</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_16">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>10</y>
-       <width>151</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Grid Settings Name</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="gridSettingsRewriteButton">
-     <property name="geometry">
-      <rect>
-       <x>100</x>
-       <y>460</y>
-       <width>71</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Rewrite</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="createUserdefGridLinesFromCurrentButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>770</x>
-       <y>80</y>
-       <width>211</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Create Userdef Grid Lines From Current</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_6">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>270</y>
-       <width>441</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Special Grid Settings</string>
-     </property>
-     <widget class="QCheckBox" name="gridGenerateLinesInsideCheckbox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>211</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string> generate gridlines inside object</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="gridTopPriorityLinesCheckbox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>40</y>
-        <width>211</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>top priority, remove overlapping lines</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_8">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>50</y>
-       <width>441</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>GroupBox</string>
-     </property>
-     <widget class="QComboBox" name="gridUnitsInput">
-      <property name="geometry">
-       <rect>
-        <x>380</x>
-        <y>20</y>
-        <width>51</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="currentText">
-       <string>mm</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>mm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>m</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>cm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>um</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>nm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>pm</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QLabel" name="label_24">
-      <property name="geometry">
-       <rect>
-        <x>320</x>
-        <y>20</y>
-        <width>61</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Grid Units</string>
-      </property>
-     </widget>
-     <widget class="QRadioButton" name="gridRectangularRadio">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>111</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Rectangular Grid</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QRadioButton" name="gridCylindricalRadio">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>20</y>
-        <width>111</width>
-        <height>18</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Cylindrical Grid</string>
-      </property>
-     </widget>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="materialSettingsTab">
-    <attribute name="title">
-     <string>Material Settings</string>
-    </attribute>
-    <widget class="QTreeWidget" name="materialSettingsTreeView">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>281</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">Material Settings List</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_2">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>70</y>
-       <width>441</width>
-       <height>131</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Material Settings</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="1">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Mue</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Epsilon</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="materialMueNumberInput">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Kappa</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QDoubleSpinBox" name="materialSigmaNumberInput"/>
-      </item>
-      <item row="2" column="2">
-       <widget class="QDoubleSpinBox" name="materialKappaNumberInput">
-        <property name="decimals">
-         <number>9</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Sigma</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QRadioButton" name="materialMetalRadioButton">
-        <property name="text">
-         <string>Metal</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QRadioButton" name="materialUserDefinedRadioButton">
-        <property name="text">
-         <string>UserDefined</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QPushButton" name="materialSettingsRemoveButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>-</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="materialSettingsAddButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>+</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_17">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>10</y>
-       <width>151</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Material Settings Name</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="materialSettingsNameInput">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>40</y>
-       <width>441</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="excitationSettingsTab">
-    <attribute name="title">
-     <string>Excitation Settings</string>
-    </attribute>
-    <widget class="QTreeWidget" name="excitationSettingsTreeView">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>281</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">Excitation Settings List</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>100</y>
-       <width>441</width>
-       <height>211</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Excitation Settings</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_13">
-        <property name="text">
-         <string>fc</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="gaussianExcitationRadioButton">
-        <property name="text">
-         <string>Gaussian</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>User Defined Function e(t)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="sinusodialExcitationFcNumberInput">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QLineEdit" name="customExcitationTextInput"/>
-      </item>
-      <item row="5" column="0">
-       <widget class="QRadioButton" name="customExcitationRadioButton">
-        <property name="text">
-         <string>Custom</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>f0</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_14">
-        <property name="text">
-         <string>fc</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
-        <property name="text">
-         <string>Sinusodial</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
-        <property name="maximum">
-         <double>1000000000000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QPushButton" name="excitationSettingsAddButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>+</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="excitationSettingsRemoveButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>-</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_18">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>10</y>
-       <width>151</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Ecitation Settings Name</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="excitationSettingsNameInput">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>40</y>
-       <width>441</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QComboBox" name="excitationUnitsNumberInput">
-     <property name="geometry">
-      <rect>
-       <x>682</x>
-       <y>70</y>
-       <width>61</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="currentText">
-      <string>Hz</string>
-     </property>
-     <item>
-      <property name="text">
-       <string>Hz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>kHz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>MHz</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>GHz</string>
-      </property>
-     </item>
-    </widget>
-    <widget class="QLabel" name="label_15">
-     <property name="geometry">
-      <rect>
-       <x>630</x>
-       <y>70</y>
-       <width>41</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>units</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="portSettingsTab">
-    <attribute name="title">
-     <string>Port Settings</string>
-    </attribute>
-    <widget class="QTreeWidget" name="portSettingsTreeView">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>281</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">Port Settings List</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QPushButton" name="portSettingsAddButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>+</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="portSettingsRemoveButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>-</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_4">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>190</y>
-       <width>171</width>
-       <height>241</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Port Settings</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="4" column="0">
-       <widget class="QRadioButton" name="etDumpPortRadioButton">
-        <property name="text">
-         <string>Et Dump</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QRadioButton" name="lumpedPortRadioButton">
-        <property name="text">
-         <string>Lumped</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="microstripPortRadioButton">
-        <property name="text">
-         <string>Microstrip</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
-        <property name="text">
-         <string>Rectangular Waveguide</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-        <property name="text">
-         <string>Circular Waveguide</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QRadioButton" name="htDumpPortRadioButton">
-        <property name="text">
-         <string>Ht Dump</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QLabel" name="label_19">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>10</y>
-       <width>151</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Port Settings Name</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="portSettingsNameInput">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>40</y>
-       <width>431</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="waveguideSettingsGroup">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>490</x>
-       <y>190</y>
-       <width>221</width>
-       <height>111</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Waveguide Settings</string>
-     </property>
-     <widget class="QComboBox" name="portWaveguidePolarizationAngle">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>50</y>
-        <width>74</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>0</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>pi/2</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QComboBox" name="portWaveguideModeName">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>20</y>
-        <width>74</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>TE11</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>TM21</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QLabel" name="label_3">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>50</y>
-        <width>101</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Polarization angle</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_4">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>80</y>
-        <width>101</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Excitation amplitude</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_2">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>101</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Mode Name</string>
-      </property>
-     </widget>
-     <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>80</y>
-        <width>71</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_7">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>70</y>
-       <width>291</width>
-       <height>111</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>General Settings</string>
-     </property>
-     <widget class="QComboBox" name="portResistanceUnitsInput">
-      <property name="geometry">
-       <rect>
-        <x>200</x>
-        <y>20</y>
-        <width>75</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="currentText">
-       <string>Ohm</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>Ohm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>uOhm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>mOhm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>kOhm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>MOhm</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>GOhm</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QLabel" name="label_27">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>91</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Port Resistance</string>
-      </property>
-     </widget>
-     <widget class="QDoubleSpinBox" name="portResistanceInput">
-      <property name="geometry">
-       <rect>
-        <x>111</x>
-        <y>20</y>
-        <width>81</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="maximum">
-       <double>10000000000.000000000000000</double>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="portDirectionInput">
-      <property name="geometry">
-       <rect>
-        <x>110</x>
-        <y>50</y>
-        <width>61</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="currentText">
-       <string>z</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>z</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>x</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>y</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QLabel" name="label_29">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>50</y>
-        <width>91</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Port Direction</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="portActive">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>80</y>
-        <width>101</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>port is active</string>
-      </property>
-     </widget>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="tab">
-    <attribute name="title">
-     <string>Lumped Part</string>
-    </attribute>
-    <widget class="QLabel" name="label_26">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>10</y>
-       <width>151</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Lumped Part Settings Name</string>
-     </property>
-    </widget>
-    <widget class="QTreeWidget" name="lumpedPartTreeView">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>281</width>
-       <height>441</height>
-      </rect>
-     </property>
-     <column>
-      <property name="text">
-       <string notr="true">LumpedPart Settings List</string>
-      </property>
-     </column>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_5">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>70</y>
-       <width>261</width>
-       <height>131</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Lumped Part Settings</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_5">
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="lumpedPartREnable">
-        <property name="text">
-         <string>R</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="lumpedPartCEnable">
-        <property name="text">
-         <string>C</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="lumpedPartCInput"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="lumpedPartLInput"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="lumpedPartLEnable">
-        <property name="text">
-         <string>L</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="lumpedPartRInput"/>
-      </item>
-      <item row="0" column="2">
-       <widget class="QComboBox" name="lumpedPartRUnits">
-        <item>
-         <property name="text">
-          <string>uOhm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mOhm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Ohm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>kOhm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MOhm</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>GOhm</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QComboBox" name="lumpedPartLUnits">
-        <item>
-         <property name="text">
-          <string>pH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>nH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>uH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>H</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>kH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MH</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>GH</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QComboBox" name="lumpedPartCUnits">
-        <item>
-         <property name="text">
-          <string>pF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>nF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>uF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>mF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>F</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>kF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MF</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>GF</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QLineEdit" name="lumpedPartSettingsNameInput">
-     <property name="geometry">
-      <rect>
-       <x>310</x>
-       <y>40</y>
-       <width>431</width>
-       <height>21</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="lumpedPartSettingsAddButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>+</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="lumpedPartSettingsRemoveButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>460</y>
-       <width>31</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>-</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="simulationParamsTab">
-    <attribute name="title">
-     <string>Simulation Params</string>
-    </attribute>
-    <widget class="QWidget" name="formLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>160</y>
-       <width>411</width>
-       <height>81</height>
-      </rect>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_23">
-        <property name="text">
-         <string>max timesteps</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QSpinBox" name="simParamsMaxTimesteps">
-        <property name="maximum">
-         <number>1000000000</number>
-        </property>
-        <property name="singleStep">
-         <number>1000</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_25">
-        <property name="text">
-         <string>min decrement</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="simParamsMinDecrement">
-        <property name="decimals">
-         <number>10</number>
-        </property>
-        <property name="maximum">
-         <double>10000000000.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>1.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="postprocessingTab">
-    <attribute name="title">
-     <string>Postprocessing</string>
-    </attribute>
-    <widget class="QPushButton" name="abortSimulationButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Write ABORT simulation File</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="drawS11Button">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>50</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Write Draw S11 Script</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="drawS21Button">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>90</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Write Draw S21 Script</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="generateJustPreviewCheckbox">
-     <property name="geometry">
-      <rect>
-       <x>200</x>
-       <y>10</y>
-       <width>261</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Generate just simulation preview</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="displaySimulationModelButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>130</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Display Simulation Model</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="runSimulationButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>170</y>
-       <width>151</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Run Simulation</string>
-     </property>
-    </widget>
-   </widget>
-  </widget>
-  <widget class="QPushButton" name="generateOpenEMSScriptButton">
-   <property name="geometry">
-    <rect>
-     <x>700</x>
-     <y>570</y>
-     <width>210</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Generate OpenEMS Script</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="saveCurrentSettingsButton">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>500</x>
-     <y>570</y>
-     <width>190</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Save Current Settings</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="loadCurrentSettingsButton">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>570</y>
-     <width>211</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Load Current Settings</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="generateOpenEMSShowResultScriptButton">
-   <property name="geometry">
-    <rect>
-     <x>920</x>
-     <y>570</y>
-     <width>211</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Generate OpenEMS Show Result Script</string>
-   </property>
-  </widget>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>
