@@ -86,6 +86,50 @@ class OpenEMS:
 		FreeCAD.ActiveDocument.recompute()
 		#Gui.runCommand('Std_ActivateNextWindow',0)
 
+	#return x,y,z boundary box of model, going through all assigned objects into model and return boundary coordinates
+	def getModelBoundaryBox(self, treeWidget):
+		root = treeWidget.invisibleRootItem()
+		child_count = root.childCount()
+		itemList = []
+
+		#iterate over whole objects assignments treeview and get just material or grid freecad objects because they are just one which are meshed
+		for i in range(child_count):
+			if (root.child(i).text(0) == "Material" or root.child(i).text(0) == "Grid"):
+				child_count2 = root.child(i).childCount()
+				for j in range(child_count2):
+					child_count3 = root.child(i).child(j).childCount()
+					for k in range(child_count3):
+						print(root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName())
+						freeCadObjName = root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName()
+						freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(freeCadObjName)
+						itemList.append(freeCadObj)
+
+		#values initialization, for minimal values must have be init to big numbers to be sure they will be overwritten, for max values have to put ther small numbers to be sure to be overwritten
+		minX = 9999
+		minY = 9999
+		minZ = 9999
+		maxX = -9999
+		maxY = -9999
+		maxZ = -9999
+		for i in range(len(itemList)):
+			print(itemList[i][0].Shape.BoundBox)
+			bBox = itemList[i][0].Shape.BoundBox
+			if (bBox.XMin < minX):
+				minX = bBox.XMin
+			if (bBox.YMin < minY):
+				minY = bBox.YMin
+			if (bBox.ZMin < minZ):
+				minZ = bBox.ZMin
+			if (bBox.XMax > maxX):
+				maxX = bBox.XMax
+			if (bBox.YMax > maxY):
+				maxY= bBox.YMax
+			if (bBox.ZMax > maxZ):
+				maxZ = bBox.ZMax
+
+		return minX, minY, minZ, maxX, maxY, maxZ
+		
+
 # parent class for following settings items, it contains all function common for all classes
 #
 class SettingsItem:
@@ -532,7 +576,7 @@ class BoxTaskPanel:
 		"""
 		self.displayMessage("createUserdefGridLinesFromCurrentButtonClicked")
 
-	def displayGridLinesInModelButtonClicked(self):
+	def displayGridLinesInModelButtonClicked(self):        
 		gridCategory = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchFixedString)[0]
 		for gridItemIndex in range(gridCategory.childCount()):
 			for objIndex in range(gridCategory.child(gridItemIndex).childCount()):
@@ -616,6 +660,11 @@ class BoxTaskPanel:
 		offsetY = 0
 		offsetZ = 0
 
+		#getting model boundaries to draw gridlines properly
+		modelMinX, modelMinY, modelMinZ, modelMaxX, modelMaxY, modelMaxZ = self.openEMSObj.getModelBoundaryBox(self.form.objectAssignmentRightTreeWidget)
+
+		#don't know why I put here this axis list code snippet probably to include case if there are some auxiliary axis but now seems useless
+		#THERE IS QUESTION IN WHICH PLANE GRID SHOULD BE DRAWN IF in XY, XZ or YZ
 		currGridAxis = self.form.auxGridAxis.currentText().lower()
 		print("Aux grid axis: " + currGridAxis)
 		axisList = collections.deque(['x', 'y', 'z'])
@@ -624,10 +673,11 @@ class BoxTaskPanel:
 
 		if (currSetting.getType() == 'Fixed Distance'):
 
+			#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
 			zAuxGridCoordList = []
 			if (currSetting.zenabled):
 				if int(currSetting.getXYZ()['z']) != 0:
-					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])    #split Z interval and generate Z layers
 					for zGridLine in zlines:
 						zAuxGridCoordList.append(zGridLine)
 			if len(zAuxGridCoordList) == 0:
@@ -640,7 +690,7 @@ class BoxTaskPanel:
 						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
 						for xGridLine in xlines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, -100, zAuxGridCoord], [xGridLine, 100, zAuxGridCoord])
+							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 	
 				#DRAW Y LINES auxiliary grid in 3D view
 				if (currSetting.yenabled):
@@ -648,13 +698,15 @@ class BoxTaskPanel:
 						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
 						for yGridLine in ylines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-							self.openEMSObj.drawDraftLine("auxGridLine", [-100, yGridLine, zAuxGridCoord], [100, yGridLine, zAuxGridCoord])
+							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 
 		elif (currSetting.getType() == 'Fixed Count'):
+
+            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
 			zAuxGridCoordList = []
 			if (currSetting.zenabled):
 				if int(currSetting.getXYZ()['z']) != 0:
-					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))   #collecting Z coordinates where grid layers will be drawn
 					for zGridLine in zlines:
 						zAuxGridCoordList.append(zGridLine)
 			if len(zAuxGridCoordList) == 0:
@@ -666,14 +718,14 @@ class BoxTaskPanel:
 					xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))
 					for xGridLine in xlines:
 						#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-						self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, -100, zAuxGridCoord], [xGridLine, 100, zAuxGridCoord])
+						self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 	
 				#DRAW Y LINES auxiliary grid in 3D view
 				if (currSetting.yenabled):
 					ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))
 					for yGridLine in ylines:
 						#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-						self.openEMSObj.drawDraftLine("auxGridLine", [-100, yGridLine, zAuxGridCoord], [100, yGridLine, zAuxGridCoord])
+						self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 
 		elif (currSetting.getType() == 'User Defined'):
 			#UNIT FOR MESH										
@@ -1396,6 +1448,7 @@ ylim([-40 2]);
 
 		#
 		# DEFUALT MATERIAL definitions
+		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here
 		#
 		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
 		genScript += "\n"
