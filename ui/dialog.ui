@@ -34,7 +34,7 @@
      <item>
       <widget class="QTabWidget" name="openEMSTab">
        <property name="currentIndex">
-        <number>0</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="objectAssignmentTab">
         <attribute name="title">
@@ -234,7 +234,7 @@
            <item>
             <widget class="QTreeWidget" name="objectAssignmentRightTreeWidget">
              <attribute name="headerVisible">
-              <bool>true</bool>
+              <bool>false</bool>
              </attribute>
              <column>
               <property name="text">
@@ -324,7 +324,7 @@
            <item>
             <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
              <attribute name="headerVisible">
-              <bool>true</bool>
+              <bool>false</bool>
              </attribute>
              <column>
               <property name="text">
@@ -2438,25 +2438,6 @@
          </property>
          <property name="text">
           <string>Generate OpenEMS Script</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="generateOpenEMSShowResultScriptButton">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>200</width>
-           <height>40</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Generate OpenEMS Show Result Script</string>
          </property>
         </widget>
        </item>

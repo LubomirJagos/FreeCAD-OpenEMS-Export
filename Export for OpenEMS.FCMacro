@@ -471,11 +471,6 @@ class BoxTaskPanel:
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
-		# Clicked on "Generate OpenEMS Script"
-		#		
-		self.form.generateOpenEMSShowResultScriptButton.clicked.connect(self.generateOpenEMSShowResultScriptButtonClicked)
-
-		#
 		# Clicked on "Autoset priorities"
 		#		
 		self.form.autosetPrioritiesButton.clicked.connect(self.autosetPrioritiesButtonClicked)
@@ -1924,15 +1919,6 @@ ylim([-40 2]);
 		print('Simulation file written into: ' + fileName)
 
 		return
-
-	#
-	#	POSTPORCESSING Script Generation Part
-	#
-	def generateOpenEMSShowResultScriptButtonClicked(self):
-		#
-		#	...code to display simulation result generation...
-		#
-		self.displayMessage("generateOpenEMSShowResultScriptButtonClicked() response message, placeholder")
 
 	def show(self):
 		self.form.show()
