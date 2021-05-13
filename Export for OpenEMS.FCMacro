@@ -310,7 +310,7 @@ class PortSettingsItem(SettingsItem):
 #	fc
 #
 class SimulationSettingsItem(SettingsItem):
-	def __init__(self, name = "DefaultSimlationName", params='{"max_timestamps": 1e6, "min_decrement": 0}'):
+	def __init__(self, name = "DefaultSimlationName", params='{"max_timestamps": 1e6, "min_decrement": 0, "BCxmin": "PEC", "BCxmax": "PEC", "BCymin": "PEC", "BCymax": "PEC", "BCzmin": "PEC", "BCzmax": "PEC", "PMLxmincells": 1, "PMLxmaxcells": 1, "PMLymincells": 1, "PMLymaxcells": 1, "PMLzmincells": 1, "PMLzmaxcells": 1}'):
 		self.name = name
 		self.params = {}
 		self.params = json.loads(params)
@@ -510,7 +510,7 @@ class BoxTaskPanel:
 		#	- select rectangular or cylindrical grid
 		#		
 		self.form.createUserdefGridLinesFromCurrentButton.clicked.connect(self.createUserdefGridLinesFromCurrentButtonClicked)
-		self.form.displayGridLinesInModelButton.clicked.connect(self.displayGridLinesInModelButtonClicked)
+		self.form.displayXYGridLinesInModelButton.clicked.connect(self.displayXYGridLinesInModelButtonClicked)
 		self.form.gridRectangularRadio.toggled.connect(self.gridCoordsTypeChoosed)
 		self.form.gridCylindricalRadio.toggled.connect(self.gridCoordsTypeChoosed)
 
@@ -523,7 +523,6 @@ class BoxTaskPanel:
 		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)	
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 
-
 		#PORT tab settings events handlers
 		self.form.lumpedPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.microstripPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
@@ -531,6 +530,14 @@ class BoxTaskPanel:
 		self.form.rectangularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.etDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.htDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+
+		#SIMULATION Boundary Conditions change event mapping
+		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
+		self.form.BCxmax.currentIndexChanged.connect(self.BCxmaxCurrentIndexChanged)
+		self.form.BCymin.currentIndexChanged.connect(self.BCyminCurrentIndexChanged)
+		self.form.BCymax.currentIndexChanged.connect(self.BCymaxCurrentIndexChanged)
+		self.form.BCzmin.currentIndexChanged.connect(self.BCzminCurrentIndexChanged)
+		self.form.BCzmax.currentIndexChanged.connect(self.BCzmaxCurrentIndexChanged)
 
 		####################################################################################################
 		# GUI SAVE/LOAD from file
@@ -542,6 +549,24 @@ class BoxTaskPanel:
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
+
+	def BCxminCurrentIndexChanged(self, index):
+		self.form.PMLxmincells.setEnabled(self.form.BCxmin.currentText() == "PML")
+
+	def BCxmaxCurrentIndexChanged(self, index):
+		self.form.PMLxmaxcells.setEnabled(self.form.BCxmax.currentText() == "PML")
+
+	def BCyminCurrentIndexChanged(self, index):
+		self.form.PMLymincells.setEnabled(self.form.BCymin.currentText() == "PML")
+
+	def BCymaxCurrentIndexChanged(self, index):
+		self.form.PMLymaxcells.setEnabled(self.form.BCymax.currentText() == "PML")
+
+	def BCzminCurrentIndexChanged(self, index):
+		self.form.PMLzmincells.setEnabled(self.form.BCzmin.currentText() == "PML")
+
+	def BCzmaxCurrentIndexChanged(self, index):
+		self.form.PMLzmaxcells.setEnabled(self.form.BCzmax.currentText() == "PML")
 
 	def eraseAuxGridButtonClicked(self):
 		print("--> Start removing auxiliary gridlines from 3D view.")
@@ -571,7 +596,7 @@ class BoxTaskPanel:
 		"""
 		self.displayMessage("createUserdefGridLinesFromCurrentButtonClicked")
 
-	def displayGridLinesInModelButtonClicked(self):        
+	def displayXYGridLinesInModelButtonClicked(self):        
 		gridCategory = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchFixedString)[0]
 		for gridItemIndex in range(gridCategory.childCount()):
 			for objIndex in range(gridCategory.child(gridItemIndex).childCount()):
@@ -1415,15 +1440,25 @@ ylim([-40 2]);
 		#
 		# BOUNDARY CONDITIONS SETTING, OK
 		#
+		strBC = ""
+		strBC += ('\"PML_' + str(self.form.PMLxmincells.value()) + '\"' if self.form.BCxmin.currentText() == 'PML' else '\"' + self.form.BCxmin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLxmaxcells.value()) + '\"' if self.form.BCxmax.currentText() == 'PML' else '\"' + self.form.BCxmax.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLymincells.value()) + '\"' if self.form.BCymin.currentText() == 'PML' else '\"' + self.form.BCymin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLymaxcells.value()) + '\"' if self.form.BCymax.currentText() == 'PML' else '\"' + self.form.BCymax.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLzmincells.value()) + '\"' if self.form.BCzmin.currentText() == 'PML' else '\"' + self.form.BCzmin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLzmaxcells.value()) + '\"' if self.form.BCzmax.currentText() == 'PML' else '\"' + self.form.BCzmax.currentText() + "\"")  
+
+		""" THIS IS ORIGINAL NON GENERATED CODE FOR BOUNDARIES CONDITIONS
 		genScript += "BC = {'MUR' 'MUR' 'MUR' 'MUR' 'MUR' 'MUR'}; % boundary conditions\n"
 		genScript += "if (use_pml>0)\n"
 		genScript += "    BC = {'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8'}; % use pml instead of mur\n"
 		genScript += "end\n"
 		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
 		genScript += "\n"
-
-
-
+		"""
+		genScript += "BC = {" + strBC + "}; % boundary conditions\n"
+		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
+		genScript += "\n"
 
 		#
 		# COORDINATION SYSTEM
@@ -2698,6 +2733,11 @@ ylim([-40 2]);
 
 		return
 
+	def setSimlationParamBC(self, comboBox, strValue):
+		index = comboBox.findText(strValue, QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			comboBox.setCurrentIndex(index)
+
 	####################################################################################################################################################################
 	# GUI SAVE/LOAD buttons
 	####################################################################################################################################################################
@@ -2789,6 +2829,18 @@ ylim([-40 2]);
 		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
 		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
 		simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
+		simulationSettings.params['BCxmin'] = self.form.BCxmin.currentText()
+		simulationSettings.params['BCxmax'] = self.form.BCxmax.currentText()
+		simulationSettings.params['BCymin'] = self.form.BCymin.currentText()
+		simulationSettings.params['BCymax'] = self.form.BCymax.currentText()
+		simulationSettings.params['BCzmin'] = self.form.BCzmin.currentText()
+		simulationSettings.params['BCzmax'] = self.form.BCzmax.currentText()
+		simulationSettings.params['PMLxmincells'] = self.form.PMLxmincells.value()
+		simulationSettings.params['PMLxmaxcells'] = self.form.PMLxmaxcells.value()
+		simulationSettings.params['PMLymincells'] = self.form.PMLymincells.value()
+		simulationSettings.params['PMLymaxcells'] = self.form.PMLymaxcells.value()
+		simulationSettings.params['PMLzmincells'] = self.form.PMLzmincells.value()
+		simulationSettings.params['PMLzmaxcells'] = self.form.PMLzmaxcells.value()
 
 		settings.beginGroup("SIMULATION-" + simulationSettings.name)
 		settings.setValue("name", simulationSettings.name)
@@ -2963,6 +3015,22 @@ ylim([-40 2]);
 
 				self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
 				self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
+
+				self.setSimlationParamBC(self.form.BCxmin, simulationSettings.params['BCxmin'])
+				self.setSimlationParamBC(self.form.BCxmax, simulationSettings.params['BCxmax'])
+				self.setSimlationParamBC(self.form.BCymin, simulationSettings.params['BCymin'])
+				self.setSimlationParamBC(self.form.BCymax, simulationSettings.params['BCymax'])
+				self.setSimlationParamBC(self.form.BCzmin, simulationSettings.params['BCzmin'])
+				self.setSimlationParamBC(self.form.BCzmax, simulationSettings.params['BCzmax'])
+
+				self.form.PMLxmincells.setValue(simulationSettings.params['PMLxmincells'])
+				self.form.PMLxmaxcells.setValue(simulationSettings.params['PMLxmaxcells'])
+				self.form.PMLymincells.setValue(simulationSettings.params['PMLymincells'])
+				self.form.PMLymaxcells.setValue(simulationSettings.params['PMLymaxcells'])
+				self.form.PMLzmincells.setValue(simulationSettings.params['PMLzmincells'])
+				self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
+
+				#self.form.BCPMLcells.setValue(simulationSettings.params['BCPMLcells'])
 
 				continue	#there is no tree widget to add item to
 
