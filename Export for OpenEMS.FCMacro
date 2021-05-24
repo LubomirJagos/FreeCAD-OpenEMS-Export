@@ -687,72 +687,218 @@ class BoxTaskPanel:
 		#THERE IS QUESTION IN WHICH PLANE GRID SHOULD BE DRAWN IF in XY, XZ or YZ
 		currGridAxis = self.form.auxGridAxis.currentText().lower()
 		print("Aux grid axis: " + currGridAxis)
+
+		""""
 		axisList = collections.deque(['x', 'y', 'z'])
 		while axisList[0] != currGridAxis:
 			axisList.rotate()
+		"""
 
-		if (currSetting.getType() == 'Fixed Distance'):
+		if (currGridAxis == "z"):
 
-			#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
-			zAuxGridCoordList = []
-			if (currSetting.zenabled):
-				if int(currSetting.getXYZ()['z']) != 0:
-					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])    #split Z interval and generate Z layers
-					for zGridLine in zlines:
-						zAuxGridCoordList.append(zGridLine)
-			if len(zAuxGridCoordList) == 0:
-				zAuxGridCoordList.append(bbCoords.ZMax)
+			#######################################################################################################################################################################
+		  	# Z grid axis
+			#######################################################################################################################################################################
 
-			for zAuxGridCoord in zAuxGridCoordList:
-				#DRAW X LINES auxiliary grid in 3D view
-				if (currSetting.xenabled):
-					if int(currSetting.getXYZ()['x']) !=  0:
-						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+			print("Drawing GRID in Z axis.")
+
+			if (currSetting.getType() == 'Fixed Distance'):
+	
+				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
+				zAuxGridCoordList = []
+				if (currSetting.zenabled):
+					if int(currSetting.getXYZ()['z']) != 0:
+						zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])    #split Z interval and generate Z layers
+						for zGridLine in zlines:
+							zAuxGridCoordList.append(zGridLine)
+				if len(zAuxGridCoordList) == 0:
+					zAuxGridCoordList.append(bbCoords.ZMax)
+	
+				for zAuxGridCoord in zAuxGridCoordList:
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.xenabled):
+						if int(currSetting.getXYZ()['x']) !=  0:
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+							for xGridLine in xlines:
+								#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
+		
+					#DRAW Y LINES auxiliary grid in 3D view
+					if (currSetting.yenabled):
+						if int(currSetting.getXYZ()['y']) != 0:
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+							for yGridLine in ylines:
+								#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+	
+			elif (currSetting.getType() == 'Fixed Count'):
+	
+	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+				zAuxGridCoordList = []
+				if (currSetting.zenabled):
+					if int(currSetting.getXYZ()['z']) != 0:
+						zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))   #collecting Z coordinates where grid layers will be drawn
+						for zGridLine in zlines:
+							zAuxGridCoordList.append(zGridLine)
+				if len(zAuxGridCoordList) == 0:
+					zAuxGridCoordList.append(bbCoords.ZMax)
+	
+				for zAuxGridCoord in zAuxGridCoordList:
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.xenabled):
+						xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))
 						for xGridLine in xlines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
 							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
-	
-				#DRAW Y LINES auxiliary grid in 3D view
-				if (currSetting.yenabled):
-					if int(currSetting.getXYZ()['y']) != 0:
-						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+		
+					#DRAW Y LINES auxiliary grid in 3D view
+					if (currSetting.yenabled):
+						ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))
 						for yGridLine in ylines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
 							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
-
-		elif (currSetting.getType() == 'Fixed Count'):
-
-            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
-			zAuxGridCoordList = []
-			if (currSetting.zenabled):
-				if int(currSetting.getXYZ()['z']) != 0:
-					zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))   #collecting Z coordinates where grid layers will be drawn
-					for zGridLine in zlines:
-						zAuxGridCoordList.append(zGridLine)
-			if len(zAuxGridCoordList) == 0:
-				zAuxGridCoordList.append(bbCoords.ZMax)
-
-			for zAuxGridCoord in zAuxGridCoordList:
-				#DRAW X LINES auxiliary grid in 3D view
-				if (currSetting.xenabled):
-					xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))
-					for xGridLine in xlines:
-						#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-						self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 	
-				#DRAW Y LINES auxiliary grid in 3D view
-				if (currSetting.yenabled):
-					ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))
-					for yGridLine in ylines:
-						#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-						self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+			elif (currSetting.getType() == 'User Defined'):
+				#UNIT FOR MESH										
+				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
 
-		elif (currSetting.getType() == 'User Defined'):
-			#UNIT FOR MESH										
-			genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-			genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+		elif (currGridAxis == "x"):
+
+			#######################################################################################################################################################################
+		  	# X grid axis - STILL EXPERIMENTAL require REPAIR
+			#######################################################################################################################################################################
+
+			print("Drawing GRID in X axis.")
+			
+			if (currSetting.getType() == 'Fixed Distance'):
+	
+				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
+				xAuxGridCoordList = []
+				if (currSetting.xenabled):
+					if int(currSetting.getXYZ()['x']) != 0:
+						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])    #split Z interval and generate Z layers
+						for xGridLine in xlines:
+							xAuxGridCoordList.append(xGridLine)
+				if len(xAuxGridCoordList) == 0:
+					xAuxGridCoordList.append(bbCoords.XMax)
+	
+				for xAuxGridCoord in xAuxGridCoordList:
+					#DRAW Z LINES auxiliary grid in 3D view
+					if (currSetting.zenabled):
+						if int(currSetting.getXYZ()['z']) !=  0:
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+							for zGridLine in zlines:
+								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+		
+					#DRAW Y LINES auxiliary grid in 3D view
+					if (currSetting.yenabled):
+						if int(currSetting.getXYZ()['y']) != 0:
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+							for yGridLine in ylines:
+								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+	
+			elif (currSetting.getType() == 'Fixed Count'):
+	
+	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+				xAuxGridCoordList = []
+				if (currSetting.xenabled):
+					if int(currSetting.getXYZ()['x']) != 0:
+						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))   #collecting Z coordinates where grid layers will be drawn
+						for xGridLine in xlines:
+							xAuxGridCoordList.append(xGridLine)
+				if len(xAuxGridCoordList) == 0:
+					xAuxGridCoordList.append(bbCoords.XMax)
+	
+				for xAuxGridCoord in xAuxGridCoordList:
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.zenabled):
+						zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+						for zGridLine in zlines:
+							self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+		
+					#DRAW Y LINES auxiliary grid in 3D view
+					if (currSetting.yenabled):
+						ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))
+						for yGridLine in ylines:
+								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+	
+			elif (currSetting.getType() == 'User Defined'):
+				#UNIT FOR MESH										
+				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+				
+		elif (currGridAxis == "y"):
+
+			#######################################################################################################################################################################
+		  	# Y grid axis - NOT IMPLEMENTED
+			#######################################################################################################################################################################
+
+			print("Drawing GRID in Y axis.")
+
+			if (currSetting.getType() == 'Fixed Distance'):
+	
+				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
+				yAuxGridCoordList = []
+				if (currSetting.yenabled):
+					if int(currSetting.getXYZ()['y']) != 0:
+						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])    #split Y interval and generate Z layers
+						for yGridLine in ylines:
+							yAuxGridCoordList.append(yGridLine)
+				if len(yAuxGridCoordList) == 0:
+					yAuxGridCoordList.append(bbCoords.YMax)
+	
+				for yAuxGridCoord in yAuxGridCoordList:
+					#DRAW Z LINES auxiliary grid in 3D view
+					if (currSetting.zenabled):
+						if int(currSetting.getXYZ()['z']) !=  0:
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+							for zGridLine in zlines:
+								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+		
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.xenabled):
+						if int(currSetting.getXYZ()['x']) != 0:
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+							for xGridLine in xlines:
+								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+	
+			elif (currSetting.getType() == 'Fixed Count'):
+	
+	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+				yAuxGridCoordList = []
+				if (currSetting.yenabled):
+					if int(currSetting.getXYZ()['y']) != 0:
+						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ()['y']))   #collecting Y coordinates where grid layers will be drawn
+						for yGridLine in ylines:
+							yAuxGridCoordList.append(yGridLine)
+				if len(yAuxGridCoordList) == 0:
+					yAuxGridCoordList.append(bbCoords.YMax)
+	
+				for yAuxGridCoord in yAuxGridCoordList:
+					#DRAW Z LINES auxiliary grid in 3D view
+					if (currSetting.zenabled):
+						zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+						for zGridLine in zlines:
+							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+		
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.xenabled):
+						xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ()['x']))
+						for xGridLine in xlines:
+							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+	
+			elif (currSetting.getType() == 'User Defined'):
+				#UNIT FOR MESH										
+				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+
 		print("---> Aux grid drawing finished. \n" + genScript)
 
+	#######################################################################################################################################################################
+  	# END GRID DRAWING
+	#######################################################################################################################################################################
+	
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
 		openEMSObj = OpenEMS()									# <------------------- openEMS object initialization
