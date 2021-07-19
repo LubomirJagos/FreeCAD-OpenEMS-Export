@@ -471,11 +471,18 @@ class BoxTaskPanel:
 		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
-		# Clicked on "Autoset priorities"
+		# Clicked on BUTTONS FOR OBJECT PRIORITIES
 		#		
 		self.form.autosetPrioritiesButton.clicked.connect(self.autosetPrioritiesButtonClicked)
 		self.form.moveupPriorityButton.clicked.connect(self.moveupPriorityButtonClicked)
 		self.form.movedownPriorityButton.clicked.connect(self.movedownPriorityButtonClicked)
+
+		#
+		# Clicked on BUTTONS FOR MESH PRIORITIES
+		#		
+		self.form.autosetMeshPrioritiesButton.clicked.connect(self.autosetPrioritiesMeshButtonClicked)
+		self.form.moveupMeshPriorityButton.clicked.connect(self.moveupPriorityMeshButtonClicked)
+		self.form.movedownMeshPriorityButton.clicked.connect(self.movedownPriorityMeshButtonClicked)
 
 		#
 		# Clicked on "Erase aux Grid"
@@ -688,7 +695,7 @@ class BoxTaskPanel:
 		currGridAxis = self.form.auxGridAxis.currentText().lower()
 		print("Aux grid axis: " + currGridAxis)
 
-		""""
+		"""
 		axisList = collections.deque(['x', 'y', 'z'])
 		while axisList[0] != currGridAxis:
 			axisList.rotate()
@@ -1261,6 +1268,7 @@ ylim([-40 2]);
 
 		return
 
+	""" DUPLICATION
 	def saveCurrentSettingsButtonClicked(self):
 		print("objectAssignmentShowSettingsButtonClicked entered")
 
@@ -1282,6 +1290,7 @@ ylim([-40 2]);
 					print(itemData.serializeToString())
 
 		return
+	"""
 
 	#
 	#	Get COORDINATION TPYE
@@ -1333,9 +1342,21 @@ ylim([-40 2]);
 		return str(self.form.simParamF0NumberInput.value()) + units
 
 	#
-	# Button 'Autoset priorities' on FRONT PANEL clicked
+	# Button 'Autoset priorities' for OBJECTS on FRONT PANEL clicked
 	#
 	def autosetPrioritiesButtonClicked(self):
+		#
+		#	Here items in priority tree view reorderd to approximate order which should be right:
+		#		1. ports
+		#		2. materials
+		#
+		
+		return
+
+	#
+	# Button 'Autoset priorities' for MESH on FRONT PANEL clicked
+	#
+	def autosetPrioritiesMeshButtonClicked(self):
 		#
 		#	Here items in priority tree view reorderd to approximate order which should be right:
 		#		1. ports
@@ -2112,17 +2133,30 @@ ylim([-40 2]);
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 
 		#
-		#	REMOVE FROM PRIORITY ASSIGNMENT tree view
+		#	REMOVE FROM PRIORITY OBJECT ASSIGNMENT tree view
 		#
 		prioritySettingsItemName = rightItem.parent().parent().text(0) + ", " + rightItem.parent().text(0) + ", " + rightItem.text(0)
-		print("Removing item " + prioritySettingsItemName + " from priority list.")
 
-		#going through items in priority list and searching for name, when matched it's removed from list
+		#going through items in priority object list and searching for name, when matched it's removed from list
 		itemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
 		for k in range(itemsCount):
 			priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
 			if prioritySettingsItemName in priorityItem.text(0):
 				self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
+				print("Removing item " + prioritySettingsItemName + " from priority object list.")
+				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
+
+		#
+		#	REMOVE FROM PRIORITY MESH ASSIGNMENT tree view
+		#
+
+		#going through items in priority mesh list and searching for name, when matched it's removed from list
+		itemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+		for k in range(itemsCount):
+			priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
+			if prioritySettingsItemName in priorityItem.text(0):
+				self.form.meshPriorityTreeView.takeTopLevelItem(k)
+				print("Removing item " + prioritySettingsItemName + " from priority mesh list.")
 				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
 
 		#
@@ -2162,18 +2196,6 @@ ylim([-40 2]);
 			#
 			rightItem.addChild(leftItem)
 
-
-			###################################################
-			#
-			#	GRID ITEMS have no priority so when item is grid type next steps are skipped
-			#
-			###################################################
-			"""
-			if (reResult.group(1).lower() == 'grid'):
-				print("Move >> clicked, gird item detected skipping part to add items into priority list")
-				return
-			"""
-
 			#
 			# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
 			#
@@ -2184,16 +2206,35 @@ ylim([-40 2]);
 	
 			#
 			#	Check if item is already in priority list, must be in same category as material, port or so to be not added due it will be duplicate
+			#	There are 2 priority lists:
+			#		1. objects priority for 3D objects - materials, ports
+			#		2. mesh priority objects
 			#
-			priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
-			addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
+			isGridObjectToBeAdded = reResult.group(1).lower() == 'grid'
+
+			if (isGridObjectToBeAdded):
+				priorityListItems = self.form.meshPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
+				addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
+			else:
+				priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
+				addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
 			
 			if addItemToPriorityList:
 				#	Item is gonna be added into list:
 				#		1. copy icon of object category in right list to know what is added (PORT, MATERIAL, Excitation, ...)
 				#		2. add item into priority list with according icon and category				
 				leftItem2.setText(0, newAddedItemName)
-				self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
+
+				if (isGridObjectToBeAdded):
+					self.form.meshPriorityTreeView.insertTopLevelItem(0, leftItem2)						
+				else:
+					self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
+
+				#
+				# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+				#
+				self.updateMeshPriorityDisableItems()
+				
 				leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
 				print("Object " + leftItem2.text(0)+ " added into priority list")
 			else:
@@ -2214,8 +2255,33 @@ ylim([-40 2]);
 		rightItem.addChild(leftItem)
 		"""	
 
+	def updateMeshPriorityDisableItems(self):
+		itemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+		for k in range(itemsCount):
+			priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
+			itemNameFields = priorityItem.text(0).split(',')
+			print("Searching......" + itemNameFields[1])
+			gridParent = self.form.objectAssignmentRightTreeWidget.findItems(itemNameFields[1].strip(), QtCore.Qt.MatchRecursive)
+			if len(gridParent) > 0:
+				print("parent grid found")
+				print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
+				if gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == "false":
+					print("doing")
+					self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
+
+		"""
+		# If grid item is set to have priority lines it means it should be highlighted in mesh priority widget
+		# to display it is special generated in script for simulation
+		if rightItem.data(0, QtCore.Qt.UserRole).topPriorityLines:
+			#self.form.meshPriorityTreeView.topLevelItem(0).setFont(0, QtGui.QFont("Courier", weight = QtGui.QFont.Bold))
+			self.form.meshPriorityTreeView.topLevelItem(0).setDisabled(True)
+		else:
+			#self.form.meshPriorityTreeView.topLevelItem(0).setFont(0, QtGui.QFont("Courier", weight = QtGui.QFont.Bold))
+			self.form.meshPriorityTreeView.topLevelItem(0).setDisabled(False)
+		"""
+
 	#
-	#	PRIORITY LIST move item UP
+	#	PRIORITY OBJECT LIST move item UP
 	#
 	def moveupPriorityButtonClicked(self):
 		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
@@ -2225,7 +2291,7 @@ ylim([-40 2]);
 			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
 
 	#
-	#	PRIORITY LIST move item DOWN
+	#	PRIORITY OBJECT LIST move item DOWN
 	#
 	def movedownPriorityButtonClicked(self):
 		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
@@ -2234,6 +2300,27 @@ ylim([-40 2]);
 			takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(currItemIndex)
 			self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
 			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
+
+	#
+	#	PRIORITY MESH LIST move item UP
+	#
+	def moveupPriorityMeshButtonClicked(self):
+		currItemIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(self.form.meshPriorityTreeView.currentItem())
+		if currItemIndex > 0:
+			takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(currItemIndex)
+			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex-1, takenItem)
+			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
+
+	#
+	#	PRIORITY MESH LIST move item DOWN
+	#
+	def movedownPriorityMeshButtonClicked(self):
+		currItemIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(self.form.meshPriorityTreeView.currentItem())
+		countAllItems = self.form.meshPriorityTreeView.topLevelItemCount()
+		if currItemIndex < countAllItems-1:
+			takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(currItemIndex)
+			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
+			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
 
 	def displayMessage(self, msgText):
 		msgBox = QtGui.QMessageBox()
@@ -3034,7 +3121,7 @@ ylim([-40 2]);
 
 
 		#SAVE PRIORITY OBJECT LIST SETTINGS INTO FILE
-		settings.beginGroup("PRIORITYLIST-DefaultName")
+		settings.beginGroup("PRIORITYLIST-OBJECTS")
 		priorityObjList = self.form.objectAssignmentPriorityTreeView
 
 		print("Priority list contains " + str(priorityObjList.topLevelItemCount()) + " items.")
@@ -3043,6 +3130,18 @@ ylim([-40 2]);
 			print("Saving new PRIORITY for " + priorityObjName)	
 			settings.setValue(priorityObjName, str(k))
 		settings.endGroup()
+
+		#SAVE MESH PRIORITY INTO FILE
+		settings.beginGroup("PRIORITYLIST-MESH")
+		priorityMeshObjList = self.form.meshPriorityTreeView
+
+		print("Priority list contains " + str(priorityMeshObjList.topLevelItemCount()) + " items.")
+		for k in range(priorityMeshObjList.topLevelItemCount()):
+			priorityMeshObjName = priorityMeshObjList.topLevelItem(k).text(0)
+			print("Saving new MESH PRIORITY for " + priorityMeshObjName)	
+			settings.setValue(priorityMeshObjName, str(k))
+		settings.endGroup()
+
 
 		#SAVE POSTPROCESSING OPTIONS
 		settings.beginGroup("POSTPROCESSING-DefaultName")
@@ -3218,8 +3317,33 @@ ylim([-40 2]);
 				categorySettings.params = json.loads(settings.value('params'))
 				settings.endGroup()
 
-			elif (re.compile("PRIORITYLIST").search(settingsGroup)):
+			elif (re.compile("PRIORITYLIST-OBJECTS").search(settingsGroup)):
 				print("PriorityList group settings found.")
+
+				#start reading priority objects configuration in ini file
+				settings.beginGroup(settingsGroup)
+
+				#add each priority item from ini file into GUI tree widget
+				topItemsList = [0 for i in range(len(settings.childKeys()))]
+				print("Priority objects list array initialized with size " +  str(len(topItemsList)))
+				for prioritySettingsKey in settings.childKeys():
+					prioritySettingsOrder = int(settings.value(prioritySettingsKey))
+					prioritySettingsType = prioritySettingsKey.split(", ")
+					print("Priority list adding item " + prioritySettingsKey)
+
+					#adding item into priority list
+					topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
+					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
+					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
+					topItemsList[prioritySettingsOrder] = topItem
+
+				self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0,topItemsList)
+
+				settings.endGroup()
+				continue
+
+			elif (re.compile("PRIORITYLIST-MESH").search(settingsGroup)):
+				print("PriorityList mesh group settings found.")
 
 				#start reading priority objects configuration in ini file
 				settings.beginGroup(settingsGroup)
@@ -3238,7 +3362,7 @@ ylim([-40 2]);
 					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
 					topItemsList[prioritySettingsOrder] = topItem
 
-				self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0,topItemsList)
+				self.form.meshPriorityTreeView.insertTopLevelItems(0,topItemsList)
 
 				settings.endGroup()
 				continue
@@ -3257,6 +3381,11 @@ ylim([-40 2]);
 
 			self.addSettingsItemGui(categorySettings)		#better more universal way to add things to gui
 
+		#
+		# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+		#
+		self.updateMeshPriorityDisableItems()
+
 		self.displayMessage("Settings loaded from file: " + outFile)
 		return
 
@@ -3267,3 +3396,22 @@ ylim([-40 2]);
 panel = BoxTaskPanel()
 #FreeCADGui.Control.showDialog(panel)
 panel.show()
+
+
+
+
+
+"""
+a = [1 2 3 4 5 6 7 8 9 10]
+a(a >= 2 & a <= 7) = []
+"""
+
+
+
+
+
+
+
+
+
+
