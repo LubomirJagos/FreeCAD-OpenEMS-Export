@@ -473,14 +473,12 @@ class BoxTaskPanel:
 		#
 		# Clicked on BUTTONS FOR OBJECT PRIORITIES
 		#		
-		self.form.autosetPrioritiesButton.clicked.connect(self.autosetPrioritiesButtonClicked)
 		self.form.moveupPriorityButton.clicked.connect(self.moveupPriorityButtonClicked)
 		self.form.movedownPriorityButton.clicked.connect(self.movedownPriorityButtonClicked)
 
 		#
 		# Clicked on BUTTONS FOR MESH PRIORITIES
 		#		
-		self.form.autosetMeshPrioritiesButton.clicked.connect(self.autosetPrioritiesMeshButtonClicked)
 		self.form.moveupMeshPriorityButton.clicked.connect(self.moveupPriorityMeshButtonClicked)
 		self.form.movedownMeshPriorityButton.clicked.connect(self.movedownPriorityMeshButtonClicked)
 
@@ -1342,30 +1340,6 @@ ylim([-40 2]);
 		return str(self.form.simParamF0NumberInput.value()) + units
 
 	#
-	# Button 'Autoset priorities' for OBJECTS on FRONT PANEL clicked
-	#
-	def autosetPrioritiesButtonClicked(self):
-		#
-		#	Here items in priority tree view reorderd to approximate order which should be right:
-		#		1. ports
-		#		2. materials
-		#
-		
-		return
-
-	#
-	# Button 'Autoset priorities' for MESH on FRONT PANEL clicked
-	#
-	def autosetPrioritiesMeshButtonClicked(self):
-		#
-		#	Here items in priority tree view reorderd to approximate order which should be right:
-		#		1. ports
-		#		2. materials
-		#
-		
-		return
-
-	#
 	#	Returns object priority
 	#		priorityItemName - string which identifies item by its text in priority tree view widget
 	#
@@ -1429,11 +1403,12 @@ ylim([-40 2]);
 	#	Removing from Priority List
 	###
 	def removePriorityName(self, priorityName):
-		print("Removing Priority Material from priority list tree view:")
-		print("\t--->" + priorityName)
+		print("Removing from oibjects priority list tree view:" + priorityName)
 		priorityItemRemoved = True
 		while priorityItemRemoved:
 			priorityItemRemoved = False
+
+			#search item in priority list for OBJECTS
 			priorityItemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
 			for k in range(priorityItemsCount):
 				priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
@@ -1441,6 +1416,16 @@ ylim([-40 2]);
 					self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
 					priorityItemRemoved = True
 					break
+
+			#search item also in priority list for MESH
+			if not priorityItemRemoved:
+				priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+				for k in range(priorityItemsCount):
+					priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
+					if priorityName in priorityItem.text(0):
+						self.form.meshPriorityTreeView.takeTopLevelItem(k)
+						priorityItemRemoved = True
+						break
 
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
@@ -2265,7 +2250,8 @@ ylim([-40 2]);
 			if len(gridParent) > 0:
 				print("parent grid found")
 				print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
-				if gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == "false":
+				print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
+				if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
 					print("doing")
 					self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
 
@@ -2279,6 +2265,15 @@ ylim([-40 2]);
 			#self.form.meshPriorityTreeView.topLevelItem(0).setFont(0, QtGui.QFont("Courier", weight = QtGui.QFont.Bold))
 			self.form.meshPriorityTreeView.topLevelItem(0).setDisabled(False)
 		"""
+
+	def removeAllMeshPriorityItems(self):
+		print("START REMOVING MESH PRIORITY WIDGET ITEMS")
+		print("ITEM TO REMOVE: " + str(self.form.meshPriorityTreeView.invisibleRootItem().childCount()))
+
+		priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+		for k in reversed(range(priorityItemsCount)):
+			print("REMOVING ITEM " + self.form.meshPriorityTreeView.takeTopLevelItem(k).text(0))
+			self.form.meshPriorityTreeView.takeTopLevelItem(k)
 
 	#
 	#	PRIORITY OBJECT LIST move item UP
@@ -2442,6 +2437,7 @@ ylim([-40 2]);
 		#if everything is OK, item is added into tree
 		if (not isDuplicityName):
 			self.addSettingsItemGui(gridItem)
+			self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
@@ -2469,6 +2465,8 @@ ylim([-40 2]);
 		self.form.gridSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		gridGroupItem.parent().removeChild(gridGroupItem)
 
+		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+
 		return
 
 	def gridSettingsRewriteButtonClicked(self):
@@ -2482,6 +2480,8 @@ ylim([-40 2]);
 		for item in gridGroupWidgetItems:
 			if (item.parent().text(0) == "Grid"):
 				item.setData(0, QtCore.Qt.UserRole, gridSetting)
+
+		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridCoordsTypeChoosed(self):
 		if (self.form.gridRectangularRadio.isChecked()):
@@ -3345,6 +3345,9 @@ ylim([-40 2]);
 			elif (re.compile("PRIORITYLIST-MESH").search(settingsGroup)):
 				print("PriorityList mesh group settings found.")
 
+				#clear all items from mesh tree widget
+				self.removeAllMeshPriorityItems()
+
 				#start reading priority objects configuration in ini file
 				settings.beginGroup(settingsGroup)
 
@@ -3365,6 +3368,12 @@ ylim([-40 2]);
 				self.form.meshPriorityTreeView.insertTopLevelItems(0,topItemsList)
 
 				settings.endGroup()
+
+				#
+				# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+				#
+				self.updateMeshPriorityDisableItems()
+
 				continue
 
 			elif (re.compile("POSTPROCESSING").search(settingsGroup)):
@@ -3380,11 +3389,6 @@ ylim([-40 2]);
 				continue
 
 			self.addSettingsItemGui(categorySettings)		#better more universal way to add things to gui
-
-		#
-		# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
-		#
-		self.updateMeshPriorityDisableItems()
 
 		self.displayMessage("Settings loaded from file: " + outFile)
 		return

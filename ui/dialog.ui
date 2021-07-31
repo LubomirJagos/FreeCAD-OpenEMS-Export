@@ -374,16 +374,6 @@
                </property>
               </spacer>
              </item>
-             <item>
-              <widget class="QPushButton" name="autosetPrioritiesButton">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Autoset Priorities</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>
@@ -438,16 +428,6 @@
                 </size>
                </property>
               </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="autosetMeshPrioritiesButton">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Autoset Priorities</string>
-               </property>
-              </widget>
              </item>
             </layout>
            </item>
