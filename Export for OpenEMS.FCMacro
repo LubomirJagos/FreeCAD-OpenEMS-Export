@@ -624,7 +624,7 @@ class BoxTaskPanel:
 
 		# store octave script to drive
 		currDir, nameBase = self.getCurrDir()
-		fileName = nameBase + "_runCmd_AppCSXCAD.m"
+		fileName = nameBase + '_runCmd_AppCSXCAD.m'
 		f = open(fileName, "w")
 		f.write(runCmd)
 		f.close()
@@ -1527,6 +1527,7 @@ ylim([-40 2]);
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
 		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % equivalent to -50 dB\n"
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
+		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
 
 		#default structure for mesh
