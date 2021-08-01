@@ -1,4 +1,4 @@
-from PySide import QtGui, QtCore
+from PySide import QtGui, QtCore        
 import FreeCAD,FreeCADGui,Part, os
 import re
 import Mesh
@@ -201,6 +201,8 @@ class GridSettingsItem(SettingsItem):
 		self.fixedCount = fixedCount
 		self.fixedDistance = fixedDistance
 		self.userDefined = userDefined
+		self.generateLinesInside = False
+		self.topPriorityLines = False
 
 	#Return xyz distances, count or user defined array based what user asked for.
 	def getXYZ(self):
@@ -1361,6 +1363,115 @@ ylim([-40 2]);
 
 		return priorityItemValue
 
+	#  __  __ ______  _____ _    _     _____  _____  _____ ____  _____  _____ _________     __   _____  _____ _____  _____ _____ _______ 
+	# |  \/  |  ____|/ ____| |  | |   |  __ \|  __ \|_   _/ __ \|  __ \|_   _|__   __\ \   / /  / ____|/ ____|  __ \|_   _|  __ \__   __|
+	# | \  / | |__  | (___ | |__| |   | |__) | |__) | | || |  | | |__) | | |    | |   \ \_/ /  | (___ | |    | |__) | | | | |__) | | |   
+	# | |\/| |  __|  \___ \|  __  |   |  ___/|  _  /  | || |  | |  _  /  | |    | |    \   /    \___ \| |    |  _  /  | | |  ___/  | |   
+	# | |  | | |____ ____) | |  | |   | |    | | \ \ _| || |__| | | \ \ _| |_   | |     | |     ____) | |____| | \ \ _| |_| |      | |   
+	# |_|  |_|______|_____/|_|  |_|   |_|    |_|  \_\_____\____/|_|  \_\_____|  |_|     |_|    |_____/ \_____|_|  \_\_____|_|      |_|   
+	#                                                                                                                                    
+	#	Returns script lines for mesh priority
+	#
+	def getMeshPriorityScriptLines(self, meshPriorityIdentifier):
+		meshPriorityIdentifierArray = meshPriorityIdentifier.split(',')		#split identifier based on commas
+		freecadObjName = meshPriorityIdentifierArray[2].strip()
+
+		item = self.form.objectAssignmentRightTreeWidget.findItems(meshPriorityIdentifierArray[1].strip(), QtCore.Qt.MatchRecursive)[0]	#find grid named by identifier using 2nd item what is grid category name
+		currSetting = item.data(0, QtCore.Qt.UserRole)	#obtain current grid category settings
+
+		#if grid settings topPriorityLines is disabled then don't do nothing and return empty string
+		if not currSetting.topPriorityLines:
+			return ""
+		
+		print("Mesh priority generating, grid category found - " + item.text(0))
+		print("Start looking for object " + freecadObjName)
+		
+		objs = FreeCAD.ActiveDocument.Objects
+		freecadObjects = [i for i in objs if (i.Label) == freecadObjName]	#get FreeCAD object with name from priority list 
+
+		#print(freecadObjects)
+		genScript = ""
+		for obj in freecadObjects:
+			# obj = FreeCAD Object class
+
+			#BOUNDING BOX, if object has none then this iteration is skipped and going for next object
+			if (not "Shape" in dir(obj)):
+				continue
+
+			bbCoords = obj.Shape.BoundBox
+
+			#offset NOT USED, it's here when needed, but bbCoords are actual final coordinates including everything also offset
+			offsetX = 0
+			offsetY = 0
+			offsetZ = 0
+
+			#ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
+			if currSetting.generateLinesInside:
+				k = 0.05
+				print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
+			else:
+				k = 0
+													
+			xmax = bbCoords.XMax - (bbCoords.XMax - bbCoords.XMin)*k    
+			ymax = bbCoords.YMax - (bbCoords.YMax - bbCoords.YMin)*k    
+			zmax = bbCoords.ZMax - (bbCoords.ZMax - bbCoords.ZMin)*k    
+			xmin = bbCoords.XMin + (bbCoords.XMax - bbCoords.XMin)*k    
+			ymin = bbCoords.YMin + (bbCoords.YMax - bbCoords.YMin)*k    
+			zmin = bbCoords.ZMin + (bbCoords.ZMax - bbCoords.ZMin)*k    
+
+			#
+			# GRID openEMS GENERATION INTO VARIABLE
+			#
+			genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+			genScript += "% MESH PRIORITY - " + currSetting.getName() + " - " + freecadObjName + "\n"
+			genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+			if (currSetting.getType() == 'Fixed Distance'):
+				#UNIT FOR MESH										
+				if (currSetting.xenabled):
+					genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
+					genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
+				if (currSetting.yenabled):
+					genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
+					genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
+				if (currSetting.zenabled):
+					genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
+					genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
+				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+				pass
+			elif (currSetting.getType() == 'Fixed Count'):
+				#if just one line is defined then is place in middle										
+				if (currSetting.xenabled):
+					genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
+					if (not currSetting.getXYZ()['x'] == 1):
+						genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+					else:
+						genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
+
+				if (currSetting.yenabled):
+					genScript += "mesh.y(mesh.y >= " + str(xmin) + " & mesh.y <= " + str(xmax) + ") = [];\n"
+					if (not currSetting.getXYZ()['y'] == 1):
+						genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+					else:
+						genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
+
+				if (currSetting.zenabled):
+					genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
+					if (not currSetting.getXYZ()['z'] == 1):
+						genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+					else:
+						genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
+
+				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+				pass
+			elif (currSetting.getType() == 'User Defined'):
+				#UNIT FOR MESH										
+				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
+				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+				pass
+
+		return genScript
+
 	#
 	# Universal function to add items into categories in GUI.
 	#
@@ -1527,7 +1638,6 @@ ylim([-40 2]);
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
 		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % equivalent to -50 dB\n"
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
-		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
 
 		#default structure for mesh
@@ -1615,7 +1725,9 @@ ylim([-40 2]);
 
 		#
 		# COORDINATION SYSTEM
+		#	Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLMENTED!
 		#
+		"""
 		gridCoordsType = self.getModelCoordsType()
 		if (gridCoordsType == "rectangular"):
 			genScript += "CSX = InitCSX();\n"
@@ -1623,7 +1735,8 @@ ylim([-40 2]);
 			genScript += "CSX = InitCSX('CoordSystem',1);\n"
 		else:
 			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOW"				
-
+		"""
+		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
 
 
@@ -1793,6 +1906,7 @@ ylim([-40 2]);
 							objsExport = []
 
 							#item = current GRID ITEM
+							#currSetting = current GRID ITEM data ie. topPriorityLines, ...
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
 								print("##GRID item children:")
@@ -1842,6 +1956,20 @@ ylim([-40 2]);
 									#print("\tplacement Y: " + str(offsetY))
 									#print("\tplacement Z: " + str(offsetZ))
 
+                                    #ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
+									if currSetting.generateLinesInside:
+										k = 0.005
+										print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
+									else:
+										k = 0
+																			
+									xmax = bbCoords.XMax - (bbCoords.XMax - bbCoords.XMin)*k    
+									ymax = bbCoords.YMax - (bbCoords.YMax - bbCoords.YMin)*k    
+									zmax = bbCoords.ZMax - (bbCoords.ZMax - bbCoords.ZMin)*k    
+									xmin = bbCoords.XMin + (bbCoords.XMax - bbCoords.XMin)*k    
+									ymin = bbCoords.YMin + (bbCoords.YMax - bbCoords.YMin)*k    
+									zmin = bbCoords.ZMin + (bbCoords.ZMax - bbCoords.ZMin)*k    
+
 									#
 									# GRID openEMS GENERATION INTO VARIABLE
 									#
@@ -1851,32 +1979,41 @@ ylim([-40 2]);
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
 										if (currSetting.xenabled):
-											genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+											#genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+											genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
 										if (currSetting.yenabled):
-											genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+											#genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+											genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
 										if (currSetting.zenabled):
-											genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+											#genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+											genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
 										#if just one line is defined then is place in middle										
 										if (currSetting.xenabled):
 											if (not currSetting.getXYZ()['x'] == 1):
-												genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+												#genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+												genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
 											else:
-												genScript += "mesh.x = [mesh.x " + str((bbCoords.XMin + bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
+												#genScript += "mesh.x = [mesh.x " + str((bbCoords.XMin + bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
+												genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
 
 										if (currSetting.yenabled):
 											if (not currSetting.getXYZ()['y'] == 1):
-												genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+												#genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+												genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
 											else:
-												genScript += "mesh.y = [mesh.y " + str((bbCoords.YMin + bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
+												#genScript += "mesh.y = [mesh.y " + str((bbCoords.YMin + bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
+												genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
 
 										if (currSetting.zenabled):
 											if (not currSetting.getXYZ()['z'] == 1):
-												genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+												#genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+												genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
 											else:
-												genScript += "mesh.z = [mesh.z " + str((bbCoords.ZMin + bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
+												#genScript += "mesh.z = [mesh.z " + str((bbCoords.ZMin + bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
+												genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
 
 										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
 										pass
@@ -2084,6 +2221,24 @@ ylim([-40 2]);
 				print("\n")
 
 		print("======================== REPORT END ========================\n")
+
+		#   _____ _____  _____ _____       _____  _____  _____ ____  _____  _____ _______ _____ ______  _____ 
+		#  / ____|  __ \|_   _|  __ \     |  __ \|  __ \|_   _/ __ \|  __ \|_   _|__   __|_   _|  ____|/ ____|
+		# | |  __| |__) | | | | |  | |    | |__) | |__) | | || |  | | |__) | | |    | |    | | | |__  | (___  
+		# | | |_ |  _  /  | | | |  | |    |  ___/|  _  /  | || |  | |  _  /  | |    | |    | | |  __|  \___ \ 
+		# | |__| | | \ \ _| |_| |__| |    | |    | | \ \ _| || |__| | | \ \ _| |_   | |   _| |_| |____ ____) |
+		#  \_____|_|  \_\_____|_____/     |_|    |_|  \_\_____\____/|_|  \_\_____|  |_|  |_____|______|_____/ 
+		#                                                                                                     
+
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% GRID PRIORITIES GENERATION\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+		meshPrioritiesCount = self.form.meshPriorityTreeView.topLevelItemCount()
+		for k in reversed(range(meshPrioritiesCount)):
+			meshPriorityIdentifier = self.form.meshPriorityTreeView.topLevelItem(k).text(0)
+			print("GRID PRIORITY SCRIPT GENERATION " + meshPriorityIdentifier)
+			genScript += self.getMeshPriorityScriptLines(meshPriorityIdentifier)
 
 		#
 		# WRITE GENERATED SCRIPT INTO FILE
@@ -3401,22 +3556,3 @@ ylim([-40 2]);
 panel = BoxTaskPanel()
 #FreeCADGui.Control.showDialog(panel)
 panel.show()
-
-
-
-
-
-"""
-a = [1 2 3 4 5 6 7 8 9 10]
-a(a >= 2 & a <= 7) = []
-"""
-
-
-
-
-
-
-
-
-
-
