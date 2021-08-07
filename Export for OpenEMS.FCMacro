@@ -1407,17 +1407,17 @@ ylim([-40 2]);
 
 			#ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
 			if currSetting.generateLinesInside:
-				k = 0.05
+				k = self.maxGridResolution
 				print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
 			else:
 				k = 0
 													
-			xmax = bbCoords.XMax - (bbCoords.XMax - bbCoords.XMin)*k    
-			ymax = bbCoords.YMax - (bbCoords.YMax - bbCoords.YMin)*k    
-			zmax = bbCoords.ZMax - (bbCoords.ZMax - bbCoords.ZMin)*k    
-			xmin = bbCoords.XMin + (bbCoords.XMax - bbCoords.XMin)*k    
-			ymin = bbCoords.YMin + (bbCoords.YMax - bbCoords.YMin)*k    
-			zmin = bbCoords.ZMin + (bbCoords.ZMax - bbCoords.ZMin)*k    
+			xmax = bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin)*k    
+			ymax = bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin)*k    
+			zmax = bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
+			xmin = bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin)*k    
+			ymin = bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin)*k    
+			zmin = bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
 
 			#
 			# GRID openEMS GENERATION INTO VARIABLE
@@ -1681,17 +1681,25 @@ ylim([-40 2]);
 				genScript += "% EXCITATION " + currSetting.getName() + "\n"
 				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
+				#EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
+				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
 				if (currSetting.getType() == 'sinusodial'):
 					genScript += "fc = " + str(currSetting.sinusodial['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
+					genScript += "max_res = c0 / fc / 20;\n"
+					self.maxGridResolution = 3e8 / (currSetting.sinusodial['fc']*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'gaussian'):
 					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetGaussExcite(FDTD, f0, fc );\n"
+					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
+					self.maxGridResolution = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc'])*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'custom'):
 					genScript += "%custom\n"
+					genScript += "max_res = 0;\n"
+					self.maxGridResolution = 0
 					pass
 				pass
 			else:
@@ -1958,17 +1966,17 @@ ylim([-40 2]);
 
                                     #ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
 									if currSetting.generateLinesInside:
-										k = 0.005
+										k = self.maxGridResolution
 										print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
 									else:
 										k = 0
 																			
-									xmax = bbCoords.XMax - (bbCoords.XMax - bbCoords.XMin)*k    
-									ymax = bbCoords.YMax - (bbCoords.YMax - bbCoords.YMin)*k    
-									zmax = bbCoords.ZMax - (bbCoords.ZMax - bbCoords.ZMin)*k    
-									xmin = bbCoords.XMin + (bbCoords.XMax - bbCoords.XMin)*k    
-									ymin = bbCoords.YMin + (bbCoords.YMax - bbCoords.YMin)*k    
-									zmin = bbCoords.ZMin + (bbCoords.ZMax - bbCoords.ZMin)*k    
+									xmax = bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin)*k    
+									ymax = bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin)*k    
+									zmax = bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
+									xmin = bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin)*k    
+									ymin = bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin)*k    
+									zmin = bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
 
 									#
 									# GRID openEMS GENERATION INTO VARIABLE
