@@ -32,7 +32,10 @@ class OpenEMS:
 		objList = []
 		for obj in currentObjects:
 			item = QtGui.QTreeWidgetItem([obj.Label])
-			item.setIcon(0, QtGui.QIcon("./img/object.svg")) 
+			if (type(item).find("Sketch")):
+				item.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+			else:
+				item.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 			objList.append(item)
 		return objList
 
@@ -915,19 +918,17 @@ class BoxTaskPanel:
 		for i in items:
 			print("openEMS object to export:" + i.Label)
 
-			# FIRST METHOD raw including just labeled items
-			#
-			#item = QtGui.QTreeWidgetItem([i.Label])
-			#item.setIcon(0, QtGui.QIcon("./img/object.svg"))
-			#treeItems.append(item)
-
 			# ADDING ITEMS with UserData object which storethem in intelligent way
 			#
 			topItem = QtGui.QTreeWidgetItem([i.Label])
 			itemData = FreeCADSettingsItem(i.Label)
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
-			topItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
+			if (str(type(i)).find("Sketch") > -1):
+				topItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+			else:
+				topItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 			treeItems.append(topItem)
+
 		
 		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
 
@@ -3468,8 +3469,14 @@ ylim([-40 2]);
 							#treeItem = QtGui.QTreeWidgetItem([itemName])
 							treeItem = QtGui.QTreeWidgetItem()
 							treeItem.setText(0, itemName)
-							treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
+							#treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
 							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+
+							#set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
+							if (str(type(FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0])).find("Sketch") > -1):
+								treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+							else:
+								treeItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 
 							targetGroup[k].child(m).addChild(treeItem)
 							print("\tItem added")
