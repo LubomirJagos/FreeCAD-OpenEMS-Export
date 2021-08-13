@@ -2962,6 +2962,21 @@ ylim([-40 2]);
 		if not self.form.gridSettingsTreeView.currentItem():
 			return
 
+		#set values to zero to not left previous settings to confuse user
+		self.form.fixedDistanceXNumberInput.setValue(0)
+		self.form.fixedDistanceYNumberInput.setValue(0)
+		self.form.fixedDistanceZNumberInput.setValue(0)
+		self.form.fixedCountXNumberInput.setValue(0)
+		self.form.fixedCountYNumberInput.setValue(0)
+		self.form.fixedCountZNumberInput.setValue(0)
+		self.form.userDefinedGridLinesTextInput.setPlainText("")
+		self.form.gridXEnable.setChecked(False)
+		self.form.gridYEnable.setChecked(False)
+		self.form.gridZEnable.setChecked(False)
+		self.form.gridGenerateLinesInsideCheckbox.setChecked(False)
+		self.form.gridTopPriorityLinesCheckbox.setChecked(False)
+
+		#set values in grid settings by actual selected item
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.gridSettingsNameInput.setText(currSetting.name)
 
