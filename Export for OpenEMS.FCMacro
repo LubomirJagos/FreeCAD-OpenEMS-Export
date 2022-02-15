@@ -32,8 +32,10 @@ class OpenEMS:
 		objList = []
 		for obj in currentObjects:
 			item = QtGui.QTreeWidgetItem([obj.Label])
-			if (type(item).find("Sketch")):
-				item.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+			if (obj.Name.find("Sketch") > -1):
+				item.setIcon(0, QtGui.QIcon("./img/wire.svg"))
+			elif (obj.Name.find("Discretized_Edge") > -1): 
+				item.setIcon(0, QtGui.QIcon("./img/curve.svg"))
 			else:
 				item.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 			objList.append(item)
@@ -923,8 +925,10 @@ class BoxTaskPanel:
 			topItem = QtGui.QTreeWidgetItem([i.Label])
 			itemData = FreeCADSettingsItem(i.Label)
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
-			if (str(type(i)).find("Sketch") > -1):
+			if (i.Name.find("Sketch") > -1):
 				topItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+			elif (i.Name.find("Discretized_Edge") > -1): 
+				topItem.setIcon(0, QtGui.QIcon("./img/curve.svg"))
 			else:
 				topItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 			treeItems.append(topItem)
@@ -1669,9 +1673,10 @@ ylim([-40 2]);
 			print("#EXCITATION")
 
 			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-			item = excitationCategory[0].child(0)
-			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
-			if (currSetting.getName() != 'Excitation Default'):
+			if (excitationCategory[0].childCount() > 0):
+				item = excitationCategory[0].child(0)
+				currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
+
 				print("#name: " + currSetting.getName())
 				print("#type: " + currSetting.getType())
 
@@ -1707,8 +1712,7 @@ ylim([-40 2]);
 					pass
 				pass
 			else:
-				print("#Excitation Default")
-				print("---")
+				self.displayMessage("Missing excitation, please define one.")
 				pass
 			pass
 
@@ -2075,37 +2079,89 @@ ylim([-40 2]);
 								genScript += "CSX = SetMaterialProperty( CSX, '" + currSetting.getName() + "', 'Epsilon', " + str(currSetting.constants['epsilon']) + ", 'Kappa', " + str(currSetting.constants['kappa']) + ");\n"
 
 							#item = current MATERIAL ITEM
+							
+							#first print all current material children names
 							for k in range(item.childCount()):
 								childName = item.child(k).text(0)
 								print("##Children:")
 								print("\t" + childName)
 
-								currDir, baseName = self.getCurrDir()
-								stlModelFileName = childName + "_gen_model.stl"
+							#now export material children, if it's object export as STL, if it's curve export as curve
+							for k in range(item.childCount()):
+								childName = item.child(k).text(0)
 
 								#
 								#	getting item priority
 								#
-								stlModelPriorityItemName = item.parent().text(0) + ", " + item.text(0)+ ", " + childName
-								stlModelPriority = self.getItemPriority(stlModelPriorityItemName)
+								objModelPriorityItemName = item.parent().text(0) + ", " + item.text(0)+ ", " + childName
+								objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
-								genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(stlModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', 1});\n"
+								#getting reference to FreeCAD object
+								freeCadObj =  [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName][0]
 
-								#   _____ _______ _                                        _   _             
-								#  / ____|__   __| |                                      | | (_)            
-								# | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __  
-								#  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \ 
-								#  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
-								# |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
-								#                           __/ |                                            
-								#                          |___/                                            
-								#
-								#going through each concrete material items and generate their .stl files
-								partToExport = [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName] 
-								currDir = os.path.dirname(App.ActiveDocument.FileName)
-								exportFileName = currDir + "/" + stlModelFileName
-								Mesh.export(partToExport,exportFileName)
-								print("Material object exported as STL into: " + stlModelFileName)
+								if (freeCadObj.Name.find("Discretized_Edge") > -1):
+									#
+									#	Adding discretized curve
+									#
+										
+									curvePoints = freeCadObj.Points
+									genScript += "points = [];\n"
+									for k in range(1,len(curvePoints)):
+										genScript += "points(1," + str(k) + ") = " + str(curvePoints[k].x) + ";" 
+										genScript += "points(2," + str(k) + ") = " + str(curvePoints[k].y) + ";" 
+										genScript += "points(3," + str(k) + ") = " + str(curvePoints[k].z) + ";"
+										genScript += "\n" 
+
+									genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+									print("Curve added to generated script using its points.")
+
+								elif (freeCadObj.Name.find("Sketch") > -1):
+									#
+									#	Adding JUST LINE SEGMENTS FROM SKETCH, THIS NEED TO BE IMPROVED TO PROPERLY GENERATE CURVE FROM SKETCH,
+									#	there can be circle, circle arc and maybe something else in sketch geometry
+									#
+										
+									for geometryObj in freeCadObj.Geometry:
+										if (str(type(geometryObj)).find("LineSegment") > -1):
+											genScript += "points = [];\n"
+											genScript += "points(1,1) = " + str(geometryObj.StartPoint.x) + ";" 
+											genScript += "points(2,1) = " + str(geometryObj.StartPoint.y) + ";" 
+											genScript += "points(3,1) = " + str(geometryObj.StartPoint.z) + ";"
+											genScript += "\n" 
+											genScript += "points(1,2) = " + str(geometryObj.EndPoint.x) + ";" 
+											genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";" 
+											genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
+											genScript += "\n" 
+											genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+
+									print("Line segments from sketch added.")
+									
+								else:
+									#
+									#	Adding part as STL model, first export it into file and that file load using octave openEMS function
+									#
+
+									currDir, baseName = self.getCurrDir()
+									stlModelFileName = childName + "_gen_model.stl"
+		
+									genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', 1});\n"
+	
+									#   _____ _______ _                                        _   _             
+									#  / ____|__   __| |                                      | | (_)            
+									# | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __  
+									#  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \ 
+									#  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
+									# |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
+									#                           __/ |                                            
+									#                          |___/                                            
+									#
+									#going through each concrete material items and generate their .stl files
+									 
+									currDir = os.path.dirname(App.ActiveDocument.FileName)
+									partToExport = [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName]
+									exportFileName = currDir + "/" + stlModelFileName
+									Mesh.export(partToExport,exportFileName)
+									print("Material object exported as STL into: " + stlModelFileName)
 
 						else:
 							print("#Material Default")
@@ -3488,8 +3544,11 @@ ylim([-40 2]);
 							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
 							#set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
-							if (str(type(FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0])).find("Sketch") > -1):
+							freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0]
+							if (freeCadObj.Name.find("Sketch") > -1):
 								treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+							elif (freeCadObj.Name.find("Discretized_Edge") > -1):
+								treeItem.setIcon(0, QtGui.QIcon("./img/curve.svg")) 
 							else:
 								treeItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
 
