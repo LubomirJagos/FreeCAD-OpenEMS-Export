@@ -2106,7 +2106,7 @@ ylim([-40 2]);
 										
 									curvePoints = freeCadObj.Points
 									genScript += "points = [];\n"
-									for k in range(1,len(curvePoints)):
+									for k in range(0,len(curvePoints)):
 										genScript += "points(1," + str(k) + ") = " + str(curvePoints[k].x) + ";" 
 										genScript += "points(2," + str(k) + ") = " + str(curvePoints[k].y) + ";" 
 										genScript += "points(3," + str(k) + ") = " + str(curvePoints[k].z) + ";"
