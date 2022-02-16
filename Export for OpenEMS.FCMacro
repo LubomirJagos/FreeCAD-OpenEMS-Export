@@ -2107,9 +2107,9 @@ ylim([-40 2]);
 									curvePoints = freeCadObj.Points
 									genScript += "points = [];\n"
 									for k in range(0,len(curvePoints)):
-										genScript += "points(1," + str(k) + ") = " + str(curvePoints[k].x) + ";" 
-										genScript += "points(2," + str(k) + ") = " + str(curvePoints[k].y) + ";" 
-										genScript += "points(3," + str(k) + ") = " + str(curvePoints[k].z) + ";"
+										genScript += "points(1," + str(k+1) + ") = " + str(curvePoints[k].x) + ";" 
+										genScript += "points(2," + str(k+1) + ") = " + str(curvePoints[k].y) + ";" 
+										genScript += "points(3," + str(k+1) + ") = " + str(curvePoints[k].z) + ";"
 										genScript += "\n" 
 
 									genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
