@@ -116,7 +116,7 @@ class OpenEMS:
 						freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(freeCadObjName)
 						itemList.append(freeCadObj)
 
-		#values initialization, for minimal values must have be init to big numbers to be sure they will be overwritten, for max values have to put ther small numbers to be sure to be overwritten
+		#values initialization, for minimal values must have be init to big numbers to be sure they will be overwritten, for max values have to put their small numbers to be sure to be overwritten
 		minX = 9999
 		minY = 9999
 		minZ = 9999
@@ -710,7 +710,7 @@ class BoxTaskPanel:
 		#
 		#	Drawing auxiliary object grid for meshing.
 		#
-		#		example how to draw line for gird: self.openEMSObj.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
+		#		example how to draw line for grid: self.openEMSObj.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
 
 		currSetting = currItem.data(0, QtCore.Qt.UserRole)
 		genScript = ""
@@ -862,7 +862,7 @@ class BoxTaskPanel:
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
-	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				zAuxGridCoordList = []
 				if (currSetting.zenabled):
 					if float(currSetting.getXYZ()['z']) != 0:
@@ -942,7 +942,7 @@ class BoxTaskPanel:
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
-	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				xAuxGridCoordList = []
 				if (currSetting.xenabled):
 					if float(currSetting.getXYZ()['x']) != 0:
@@ -1020,7 +1020,7 @@ class BoxTaskPanel:
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
-	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				yAuxGridCoordList = []
 				if (currSetting.yenabled):
 					if float(currSetting.getXYZ()['y']) != 0:
@@ -1609,7 +1609,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	"""
 
 	#
-	#	Get COORDINATION TPYE
+	#	Get COORDINATION TYPE
 	#		this function traverse priority tree view and return coordination type of the most high item
 	#
 	#	returns string coords type
@@ -1663,7 +1663,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#
 	def getItemPriority(self, priorityItemName):
 		#
-		#	priority is readed from tree view
+		#	priority is read from tree view
 		#
 		priorityItemValue = 42
 		itemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
@@ -2006,7 +2006,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("#name: " + currSetting.getName())
 				print("#type: " + currSetting.getType())
 
-				#DON'T KNOW WHY I HAD THS IN EXCITATION BEFORE, I WILL SEE
+				#DON'T KNOW WHY I HAD THIS IN EXCITATION BEFORE, I WILL SEE
 				#portName = "port_" + str(100*m+k)
 
 				#
@@ -2069,7 +2069,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		#
 		# COORDINATION SYSTEM
-		#	Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLMENTED!
+		#	Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
 		#
 		"""
 		gridCoordsType = self.getModelCoordsType()
@@ -2078,7 +2078,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		elif (gridCoordsType == "cylindrical"):
 			genScript += "CSX = InitCSX('CoordSystem',1);\n"
 		else:
-			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOW"				
+			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
 		"""
 		genScript += "CSX = InitCSX();\n"
 		genScript += "\n"
@@ -2087,7 +2087,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 
 		#
-		# DEFUALT MATERIAL definitions
+		# DEFAULT MATERIAL definitions
 		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here
 		#
 		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
@@ -2739,7 +2739,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
 
 		#
-		#	REMOVE ITEM FROM OpenEMS Simulation assignements tree view
+		#	REMOVE ITEM FROM OpenEMS Simulation assignments tree view
 		#
 		rightItem.parent().removeChild(rightItem)
 
@@ -3681,7 +3681,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		print("Saving data from file: " + outFile)
 
 		if (os.path.exists(outFile)):
-			os.remove(outFile)	#if there is aready settings file erase to not cause problems with already written objects inside
+			os.remove(outFile)	# wif there already is settings file, erase to not
+								# cause problems with already written objects inside
 
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
