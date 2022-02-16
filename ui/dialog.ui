@@ -283,7 +283,7 @@
              <item>
               <widget class="QLabel" name="label">
                <property name="text">
-                <string>Auxiliar Grid Axis</string>
+                <string>Auxiliary Grid Axis</string>
                </property>
               </widget>
              </item>
