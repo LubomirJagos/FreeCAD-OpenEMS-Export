@@ -1134,7 +1134,7 @@ CSX = InitCSX();
 									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
 			
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
 										genScript_isActive = " , true"
 			
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
@@ -1840,7 +1840,7 @@ ylim([-40 2]);
 									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
 
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
 										genScript_isActive = ", true"
 
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
@@ -1853,7 +1853,7 @@ ylim([-40 2]);
 									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
 
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes')):
+									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
 										genScript_isActive = ", 'ExcitePort', true"
 
 									genScript_R = ""
