@@ -306,6 +306,8 @@ class PortSettingsItem(SettingsItem):
 			serializedString += ", 'type': 'circular waveguide'"
 		if (self.type == "rectangular waveguide"):
 			serializedString += ", 'type': 'rectangular waveguide'"
+		if (self.type == "nf2ff box"):
+			serializedString += ", 'type': 'nf2ff box'"
 		serializedString += "}"
 		return serializedString
 
@@ -516,6 +518,11 @@ class BoxTaskPanel:
 		self.form.runSimulationButton.clicked.connect(self.runSimulationButtonClicked)
 
 		#
+		# Clicke on "Write NF2FF"
+		#		
+		self.form.writeNf2ffButton.clicked.connect(self.writeNf2ffButtonClicked)
+
+		#
 		# GRID
 		#	- button "Display gridlines...."
 		#	- button "Create userdef..."
@@ -542,6 +549,7 @@ class BoxTaskPanel:
 		self.form.rectangularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.etDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.htDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.nf2ffBoxPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
@@ -615,6 +623,20 @@ class BoxTaskPanel:
 				currItem = gridCategory.child(gridItemIndex).child(objIndex)
 				print(currItem.text(0))
 				self.objectDrawGrid(currItem)
+
+	#
+	#	Update NF2FF list at POSTPROCESSING TAB
+	#
+	def updateNF2FFList(self):
+		#
+		#	If Postprocessing tab is actived then fill combobox with nf2ff possible objects
+		#
+		self.form.portNf2ffObjectList.clear()
+		for k in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItemCount()):
+			if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).text(0) == "Port"):
+				for l in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItem(k).childCount()):
+					if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
+						self.form.portNf2ffObjectList.addItem(self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0))
 
 	#
 	#	Generate Octave script which run openEMS AppCSXCAD to explore model, this is done using octave because path to openEMS folder should be known to octave
@@ -1068,10 +1090,6 @@ CSX = InitCSX();
 				pass
 			pass
 
-
-
-
-
 		genScriptPortCount = 1
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
@@ -1159,11 +1177,6 @@ CSX = InitCSX();
 								else:
 									genScript += '% Unknown port type. Nothing was generated. \n'
 
-
-
-
-
-
 		genScript += """%% postprocessing & do the plots
 freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
 
@@ -1181,6 +1194,7 @@ ylabel('S-Parameter (dB)','FontSize',12);
 xlabel('frequency (GHz) \\rightarrow','FontSize',12);
 ylim([-40 2]);
 """
+
 		#
 		# WRITE OpenEMS Script file into current dir
 		#
@@ -1196,6 +1210,72 @@ ylim([-40 2]);
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
 		print(result)
+
+	#
+	#	Write NF2FF Button clicked, generate script to display far field pattern
+	#
+	def writeNf2ffButtonClicked(self):
+		genScript = ""
+		genScript += """close all
+clear
+clc
+
+Sim_Path = "tmp";
+
+%% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%find resonance frequncy from s11
+f_res = f0;
+
+% get accepted antenna power at frequency f0
+P_in_0 = interp1(freq, port.P_acc, f0);
+
+% calculate the far field at phi=0 degrees and at phi=90 degrees
+thetaRange = unique([0:0.5:90 90:180]);
+phiRange = (0:2:360) - 180;
+disp( 'calculating the 3D far field...' );
+
+nf2ff = CalcNF2FF(nf2ff, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180,'Mode',0,'Outfile','3D_Pattern.h5','Verbose',1);
+
+theta_HPBW = interp1(nf2ff.E_norm{1}(:,1)/max(nf2ff.E_norm{1}(:,1)),thetaRange,1/sqrt(2))*2;
+
+% display power and directivity
+disp( ['radiated power: Prad = ' num2str(nf2ff.Prad) ' Watt']);
+disp( ['directivity: Dmax = ' num2str(nf2ff.Dmax) ' (' num2str(10*log10(nf2ff.Dmax)) ' dBi)'] );
+disp( ['efficiency: nu_rad = ' num2str(100*nf2ff.Prad./P_in_0) ' %']);
+disp( ['theta_HPBW = ' num2str(theta_HPBW) ' Â°']);
+
+
+%%
+directivity = nf2ff.P_rad{1}/nf2ff.Prad*4*pi;
+directivity_CPRH = abs(nf2ff.E_cprh{1}).^2./max(nf2ff.E_norm{1}(:)).^2*nf2ff.Dmax;
+directivity_CPLH = abs(nf2ff.E_cplh{1}).^2./max(nf2ff.E_norm{1}(:)).^2*nf2ff.Dmax;
+
+%%
+figure
+plot(thetaRange, 10*log10(directivity(:,1)'),'k-','LineWidth',2);
+hold on
+grid on
+xlabel('theta (deg)');
+ylabel('directivity (dBi)');
+plot(thetaRange, 10*log10(directivity_CPRH(:,1)'),'g--','LineWidth',2);
+plot(thetaRange, 10*log10(directivity_CPLH(:,1)'),'r-.','LineWidth',2);
+legend('norm','CPRH','CPLH');
+
+%% dump to vtk
+DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',1e-3);
+DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3);
+DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3);
+	
+"""
+		#
+		# WRITE OpenEMS Script file into current dir
+		#
+		currDir, nameBase = self.getCurrDir()
+		fileName = nameBase + "_draw_NF2FF.m"
+		f = open(fileName, "w")
+		f.write(genScript)
+		f.close()
+		print('Script to display far field written into: ' + fileName)
 
 	def materialUserDeinedRadioButtonToggled(self):
 		if (self.form.materialUserDefinedRadioButton.isChecked()):
@@ -1572,6 +1652,8 @@ ylim([-40 2]);
 		#  ____) | |____   | |     | |__| | |____| |\  | |____| | \ \  / ____ \| |  | |____| |__| | | |____ / ____ \| |  | |___| |__| | |__| | | \ \ _| |_| |____ ____) |
 		# |_____/|______|  |_|      \_____|______|_| \_|______|_|  \_\/_/    \_\_|  |______|_____/   \_____/_/    \_\_|  |______\_____|\____/|_|  \_\_____|______|_____/ 
 		#                                                                                                                                                               
+		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
+		
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
 		for k in range(childCount):
@@ -1868,15 +1950,26 @@ ylim([-40 2]);
 								elif (currSetting.getType() == 'rectangular waveguide'):
 									genScript += "%% rectangular port openEMS code should be here\n"
 								elif (currSetting.getType() == 'et dump'):
-									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+									genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
 									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+									genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 								elif (currSetting.getType() == 'ht dump'):
-									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+									genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
 									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+									genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+								elif (currSetting.getType() == 'nf2ff box'):
+									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+									
+									nf2ff_gridlines['x'].append(bbCoords.XMin)
+									nf2ff_gridlines['x'].append(bbCoords.XMax)
+									nf2ff_gridlines['y'].append(bbCoords.YMin)
+									nf2ff_gridlines['y'].append(bbCoords.YMax)
+									nf2ff_gridlines['z'].append(bbCoords.ZMin)
+									nf2ff_gridlines['z'].append(bbCoords.ZMax)
 								else:
 									genScript += '% Unknown port type. Nothing was generated. \n'
 
@@ -2308,6 +2401,27 @@ ylim([-40 2]);
 			print("GRID PRIORITY SCRIPT GENERATION " + meshPriorityIdentifier)
 			genScript += self.getMeshPriorityScriptLines(meshPriorityIdentifier)
 
+		#  _   _ ______ ___  ______ ______    _____ _____  _____ _____  _      _____ _   _ ______  _____ 
+		# | \ | |  ____|__ \|  ____|  ____|  / ____|  __ \|_   _|  __ \| |    |_   _| \ | |  ____|/ ____|
+		# |  \| | |__     ) | |__  | |__    | |  __| |__) | | | | |  | | |      | | |  \| | |__  | (___  
+		# | . ` |  __|   / /|  __| |  __|   | | |_ |  _  /  | | | |  | | |      | | | . ` |  __|  \___ \ 
+		# | |\  | |     / /_| |    | |      | |__| | | \ \ _| |_| |__| | |____ _| |_| |\  | |____ ____) |
+		# |_| \_|_|    |____|_|    |_|       \_____|_|  \_\_____|_____/|______|_____|_| \_|______|_____/ 
+		#                                                                                                
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% NF2FF PROBES GRIDLINES\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+		if (len(nf2ff_gridlines['x']) > 0):
+			genScript += "mesh.x = [mesh.x " + " ".join(str(i) for i in nf2ff_gridlines['x']) + "];\n"
+		if (len(nf2ff_gridlines['y']) > 0):
+			genScript += "mesh.y = [mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + "];\n"
+		if (len(nf2ff_gridlines['z']) > 0):
+			genScript += "mesh.z = [mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + "];\n"
+		
+		#add nf2ff gridlines into mesh, they are always added this way, HARDCODED UNIT mm (milimeter), must figure out if there should be added something like default units for simulation
+		genScript += "CSX = DefineRectGrid(CSX, 0.001, mesh);\n"
+                                                                                                
 		#
 		# WRITE GENERATED SCRIPT INTO FILE
 		#
@@ -2327,6 +2441,8 @@ ylim([-40 2]);
 		f = open(fileName, "w")
 		f.write(genScript)
 		f.close()
+		
+		self.displayMessage('Simulation file written into: ' + fileName)
 		print('Simulation file written into: ' + fileName)
 
 		return
@@ -2581,12 +2697,34 @@ ylim([-40 2]);
 	#
 	def fixedCountRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(False)
+		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
 
 	def fixedDistanceRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(False)
+		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
 
 	def userDefinedRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(True)
+
+		self.form.gridTopPriorityLinesCheckbox.setCheckState(QtCore.Qt.Unchecked)
+		self.form.gridTopPriorityLinesCheckbox.setEnabled(False)
+		
+	def getCurrentSimulationGridType(self):
+		isCoordTypeRectangular = True
+
+		#none grid items defined
+		if self.form.gridSettingsTreeView.invisibleRootItem().childCount() == 0:
+			return None
+
+		#there are grid items defined, so going through them and find their coordination type, they should be all the same coord type
+		currentSimulationGridType = 'rectangular'
+		topGridItem = self.form.gridSettingsTreeView.invisibleRootItem()
+		definedGridItemsCount = topGridItem.childCount()
+		for k in range(0, definedGridItemsCount):
+			if topGridItem.child(k).data(0, QtCore.Qt.UserRole).coordsType != currentSimulationGridType:
+				currentSimulationGridType = 'cylindrical'
+
+		return currentSimulationGridType
 
 	def getGridItemFromGui(self):
 		name = self.form.gridSettingsNameInput.text()
@@ -2647,6 +2785,7 @@ ylim([-40 2]);
 			gridItem.userDefined = gridUserDefined
 
 		gridItem.units = self.form.gridUnitsInput.currentText()
+		gridItem.units2 = self.form.gridUnitsInput_2.currentText()
 		gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
 		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
 
@@ -2655,10 +2794,15 @@ ylim([-40 2]);
 	def gridSettingsAddButtonClicked(self):		
 		gridItem = self.getGridItemFromGui()
 
-		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
+		#check if all items have same coordination type
+		currentSimulationGridType = self.getCurrentSimulationGridType()
+		if currentSimulationGridType != None and gridItem.coordsType != currentSimulationGridType:
+			self.displayMessage("All current defined grids are " + currentSimulationGridType + " you have to remove them or change type of current grid item.")
+			return
 
+		#check for duplicity in names if there is some warning message displayed
 		#if everything is OK, item is added into tree
+		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
 		if (not isDuplicityName):
 			self.addSettingsItemGui(gridItem)
 			self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
@@ -2708,6 +2852,7 @@ ylim([-40 2]);
 		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridCoordsTypeChoosed(self):
+		"""
 		if (self.form.gridRectangularRadio.isChecked()):
 			self.form.gridUnitsInput.clear()
 			self.form.gridUnitsInput.addItem("mm")
@@ -2717,14 +2862,25 @@ ylim([-40 2]);
 			self.form.gridUnitsInput.addItem("pm")
 			self.form.gridXEnable.setText("X")
 			self.form.gridYEnable.setText("Y")
-
+		
 		if (self.form.gridCylindricalRadio.isChecked()):
 			self.form.gridUnitsInput.clear()
 			self.form.gridUnitsInput.addItem("rad")
 			self.form.gridUnitsInput.addItem("deg")
 			self.form.gridXEnable.setText("r")
-			self.form.gridYEnable.setText("a")
+			self.form.gridYEnable.setText("phi")
+		"""
 
+		if (self.form.gridRectangularRadio.isChecked()):
+			self.form.gridXEnable.setText("X")
+			self.form.gridYEnable.setText("Y")
+			self.form.gridUnitsInput_2.setEnabled(False)
+		
+		if (self.form.gridCylindricalRadio.isChecked()):
+			self.form.gridXEnable.setText("r")
+			self.form.gridYEnable.setText("phi")
+			self.form.gridUnitsInput_2.setEnabled(True)
+		
 	#
 	# MATERIAL SETTINGS
 	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -2882,12 +3038,16 @@ ylim([-40 2]);
 			portItem.type = "et dump"
 		if (self.form.htDumpPortRadioButton.isChecked()):
 			portItem.type = "ht dump"
+		if (self.form.nf2ffBoxPortRadioButton.isChecked()):
+			portItem.type = "nf2ff box"
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
 
 		if (not isDuplicityName):
 			self.addSettingsItemGui(portItem)
+			if (portItem.type == "nf2ff box"):
+				self.updateNF2FFList()
 
 		return
 
@@ -2908,9 +3068,17 @@ ylim([-40 2]);
 		priorityName = portGroupItem.parent().text(0) + ", " + portGroupItem.text(0);
 		self.removePriorityName(priorityName)
 
-
+		###
+		#	Removing from Object Assugnment Tree
+		###
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
+
+		#
+		#	If NF2FF box removed then update NF2FF list on POSTPROCESSING TAB
+		#
+		if (portGroupItem.data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
+			self.updateNF2FFList()
 
 		return
 
@@ -3125,10 +3293,10 @@ ylim([-40 2]);
 
 		if (currSetting.type.lower() == "lumped"):
 			self.form.lumpedPortRadioButton.click()
-			pass
+
 		elif (currSetting.type.lower() == "microstrip"):
 			self.form.microstripPortRadioButton.click()
-			pass
+
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()
 
@@ -3144,20 +3312,20 @@ ylim([-40 2]);
 
 			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 
-			pass
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
-			pass
 		elif (currSetting.type.lower() == "et dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.etDumpPortRadioButton.click()
-			pass
 		elif (currSetting.type.lower() == "ht dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.htDumpPortRadioButton.click()
-			pass
+		elif (currSetting.type.lower() == "nf2ff box"):
+			self.form.portResistanceInput.setEnabled(False)
+			self.form.portResistanceUnitsInput.setEnabled(False)
+			self.form.nf2ffBoxPortRadioButton.click()
 		else:
 			pass #no gui update
 
@@ -3385,11 +3553,20 @@ ylim([-40 2]);
 		#SAVE POSTPROCESSING OPTIONS
 		settings.beginGroup("POSTPROCESSING-DefaultName")
 		settings.setValue("generateJustPreview", self.form.generateJustPreviewCheckbox.isChecked())
+		settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
+		settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
+		settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
+		settings.setValue("nf2ffThetaStop", self.form.portNf2ffThetaStop.value())
+		settings.setValue("nf2ffThetaStep", self.form.portNf2ffThetaStep.value())
+		settings.setValue("nf2ffPhiStart", self.form.portNf2ffPhiStart.value())
+		settings.setValue("nf2ffPhiStop", self.form.portNf2ffPhiStop.value())
+		settings.setValue("nf2ffPhiStep", self.form.portNf2ffPhiStep.value())
 		settings.endGroup()
 
 
 		#sys.exit()  # prevents second call
 		print("Current values saved into file: " + outFile)
+		self.displayMessage("Current values saved into file: " + outFile)
 		return
 
 	#  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3470,6 +3647,12 @@ ylim([-40 2]);
 					categorySettings.modeName = settings.value('modeName')
 					categorySettings.polarizationAngle = settings.value('polarizationAngle')
 					categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+				elif (categorySettings.type == "nf2ff box"):
+					#
+					#	Add nf2ff box item into list of possible object in postprocessing tab
+					#
+					self.form.portNf2ffObjectList.addItem(categorySettings.name)
+
 
 				settings.endGroup()
 
@@ -3628,6 +3811,25 @@ ylim([-40 2]);
 				print("POSTPROCESSING item settings found.")
 				settings.beginGroup(settingsGroup)
 				self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if settings.value('generateJustPreview') else QtCore.Qt.Unchecked)
+
+				#
+				#	In case of error just continue and do nothing to correct values
+				#
+				try:
+					index = self.form.portNf2ffObjectList.findText(settings.value("nf2ffObject"), QtCore.Qt.MatchFixedString)
+					if index >= 0:
+						 self.form.portNf2ffObjectList.setCurrentIndex(index)
+						 
+					self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreq"))
+					self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
+					self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
+					self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
+					self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
+					self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
+					self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
+				except:
+					pass
+
 				settings.endGroup()
 				continue
 

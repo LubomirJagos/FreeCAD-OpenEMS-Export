@@ -189,7 +189,6 @@
             <widget class="QPushButton" name="moveRightButton">
              <property name="font">
               <font>
-               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -585,7 +584,7 @@
               <item>
                <widget class="QRadioButton" name="gridCylindricalRadio">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="text">
                  <string>Cylindrical Grid</string>
@@ -657,6 +656,38 @@
                 <item>
                  <property name="text">
                   <string>pm</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="gridUnitsInput_2">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="currentText">
+                 <string>rad</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>rad</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>deg</string>
                  </property>
                 </item>
                </widget>
@@ -1629,6 +1660,33 @@
               <string>Port Settings</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_4">
+              <item row="3" column="0">
+               <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                <property name="text">
+                 <string>Rectangular Waveguide</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QRadioButton" name="htDumpPortRadioButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Ht Dump</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                <property name="text">
+                 <string>Circular Waveguide</string>
+                </property>
+               </widget>
+              </item>
               <item row="4" column="0">
                <widget class="QRadioButton" name="etDumpPortRadioButton">
                 <property name="text">
@@ -1653,22 +1711,8 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
-                <property name="text">
-                 <string>Rectangular Waveguide</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-                <property name="text">
-                 <string>Circular Waveguide</string>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QRadioButton" name="htDumpPortRadioButton">
+              <item row="6" column="0">
+               <widget class="QRadioButton" name="nf2ffBoxPortRadioButton">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                   <horstretch>0</horstretch>
@@ -1676,7 +1720,7 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Ht Dump</string>
+                 <string>NF2FF Box</string>
                 </property>
                </widget>
               </item>
@@ -1684,115 +1728,131 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="waveguideSettingsGroup">
-             <property name="enabled">
-              <bool>false</bool>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <property name="leftMargin">
+              <number>0</number>
              </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+             <property name="topMargin">
+              <number>0</number>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>200</width>
-               <height>120</height>
-              </size>
+             <property name="rightMargin">
+              <number>0</number>
              </property>
-             <property name="title">
-              <string>Waveguide Settings</string>
+             <property name="bottomMargin">
+              <number>0</number>
              </property>
-             <widget class="QComboBox" name="portWaveguidePolarizationAngle">
-              <property name="geometry">
-               <rect>
-                <x>130</x>
-                <y>50</y>
-                <width>74</width>
-                <height>22</height>
-               </rect>
-              </property>
-              <item>
-               <property name="text">
-                <string>0</string>
+             <item>
+              <widget class="QGroupBox" name="waveguideSettingsGroup">
+               <property name="enabled">
+                <bool>false</bool>
                </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>pi/2</string>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
-              </item>
-             </widget>
-             <widget class="QComboBox" name="portWaveguideModeName">
-              <property name="geometry">
-               <rect>
-                <x>130</x>
-                <y>20</y>
-                <width>74</width>
-                <height>22</height>
-               </rect>
-              </property>
-              <item>
-               <property name="text">
-                <string>TE11</string>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>120</height>
+                </size>
                </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>TM21</string>
+               <property name="title">
+                <string>Waveguide Settings</string>
                </property>
-              </item>
-             </widget>
-             <widget class="QLabel" name="label_3">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>50</y>
-                <width>101</width>
-                <height>21</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>Polarization angle</string>
-              </property>
-             </widget>
-             <widget class="QLabel" name="label_4">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>80</y>
-                <width>101</width>
-                <height>21</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>Excitation amplitude</string>
-              </property>
-             </widget>
-             <widget class="QLabel" name="label_2">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>20</y>
-                <width>101</width>
-                <height>21</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>Mode Name</string>
-              </property>
-             </widget>
-             <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude">
-              <property name="geometry">
-               <rect>
-                <x>130</x>
-                <y>80</y>
-                <width>71</width>
-                <height>22</height>
-               </rect>
-              </property>
-             </widget>
-            </widget>
+               <widget class="QComboBox" name="portWaveguidePolarizationAngle">
+                <property name="geometry">
+                 <rect>
+                  <x>130</x>
+                  <y>50</y>
+                  <width>74</width>
+                  <height>22</height>
+                 </rect>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>pi/2</string>
+                 </property>
+                </item>
+               </widget>
+               <widget class="QComboBox" name="portWaveguideModeName">
+                <property name="geometry">
+                 <rect>
+                  <x>130</x>
+                  <y>20</y>
+                  <width>74</width>
+                  <height>22</height>
+                 </rect>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>TE11</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>TM21</string>
+                 </property>
+                </item>
+               </widget>
+               <widget class="QLabel" name="label_3">
+                <property name="geometry">
+                 <rect>
+                  <x>10</x>
+                  <y>50</y>
+                  <width>101</width>
+                  <height>21</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>Polarization angle</string>
+                </property>
+               </widget>
+               <widget class="QLabel" name="label_4">
+                <property name="geometry">
+                 <rect>
+                  <x>10</x>
+                  <y>80</y>
+                  <width>101</width>
+                  <height>21</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>Excitation amplitude</string>
+                </property>
+               </widget>
+               <widget class="QLabel" name="label_2">
+                <property name="geometry">
+                 <rect>
+                  <x>10</x>
+                  <y>20</y>
+                  <width>101</width>
+                  <height>21</height>
+                 </rect>
+                </property>
+                <property name="text">
+                 <string>Mode Name</string>
+                </property>
+               </widget>
+               <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude">
+                <property name="geometry">
+                 <rect>
+                  <x>130</x>
+                  <y>80</y>
+                  <width>71</width>
+                  <height>22</height>
+                 </rect>
+                </property>
+               </widget>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <spacer name="verticalSpacer_10">
@@ -2653,6 +2713,181 @@
             </widget>
            </item>
            <item>
+            <widget class="QGroupBox" name="nf2ffGroupPostprocessing">
+             <property name="title">
+              <string>NF2FF Display Script</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <item row="3" column="1">
+               <layout class="QGridLayout" name="gridLayout_10">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="portNf2ffThetaStart">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QDoubleSpinBox" name="portNf2ffThetaStop">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_42">
+                  <property name="text">
+                   <string>phi (deg)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QDoubleSpinBox" name="portNf2ffThetaStep">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QDoubleSpinBox" name="portNf2ffPhiStop">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_41">
+                  <property name="text">
+                   <string>theta (deg)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QDoubleSpinBox" name="portNf2ffPhiStep">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="portNf2ffPhiStart">
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-360.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>360.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_43">
+                  <property name="text">
+                   <string>Start</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_44">
+                  <property name="text">
+                   <string>Stop</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="label_45">
+                  <property name="text">
+                   <string>Step</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="writeNf2ffButton">
+                <property name="text">
+                 <string>Write NF2FF </string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_24">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_40">
+                  <property name="text">
+                   <string>Analyse at frequency (MHz)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="portNf2ffFreq">
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="maximum">
+                   <double>99999999.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="portNf2ffObjectList"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <spacer name="verticalSpacer_6">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -2707,6 +2942,9 @@
           <spacer name="horizontalSpacer_11">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Preferred</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
