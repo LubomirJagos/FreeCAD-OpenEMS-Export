@@ -285,12 +285,13 @@ class ExcitationSettingsItem(SettingsItem):
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", R = 0, RUnits = "", isActive = False):
+	def __init__(self, name = "", type = "", R = 0, RUnits = "", isActive = False, direction = "z"):
 		self.name = name
 		self.type = type
 		self.R = R
 		self.RUnits = RUnits
 		self.isActive = isActive
+		self.direction = direction
 		return
 
 	def serializeToString(self):
@@ -1128,13 +1129,6 @@ CSX = InitCSX();
 								#BOUNDING BOX
 								bbCoords = obj.Shape.BoundBox
 			
-								#PLACEMENT BOX
-								print(obj.Placement)
-								#print(dir(obj.Placement.Rotation.Axis))
-								axisX = obj.Placement.Rotation.Axis.x
-								axisY = obj.Placement.Rotation.Axis.y
-								axisZ = obj.Placement.Rotation.Axis.z
-			
 								#
 								#	getting item priority
 								#
@@ -1149,7 +1143,13 @@ CSX = InitCSX();
 									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
 									genScript += 'portR = ' + str(currSetting.R) + ';\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+
+									if (currSetting.direction == 'x'):
+										genScript += 'portDirection = [1 0 0];\n'
+									elif (currSetting.direction == 'y'):
+										genScript += 'portDirection = [0 1 0];\n'
+									elif (currSetting.direction == 'z'):
+										genScript += 'portDirection = [0 0 1];\n'
 			
 									genScript_isActive = ""
 									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
@@ -1221,11 +1221,107 @@ clear
 clc
 
 Sim_Path = "tmp";
+CSX = InitCSX();
 
-%% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%find resonance frequncy from s11
+"""
+		
+		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+		if len(excitationCategory) >= 0:
+			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
+			item = excitationCategory[0].child(0)
+			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
+
+			if (currSetting.getType() == 'sinusodial'):
+				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				pass
+			elif (currSetting.getType() == 'gaussian'):
+				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+				pass
+			elif (currSetting.getType() == 'custom'):
+				genScript += "%custom\n"
+				pass
+			pass
+
+		genScript += """
+freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
 f_res = f0;
+"""
+		genScriptPortCount = 1
+		allItems = []
+		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		for k in range(childCount):
+			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
 
+		for m in range(len(allItems)):
+			currItem = allItems[m]
+
+			for k in range(currItem.childCount()):
+				item = currItem.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				if (itemData):
+					if (itemData.__class__.__name__ == "PortSettingsItem"):
+						print("Port Settings detected")
+						currSetting = item.data(0, QtCore.Qt.UserRole)
+						print("#")
+						print("#PORT")
+						print("#name: " + currSetting.getName())
+						print("#type: " + currSetting.getType())
+
+						objs = FreeCAD.ActiveDocument.Objects
+						for k in range(item.childCount()):
+							childName = item.child(k).text(0)
+			
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
+							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+			
+							print("##Children:")
+							print("\t" + childName)
+							freecadObjects = [i for i in objs if (i.Label) == childName] 
+			
+							#print(freecadObjects)
+							for obj in freecadObjects:
+								#BOUNDING BOX
+								bbCoords = obj.Shape.BoundBox
+			
+								#
+								#	getting item priority
+								#
+								priorityItemName = item.parent().text(0) + ", " + item.text(0)+ ", " + childName
+								priorityIndex = self.getItemPriority(priorityItemName)
+			
+								#
+								# PORT openEMS GENERATION INTO VARIABLE
+								#
+								if (currSetting.getType() == 'lumped' and currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portR = ' + str(currSetting.R) + ';\n'
+									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+
+									if (currSetting.direction == 'x'):
+										genScript += 'portDirection = [1 0 0];\n'
+									elif (currSetting.direction == 'y'):
+										genScript += 'portDirection = [0 1 0];\n'
+									elif (currSetting.direction == 'z'):
+										genScript += 'portDirection = [0 0 1];\n'
+			
+									genScript_isActive = ""
+									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+										genScript_isActive = " , true"
+			
+									genScript += '[CSX port] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+									genScript += 'port = calcPort( port, Sim_Path, freq);\n'
+			
+									genScriptPortCount += 1
+								elif (currSetting.getType() == 'nf2ff box'):
+									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
+									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += "[CSX nf2ff] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+
+		genScript += """
+%% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % get accepted antenna power at frequency f0
 P_in_0 = interp1(freq, port.P_acc, f0);
 
@@ -1898,13 +1994,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 								#BOUNDING BOX
 								bbCoords = obj.Shape.BoundBox
 
-								#PLACEMENT BOX
-								print(obj.Placement)
-								#print(dir(obj.Placement.Rotation.Axis))
-								axisX = obj.Placement.Rotation.Axis.x
-								axisY = obj.Placement.Rotation.Axis.y
-								axisZ = obj.Placement.Rotation.Axis.z
-
 								#
 								#	getting item priority
 								#
@@ -1919,7 +2008,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
 									genScript += 'portR = ' + str(currSetting.R) + ';\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+
+									if (currSetting.direction == 'x'):
+										genScript += 'portDirection = [1 0 0];\n'
+									elif (currSetting.direction == 'y'):
+										genScript += 'portDirection = [0 1 0];\n'
+									elif (currSetting.direction == 'z'):
+										genScript += 'portDirection = [0 0 1];\n'
 
 									genScript_isActive = ""
 									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
@@ -1932,7 +2027,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-									genScript += 'portDirection = [' + str(axisX) + ' ' + str(axisY) + ' ' + str(axisZ) + '];\n'
+
+									if (currSetting.direction == 'x'):
+										genScript += 'portDirection = [1 0 0];\n'
+									elif (currSetting.direction == 'y'):
+										genScript += 'portDirection = [0 1 0];\n'
+									elif (currSetting.direction == 'z'):
+										genScript += 'portDirection = [0 0 1];\n'
 
 									genScript_isActive = ""
 									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
@@ -3020,6 +3121,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		portItem.R = self.form.portResistanceInput.value()
 		portItem.RUnits = self.form.portResistanceUnitsInput.currentText()
 		portItem.isActive = self.form.portActive.isChecked()
+		portItem.direction = self.form.portDirectionInput.currentText()
 
 		if (self.form.lumpedPortRadioButton.isChecked()):
 			portItem.type = "lumped"
@@ -3284,6 +3386,11 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.portSettingsNameInput.setText(currSetting.name)
 		self.form.portResistanceInput.setValue(float(currSetting.R))
 
+		#set active port field direction
+		index = self.form.portDirectionInput.findText(currSetting.direction, QtCore.Qt.MatchFixedString)
+		if index >= 0:
+			self.form.portDirectionInput.setCurrentIndex(index)		
+
 		index = self.form.portResistanceUnitsInput.findText(currSetting.RUnits, QtCore.Qt.MatchFixedString)
 		if index >= 0:
 			self.form.portResistanceUnitsInput.setCurrentIndex(index)
@@ -3457,6 +3564,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue("R", portList[k].R)
 			settings.setValue("RUnits", portList[k].RUnits)
 			settings.setValue("isActive", portList[k].isActive)
+			settings.setValue("direction", portList[k].direction)
 
 			if (portList[k].type == "circular waveguide"):
 				settings.setValue("modeName", portList[k].modeName)
@@ -3642,6 +3750,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				categorySettings.R = settings.value('R')
 				categorySettings.RUnits = settings.value('RUnits')
 				categorySettings.isActive = settings.value('isActive')
+				categorySettings.direction = settings.value('direction')
 
 				if (categorySettings.type == "circular waveguide"):
 					categorySettings.modeName = settings.value('modeName')
