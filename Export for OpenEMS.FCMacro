@@ -6,6 +6,7 @@ import Draft
 import random
 import numpy as np
 import collections
+import math
 
 from PySide.QtCore import QSettings
 import json
@@ -92,8 +93,9 @@ class OpenEMS:
 	def drawDraftCircle(self, lineName, centerPoint, radius):
 		pl = FreeCAD.Placement()
 		pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
-		pl.Base = FreeCAD.Vector(0.0, 0.0, 0.0)
+		pl.Base = centerPoint
 		circle = Draft.makeCircle(radius=radius, placement=pl, face=False, support=None)
+		circle.Label = lineName
 		Draft.autogroup(circle)
 
 	#return x,y,z boundary box of model, going through all assigned objects into model and return boundary coordinates
@@ -751,8 +753,73 @@ class BoxTaskPanel:
 				pass
 
 			elif (currSetting.getType() == 'Fixed Count'):
-				#need to be done for this case
-				pass
+
+	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
+				zAuxGridCoordList = []
+				if (currSetting.zenabled):
+					if int(currSetting.getXYZ()['z']) != 0:
+
+						if int(currSetting.getXYZ()['z']) == 1:
+							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
+						else:
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+							
+						#collecting Z coordinates where grid layers will be drawn
+						for zGridLine in zlines:
+							zAuxGridCoordList.append(zGridLine)
+
+				print("zlines")
+				print(zAuxGridCoordList)
+				if len(zAuxGridCoordList) == 0:
+					zAuxGridCoordList.append(bbCoords.ZMax)
+	
+				for zAuxGridCoord in zAuxGridCoordList:
+					
+					bbPointsVectors = [FreeCAD.Vector(bbCoords.YMin, bbCoords.XMin, 0), FreeCAD.Vector(bbCoords.YMin, bbCoords.XMax, 0), FreeCAD.Vector(bbCoords.YMax, bbCoords.XMin, 0), FreeCAD.Vector(bbCoords.YMax, bbCoords.XMax, 0)]
+					angle1 = math.atan2(bbCoords.YMin, bbCoords.XMin) + 2*math.pi % (2*math.pi)
+					angle2 = math.atan2(bbCoords.YMin, bbCoords.XMax) + 2*math.pi % (2*math.pi)
+					angle3 = math.atan2(bbCoords.YMax, bbCoords.XMin) + 2*math.pi % (2*math.pi)
+					angle4 = math.atan2(bbCoords.YMax, bbCoords.XMax) + 2*math.pi % (2*math.pi)
+					
+					minAngle = min([angle1, angle2, angle3, angle4])
+					maxAngle = max([angle1, angle2, angle3, angle4])						
+					radius = max([math.sqrt(modelMinX**2 + modelMinY**2), math.sqrt(modelMaxX**2 + modelMaxY**2)])
+
+					print("Calculate ylines for cylindrical coords.")
+					print("minAngle: " + str(minAngle))
+					print("maxAngle: " + str(maxAngle))
+					print("radius: " + str(radius))						
+
+					#DRAW X LINES auxiliary grid in 3D view
+					if (currSetting.xenabled):						
+						a = np.array([angle1, angle2, angle3, angle4])
+						indicesMin = a.argmin()
+						indicesMax = a.argmax()
+						closestLineToCenter = bbPointsVectors[indicesMin] - bbPointsVectors[indicesMax]
+
+						#minRadius = closestLineToCenter.distanceToPoint(FreeCAD.Vector(0,0,0))
+						minRadius = abs((bbPointsVectors[indicesMax].x - bbPointsVectors[indicesMin].x)*bbPointsVectors[indicesMin].y - (bbPointsVectors[indicesMax].y - bbPointsVectors[indicesMin].y)*bbPointsVectors[indicesMin].x)/closestLineToCenter.Length
+						maxRadius = max([math.sqrt(bbCoords.XMin**2 + bbCoords.YMin**2), math.sqrt(bbCoords.XMax**2 + bbCoords.YMax**2)])
+
+						if float(currSetting.getXYZ()['x']) == 1:
+							xlines = np.array([(minRadius + maxRadius)/2])
+						else:
+							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ()['x']))
+							
+						for xGridLine in xlines:
+							self.openEMSObj.drawDraftCircle("auxGridLine", FreeCAD.Vector(0,0,zAuxGridCoord), xGridLine)
+		
+					#DRAW Y LINES auxiliary grid in 3D view
+					if (currSetting.yenabled):												
+						if float(currSetting.getXYZ()['y']) == 1:
+							ylines = np.array([(minAngle, maxAngle)/2])
+						else:
+							ylines = np.linspace(minAngle, maxAngle, int(currSetting.getXYZ()['y']))
+							
+						print(ylines)
+
+						for yGridLine in ylines:
+							self.openEMSObj.drawDraftLine("auxGridLine", [0, 0, zAuxGridCoord], [math.cos(yGridLine)*radius, math.sin(yGridLine)*radius, zAuxGridCoord])
 
 		elif (currSetting.coordsType == 'rectangular' and currGridAxis == "z"):
 
