@@ -1429,6 +1429,26 @@
                 </property>
                </spacer>
               </item>
+              <item row="5" column="3">
+               <widget class="QDoubleSpinBox" name="customExcitationF0NumberInput">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximum">
+                 <double>1000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="3">
+               <widget class="QLabel" name="label_46">
+                <property name="text">
+                 <string>f0</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -2013,10 +2033,18 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QDoubleSpinBox" name="lumpedPartCInput"/>
+               <widget class="QDoubleSpinBox" name="lumpedPartCInput">
+                <property name="maximum">
+                 <double>10000000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="lumpedPartRInput"/>
+               <widget class="QDoubleSpinBox" name="lumpedPartRInput">
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="0" column="2">
                <widget class="QComboBox" name="lumpedPartRUnits">
@@ -2157,7 +2185,11 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="lumpedPartLInput"/>
+               <widget class="QDoubleSpinBox" name="lumpedPartLInput">
+                <property name="maximum">
+                 <double>1000000000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="1" column="0">
                <widget class="QCheckBox" name="lumpedPartLEnable">

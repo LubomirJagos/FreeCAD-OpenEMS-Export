@@ -259,7 +259,7 @@ class MaterialSettingsItem(SettingsItem):
 #	Custom     - user has to define function of electric field at input port
 #
 class ExcitationSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", sinusodial = {'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0'}, units = "Hz"):
+	def __init__(self, name = "", type = "", sinusodial = {'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0', 'f0': 0}, units = "Hz"):
 		SettingsItem.__init__(self)
 		self.name = name
 		self.type = type
@@ -277,7 +277,7 @@ class ExcitationSettingsItem(SettingsItem):
 		if (self.type == "gaussian"):
 			serializedString += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
 		if (self.type == "custom"):
-			serializedString += "'f': '" + str(self.custom['functionStr']) + "' "
+			serializedString += "'f': '" + str(self.custom['functionStr']) + "', 'f0': '" + str(self.custom['f0']) + "' "
 
 		serializedString += "'units': \"" + self.units + "\""
 		serializedString += "}"
@@ -2020,7 +2020,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					self.maxGridResolution = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc'])*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'custom'):
-					genScript += "%custom\n"
+					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
+					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "FDTD = SetCustomExcite(FDTD,f0,'" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "');\n"
 					genScript += "max_res = 0;\n"
 					self.maxGridResolution = 0
 					pass
@@ -3226,6 +3228,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			excitationItem.type = 'custom'
 			excitationItem.custom = {}
 			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
+			excitationItem.custom['f0'] = self.form.customExcitationF0NumberInput.value()
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
@@ -3513,6 +3516,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		elif (currSetting.type == "custom"):
 			self.form.customExcitationRadioButton.click()
 			self.form.customExcitationTextInput.setText(currSetting.custom['functionStr'])
+			self.form.customExcitationF0NumberInput.setValue(currSetting.custom['f0'])
+			
 			index = self.form.excitationUnitsNumberInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
 			if index >= 0:
 				self.form.excitationUnitsNumberInput.setCurrentIndex(index)
