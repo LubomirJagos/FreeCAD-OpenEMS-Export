@@ -421,6 +421,9 @@ class BoxTaskPanel:
 
 		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
+		
+		self.form.objectAssignmentRightTreeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
+		self.form.objectAssignmentRightTreeWidget.customContextMenuRequested.connect(self.objectAssignmentTreeWidgetContextClicked) 
 
 		#########################################################################################################
 		#	RIGHT COLUMN
@@ -443,19 +446,23 @@ class BoxTaskPanel:
 		#
 		self.form.gridSettingsAddButton.clicked.connect(self.gridSettingsAddButtonClicked)
 		self.form.gridSettingsRemoveButton.clicked.connect(self.gridSettingsRemoveButtonClicked)
-		self.form.gridSettingsRewriteButton.clicked.connect(self.gridSettingsRewriteButtonClicked)
+		self.form.gridSettingsUpdateButton.clicked.connect(self.gridSettingsUpdateButtonClicked)
 
 		self.form.materialSettingsAddButton.clicked.connect(self.materialSettingsAddButtonClicked)
 		self.form.materialSettingsRemoveButton.clicked.connect(self.materialSettingsRemoveButtonClicked)
+		self.form.materialSettingsUpdateButton.clicked.connect(self.materialSettingsUpdateButtonClicked)
 
 		self.form.excitationSettingsAddButton.clicked.connect(self.excitationSettingsAddButtonClicked)
 		self.form.excitationSettingsRemoveButton.clicked.connect(self.excitationSettingsRemoveButtonClicked)
+		self.form.excitationSettingsUpdateButton.clicked.connect(self.excitationSettingsUpdateButtonClicked)
 
 		self.form.portSettingsAddButton.clicked.connect(self.portSettingsAddButtonClicked)
 		self.form.portSettingsRemoveButton.clicked.connect(self.portSettingsRemoveButtonClicked)
+		self.form.portSettingsUpdateButton.clicked.connect(self.portSettingsUpdateButtonClicked)
 
 		self.form.lumpedPartSettingsAddButton.clicked.connect(self.lumpedPartSettingsAddButtonClicked)
 		self.form.lumpedPartSettingsRemoveButton.clicked.connect(self.lumpedPartSettingsRemoveButtonClicked)
+		self.form.lumpedPartSettingsUpdateButton.clicked.connect(self.lumpedPartSettingsUpdateButtonClicked)
 
 		#
 		# Handle function for grid radio buttons click
@@ -677,6 +684,17 @@ class BoxTaskPanel:
 		if (currItemLabel):
 			FreeCADGui.Selection.clearSelection()
 			self.openEMSObj.selectObjectByLabel(currItemLabel)
+			
+	def objectAssignmentTreeWidgetContextClicked(self, event):
+		self.objAssignCtxMenu = QtGui.QMenu(self.form.objectAssignmentRightTreeWidget)
+		action_expand   = self.objAssignCtxMenu.addAction("Expand all")
+		actioN_collapse = self.objAssignCtxMenu.addAction("Collapse all")
+		menu_action = self.objAssignCtxMenu.exec_(self.form.objectAssignmentRightTreeWidget.mapToGlobal(event))
+		if menu_action is not None:
+			if menu_action == action_expand:
+				self.form.objectAssignmentRightTreeWidget.expandAll()
+			if menu_action == actioN_collapse:
+				self.form.objectAssignmentRightTreeWidget.collapseAll()
 
 	#
 	#	Handler for DOUBLE CLICK on grid item in object assignment list
@@ -1921,14 +1939,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
 		genScript += "display(currDir);\n"
 		genScript += "\n"
-		genScript += "%LuboJ, JUST TO SEE RESULT\n"
-
+		
+		genScript += "%% --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
+		genScript += "%% --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
+		openEMS_opt = []
+		if self.form.generateDebugPECCheckbox.isChecked():
+			openEMS_opt.append('--debug-PEC')
 		if self.form.generateJustPreviewCheckbox.isChecked():
-			genScript += "openEMS_opts = '--no-simulation';\n"
-		else:
-			genScript += "openEMS_opts = '';\n"		
-		#genScript += "%openEMS_opts = '--debug-PEC --no-simulation';\n"
-
+			openEMS_opt.append('--no-simulation')			
+		genScript += "openEMS_opts = '" + " ".join(openEMS_opt)+ "';\n"		
 		genScript += "\n"
 
 		#
@@ -3087,7 +3106,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		return
 
-	def gridSettingsRewriteButtonClicked(self):
+	def gridSettingsUpdateButtonClicked(self):
 		gridSetting = self.getGridItemFromGui()
 
 		selectedItems = self.form.gridSettingsTreeView.selectedItems()
@@ -3196,7 +3215,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.materialSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		materialGroupItem.parent().removeChild(materialGroupItem)
 
+	def materialSettingsUpdateButtonClicked(self):
 		return
+		
 
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3255,6 +3276,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.excitationSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		excitationGroupItem.parent().removeChild(excitationGroupItem)
 
+	def excitationSettingsUpdateButtonClicked(self):
 		return
 
 	# PORT SETTINGS
@@ -3335,6 +3357,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		if (portGroupItem.data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
 			self.updateNF2FFList()
 
+	def portSettingsUpdateButtonClicked(self):
 		return
 
 	def portSettingsTypeChoosed(self):
@@ -3398,6 +3421,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.lumpedPartTreeView.invisibleRootItem().removeChild(selectedItem)
 		lumpedPartGroupItem.parent().removeChild(lumpedPartGroupItem)
 
+	def lumpedPartSettingsUpdateButtonClicked(self):
 		return
 
 
@@ -3742,6 +3766,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		simulationSettings.params['PMLymaxcells'] = self.form.PMLymaxcells.value()
 		simulationSettings.params['PMLzmincells'] = self.form.PMLzmincells.value()
 		simulationSettings.params['PMLzmaxcells'] = self.form.PMLzmaxcells.value()
+		simulationSettings.params['min_gridspacing_x'] = self.form.genParamMinGridSpacingX.value()
+		simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
+		simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
 
 		settings.beginGroup("SIMULATION-" + simulationSettings.name)
 		settings.setValue("name", simulationSettings.name)
@@ -3814,6 +3841,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#SAVE POSTPROCESSING OPTIONS
 		settings.beginGroup("POSTPROCESSING-DefaultName")
 		settings.setValue("generateJustPreview", self.form.generateJustPreviewCheckbox.isChecked())
+		settings.setValue("generateDebugPEC", self.form.generateDebugPECCheckbox.isChecked())
 		settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
 		settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
 		settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
@@ -3960,6 +3988,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
 
 				#self.form.BCPMLcells.setValue(simulationSettings.params['BCPMLcells'])
+				
+				self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
+				self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
+				self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])				
 
 				continue	#there is no tree widget to add item to
 
@@ -4073,7 +4105,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("POSTPROCESSING item settings found.")
 				settings.beginGroup(settingsGroup)
 				self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if settings.value('generateJustPreview') else QtCore.Qt.Unchecked)
-
+				self.form.generateDebugPECCheckbox.setCheckState(QtCore.Qt.Checked if settings.value('generateDebugPEC') else QtCore.Qt.Unchecked)
 				#
 				#	In case of error just continue and do nothing to correct values
 				#

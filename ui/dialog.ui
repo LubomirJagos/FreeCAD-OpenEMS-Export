@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>FreeCAD to OpenEMS Export Plugin</string>
+   <string>FreeCAD to OpenEMS Export</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_6">
    <property name="bottomMargin">
@@ -189,6 +189,7 @@
             <widget class="QPushButton" name="moveRightButton">
              <property name="font">
               <font>
+               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -519,9 +520,9 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="gridSettingsRewriteButton">
+              <widget class="QPushButton" name="gridSettingsUpdateButton">
                <property name="text">
-                <string>Rewrite</string>
+                <string>Update</string>
                </property>
               </widget>
              </item>
@@ -992,6 +993,13 @@
                </property>
               </spacer>
              </item>
+             <item>
+              <widget class="QPushButton" name="materialSettingsUpdateButton">
+               <property name="text">
+                <string>Update</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
           </layout>
@@ -1224,6 +1232,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="excitationSettingsUpdateButton">
+               <property name="text">
+                <string>Update</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1537,6 +1552,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="portSettingsUpdateButton">
+               <property name="text">
+                <string>Update</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1960,6 +1982,13 @@
                </property>
               </spacer>
              </item>
+             <item>
+              <widget class="QPushButton" name="lumpedPartSettingsUpdateButton">
+               <property name="text">
+                <string>Update</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
           </layout>
@@ -2253,6 +2282,173 @@
         <layout class="QHBoxLayout" name="horizontalLayout_18">
          <item>
           <layout class="QGridLayout" name="gridLayout_7">
+           <item row="6" column="3">
+            <widget class="QLabel" name="label_253">
+             <property name="text">
+              <string>dz (mm)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>xmax</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="BCxmin">
+             <item>
+              <property name="text">
+               <string>PEC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PMC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>MUR</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PML</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="4" column="6">
+            <widget class="QLabel" name="label_39">
+             <property name="text">
+              <string>zmax PML cells number</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="5">
+            <widget class="QComboBox" name="BCzmin">
+             <item>
+              <property name="text">
+               <string>PEC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PMC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>MUR</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PML</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QSpinBox" name="PMLxmincells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="3">
+            <widget class="QSpinBox" name="PMLymincells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="4">
+            <widget class="QLabel" name="label_37">
+             <property name="text">
+              <string>ymax PML cells number</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="label_21">
+             <property name="text">
+              <string>xmin</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="9">
+            <spacer name="horizontalSpacer_12">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="4" column="5">
+            <widget class="QLabel" name="label_38">
+             <property name="text">
+              <string>zmin PML cells number</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="4">
+            <widget class="QComboBox" name="BCymax">
+             <item>
+              <property name="text">
+               <string>PEC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PMC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>MUR</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PML</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="7" column="2">
+            <widget class="QDoubleSpinBox" name="genParamMinGridSpacingY">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="decimals">
+              <number>10</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLabel" name="label_30">
+             <property name="text">
+              <string>ymin</string>
+             </property>
+            </widget>
+           </item>
            <item row="1" column="0">
             <widget class="QLabel" name="label_25">
              <property name="minimumSize">
@@ -2285,171 +2481,11 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="6">
-            <widget class="QComboBox" name="BCzmax">
-             <item>
-              <property name="text">
-               <string>PEC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PMC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>MUR</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PML</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="6" column="1">
-            <spacer name="verticalSpacer_8">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_32">
-             <property name="text">
-              <string>Boundary condition</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="4">
             <widget class="QLabel" name="label_31">
              <property name="text">
               <string>ymax</string>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="6">
-            <widget class="QLabel" name="label_33">
-             <property name="text">
-              <string>zmax</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLabel" name="label_21">
-             <property name="text">
-              <string>xmin</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="5">
-            <widget class="QComboBox" name="BCzmin">
-             <item>
-              <property name="text">
-               <string>PEC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PMC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>MUR</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PML</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QSpinBox" name="simParamsMaxTimesteps">
-             <property name="maximum">
-              <number>1000000000</number>
-             </property>
-             <property name="singleStep">
-              <number>1000</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QLabel" name="label_22">
-             <property name="text">
-              <string>xmax</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="9">
-            <spacer name="horizontalSpacer_12">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="3" column="4">
-            <widget class="QComboBox" name="BCymax">
-             <item>
-              <property name="text">
-               <string>PEC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PMC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>MUR</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PML</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QComboBox" name="BCxmin">
-             <item>
-              <property name="text">
-               <string>PEC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PMC</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>MUR</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>PML</string>
-              </property>
-             </item>
             </widget>
            </item>
            <item row="3" column="2">
@@ -2474,6 +2510,99 @@
                <string>PML</string>
               </property>
              </item>
+            </widget>
+           </item>
+           <item row="5" column="5">
+            <widget class="QSpinBox" name="PMLzmincells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="2">
+            <widget class="QSpinBox" name="PMLxmaxcells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="6">
+            <widget class="QSpinBox" name="PMLzmaxcells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="4">
+            <widget class="QSpinBox" name="PMLymaxcells">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="simParamsMaxTimesteps">
+             <property name="maximum">
+              <number>1000000000</number>
+             </property>
+             <property name="singleStep">
+              <number>1000</number>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QDoubleSpinBox" name="genParamMinGridSpacingX">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="decimals">
+              <number>10</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="6">
+            <widget class="QLabel" name="label_33">
+             <property name="text">
+              <string>zmax</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QLabel" name="label_251">
+             <property name="text">
+              <string>dx (mm)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="3">
+            <widget class="QDoubleSpinBox" name="genParamMinGridSpacingZ">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="decimals">
+              <number>10</number>
+             </property>
             </widget>
            </item>
            <item row="2" column="5">
@@ -2502,6 +2631,27 @@
              </property>
             </widget>
            </item>
+           <item row="6" column="2">
+            <widget class="QLabel" name="label_252">
+             <property name="text">
+              <string>dy (mm)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="2">
+            <widget class="QLabel" name="label_35">
+             <property name="text">
+              <string>xmax PML cells number</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="3">
+            <widget class="QLabel" name="label_36">
+             <property name="text">
+              <string>ymin PML cells number</string>
+             </property>
+            </widget>
+           </item>
            <item row="3" column="3">
             <widget class="QComboBox" name="BCymin">
              <item>
@@ -2526,115 +2676,61 @@
              </item>
             </widget>
            </item>
-           <item row="2" column="3">
-            <widget class="QLabel" name="label_30">
-             <property name="text">
-              <string>ymin</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QSpinBox" name="PMLxmincells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="2">
-            <widget class="QLabel" name="label_35">
-             <property name="text">
-              <string>xmax PML cells number</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="3">
-            <widget class="QLabel" name="label_36">
-             <property name="text">
-              <string>ymin PML cells number</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="4">
-            <widget class="QLabel" name="label_37">
-             <property name="text">
-              <string>ymax PML cells number</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="5">
-            <widget class="QLabel" name="label_38">
-             <property name="text">
-              <string>zmin PML cells number</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="6">
-            <widget class="QLabel" name="label_39">
-             <property name="text">
-              <string>zmax PML cells number</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="2">
-            <widget class="QSpinBox" name="PMLxmaxcells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="3">
-            <widget class="QSpinBox" name="PMLymincells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="4">
-            <widget class="QSpinBox" name="PMLymaxcells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="5">
-            <widget class="QSpinBox" name="PMLzmincells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="6">
-            <widget class="QSpinBox" name="PMLzmaxcells">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
            <item row="4" column="1">
             <widget class="QLabel" name="label_34">
              <property name="text">
               <string>xmin PML cells number</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="6">
+            <widget class="QComboBox" name="BCzmax">
+             <item>
+              <property name="text">
+               <string>PEC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PMC</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>MUR</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PML</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="8" column="1">
+            <spacer name="verticalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_47">
+             <property name="text">
+              <string>min grid spacing</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_32">
+             <property name="text">
+              <string>boundary conditions</string>
              </property>
             </widget>
            </item>
@@ -2644,110 +2740,191 @@
        </widget>
        <widget class="QWidget" name="postprocessingTab">
         <attribute name="title">
-         <string>Postprocessing</string>
+         <string>Processing</string>
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_17">
          <item>
+          <layout class="QVBoxLayout" name="verticalLayout_15">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="OpenEMSParamsGroupProcessing">
+             <property name="title">
+              <string>OpenEMS Parameters</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_22">
+              <item>
+               <widget class="QCheckBox" name="generateJustPreviewCheckbox">
+                <property name="text">
+                 <string>--no-simulation (simulation preview only)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="generateDebugPECCheckbox">
+                <property name="text">
+                 <string>--debug-PEC (save 3D representation of conductors after meshing)</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="ActionsGroupProcessing">
+             <property name="title">
+              <string>Actions</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_23">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_21">
+                <item>
+                 <widget class="QPushButton" name="runSimulationButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>160</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Run Simulation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="abortSimulationButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>160</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>Write ABORT file to OpenEMS working directory to abort execution.</string>
+                  </property>
+                  <property name="text">
+                   <string>Terminate OpenEMS With ABORT File</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="displaySimulationModelButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>160</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Display Simulation Model</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
           <layout class="QVBoxLayout" name="verticalLayout_14">
            <item>
-            <widget class="QPushButton" name="abortSimulationButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>160</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Write ABORT simulation File</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="displaySimulationModelButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>160</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Display Simulation Model</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="runSimulationButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>160</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Run Simulation</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="drawS21Button">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>160</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Write Draw S21 Script</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="drawS11Button">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>160</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Write Draw S11 Script</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="nf2ffGroupPostprocessing">
+            <widget class="QGroupBox" name="sParametersScriptsGroupProcessing">
              <property name="title">
-              <string>NF2FF Display Script</string>
+              <string>Post-Processing: S-Parameter Scripts</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_25">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_24">
+                <item>
+                 <widget class="QPushButton" name="drawS21Button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>160</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Write Draw S21 Script</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="drawS11Button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>160</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Write Draw S11 Script</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="nf2ffGroupProcessing">
+             <property name="title">
+              <string>Post-Processing: NF2FF Display Script</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_9">
               <item row="3" column="1">
@@ -2934,58 +3111,6 @@
            </item>
           </layout>
          </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_15">
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
-            <number>10</number>
-           </property>
-           <item>
-            <widget class="QCheckBox" name="generateJustPreviewCheckbox">
-             <property name="text">
-              <string>Generate just simulation preview</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_7">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_11">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Preferred</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
         </layout>
        </widget>
       </widget>
@@ -3074,7 +3199,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>140</width>
+           <width>160</width>
            <height>40</height>
           </size>
          </property>
