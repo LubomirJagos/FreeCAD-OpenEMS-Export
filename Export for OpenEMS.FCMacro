@@ -1,5 +1,5 @@
-from PySide import QtGui, QtCore        
-import FreeCAD,FreeCADGui,Part, os
+from PySide import QtGui, QtCore
+import FreeCAD, FreeCADGui, Part, os
 import re
 import Mesh
 import Draft
@@ -165,6 +165,8 @@ class SettingsItem:
 
 	def getUnitsAsNumber(self, units):
 		if (units in ('pOhm','pH','pF', 'pm', 'pHz')):
+			outNumber = 1e-12
+		elif (units in ('nOhm','nH','nF', 'nm', 'nHz')):
 			outNumber = 1e-9
 		elif (units in ('uOhm','uH','uF', 'um', 'uHz')):
 			outNumber = 1e-6
@@ -222,7 +224,8 @@ class GridSettingsItem(SettingsItem):
 		if (self.type == "Fixed Count"):
 			return self.fixedCount
 		if (self.type == "Fixed Distance"):
-			return self.fixedDistance
+			dict_mult = lambda d, x : {n: d[n]*x for n in d.keys()}
+			return dict_mult(self.fixedDistance, self.getUnitsAsNumber(self.units)/1e-3) # grid will later be created with units mm, return appropriately scaled values
 		if (self.type == "User Defined"):
 			return self.userDefined
 	
@@ -375,25 +378,6 @@ class LumpedPartSettingsItem(SettingsItem):
 		elif ('c' in type):
 			units = self.params['CUnits'] 
 		return self.getUnitsAsNumber(units)
-
-	def getUnitsAsNumber(self, units):
-		if (units in ('pOhm','pH','pF')):
-			outNumber = 1e-9
-		elif (units in ('uOhm','uH','uF')):
-			outNumber = 1e-6
-		elif (units in ('mOhm','mH','mF')):
-			outNumber = 1e-3
-		elif (units in ('Ohm','H','F')):
-			outNumber = 1
-		elif (units in ('kOhm','kH','kF')):
-			outNumber = 1e3
-		elif (units in ('MOhm','MH','MF')):
-			outNumber = 1e6
-		elif (units in ('GOhm','GH','GF')):
-			outNumber = 1e9
-		else:
-			outNumber = 0
-		return outNumber
 
 	def getR(self):
 		outStr = str(self.params['R']) + "*" + str(self.getUnits('R'))
@@ -1909,16 +1893,25 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#
 		# Generating script beginning
 		#
-		genScript += "% EXAMPLE / generated file for openEMS from FreeCAD\n"
+		genScript += "% OpenEMS FDTD Analysis Automation Script\n"
 		genScript += "%\n"
-		genScript += "% This is generated file\n"
+		genScript += "% To be run with GNU Octave or MATLAB.\n"
+		genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos, \n"
+		genScript += "% see https://github.com/LubomirJagos/FreeCAD-OpenEMS-Export\n"
 		genScript += "%\n"
-		genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos\n"
+		genScript += "% This file has been automatically generated. Manual changes may be overwritten.\n"
 		genScript += "%\n"
 		genScript += "\n"
 		genScript += "close all\n"
 		genScript += "clear\n"
 		genScript += "clc\n"
+		genScript += "\n"
+		genScript += "%% Change the current folder to the folder of this m-file.\n"
+		genScript += "if(~isdeployed)\n"
+		genScript += "  mfile_name          = mfilename('fullpath');\n"
+		genScript += "  [pathstr,name,ext]  = fileparts(mfile_name);\n"
+		genScript += "  cd(pathstr);\n"
+		genScript += "end\n"
 		genScript += "\n"
 		genScript += "%% switches & options...\n"
 		genScript += "postprocessing_only = 0;\n"
@@ -1958,7 +1951,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "\n"
 		genScript += "%% setup FDTD parameter & excitation function\n"
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
-		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % equivalent to -50 dB\n"
+		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (1E-5 means -50 dB)\n"
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
 		genScript += "\n"
 
@@ -2923,11 +2916,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.objectAssignmentRightTreeWidget.clear()		#init right column as at startup to have default structure cleared
 		self.initRightColumnTopLevelItems()					#rerecreate default simulation structure
 
-		self.form.gridSettingsTreeView.clear()				#delete GRID setting
-		self.form.materialSettingsTreeView.clear()			#delete MATERIAL setting
-		self.form.portSettingsTreeView.clear()				#delete PORT setting
-		self.form.excitationSettingsTreeView.clear()			#delete EXCITATION setting
-		self.form.objectAssignmentPriorityTreeView.clear()			#delete EXCITATION setting
+		self.form.objectAssignmentPriorityTreeView.clear()	#delete OBJECT ASSIGNMENTS entries
+		self.form.gridSettingsTreeView.clear()			#delete GRID entries
+		self.form.materialSettingsTreeView.clear()		#delete MATERIAL entries
+		self.form.excitationSettingsTreeView.clear()		#delete EXCITATION entries
+		self.form.portSettingsTreeView.clear()			#delete PORT entries
+		self.form.lumpedPartTreeView.clear()			#delete LUMPED PART entries
+		
 		return
 
 	# GRID SETTINGS
@@ -3095,7 +3090,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	def gridSettingsRewriteButtonClicked(self):
 		gridSetting = self.getGridItemFromGui()
 
-		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0]
+		selectedItems = self.form.gridSettingsTreeView.selectedItems()
+		if len(selectedItems) == 0:
+			return
+		selectedItem = selectedItems[0]
 		selectedItem.setData(0, QtCore.Qt.UserRole, gridSetting)
 
 		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
@@ -3107,7 +3105,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridCoordsTypeChoosed(self):
-		"""
+		"""	
 		if (self.form.gridRectangularRadio.isChecked()):
 			self.form.gridUnitsInput.clear()
 			self.form.gridUnitsInput.addItem("mm")
@@ -3401,8 +3399,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		lumpedPartGroupItem.parent().removeChild(lumpedPartGroupItem)
 
 		return
-
-
 
 
 
