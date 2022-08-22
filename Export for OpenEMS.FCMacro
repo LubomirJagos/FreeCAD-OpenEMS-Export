@@ -409,7 +409,12 @@ class BoxTaskPanel:
 
 		# this will create a Qt widget from our ui file
 		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui)
-
+		
+		# add a statusBar widget (comment to revert to QMessageBox if there are any problems)
+		self.statusBar = QtGui.QStatusBar()
+		self.statusBar.setStyleSheet("QStatusBar{border-top: 1px outset grey;}")
+		self.form.dialogVertLayout.addWidget(self.statusBar)
+		
 		#
 		# TOP LEVEL ITEMS (excitation, grid, materials, ...)
 		#
@@ -1885,7 +1890,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#	GENERATE SCRIPT CLICKED
 	#
 	def generateOpenEMSScriptButtonClicked(self):
-		print("generateOpenEMSScriptButtonClicked() Hello.")
+		if self.statusBar is not None:
+			self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
+			QtGui.QApplication.processEvents()
 
 		#get reference to each category item
 		#
@@ -2708,8 +2715,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		f.write(genScript)
 		f.close()
 		
-		self.displayMessage('Simulation file written into: ' + fileName)
-		print('Simulation file written into: ' + fileName)
+		self.displayMessage('Simulation script written to: ' + fileName, forceModal=False)
+		print('Simulation script written to: ' + fileName)
 
 		return
 
@@ -2925,10 +2932,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
 			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
 
-	def displayMessage(self, msgText):
-		msgBox = QtGui.QMessageBox()
-		msgBox.setText(msgText)
-		msgBox.exec()
+	def displayMessage(self, msgText, forceModal=True):
+		if (not forceModal) and (self.statusBar is not None):
+			self.statusBar.showMessage(msgText, 5000)
+		else:
+			msgBox = QtGui.QMessageBox()
+			msgBox.setText(msgText)
+			msgBox.exec()
 
 	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
 		isDuplicityName = False
@@ -2937,7 +2947,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			item = iterator.value()
 			if item.text(0) == itemName:
 				isDuplicityName = True
-				self.displayMessage("Please change name, item with this name already exists.")
+				self.displayMessage("Please change name, item with this name already exists.", True)
 			iterator +=1
 		return isDuplicityName
 
@@ -3691,7 +3701,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		programdir = os.path.dirname(App.ActiveDocument.FileName)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
 		outFile = programdir + '/' + programbase + "_settings.ini"
-		print("Saving data from file: " + outFile)
+		print("Saving settings to file: " + outFile)
+		if self.statusBar is not None:
+			self.statusBar.showMessage("Saving settings to file...", 5000)
+			QtGui.QApplication.processEvents()
 
 		if (os.path.exists(outFile)):
 			os.remove(outFile)	# wif there already is settings file, erase to not
@@ -3873,8 +3886,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 
 		#sys.exit()  # prevents second call
-		print("Current values saved into file: " + outFile)
-		self.displayMessage("Current values saved into file: " + outFile)
+		print("Current settings saved to file: " + outFile)
+		self.displayMessage("Settings saved to file: " + outFile, forceModal=False)
 		return
 
 	#  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3886,6 +3899,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#                                                                                       
 	def loadCurrentSettingsButtonClicked(self):
 		print("Load current values from file.")
+		if self.statusBar is not None:
+			self.statusBar.showMessage("Loading current values from file...", 5000)
+			QtGui.QApplication.processEvents()
 
 		#FIRST DELETE ALL GUI TREE WIDGET ITEMS
 		self.deleteAllSettings()
@@ -4157,7 +4173,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 			self.addSettingsItemGui(categorySettings)		#better more universal way to add things to gui
 
-		self.displayMessage("Settings loaded from file: " + outFile)
+
+		self.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
+		
 		return
 
 ####################################################################################################################################################################
