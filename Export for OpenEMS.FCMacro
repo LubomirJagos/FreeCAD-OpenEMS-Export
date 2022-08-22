@@ -262,7 +262,7 @@ class MaterialSettingsItem(SettingsItem):
 #	Custom     - user has to define function of electric field at input port
 #
 class ExcitationSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", sinusodial = {'fc': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0', 'f0': 0}, units = "Hz"):
+	def __init__(self, name = "", type = "", sinusodial = {'f0': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0', 'f0': 0}, units = "Hz"):
 		SettingsItem.__init__(self)
 		self.name = name
 		self.type = type
@@ -276,7 +276,7 @@ class ExcitationSettingsItem(SettingsItem):
 		serializedString = "{'name': '" + self.name + "', "
 		serializedString += "'type': '" + self.type + "', "
 		if (self.type == "sinusodial"):
-			serializedString += "'fc': '" + str(self.sinusodial['fc']) + "', "
+			serializedString += "'f0': '" + str(self.sinusodial['f0']) + "', "
 		if (self.type == "gaussian"):
 			serializedString += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
 		if (self.type == "custom"):
@@ -422,20 +422,21 @@ class BoxTaskPanel:
 		self.form.moveLeftButton.clicked.connect(self.onMoveLeft)
 		self.form.moveRightButton.clicked.connect(self.onMoveRight)
 		
-		self.form.objectAssignmentRightTreeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
-		self.form.objectAssignmentRightTreeWidget.customContextMenuRequested.connect(self.objectAssignmentTreeWidgetContextClicked) 
+		#########################################################################################################
+		#	Left Column - FreeCAD objects list
+		#########################################################################################################
 
+		self.initLeftColumnTopLevelItems()	
+		self.form.objectAssignmentLeftTreeWidget.itemDoubleClicked.connect(self.objectAssignmentLeftTreeWidgetItemDoubleClicked)	
+		
 		#########################################################################################################
-		#	RIGHT COLUMN
+		#	RIGHT COLUMN - Simulation Object Assignment
 		#########################################################################################################
+		
 		self.form.objectAssignmentRightTreeWidget.itemSelectionChanged.connect(self.objectAssignmentRightTreeWidgetItemSelectionChanged)
-		self.form.objectAssignmentRightTreeWidget.itemDoubleClicked.connect(self.objectAssignmentRightTreeWidgetItemDoubleClicked)
- 
-		#########################################################################################################
-		#	Left Column FreeCAD objects added in list
-		#########################################################################################################
-
-		self.initLeftColumnTopLevelItems()		
+		
+		self.form.objectAssignmentRightTreeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
+		self.form.objectAssignmentRightTreeWidget.customContextMenuRequested.connect(self.objectAssignmentRightTreeWidgetContextClicked)
 
 		#########################################################################################################
 		#########################################################################################################
@@ -685,7 +686,7 @@ class BoxTaskPanel:
 			FreeCADGui.Selection.clearSelection()
 			self.openEMSObj.selectObjectByLabel(currItemLabel)
 			
-	def objectAssignmentTreeWidgetContextClicked(self, event):
+	def objectAssignmentRightTreeWidgetContextClicked(self, event):
 		self.objAssignCtxMenu = QtGui.QMenu(self.form.objectAssignmentRightTreeWidget)
 		action_expand   = self.objAssignCtxMenu.addAction("Expand all")
 		actioN_collapse = self.objAssignCtxMenu.addAction("Collapse all")
@@ -695,6 +696,12 @@ class BoxTaskPanel:
 				self.form.objectAssignmentRightTreeWidget.expandAll()
 			if menu_action == actioN_collapse:
 				self.form.objectAssignmentRightTreeWidget.collapseAll()
+				
+	#
+	#	Handler for DOUBLE CLICK on grid item in FreeCAD objects list
+	#
+	def objectAssignmentLeftTreeWidgetItemDoubleClicked(self):
+		self.onMoveRight()
 
 	#
 	#	Handler for DOUBLE CLICK on grid item in object assignment list
@@ -1117,7 +1124,7 @@ class BoxTaskPanel:
 			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
 
 			if (currSetting.getType() == 'sinusodial'):
-				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
 				pass
 			elif (currSetting.getType() == 'gaussian'):
 				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
@@ -1215,7 +1222,7 @@ CSX = InitCSX();
 			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
 
 			if (currSetting.getType() == 'sinusodial'):
-				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
 				pass
 			elif (currSetting.getType() == 'gaussian'):
 				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
@@ -1367,7 +1374,7 @@ CSX = InitCSX();
 			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
 
 			if (currSetting.getType() == 'sinusodial'):
-				genScript += "fc = " + str(currSetting.sinusodial['fc']) + ";\n"
+				genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
 				pass
 			elif (currSetting.getType() == 'gaussian'):
 				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
@@ -2019,10 +2026,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				#EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
 				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
 				if (currSetting.getType() == 'sinusodial'):
-					genScript += "fc = " + str(currSetting.sinusodial['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
 					genScript += "max_res = c0 / fc / 20;\n"
-					self.maxGridResolution = 3e8 / (currSetting.sinusodial['fc']*currSetting.getUnitsAsNumber(currSetting.units)) / 20
+					self.maxGridResolution = 3e8 / (currSetting.sinusodial['f0']*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'gaussian'):
 					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
@@ -2774,6 +2781,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			# ADD ITEM INTO RIGHT LIST, first clone is inserted
 			#
 			rightItem.addChild(leftItem)
+			rightItem.setExpanded(True)
 
 			#
 			# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
@@ -3238,7 +3246,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		if (self.form.sinusodialExcitationRadioButton.isChecked()):
 			excitationItem.type = 'sinusodial'
 			excitationItem.sinusodial = {}
-			excitationItem.sinusodial['fc'] = self.form.sinusodialExcitationFcNumberInput.value()
+			excitationItem.sinusodial['f0'] = self.form.sinusodialExcitationF0NumberInput.value()
 		if (self.form.gaussianExcitationRadioButton.isChecked()):
 			excitationItem.type = 'gaussian'
 			excitationItem.gaussian = {}
@@ -3528,7 +3536,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		self.form.excitationSettingsNameInput.setText(currSetting.name)
 		if (currSetting.type == "sinusodial"):
 			self.form.sinusodialExcitationRadioButton.click()
-			self.form.sinusodialExcitationFcNumberInput.setValue(currSetting.sinusodial['fc'])
+			self.form.sinusodialExcitationF0NumberInput.setValue(currSetting.sinusodial['f0'])
 		elif (currSetting.type == "gaussian"):
 			self.form.gaussianExcitationRadioButton.click()
 			self.form.gaussianExcitationF0NumberInput.setValue(currSetting.gaussian['f0'])
@@ -3686,7 +3694,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
-		#SAE MATERIAL SETTINGS INTO FILE
+		#SAVE MATERIAL SETTINGS INTO FILE
 		materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
 		for k in range(len(materialList)):
 			print("Save new MATERIAL constants into file: ")
@@ -3753,8 +3761,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		#SIMULATION PARAMS SAVE INTO FILE
 		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
+		
 		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
-		simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
+		simulationSettings.params['min_decrement']  = self.form.simParamsMinDecrement.value()
+		
+		simulationSettings.params['generateJustPreview'] = self.form.generateJustPreviewCheckbox.isChecked()
+		simulationSettings.params['generateDebugPEC']    = self.form.generateDebugPECCheckbox.isChecked()
+		simulationSettings.params['mFileExecCommand']    = self.form.octaveExecCommandList.currentText()
+		simulationSettings.params['base_length_unit_m']  = self.form.simParamsBaseUnitList.currentText()
+		
 		simulationSettings.params['BCxmin'] = self.form.BCxmin.currentText()
 		simulationSettings.params['BCxmax'] = self.form.BCxmax.currentText()
 		simulationSettings.params['BCymin'] = self.form.BCymin.currentText()
@@ -3841,8 +3856,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		#SAVE POSTPROCESSING OPTIONS
 		settings.beginGroup("POSTPROCESSING-DefaultName")
-		settings.setValue("generateJustPreview", self.form.generateJustPreviewCheckbox.isChecked())
-		settings.setValue("generateDebugPEC", self.form.generateDebugPECCheckbox.isChecked())
 		settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
 		settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
 		settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
@@ -3973,6 +3986,14 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 				self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
 				self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
+				self.form.generateJustPreviewCheckbox.setCheckState(
+					QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview', False) else QtCore.Qt.Unchecked)
+				self.form.generateDebugPECCheckbox.setCheckState(
+					QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC'   , False) else QtCore.Qt.Unchecked)
+				self.form.octaveExecCommandList.setCurrentText(
+					simulationSettings.params.get("mFileExecCommand", self.form.octaveExecCommandList.itemData(0)))
+				self.form.simParamsBaseUnitList.setCurrentText(
+					simulationSettings.params.get("base_length_unit_m", self.form.simParamsBaseUnitList.itemData(0))) 
 
 				self.setSimlationParamBC(self.form.BCxmin, simulationSettings.params['BCxmin'])
 				self.setSimlationParamBC(self.form.BCxmax, simulationSettings.params['BCxmax'])
@@ -3988,11 +4009,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				self.form.PMLzmincells.setValue(simulationSettings.params['PMLzmincells'])
 				self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
 
-				#self.form.BCPMLcells.setValue(simulationSettings.params['BCPMLcells'])
-				
 				self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
 				self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
-				self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])				
+				self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
 
 				continue	#there is no tree widget to add item to
 
@@ -4105,8 +4124,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			elif (re.compile("POSTPROCESSING").search(settingsGroup)):
 				print("POSTPROCESSING item settings found.")
 				settings.beginGroup(settingsGroup)
-				self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if settings.value('generateJustPreview') else QtCore.Qt.Unchecked)
-				self.form.generateDebugPECCheckbox.setCheckState(QtCore.Qt.Checked if settings.value('generateDebugPEC') else QtCore.Qt.Unchecked)
 				#
 				#	In case of error just continue and do nothing to correct values
 				#
