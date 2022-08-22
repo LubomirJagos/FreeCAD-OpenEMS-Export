@@ -1141,7 +1141,7 @@ class BoxTaskPanel:
 			pass
 
 		genScript += """%% postprocessing & do the plots
-freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
+freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 U = ReadUI( {'port_ut1','et'}, 'tmp/', freq ); % time domain/freq domain voltage
 I = ReadUI( 'port_it1', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
 
@@ -1325,7 +1325,7 @@ CSX = InitCSX();
 									genScript += '% Unknown port type. Nothing was generated. \n'
 
 		genScript += """%% postprocessing & do the plots
-freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
+freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 
 port = calcPort( port, Sim_Path, freq);
  
@@ -1391,7 +1391,7 @@ CSX = InitCSX();
 			pass
 
 		genScript += """
-freq = linspace( max([1e9,f0-fc]), f0+fc, 501 );
+freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 f_res = f0;
 """
 		genScriptPortCount = 1
