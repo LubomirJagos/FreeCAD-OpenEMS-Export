@@ -134,6 +134,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FreeCAD object names must match this pattern.&lt;/p&gt;&lt;p&gt;Empty: list all items.&lt;/p&gt;&lt;p&gt;Also supports regex: port.*y will match portXY, portYZ, ...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                 </widget>
                </item>
                <item>
