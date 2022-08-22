@@ -570,6 +570,11 @@ class BoxTaskPanel:
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
+		
+	def getOctaveExecCommand(self, mFileName, options=""):
+		cmd = self.form.octaveExecCommandList.currentText()
+		cmd = cmd.format(opt=options, filename=mFileName)
+		return cmd
 
 	def BCxminCurrentIndexChanged(self, index):
 		self.form.PMLxmincells.setEnabled(self.form.BCxmin.currentText() == "PML")
@@ -660,7 +665,7 @@ class BoxTaskPanel:
 		f.close()
 
 		# run octave script using command shell
-		cmdToRun = 'octave "' + fileName + '"'
+		cmdToRun = self.getOctaveExecCommand(fileName)
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
 		print(result)
@@ -673,7 +678,7 @@ class BoxTaskPanel:
 		fileName = nameBase + "_openEMS.m"
 
 		# run octave script using command shell
-		cmdToRun = 'octave "' + fileName + '"'
+		cmdToRun = self.getOctaveExecCommand(fileName)
 		print('Running command: ' + cmdToRun)
 		os.chdir(currDir)
 		result = os.system(cmdToRun)
@@ -1199,7 +1204,7 @@ pause
 		print('Draw result from simulation file written into: ' + fileName)
 
 		# run octave script using command shell
-		cmdToRun = 'octave -q --persist "' + fileName + '"'
+		cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
 		print(result)
@@ -1348,7 +1353,7 @@ ylim([-40 2]);
 		print('Draw result from simulation file written into: ' + fileName)
 
 		# run octave script using command shell
-		cmdToRun = 'octave -q --persist "' + fileName + '"'
+		cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
 		print(result)

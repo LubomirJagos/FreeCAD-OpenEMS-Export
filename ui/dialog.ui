@@ -2841,7 +2841,7 @@
                    <bool>true</bool>
                   </property>
                   <property name="currentText">
-                   <string>octave &quot;{filename}&quot;</string>
+                   <string>octave {opt} &quot;{filename}&quot;</string>
                   </property>
                   <property name="currentIndex">
                    <number>0</number>
@@ -2851,32 +2851,32 @@
                   </property>
                   <item>
                    <property name="text">
-                    <string>octave &quot;{filename}&quot;</string>
+                    <string>octave {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>octave-cli  &quot;{filename}&quot;</string>
+                    <string>octave-cli {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>octave-gui  &quot;{filename}&quot;</string>
+                    <string>octave-gui {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>start octave  &quot;{filename}&quot;</string>
+                    <string>start octave {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>start octave-cli  &quot;{filename}&quot;</string>
+                    <string>start octave-cli {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>start octave-gui  &quot;{filename}&quot;</string>
+                    <string>start octave-gui {opt} &quot;{filename}&quot;</string>
                    </property>
                   </item>
                  </widget>
