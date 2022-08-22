@@ -21,7 +21,7 @@ class OpenEMS:
 		objToExport = []
 		
 		for obj in currentObjects:
-			if (len(filterStr) > 0 and re.search(filterStr, obj.Label)):
+			if (len(filterStr) > 0 and re.search(filterStr, obj.Label, re.IGNORECASE)):
 				objToExport.append(obj)
 			elif (len(filterStr) == 0):
 				objToExport.append(obj)
