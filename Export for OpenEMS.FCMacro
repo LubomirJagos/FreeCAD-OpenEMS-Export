@@ -688,6 +688,17 @@ class BoxTaskPanel:
 		os.chdir(currDir)
 		result = os.system(cmdToRun)
 		print(result)
+		
+		
+	def updateObjectAssignmentRightTreeWidgetItemData(self, groupName, itemName, data):
+		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			itemName, 
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
+		for item in gridGroupWidgetItems:
+			if (groupName == "Grid"):
+				item.setData(0, QtCore.Qt.UserRole, data)
+
 
 	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
 		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
@@ -695,6 +706,7 @@ class BoxTaskPanel:
 		if (currItemLabel):
 			FreeCADGui.Selection.clearSelection()
 			self.openEMSObj.selectObjectByLabel(currItemLabel)
+
 			
 	def objectAssignmentRightTreeWidgetContextClicked(self, event):
 		self.objAssignCtxMenu = QtGui.QMenu(self.form.objectAssignmentRightTreeWidget)
@@ -2940,7 +2952,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			msgBox.setText(msgText)
 			msgBox.exec()
 
-	def checkTreeWidgetForDupliciyName(self,refTreeWidget, itemName):
+	def checkTreeWidgetForDuplicityName(self,refTreeWidget, itemName):
 		isDuplicityName = False
 		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
 		while iterator.value():
@@ -3072,21 +3084,21 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		return gridItem
 
 	def gridSettingsAddButtonClicked(self):		
-		gridItem = self.getGridItemFromGui()
+		settingsInst = self.getGridItemFromGui()
 
-		#check if all items have same coordination type
+		#check if all items have same type of coordinate system
 		currentSimulationGridType = self.getCurrentSimulationGridType()
-		if currentSimulationGridType != None and gridItem.coordsType != currentSimulationGridType:
+		if currentSimulationGridType != None and settingsInst.coordsType != currentSimulationGridType:
 			self.displayMessage("All current defined grids are " + currentSimulationGridType + " you have to remove them or change type of current grid item.")
 			return
 
 		#check for duplicity in names if there is some warning message displayed
 		#if everything is OK, item is added into tree
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.gridSettingsTreeView, gridItem.name)
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.gridSettingsTreeView, settingsInst.name)
 		if (not isDuplicityName):
 
 			#disable/enable grid plane drawing if rectangular, for cylindrical just axis z
-			if gridItem.coordsType == "rectangular":
+			if settingsInst.coordsType == "rectangular":
 				self.form.auxGridAxis.setEnabled(True)				
 			else:
 				#set grid drawing plane to 'z' and disable chosing plane to draw grid
@@ -3096,7 +3108,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				self.form.auxGridAxis.setEnabled(False)				
 
 			#add item into gui tree views
-			self.addSettingsItemGui(gridItem)
+			self.addSettingsItemGui(settingsInst)
 			self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridSettingsRemoveButtonClicked(self):
@@ -3106,45 +3118,42 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0]
 		print("Selected port name: " + selectedItem.text(0))
 
-		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
 		gridGroupItem = None
 		for item in gridGroupWidgetItems:
 			if (item.parent().text(0) == "Grid"):
 				gridGroupItem = item
 		print("Currently removing port item: " + gridGroupItem.text(0))
 
-		###
-		#	Removing from Priority List
-		###
+		#	Remove from Priority List
 		priorityName = gridGroupItem.parent().text(0) + ", " + gridGroupItem.text(0);
 		self.removePriorityName(priorityName)
 
-		###
-		#	Removing from Assigned Object
-		###
+		#	Remove from Assigned Object
 		self.form.gridSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		gridGroupItem.parent().removeChild(gridGroupItem)
 
 		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
-		return
-
 	def gridSettingsUpdateButtonClicked(self):
-		gridSetting = self.getGridItemFromGui()
+		### capture UI settings	
+		settingsInst = self.getGridItemFromGui() 
 
+		### replace old with new settingsInst
 		selectedItems = self.form.gridSettingsTreeView.selectedItems()
-		if len(selectedItems) == 0:
+		if len(selectedItems) != 1:
 			return
-		selectedItem = selectedItems[0]
-		selectedItem.setData(0, QtCore.Qt.UserRole, gridSetting)
+		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
-		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
-		gridGroupItem = None
-		for item in gridGroupWidgetItems:
-			if (item.parent().text(0) == "Grid"):
-				item.setData(0, QtCore.Qt.UserRole, gridSetting)
-
-		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+		### update other UI elements to propagate changes
+		# replace oudated copy of settingsInst 
+		self.updateObjectAssignmentRightTreeWidgetItemData("Grid", selectedItems[0].text(0), settingsInst)		
+		# update grid priority table at object assignment panel
+		self.updateMeshPriorityDisableItems() 	
+		
 
 	def gridCoordsTypeChoosed(self):
 		"""	
@@ -3184,8 +3193,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	# | |\/| | / /\ \ | |  |  __| |  _  /  | |   / /\ \ | |       \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
 	# | |  | |/ ____ \| |  | |____| | \ \ _| |_ / ____ \| |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
 	# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#                                                                                                                     
-	def materialSettingsAddButtonClicked(self):
+	#      
+
+	def getMaterialItemFromGui(self):
 		name = self.form.materialSettingsNameInput.text()
 		epsilon = self.form.materialEpsilonNumberInput.value()
 		mue = self.form.materialMueNumberInput.value()
@@ -3205,42 +3215,59 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		elif (self.form.materialUserDefinedRadioButton.isChecked() == 1):
 			materialItem.type = "userdefined"
 
+		return materialItem
+		
+	
+	def materialSettingsAddButtonClicked(self):
+		materialItem = self.getMaterialItemFromGui()
+
 		# display message box with current material settings to be added
 		#self.displayMessage(materialItem.serializeToString())
 
 		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.materialSettingsTreeView, materialItem.name)
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.materialSettingsTreeView, materialItem.name)
 
 		if (not isDuplicityName):
 			self.addSettingsItemGui(materialItem)
+			
 
 	def materialSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.materialSettingsTreeView.selectedItems()[0]
 		print("Selected material name: " + selectedItem.text(0))
 
-		materialGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		materialGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0), 
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
 		materialGroupItem = None
 		for item in materialGroupWidgetItems:
 			if (item.parent().text(0) == "Material"):
 				materialGroupItem = item
 		print("Currently removing material item: " + materialGroupItem.text(0))
 
-		###
-		#	Removing from Priority List
-		###
+		# Remove from Priority list
 		priorityName = materialGroupItem.parent().text(0) + ", " + materialGroupItem.text(0);
 		self.removePriorityName(priorityName)
-
-		###
-		###
-		###
-
+		
+		# Remove from Materials list
 		self.form.materialSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		materialGroupItem.parent().removeChild(materialGroupItem)
+		
 
 	def materialSettingsUpdateButtonClicked(self):
-		return
+		### capture UI settings
+		settingsInst = self.getMaterialItemFromGui()
+	
+		### replace old with new settingsInst
+		selectedItems = self.form.materialSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 		
+		### update other UI elements to propagate changes
+		# replace oudated copy of settingsInst 
+		self.updateObjectAssignmentRightTreeWidgetItemData("Material", selectedItems[0].text(0), settingsInst)	
+
 
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3251,7 +3278,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
 	#                                                                                                                          
 
-	def excitationSettingsAddButtonClicked(self):
+	def getExcitationItemFromGui(self):
 		name = self.form.excitationSettingsNameInput.text()
 
 		excitationItem = ExcitationSettingsItem()
@@ -3272,9 +3299,14 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			excitationItem.custom = {}
 			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
 			excitationItem.custom['f0'] = self.form.customExcitationF0NumberInput.value()
+		return excitationItem
+
+
+	def excitationSettingsAddButtonClicked(self):
+		settingsInst = self.getExcitationItemFromGui()
 
 		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.excitationSettingsTreeView, excitationItem.name)
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.excitationSettingsTreeView, settingsInst.name)
 		isMoreThanOne = self.form.excitationSettingsTreeView.topLevelItemCount() > 0
 
 		if (isDuplicityName):
@@ -3283,13 +3315,17 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			self.displayMessage("There could be just one excitation!")
 			return
 		
-		self.addSettingsItemGui(excitationItem)
+		self.addSettingsItemGui(settingsInst)
+		
 
 	def excitationSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.excitationSettingsTreeView.selectedItems()[0]
 		print("Selected port name: " + selectedItem.text(0))
 
-		excitationGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		excitationGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
 		excitationGroupItem = None
 		for item in excitationGroupWidgetItems:
 			if (item.parent().text(0) == "Excitation"):
@@ -3300,7 +3336,20 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		excitationGroupItem.parent().removeChild(excitationGroupItem)
 
 	def excitationSettingsUpdateButtonClicked(self):
-		return
+		### capture UI settings
+		settingsInst = self.getExcitationItemFromGui()
+	
+		### replace old with new settingsInst
+		selectedItems = self.form.excitationSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+		
+		### update other UI elements to propagate changes
+		# replace oudated copy of settingsInst 
+		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)	
+
+
 
 	# PORT SETTINGS
 	#  _____   ____  _____ _______    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3309,8 +3358,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	# |  ___/| |  | |  _  /  | |     \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
 	# | |    | |__| | | \ \  | |     ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
 	# |_|     \____/|_|  \_\ |_|    |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#                                                                                        
-	def portSettingsAddButtonClicked(self):
+	#    
+
+	def getPortItemFromGui():
 		name = self.form.portSettingsNameInput.text()
 
 		portItem = PortSettingsItem()
@@ -3340,54 +3390,71 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			portItem.type = "ht dump"
 		if (self.form.nf2ffBoxPortRadioButton.isChecked()):
 			portItem.type = "nf2ff box"
+			
+		return portItem
+		
+	
+	def portSettingsAddButtonClicked(self):
+		settingsInst = self.getPortItemFromGui()
 
 		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.portSettingsTreeView, portItem.name)
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name)
 
 		if (not isDuplicityName):
-			self.addSettingsItemGui(portItem)
-			if (portItem.type == "nf2ff box"):
+			self.addSettingsItemGui(settingsInst)
+			if (settingsInst.type == "nf2ff box"):
 				self.updateNF2FFList()
 
-		return
 
 	def portSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.portSettingsTreeView.selectedItems()[0]
 		print("Selected port name: " + selectedItem.text(0))
 
-		portGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		portGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
 		portGroupItem = None
 		for item in portGroupWidgetItems:
 			if (item.parent().text(0) == "Port"):
 				portGroupItem = item
 		print("Currently removing port item: " + portGroupItem.text(0))
 
-		###
-		#	Removing from Priority List
-		###
+		# Removing from Priority List
 		priorityName = portGroupItem.parent().text(0) + ", " + portGroupItem.text(0);
 		self.removePriorityName(priorityName)
 
-		###
-		#	Removing from Object Assugnment Tree
-		###
+		# Removing from Object Assugnment Tree
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
 
-		#
-		#	If NF2FF box removed then update NF2FF list on POSTPROCESSING TAB
-		#
+		# If NF2FF box removed then update NF2FF list on POSTPROCESSING TAB
 		if (portGroupItem.data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
 			self.updateNF2FFList()
+			
 
 	def portSettingsUpdateButtonClicked(self):
-		return
+		### capture UI settings
+		settingsInst = self.getPortItemFromGui()
+	
+		### replace old with new settingsInst
+		selectedItems = self.form.portSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+		
+		### update other UI elements to propagate changes
+		# replace oudated copy of settingsInst 
+		self.updateObjectAssignmentRightTreeWidgetItemData("Port", selectedItems[0].text(0), settingsInst)	
+
+
 
 	def portSettingsTypeChoosed(self):
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideSettingsGroup.setEnabled(True)
 		else:
 			self.form.waveguideSettingsGroup.setEnabled(False)
+
 
 	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _                 
 	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
@@ -3398,7 +3465,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#                                                                                                    __/ |    
 	#                                                                                                   |___/    
 	#
-	def lumpedPartSettingsAddButtonClicked(self):
+	
+	def getLumpedPartItemFromGui(self):
 		name = self.form.lumpedPartSettingsNameInput.text()
 
 		lumpedPartItem = LumpedPartSettingsItem()
@@ -3417,21 +3485,30 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			lumpedPartItem.params['CUnits'] = self.form.lumpedPartCUnits.currentText()
 			lumpedPartItem.params['CEnabled'] = 1
 
-		#check for duplicity in names if there is some warning message displayed
-		isDuplicityName = self.checkTreeWidgetForDupliciyName(self.form.lumpedPartTreeView, lumpedPartItem.name)
-		if (not isDuplicityName):
-			self.addSettingsItemGui(lumpedPartItem)
+		return lumpedPartItem
+		
+	
+	def lumpedPartSettingsAddButtonClicked(self):
+		# capture UI settings
+		settingsInst = self.getLumpedPartItemFromGui()		
 
-		return
+		#check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.lumpedPartTreeView, settingsInst.name)
+		if (not isDuplicityName):
+			self.addSettingsItemGui(settingsInst)
+			
 
 	def lumpedPartSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.lumpedPartTreeView.selectedItems()[0]
 		print("Selected lumpedpart name: " + selectedItem.text(0))
 
-		lumpedPartGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(selectedItem.text(0), QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive)
+		lumpedPartGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly|QtCore.Qt.MatchFlag.MatchRecursive
+			)
 		lumpedPartGroupItem = None
 		for item in lumpedPartGroupWidgetItems:
-			if (item.parent().text(0).lower() == "lumpedpart"):
+			if (item.parent().text(0) == "LumpedPart"):
 				lumpedPartGroupItem = item
 		print("Currently removing lumped part item: " + lumpedPartGroupItem.text(0))
 
@@ -3443,11 +3520,21 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		self.form.lumpedPartTreeView.invisibleRootItem().removeChild(selectedItem)
 		lumpedPartGroupItem.parent().removeChild(lumpedPartGroupItem)
+		
 
 	def lumpedPartSettingsUpdateButtonClicked(self):
-		return
-
-
+		### capture UI settings
+		settingsInst = self.getLumpedPartItemFromGui()		
+	
+		### replace old with new settingsInst
+		selectedItems = self.form.portSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+		
+		### update other UI elements to propagate changes
+		# replace oudated copy of settingsInst 
+		self.updateObjectAssignmentRightTreeWidgetItemData("LumpedPart", selectedItems[0].text(0), settingsInst)	
 
 
 
