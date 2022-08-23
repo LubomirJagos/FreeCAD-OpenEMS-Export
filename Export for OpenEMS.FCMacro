@@ -4258,8 +4258,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				#and if category is not known it's need to goes for another one
 				continue
 
-			self.addSettingsItemGui(categorySettings)		#better more universal way to add things to gui
-
+			# add all items
+			self.addSettingsItemGui(categorySettings)
+			# start with expanded treeWidget
+			self.form.objectAssignmentRightTreeWidget.expandAll()
 
 		self.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
 		
