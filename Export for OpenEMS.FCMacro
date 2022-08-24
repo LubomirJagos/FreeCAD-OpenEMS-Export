@@ -11,7 +11,20 @@ import math
 from PySide.QtCore import QSettings
 import json
 
-# CHANGE THE LINE BELOW
+from enum import Enum
+class FreeCADUnitScheme(Enum):
+	Standard              = 0 # 'Standard (mm/kg/s/degree)'    
+	MKS                   = 1 # 'MKS (m/kg/s/degree)'
+	US_customary          = 2 # 'US customary (in/lb)'
+	Imperial_decimal      = 3 # 'Imperial decimal (in/lb)'
+	Building_Euro         = 4 # 'Building Euro (cm/m²/m³)'
+	Building_US           = 5 # 'Building US (ft-in/sqft/cft)'
+	Metric_smallparts_CNC = 6 # 'Metric small parts & CNC(mm, mm/min)'
+	Imperial_Civil_Eng    = 7 # 'Imperial for Civil Eng (ft, ft/sec)'
+	FEM                   = 8 # 'FEM (mm, N, s)'
+	
+
+# UI file (use Qt Designer to modify)
 path_to_ui = "./ui/dialog.ui"
 
 class OpenEMS:
@@ -163,12 +176,13 @@ class SettingsItem:
 	def getName(self):
 		return self.name
 
-	def getUnitsAsNumber(self, units):
+	@staticmethod
+	def getUnitsAsNumber(units):
 		if (units in ('pOhm','pH','pF', 'pm', 'pHz')):
 			outNumber = 1e-12
 		elif (units in ('nOhm','nH','nF', 'nm', 'nHz')):
 			outNumber = 1e-9
-		elif (units in ('uOhm','uH','uF', 'um', 'uHz')):
+		elif (units in ('µOhm','µH','µF', 'µm', 'µHz','uOhm','uH','uF', 'um', 'uHz')):
 			outNumber = 1e-6
 		elif (units in ('mOhm','mH','mF', 'mm', 'mHz')):
 			outNumber = 1e-3
@@ -220,12 +234,12 @@ class GridSettingsItem(SettingsItem):
 		self.topPriorityLines = False
 
 	#Return xyz distances, count or user defined array based what user asked for.
-	def getXYZ(self):
+	def getXYZ(self, referenceUnit):
 		if (self.type == "Fixed Count"):
 			return self.fixedCount
 		if (self.type == "Fixed Distance"):
 			dict_mult = lambda d, x : {n: d[n]*x for n in d.keys()}
-			return dict_mult(self.fixedDistance, self.getUnitsAsNumber(self.units)/1e-3) # grid will later be created with units mm, return appropriately scaled values
+			return dict_mult( self.fixedDistance, self.getUnitsAsNumber(self.units) / referenceUnit )
 		if (self.type == "User Defined"):
 			return self.userDefined
 	
@@ -327,9 +341,6 @@ class PortSettingsItem(SettingsItem):
 		return self.getUnitsAsNumber(self.RUnits)
 
 # Smulation settings
-#	f0
-#	fc
-#
 class SimulationSettingsItem(SettingsItem):
 	def __init__(self, name = "DefaultSimlationName", params='{"max_timestamps": 1e6, "min_decrement": 0, "BCxmin": "PEC", "BCxmax": "PEC", "BCymin": "PEC", "BCymax": "PEC", "BCzmin": "PEC", "BCzmax": "PEC", "PMLxmincells": 1, "PMLxmaxcells": 1, "PMLymincells": 1, "PMLymaxcells": 1, "PMLzmincells": 1, "PMLzmaxcells": 1}'):
 		self.name = name
@@ -575,7 +586,18 @@ class BoxTaskPanel:
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
-		
+	
+	def getUnitLengthFromUI_m(self):
+		unitStr = self.form.simParamsDeltaUnitList.currentText()
+		return SettingsItem.getUnitsAsNumber(unitStr)
+	
+	def getFreeCADUnitLength_m(self):
+		# # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
+		# # Below is one way to retrieve this value from schemaTranslate() without implying it.
+		# [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), FreeCADUnitScheme.MKS )
+		# return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
+		return 0.001
+	
 	def getOctaveExecCommand(self, mFileName, options=""):
 		cmd = self.form.octaveExecCommandList.currentText()
 		cmd = cmd.format(opt=options, filename=mFileName)
@@ -665,7 +687,7 @@ class BoxTaskPanel:
 		# store octave script to drive
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + '_runCmd_AppCSXCAD.m'
-		f = open(fileName, "w")
+		f = open(fileName, "w", encoding='utf-8')
 		f.write(runCmd)
 		f.close()
 
@@ -733,7 +755,7 @@ class BoxTaskPanel:
 		self.objectDrawGrid(currItem)
 
 	#
-	#	Draw auxiliar grid in FreeCAD 3D view
+	#	Draw auxiliary grid in FreeCAD 3D view
 	#
 	def objectDrawGrid(self, currItem):
 		#
@@ -744,7 +766,7 @@ class BoxTaskPanel:
 		currSetting = currItem.data(0, QtCore.Qt.UserRole)
 		genScript = ""
 
-		#	must be selected freecad object which is child of grid item which gridlines will be draw
+		#	must be selected FreeCAD object which is child of grid item which gridlines will be draw
 		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(currItem.text(0))
 		if ("FreeCADSettingItem" in currSetting.type ):
 			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
@@ -756,6 +778,8 @@ class BoxTaskPanel:
 				return
 
 		bbCoords = gridObj[0].Shape.BoundBox
+		refUnit = self.getFreeCADUnitLength_m() # Coordinates need to be given in FreeCAD standard unit (mm)
+		
 		offsetX = 0	#units: mm
 		offsetY = 0
 		offsetZ = 0
@@ -788,12 +812,12 @@ class BoxTaskPanel:
 	            #collecting Z coordinates where grid will be drawn, gird will be drawn in XY plane
 				zAuxGridCoordList = []
 				if (currSetting.zenabled):
-					if int(currSetting.getXYZ()['z']) != 0:
+					if int(currSetting.getXYZ(refUnit)['z']) != 0:
 
-						if int(currSetting.getXYZ()['z']) == 1:
+						if int(currSetting.getXYZ(refUnit)['z']) == 1:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 						else:
-							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ()['z']))
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 							
 						#collecting Z coordinates where grid layers will be drawn
 						for zGridLine in zlines:
@@ -832,20 +856,20 @@ class BoxTaskPanel:
 						minRadius = abs((bbPointsVectors[indicesMax].x - bbPointsVectors[indicesMin].x)*bbPointsVectors[indicesMin].y - (bbPointsVectors[indicesMax].y - bbPointsVectors[indicesMin].y)*bbPointsVectors[indicesMin].x)/closestLineToCenter.Length
 						maxRadius = max([math.sqrt(bbCoords.XMin**2 + bbCoords.YMin**2), math.sqrt(bbCoords.XMax**2 + bbCoords.YMax**2)])
 
-						if float(currSetting.getXYZ()['x']) == 1:
+						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(minRadius + maxRadius)/2])
 						else:
-							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ()['x']))
+							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
 							self.openEMSObj.drawDraftCircle("auxGridLine", FreeCAD.Vector(0,0,zAuxGridCoord), xGridLine)
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):												
-						if float(currSetting.getXYZ()['y']) == 1:
+						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(minAngle, maxAngle)/2])
 						else:
-							ylines = np.linspace(minAngle, maxAngle, int(currSetting.getXYZ()['y']))
+							ylines = np.linspace(minAngle, maxAngle, int(currSetting.getXYZ(refUnit)['y']))
 							
 						print(ylines)
 
@@ -865,8 +889,8 @@ class BoxTaskPanel:
 				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
 				zAuxGridCoordList = []
 				if (currSetting.zenabled):
-					if float(currSetting.getXYZ()['z']) != 0:
-						zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])    #split Z interval and generate Z layers
+					if float(currSetting.getXYZ(refUnit)['z']) != 0:
+						zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])    #split Z interval and generate Z layers
 						for zGridLine in zlines:
 							zAuxGridCoordList.append(zGridLine)
 				if len(zAuxGridCoordList) == 0:
@@ -875,16 +899,16 @@ class BoxTaskPanel:
 				for zAuxGridCoord in zAuxGridCoordList:
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
-						if float(currSetting.getXYZ()['x']) !=  0:
-							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+						if float(currSetting.getXYZ(refUnit)['x']) !=  0:
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
 								#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
 								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
-						if float(currSetting.getXYZ()['y']) != 0:
-							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+						if float(currSetting.getXYZ(refUnit)['y']) != 0:
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
 								#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
 								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
@@ -894,9 +918,9 @@ class BoxTaskPanel:
 	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				zAuxGridCoordList = []
 				if (currSetting.zenabled):
-					if float(currSetting.getXYZ()['z']) != 0:
-						if float(currSetting.getXYZ()['z']) == 1:
-							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ()['z']))
+					if float(currSetting.getXYZ(refUnit)['z']) != 0:
+						if float(currSetting.getXYZ(refUnit)['z']) == 1:
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
 						else:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 							
@@ -909,10 +933,10 @@ class BoxTaskPanel:
 				for zAuxGridCoord in zAuxGridCoordList:
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
-						if float(currSetting.getXYZ()['x']) == 1:
+						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ()['x']))
+							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
@@ -920,10 +944,10 @@ class BoxTaskPanel:
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
-						if float(currSetting.getXYZ()['y']) == 1:
+						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ()['y']))
+							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))
 
 						for yGridLine in ylines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
@@ -932,7 +956,7 @@ class BoxTaskPanel:
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
 				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
 
 		elif (currSetting.coordsType == 'rectangular' and currGridAxis == "x"):
 
@@ -947,8 +971,8 @@ class BoxTaskPanel:
 				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
 				xAuxGridCoordList = []
 				if (currSetting.xenabled):
-					if float(currSetting.getXYZ()['x']) != 0:
-						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])    #split Z interval and generate Z layers
+					if float(currSetting.getXYZ(refUnit)['x']) != 0:
+						xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])    #split Z interval and generate Z layers
 						for xGridLine in xlines:
 							xAuxGridCoordList.append(xGridLine)
 				if len(xAuxGridCoordList) == 0:
@@ -957,15 +981,15 @@ class BoxTaskPanel:
 				for xAuxGridCoord in xAuxGridCoordList:
 					#DRAW Z LINES auxiliary grid in 3D view
 					if (currSetting.zenabled):
-						if float(currSetting.getXYZ()['z']) !=  0:
-							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
-						if float(currSetting.getXYZ()['y']) != 0:
-							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])
+						if float(currSetting.getXYZ(refUnit)['y']) != 0:
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
 	
@@ -974,11 +998,11 @@ class BoxTaskPanel:
 	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				xAuxGridCoordList = []
 				if (currSetting.xenabled):
-					if float(currSetting.getXYZ()['x']) != 0:
-						if float(currSetting.getXYZ()['x']) == 1:
+					if float(currSetting.getXYZ(refUnit)['x']) != 0:
+						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ()['x']))   #collecting Z coordinates where grid layers will be drawn
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))   #collecting Z coordinates where grid layers will be drawn
 							
 						for xGridLine in xlines:
 							xAuxGridCoordList.append(xGridLine)
@@ -989,20 +1013,20 @@ class BoxTaskPanel:
 				for xAuxGridCoord in xAuxGridCoordList:
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.zenabled):
-						if float(currSetting.getXYZ()['z']) == 1:
+						if float(currSetting.getXYZ(refUnit)['z']) == 1:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 						else:
-							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ()['z']))
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
 						
 						for zGridLine in zlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
-						if float(currSetting.getXYZ()['y']) == 1:
+						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ()['y']))
+							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))
 						
 						for yGridLine in ylines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
@@ -1010,7 +1034,7 @@ class BoxTaskPanel:
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
 				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
 				
 		elif (currSetting.coordsType == 'rectangular' and currGridAxis == "y"):
 
@@ -1025,8 +1049,8 @@ class BoxTaskPanel:
 				#here adding Z coordinates for which grid will be drawn so grid will be drawn in XY plane, so here are collected just Z coords for which it will be drawn
 				yAuxGridCoordList = []
 				if (currSetting.yenabled):
-					if float(currSetting.getXYZ()['y']) != 0:
-						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ()['y'])    #split Y interval and generate Z layers
+					if float(currSetting.getXYZ(refUnit)['y']) != 0:
+						ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])    #split Y interval and generate Z layers
 						for yGridLine in ylines:
 							yAuxGridCoordList.append(yGridLine)
 				if len(yAuxGridCoordList) == 0:
@@ -1035,15 +1059,15 @@ class BoxTaskPanel:
 				for yAuxGridCoord in yAuxGridCoordList:
 					#DRAW Z LINES auxiliary grid in 3D view
 					if (currSetting.zenabled):
-						if float(currSetting.getXYZ()['z']) !=  0:
-							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ()['z'])
+						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
-						if float(currSetting.getXYZ()['x']) != 0:
-							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ()['x'])
+						if float(currSetting.getXYZ(refUnit)['x']) != 0:
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
 	
@@ -1052,11 +1076,11 @@ class BoxTaskPanel:
 	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				yAuxGridCoordList = []
 				if (currSetting.yenabled):
-					if float(currSetting.getXYZ()['y']) != 0:
-						if float(currSetting.getXYZ()['y']) == 1:
+					if float(currSetting.getXYZ(refUnit)['y']) != 0:
+						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ()['y']))   #collecting Y coordinates where grid layers will be drawn
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))   #collecting Y coordinates where grid layers will be drawn
 
 						for yGridLine in ylines:
 							yAuxGridCoordList.append(yGridLine)
@@ -1067,20 +1091,20 @@ class BoxTaskPanel:
 				for yAuxGridCoord in yAuxGridCoordList:
 					#DRAW Z LINES auxiliary grid in 3D view
 					if (currSetting.zenabled):
-						if float(currSetting.getXYZ()['z']) == 1:
+						if float(currSetting.getXYZ(refUnit)['z']) == 1:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 						else:
-							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ()['z']))
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
 
 						for zGridLine in zlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
-						if float(currSetting.getXYZ()['x']) == 1:
+						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ()['x']))
+							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))
 
 						for xGridLine in xlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
@@ -1088,7 +1112,7 @@ class BoxTaskPanel:
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
 				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
+				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
 
 		#update whole document
 		FreeCAD.ActiveDocument.recompute()
@@ -1100,7 +1124,7 @@ class BoxTaskPanel:
 	
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
-		openEMSObj = OpenEMS()									# <------------------- openEMS object initialization
+		openEMSObj = OpenEMS() # openEMS object initialization
 
 		items = openEMSObj.getOpenEMSObjects(filterStr)
 		treeItems = []
@@ -1132,7 +1156,7 @@ class BoxTaskPanel:
 		outFile = programdir + '/tmp/ABORT'
 		print("------------->" + outFile)
 
-		f = open(outFile, "w+")
+		f = open(outFile, "w+", encoding='utf-8')
 		f.write("THIS CAN BE JUST EMPTY FILE. ABORT simulation.")
 		f.close()
 
@@ -1215,7 +1239,7 @@ pause
 		#
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_draw_S11.m"
-		f = open(fileName, "w")
+		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
 		print('Draw result from simulation file written into: ' + fileName)
@@ -1364,7 +1388,7 @@ ylim([-40 2]);
 		#
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_draw_S21.m"
-		f = open(fileName, "w")
+		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
 		print('Draw result from simulation file written into: ' + fileName)
@@ -1532,7 +1556,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_draw_NF2FF.m"
-		f = open(fileName, "w")
+		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
 		print('Script to display far field written into: ' + fileName)
@@ -1750,13 +1774,14 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				continue
 
 			bbCoords = obj.Shape.BoundBox
-
+			refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+			
 			#offset NOT USED, it's here when needed, but bbCoords are actual final coordinates including everything also offset
 			offsetX = 0
 			offsetY = 0
 			offsetZ = 0
 
-			#ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
+			#ADJUSTMENT if grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
 			if currSetting.generateLinesInside:
 				k = self.maxGridResolution
 				print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
@@ -1780,45 +1805,45 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				#UNIT FOR MESH										
 				if (currSetting.xenabled is True or currSetting.xenabled == 'true'):
 					genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
-					genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
+					genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
 				if (currSetting.yenabled is True or currSetting.yenabled == 'true'):
 					genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
-					genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
+					genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
 				if (currSetting.zenabled is True or currSetting.zenabled == 'true'):
 					genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
-					genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
-				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+					genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				pass
 			elif (currSetting.getType() == 'Fixed Count'):
 				#if just one line is defined then is place in middle										
 				if (currSetting.xenabled is True or currSetting.xenabled == 'true'):
 					genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
-					if (not currSetting.getXYZ()['x'] == 1):
-						genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+					if (not currSetting.getXYZ(refUnit)['x'] == 1):
+						genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
 					else:
 						genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
 
 				if (currSetting.yenabled is True or currSetting.yenabled == 'true'):
 					genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
-					if (not currSetting.getXYZ()['y'] == 1):
-						genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+					if (not currSetting.getXYZ(refUnit)['y'] == 1):
+						genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 					else:
 						genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
 
 				if (currSetting.zenabled is True or currSetting.zenabled == 'true'):
 					genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
-					if (not currSetting.getXYZ()['z'] == 1):
-						genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+					if (not currSetting.getXYZ(refUnit)['z'] == 1):
+						genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 					else:
 						genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
 
-				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				pass
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
 				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-				genScript += "mesh = " + currSetting.getXYZ() + ";\n"
-				genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				pass
 
 		return genScript
@@ -1918,6 +1943,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		# |_____/|______|  |_|      \_____|______|_| \_|______|_|  \_\/_/    \_\_|  |______|_____/   \_____/_/    \_\_|  |______\_____|\____/|_|  \_\_____|______|_____/ 
 		#                                                                                                                                                               
 		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 		
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
@@ -1962,7 +1988,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "  cd(pathstr);\n"
 		genScript += "end\n"
 		genScript += "\n"
-		genScript += "%% switches & options...\n"
+		genScript += "%% switches & options\n"
 		genScript += "postprocessing_only = 0;\n"
 		genScript += "draw_3d_pattern = 0; % this may take a while...\n"
 		genScript += "use_pml = 0;         % use pml boundaries instead of mur\n"
@@ -1971,8 +1997,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "display(currDir);\n"
 		genScript += "\n"
 		
-		genScript += "%% --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
-		genScript += "%% --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
+		genScript += "%	--no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
+		genScript += "% --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
 		openEMS_opt = []
 		if self.form.generateDebugPECCheckbox.isChecked():
 			openEMS_opt.append('--debug-PEC')
@@ -1982,16 +2008,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "\n"
 
 		#
-		# IMPORTANT
+		# SIMULATION SETTINGS
 		#
-		genScript += "%% setup the simulation\n"
+		genScript += "%% constants\n"
 		genScript += "physical_constants;\n"
-		#genScript += "unit = " +  + "; % all length in mm\n"
+		genScript += "unit = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
+		genScript += "fc_unit = " + str(self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
 		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
-
-		#
-		# SIMULATION SETTING, OK
-		#
 		genScript += "\n"
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
@@ -2001,7 +2024,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "\n"
 		genScript += "%% setup FDTD parameter & excitation function\n"
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
-		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (1E-5 means -50 dB)\n"
+		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
 		genScript += "\n"
 
@@ -2051,21 +2074,21 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
 				if (currSetting.getType() == 'sinusodial'):
 					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetSinusExcite(FDTD,fc);\n"
-					genScript += "max_res = c0 / fc / 20;\n"
+					genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
+					genScript += "max_res = c0 / f0 / 20;\n"
 					self.maxGridResolution = 3e8 / (currSetting.sinusodial['f0']*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'gaussian'):
 					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetGaussExcite(FDTD, f0, fc );\n"
+					genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
 					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
 					self.maxGridResolution = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc'])*currSetting.getUnitsAsNumber(currSetting.units)) / 20
 					pass
 				elif (currSetting.getType() == 'custom'):
 					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
 					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetCustomExcite(FDTD,f0,'" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "');\n"
+					genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
 					genScript += "max_res = 0;\n"
 					self.maxGridResolution = 0
 					pass
@@ -2105,13 +2128,14 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		"""
 		gridCoordsType = self.getModelCoordsType()
 		if (gridCoordsType == "rectangular"):
-			genScript += "CSX = InitCSX();\n"
+			genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
 		elif (gridCoordsType == "cylindrical"):
-			genScript += "CSX = InitCSX('CoordSystem',1);\n"
+			genScript += "CSX = InitCSX('CoordSystem',1); % Cylindrical coordinate system.\n"
 		else:
 			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
 		"""
-		genScript += "CSX = InitCSX();\n"
+		genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+		genScript += "CSX = DefineRectGrid(CSX, unit, mesh); % First call with empty mesh to set deltaUnit attribute.\n" 
 		genScript += "\n"
 
 
@@ -2119,7 +2143,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		#
 		# DEFAULT MATERIAL definitions
-		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here
+		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
+		# Note that the user will need to create a metal named 'PEC' and populate it to avoid a warning
+		# about "no primitives assigned to metal 'PEC'".
 		#
 		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
 		genScript += "\n"
@@ -2244,6 +2270,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 								elif (currSetting.getType() == 'nf2ff box'):
 									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 									genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 									
 									nf2ff_gridlines['x'].append(bbCoords.XMin)
@@ -2284,15 +2311,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 							print("#name " + currSetting.getName())
 							print("#")
 							if (currSetting.getType() == "Fixed Count"):
-								print("#--> x: " + str(currSetting.getXYZ()['x']))
-								print("#--> y: " + str(currSetting.getXYZ()['y']))
-								print("#--> z: " + str(currSetting.getXYZ()['z']))
+								print("#--> x: " + str(currSetting.getXYZ(refUnit)['x']))
+								print("#--> y: " + str(currSetting.getXYZ(refUnit)['y']))
+								print("#--> z: " + str(currSetting.getXYZ(refUnit)['z']))
 							if (currSetting.getType() == "Fixed Distance"):
-								print("#--> x: " + str(currSetting.getXYZ()['x']))
-								print("#--> y: " + str(currSetting.getXYZ()['y']))
-								print("#--> z: " + str(currSetting.getXYZ()['z']))
+								print("#--> x: " + str(currSetting.getXYZ(refUnit)['x']))
+								print("#--> y: " + str(currSetting.getXYZ(refUnit)['y']))
+								print("#--> z: " + str(currSetting.getXYZ(refUnit)['z']))
 							if (currSetting.getType() == "User Defined"):
-								print("#--> userDefined: " + str(currSetting.getXYZ()))
+								print("#--> userDefined: " + str(currSetting.getXYZ(refUnit)))
 							print("#--> units: " + str(currSetting.units))
 							print("#")
 
@@ -2373,49 +2400,49 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
 										if (currSetting.xenabled):
-											#genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
-											genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ()['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
+											#genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+											genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
 										if (currSetting.yenabled):
-											#genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
-											genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ()['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
+											#genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+											genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
 										if (currSetting.zenabled):
-											#genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
-											genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ()['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
-										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+											#genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+											genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
+										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
 									elif (currSetting.getType() == 'Fixed Count'):
 										#if just one line is defined then is place in middle										
 										if (currSetting.xenabled):
-											if (not currSetting.getXYZ()['x'] == 1):
-												#genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
-												genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ()['x']) + ") + " + str(offsetX) + "];\n"
+											if (not currSetting.getXYZ(refUnit)['x'] == 1):
+												#genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
+												genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
 											else:
 												#genScript += "mesh.x = [mesh.x " + str((bbCoords.XMin + bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
 												genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
 
 										if (currSetting.yenabled):
-											if (not currSetting.getXYZ()['y'] == 1):
-												#genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
-												genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ()['y']) + ") + " + str(offsetY) + "];\n"
+											if (not currSetting.getXYZ(refUnit)['y'] == 1):
+												#genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
+												genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 											else:
 												#genScript += "mesh.y = [mesh.y " + str((bbCoords.YMin + bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
 												genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
 
 										if (currSetting.zenabled):
-											if (not currSetting.getXYZ()['z'] == 1):
-												#genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
-												genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ()['z']) + ") + " + str(offsetZ) + "];\n"
+											if (not currSetting.getXYZ(refUnit)['z'] == 1):
+												#genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
+												genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 											else:
 												#genScript += "mesh.z = [mesh.z " + str((bbCoords.ZMin + bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
 												genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
 
-										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
 									elif (currSetting.getType() == 'User Defined'):
 										#UNIT FOR MESH										
 										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-										genScript += "mesh = " + currSetting.getXYZ() + ";\n"
-										genScript += "CSX = DefineRectGrid(CSX, " + currSetting.getUnitAsScriptLine() + ", mesh);\n"
+										genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
+										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
 
 							pass
@@ -2522,7 +2549,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									currDir, baseName = self.getCurrDir()
 									stlModelFileName = childName + "_gen_model.stl"
 		
-									genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', 1});\n"
+									genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', unit/fc_unit});\n"
 	
 									#   _____ _______ _                                        _   _             
 									#  / ____|__   __| |                                      | | (_)            
@@ -2704,8 +2731,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		if (len(nf2ff_gridlines['z']) > 0):
 			genScript += "mesh.z = [mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + "];\n"
 		
-		#add nf2ff gridlines into mesh, they are always added this way, HARDCODED UNIT mm (milimeter), must figure out if there should be added something like default units for simulation
-		genScript += "CSX = DefineRectGrid(CSX, 0.001, mesh);\n"
+		# add nf2ff gridlines to mesh
+		genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
                                                                                                 
 		#
 		# WRITE GENERATED SCRIPT INTO FILE
@@ -2723,7 +2750,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_openEMS.m"
-		f = open(fileName, "w")
+		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
 		
@@ -3873,7 +3900,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		simulationSettings.params['generateJustPreview'] = self.form.generateJustPreviewCheckbox.isChecked()
 		simulationSettings.params['generateDebugPEC']    = self.form.generateDebugPECCheckbox.isChecked()
 		simulationSettings.params['mFileExecCommand']    = self.form.octaveExecCommandList.currentText()
-		simulationSettings.params['base_length_unit_m']  = self.form.simParamsBaseUnitList.currentText()
+		simulationSettings.params['base_length_unit_m']  = self.form.simParamsDeltaUnitList.currentText()
 		
 		simulationSettings.params['BCxmin'] = self.form.BCxmin.currentText()
 		simulationSettings.params['BCxmax'] = self.form.BCxmax.currentText()
@@ -4100,8 +4127,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC'   , False) else QtCore.Qt.Unchecked)
 				self.form.octaveExecCommandList.setCurrentText(
 					simulationSettings.params.get("mFileExecCommand", self.form.octaveExecCommandList.itemData(0)))
-				self.form.simParamsBaseUnitList.setCurrentText(
-					simulationSettings.params.get("base_length_unit_m", self.form.simParamsBaseUnitList.itemData(0))) 
+				self.form.simParamsDeltaUnitList.setCurrentText(
+					simulationSettings.params.get("base_length_unit_m", self.form.simParamsDeltaUnitList.itemData(0))) 
 
 				self.setSimlationParamBC(self.form.BCxmin, simulationSettings.params['BCxmin'])
 				self.setSimlationParamBC(self.form.BCxmax, simulationSettings.params['BCxmax'])
