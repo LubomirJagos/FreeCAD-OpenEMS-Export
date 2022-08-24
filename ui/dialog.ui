@@ -848,14 +848,17 @@
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string> generate gridlines inside object</string>
+                   <string>shift gridlines inward by λmin/20</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QCheckBox" name="gridTopPriorityLinesCheckbox">
                   <property name="text">
-                   <string>top priority, remove overlapping lines</string>
+                   <string>remove lower-priority overlapping lines</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
