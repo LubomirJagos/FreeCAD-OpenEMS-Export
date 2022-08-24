@@ -178,23 +178,23 @@ class SettingsItem:
 
 	@staticmethod
 	def getUnitsAsNumber(units):
-		if (units in ('pOhm','pH','pF', 'pm', 'pHz')):
+		if (units in ['pOhm','pH','pF', 'pm', 'pHz']):
 			outNumber = 1e-12
-		elif (units in ('nOhm','nH','nF', 'nm', 'nHz')):
+		elif (units in ['nOhm','nH','nF', 'nm', 'nHz']):
 			outNumber = 1e-9
-		elif (units in ('µOhm','µH','µF', 'µm', 'µHz','uOhm','uH','uF', 'um', 'uHz')):
+		elif (units in ['µOhm','µH','µF', 'µm', 'µHz','uOhm','uH','uF', 'um', 'uHz']):
 			outNumber = 1e-6
-		elif (units in ('mOhm','mH','mF', 'mm', 'mHz')):
+		elif (units in ['mOhm','mH','mF', 'mm', 'mHz']):
 			outNumber = 1e-3
-		elif (units in ('cm')):
+		elif (units in ['cm']):
 			outNumber = 1e-2
-		elif (units in ('Ohm','H','F', 'm', 'Hz')):
+		elif (units in ['Ohm','H','F', 'm', 'Hz']):
 			outNumber = 1
-		elif (units in ('kOhm','kH','kF', 'km', 'kHz')):
+		elif (units in ['kOhm','kH','kF', 'km', 'kHz']):
 			outNumber = 1e3
-		elif (units in ('MOhm','MH','MF', 'MHz')):
+		elif (units in ['MOhm','MH','MF', 'MHz']):
 			outNumber = 1e6
-		elif (units in ('GOhm','GH','GF', 'GHz')):
+		elif (units in ['GOhm','GH','GF', 'GHz']):
 			outNumber = 1e9
 		else:
 			outNumber = 0
@@ -231,7 +231,7 @@ class GridSettingsItem(SettingsItem):
 		self.fixedDistance = fixedDistance
 		self.userDefined = userDefined
 		self.generateLinesInside = False
-		self.topPriorityLines = False
+		self.topPriorityLines = True
 
 	#Return xyz distances, count or user defined array based what user asked for.
 	def getXYZ(self, referenceUnit):
@@ -777,8 +777,7 @@ class BoxTaskPanel:
 			else:
 				return
 
-		bbCoords = gridObj[0].Shape.BoundBox
-		refUnit = self.getFreeCADUnitLength_m() # Coordinates need to be given in FreeCAD standard unit (mm)
+		bbCoords = gridObj[0].Shape.BoundBox 
 		
 		offsetX = 0	#units: mm
 		offsetY = 0
@@ -1260,6 +1259,9 @@ Sim_Path = "tmp";
 CSX = InitCSX();
 
 """
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+
 		
 		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
 		if len(excitationCategory) >= 0:
@@ -1327,8 +1329,8 @@ CSX = InitCSX();
 								# PORT openEMS GENERATION INTO VARIABLE
 								#
 								if (currSetting.getType() == 'lumped'):
-									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'portStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += 'portR = ' + str(currSetting.R) + ';\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 
@@ -1354,13 +1356,13 @@ CSX = InitCSX();
 									genScript += "%% rectangular port openEMS code should be here\n"
 								elif (currSetting.getType() == 'et dump'):
 									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 								elif (currSetting.getType() == 'ht dump'):
 									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 								else:
 									genScript += '% Unknown port type. Nothing was generated. \n'
@@ -1412,6 +1414,10 @@ Sim_Path = "tmp";
 CSX = InitCSX();
 
 """
+		
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+
 		
 		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
 		if len(excitationCategory) >= 0:
@@ -1746,7 +1752,11 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	def getMeshPriorityScriptLines(self, meshPriorityIdentifier):
 		meshPriorityIdentifierArray = meshPriorityIdentifier.split(',')		#split identifier based on commas
 		freecadObjName = meshPriorityIdentifierArray[2].strip()
-
+		
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+		refUnitStr = self.form.simParamsDeltaUnitList.currentText()
+		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+		
 		#find grid named by identifier using 2nd item what is grid category name
 		item = self.form.objectAssignmentRightTreeWidget.findItems(meshPriorityIdentifierArray[1].strip(), QtCore.Qt.MatchRecursive)[0]
 		currSetting = item.data(0, QtCore.Qt.UserRole)	#obtain current grid category settings
@@ -1774,7 +1784,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				continue
 
 			bbCoords = obj.Shape.BoundBox
-			refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 			
 			#offset NOT USED, it's here when needed, but bbCoords are actual final coordinates including everything also offset
 			offsetX = 0
@@ -1783,17 +1792,17 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 			#ADJUSTMENT if grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
 			if currSetting.generateLinesInside:
-				k = self.maxGridResolution
-				print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
+				delta = self.maxGridResolution_m / refUnit
+				print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + " " + refUnitStr)
 			else:
-				k = 0
+				delta = 0
 													
-			xmax = bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin)*k    
-			ymax = bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin)*k    
-			zmax = bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
-			xmin = bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin)*k    
-			ymin = bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin)*k    
-			zmin = bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
+			xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
+			ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
+			zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
+			xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
+			ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
+			zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
 
 			#
 			# GRID openEMS GENERATION INTO VARIABLE
@@ -1943,8 +1952,11 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		# |_____/|______|  |_|      \_____|______|_| \_|______|_|  \_\/_/    \_\_|  |______|_____/   \_____/_/    \_\_|  |______\_____|\____/|_|  \_\_____|______|_____/ 
 		#                                                                                                                                                               
 		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
-		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 		
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+		refUnitStr = self.form.simParamsDeltaUnitList.currentText()
+		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+			
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
 		for k in range(childCount):
@@ -2012,7 +2024,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#
 		genScript += "%% constants\n"
 		genScript += "physical_constants;\n"
-		genScript += "unit = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
+		genScript += "unit    = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
 		genScript += "fc_unit = " + str(self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
 		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
 		genScript += "\n"
@@ -2076,21 +2088,21 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
 					genScript += "max_res = c0 / f0 / 20;\n"
-					self.maxGridResolution = 3e8 / (currSetting.sinusodial['f0']*currSetting.getUnitsAsNumber(currSetting.units)) / 20
+					self.maxGridResolution_m = 3e8 / (currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
 					pass
 				elif (currSetting.getType() == 'gaussian'):
 					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
 					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
-					self.maxGridResolution = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc'])*currSetting.getUnitsAsNumber(currSetting.units)) / 20
+					self.maxGridResolution_m = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc']) * currSetting.getUnitsAsNumber(currSetting.units) *  20)
 					pass
 				elif (currSetting.getType() == 'custom'):
 					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
 					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
 					genScript += "max_res = 0;\n"
-					self.maxGridResolution = 0
+					self.maxGridResolution_m = 0
 					pass
 				pass
 			else:
@@ -2138,9 +2150,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "CSX = DefineRectGrid(CSX, unit, mesh); % First call with empty mesh to set deltaUnit attribute.\n" 
 		genScript += "\n"
 
-
-
-
 		#
 		# DEFAULT MATERIAL definitions
 		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
@@ -2149,10 +2158,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#
 		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
 		genScript += "\n"
-
-
-
-
 
 		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
 		genScriptPortCount = 1
@@ -2211,8 +2216,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 								# PORT openEMS GENERATION INTO VARIABLE
 								#
 								if (currSetting.getType() == 'lumped'):
-									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += 'portR = ' + str(currSetting.R) + ';\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 
@@ -2231,8 +2236,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 									genScriptPortCount += 1
 								elif (currSetting.getType() == 'microstrip'):
-									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 
 									if (currSetting.direction == 'x'):
@@ -2259,26 +2264,26 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									genScript += "%% rectangular port openEMS code should be here\n"
 								elif (currSetting.getType() == 'et dump'):
 									genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop  =[' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 								elif (currSetting.getType() == 'ht dump'):
 									genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'dumpStop  =[' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 								elif (currSetting.getType() == 'nf2ff box'):
-									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
+									genScript += 'nf2ffStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
+									genScript += 'nf2ffStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 									genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 									genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 									
-									nf2ff_gridlines['x'].append(bbCoords.XMin)
-									nf2ff_gridlines['x'].append(bbCoords.XMax)
-									nf2ff_gridlines['y'].append(bbCoords.YMin)
-									nf2ff_gridlines['y'].append(bbCoords.YMax)
-									nf2ff_gridlines['z'].append(bbCoords.ZMin)
-									nf2ff_gridlines['z'].append(bbCoords.ZMax)
+									nf2ff_gridlines['x'].append(sf*bbCoords.XMin)
+									nf2ff_gridlines['x'].append(sf*bbCoords.XMax)
+									nf2ff_gridlines['y'].append(sf*bbCoords.YMin)
+									nf2ff_gridlines['y'].append(sf*bbCoords.YMax)
+									nf2ff_gridlines['z'].append(sf*bbCoords.ZMin)
+									nf2ff_gridlines['z'].append(sf*bbCoords.ZMax)
 								else:
 									genScript += '% Unknown port type. Nothing was generated. \n'
 
@@ -2350,12 +2355,12 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									bbCoords = obj.Shape.BoundBox
 									#print(type(bbCoords))
 									#print(str(dir(bbCoords)))
-									print('\t--> Xlength: ' + str(bbCoords.XLength))
-									print('\t--> Ylength: ' + str(bbCoords.YLength))
-									print('\t--> Zlength: ' + str(bbCoords.ZLength))
-									print('\t--> XMin: ' + str(bbCoords.XMin) + " XMax: " + str(bbCoords.XMax))
-									print('\t--> YMin: ' + str(bbCoords.YMin) + " YMax: " + str(bbCoords.YMax))
-									print('\t--> ZMin: ' + str(bbCoords.ZMin) + " ZMax: " + str(bbCoords.ZMax))
+									print('\t--> Xlength: ' + str(sf*bbCoords.XLength))
+									print('\t--> Ylength: ' + str(sf*bbCoords.YLength))
+									print('\t--> Zlength: ' + str(sf*bbCoords.ZLength))
+									print('\t--> XMin: ' + str(sf*bbCoords.XMin) + " XMax: " + str(sf*bbCoords.XMax))
+									print('\t--> YMin: ' + str(sf*bbCoords.YMin) + " YMax: " + str(sf*bbCoords.YMax))
+									print('\t--> ZMin: ' + str(sf*bbCoords.ZMin) + " ZMax: " + str(sf*bbCoords.ZMax))
 
 									#PLACEMENT BOX
 									print(obj.Placement)
@@ -2377,19 +2382,19 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									#print("\tplacement Y: " + str(offsetY))
 									#print("\tplacement Z: " + str(offsetZ))
 
-                                    #ADJUSTMENT fi grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
+                                    #ADJUSTMENT if grid lines should be inside object, so there is some delta added for minimalx coord and subtract from max coord
 									if currSetting.generateLinesInside:
-										k = self.maxGridResolution
-										print("GRID generateLinesInside object detected, setting correction constant to " + str(k))
+										delta = self.maxGridResolution_m / refUnit
+										print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + " " + refUnitStr)
 									else:
-										k = 0
+										delta = 0
 																			
-									xmax = bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin)*k    
-									ymax = bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin)*k    
-									zmax = bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
-									xmin = bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin)*k    
-									ymin = bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin)*k    
-									zmin = bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin)*k    
+									xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta   
+									ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+									zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+									xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+									ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+									zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
 
 									#
 									# GRID openEMS GENERATION INTO VARIABLE
@@ -2400,13 +2405,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									if (currSetting.getType() == 'Fixed Distance'):
 										#UNIT FOR MESH										
 										if (currSetting.xenabled):
-											#genScript += "mesh.x = [mesh.x (" + str(bbCoords.XMin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
+											#genScript += "mesh.x = [mesh.x (" + str(sf*bbCoords.XMin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(sf*bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
 											genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
 										if (currSetting.yenabled):
-											#genScript += "mesh.y = [mesh.y (" + str(bbCoords.YMin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
+											#genScript += "mesh.y = [mesh.y (" + str(sf*bbCoords.YMin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(sf*bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
 											genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
 										if (currSetting.zenabled):
-											#genScript += "mesh.z = [mesh.z (" + str(bbCoords.ZMin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
+											#genScript += "mesh.z = [mesh.z (" + str(sf*bbCoords.ZMin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(sf*bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
 											genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
 										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
@@ -2414,26 +2419,26 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 										#if just one line is defined then is place in middle										
 										if (currSetting.xenabled):
 											if (not currSetting.getXYZ(refUnit)['x'] == 1):
-												#genScript += "mesh.x = [mesh.x linspace(" + str(bbCoords.XMin) + "," + str(bbCoords.XMax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
+												#genScript += "mesh.x = [mesh.x linspace(" + str(sf*bbCoords.XMin) + "," + str(sf*bbCoords.XMax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
 												genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
 											else:
-												#genScript += "mesh.x = [mesh.x " + str((bbCoords.XMin + bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
+												#genScript += "mesh.x = [mesh.x " + str((sf*bbCoords.XMin + sf*bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
 												genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
 
 										if (currSetting.yenabled):
 											if (not currSetting.getXYZ(refUnit)['y'] == 1):
-												#genScript += "mesh.y = [mesh.y linspace(" + str(bbCoords.YMin) + "," + str(bbCoords.YMax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
+												#genScript += "mesh.y = [mesh.y linspace(" + str(sf*bbCoords.YMin) + "," + str(sf*bbCoords.YMax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 												genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 											else:
-												#genScript += "mesh.y = [mesh.y " + str((bbCoords.YMin + bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
+												#genScript += "mesh.y = [mesh.y " + str((sf*bbCoords.YMin + sf*bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
 												genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
 
 										if (currSetting.zenabled):
 											if (not currSetting.getXYZ(refUnit)['z'] == 1):
-												#genScript += "mesh.z = [mesh.z linspace(" + str(bbCoords.ZMin) + "," + str(bbCoords.ZMax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
+												#genScript += "mesh.z = [mesh.z linspace(" + str(sf*bbCoords.ZMin) + "," + str(sf*bbCoords.ZMax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 												genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 											else:
-												#genScript += "mesh.z = [mesh.z " + str((bbCoords.ZMin + bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
+												#genScript += "mesh.z = [mesh.z " + str((sf*bbCoords.ZMin + sf*bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
 												genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
 
 										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
@@ -2651,8 +2656,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 								#PLACEMENT BOX
 								print(obj.Placement)
 
-								genScript += 'lumpedPartStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + ']\n'
-								genScript += 'lumpedPartStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + ']\n'
+								genScript += 'lumpedPartStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + ']\n'
+								genScript += 'lumpedPartStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + ']\n'
 
 								lumpedPartName = currentSetting.name
 								lumpedPartParams = ''
