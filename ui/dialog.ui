@@ -661,11 +661,9 @@
                   <property name="currentText">
                    <string>mm</string>
                   </property>
-                  <item>
-                   <property name="text">
-                    <string>mm</string>
-                   </property>
-                  </item>
+                  <property name="currentIndex">
+                   <number>2</number>
+                  </property>
                   <item>
                    <property name="text">
                     <string>m</string>
@@ -674,6 +672,11 @@
                   <item>
                    <property name="text">
                     <string>cm</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>mm</string>
                    </property>
                   </item>
                   <item>
@@ -1621,6 +1624,79 @@
               <widget class="QLineEdit" name="portSettingsNameInput"/>
              </item>
              <item>
+              <widget class="QGroupBox" name="groupBox_4">
+               <property name="title">
+                <string>Port Type</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_11">
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="lumpedPortRadioButton">
+                  <property name="text">
+                   <string>Lumped</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="htDumpPortRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Ht Dump</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                  <property name="text">
+                   <string>Rectangular Waveguide</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="microstripPortRadioButton">
+                  <property name="text">
+                   <string>Microstrip</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                  <property name="text">
+                   <string>Circular Waveguide</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QRadioButton" name="etDumpPortRadioButton">
+                  <property name="text">
+                   <string>Et Dump</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QRadioButton" name="nf2ffBoxPortRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>NF2FF Box</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
               <widget class="QGroupBox" name="groupBox_7">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -1645,10 +1721,10 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QDoubleSpinBox" name="portResistanceInput">
-                  <property name="maximum">
-                   <double>10000000000.000000000000000</double>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_29">
+                  <property name="text">
+                   <string>Port Direction</string>
                   </property>
                  </widget>
                 </item>
@@ -1689,10 +1765,17 @@
                   </item>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_29">
+                <item row="0" column="1">
+                 <widget class="QDoubleSpinBox" name="portResistanceInput">
+                  <property name="maximum">
+                   <double>10000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QCheckBox" name="portActive">
                   <property name="text">
-                   <string>Port Direction</string>
+                   <string>port is active</string>
                   </property>
                  </widget>
                 </item>
@@ -1716,86 +1799,6 @@
                     <string>y</string>
                    </property>
                   </item>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QCheckBox" name="portActive">
-                  <property name="text">
-                   <string>port is active</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_4">
-               <property name="title">
-                <string>Port Settings</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_4">
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
-                  <property name="text">
-                   <string>Rectangular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QRadioButton" name="htDumpPortRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Ht Dump</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-                  <property name="text">
-                   <string>Circular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0">
-                 <widget class="QRadioButton" name="etDumpPortRadioButton">
-                  <property name="text">
-                   <string>Et Dump</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QRadioButton" name="lumpedPortRadioButton">
-                  <property name="text">
-                   <string>Lumped</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="microstripPortRadioButton">
-                  <property name="text">
-                   <string>Microstrip</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="0">
-                 <widget class="QRadioButton" name="nf2ffBoxPortRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>NF2FF Box</string>
-                  </property>
                  </widget>
                 </item>
                </layout>
@@ -1833,7 +1836,7 @@
                   </size>
                  </property>
                  <property name="title">
-                  <string>Waveguide Settings</string>
+                  <string>Waveguide-specific Settings</string>
                  </property>
                  <widget class="QComboBox" name="portWaveguidePolarizationAngle">
                   <property name="geometry">
@@ -2768,32 +2771,48 @@
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_48">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenEMS deltaUnit first specified by setRectilinearGrid. This unit is applied to objects as drawingunit.&lt;br/&gt;FreeCAD STL files are exported in FreeCAD standard units (mm) and imported with the appropriate scaling factor to match drawing units.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
-                <string>length unit (m)</string>
+                <string>geometry unit</string>
                </property>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QComboBox" name="simParamsBaseUnitList">
+              <widget class="QComboBox" name="simParamsDeltaUnitList">
                <property name="editable">
-                <bool>true</bool>
+                <bool>false</bool>
+               </property>
+               <property name="currentText">
+                <string>mm</string>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>2</number>
                </property>
                <item>
                 <property name="text">
-                 <string>1</string>
+                 <string>m</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>1e-3</string>
+                 <string>cm</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>1e-6</string>
+                 <string>mm</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>µm</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>nm</string>
                 </property>
                </item>
               </widget>
