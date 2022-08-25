@@ -9,20 +9,7 @@ import collections
 import math
 
 from PySide.QtCore import QSettings
-import json
-
-from enum import Enum
-class FreeCADUnitScheme(Enum):
-	Standard              = 0 # 'Standard (mm/kg/s/degree)'    
-	MKS                   = 1 # 'MKS (m/kg/s/degree)'
-	US_customary          = 2 # 'US customary (in/lb)'
-	Imperial_decimal      = 3 # 'Imperial decimal (in/lb)'
-	Building_Euro         = 4 # 'Building Euro (cm/m²/m³)'
-	Building_US           = 5 # 'Building US (ft-in/sqft/cft)'
-	Metric_smallparts_CNC = 6 # 'Metric small parts & CNC(mm, mm/min)'
-	Imperial_Civil_Eng    = 7 # 'Imperial for Civil Eng (ft, ft/sec)'
-	FEM                   = 8 # 'FEM (mm, N, s)'
-	
+import json	
 
 # UI file (use Qt Designer to modify)
 path_to_ui = "./ui/dialog.ui"
@@ -594,7 +581,7 @@ class BoxTaskPanel:
 	def getFreeCADUnitLength_m(self):
 		# # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
 		# # Below is one way to retrieve this value from schemaTranslate() without implying it.
-		# [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), FreeCADUnitScheme.MKS )
+		# [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), App.Units.Scheme.SI2 )
 		# return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
 		return 0.001
 	
@@ -2554,7 +2541,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									currDir, baseName = self.getCurrDir()
 									stlModelFileName = childName + "_gen_model.stl"
 		
-									genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', unit/fc_unit});\n"
+									genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "'," + str(objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit});\n"
 	
 									#   _____ _______ _                                        _   _             
 									#  / ____|__   __| |                                      | | (_)            
