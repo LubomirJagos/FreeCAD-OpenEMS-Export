@@ -2369,6 +2369,9 @@
                <property name="minimum">
                 <number>1</number>
                </property>
+               <property name="value">
+                <number>8</number>
+               </property>
               </widget>
              </item>
              <item row="3" column="2">
@@ -2389,6 +2392,12 @@
                <property name="decimals">
                 <number>10</number>
                </property>
+               <property name="maximum">
+                <double>1000000000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000001000000000</double>
+               </property>
               </widget>
              </item>
              <item row="8" column="1">
@@ -2400,7 +2409,16 @@
                 </sizepolicy>
                </property>
                <property name="decimals">
-                <number>10</number>
+                <number>12</number>
+               </property>
+               <property name="maximum">
+                <double>1000000000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000001000000000</double>
                </property>
               </widget>
              </item>
@@ -2411,6 +2429,9 @@
                </property>
                <property name="minimum">
                 <number>1</number>
+               </property>
+               <property name="value">
+                <number>8</number>
                </property>
               </widget>
              </item>
@@ -2539,6 +2560,9 @@
                <property name="singleStep">
                 <number>1000</number>
                </property>
+               <property name="value">
+                <number>1000000</number>
+               </property>
               </widget>
              </item>
              <item row="3" column="5">
@@ -2559,6 +2583,12 @@
                <property name="decimals">
                 <number>10</number>
                </property>
+               <property name="maximum">
+                <double>1000000000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000001000000000</double>
+               </property>
               </widget>
              </item>
              <item row="3" column="6">
@@ -2577,7 +2607,7 @@
                 <number>1</number>
                </property>
                <property name="value">
-                <number>1</number>
+                <number>8</number>
                </property>
               </widget>
              </item>
@@ -2654,6 +2684,9 @@
                </property>
                <property name="minimum">
                 <number>1</number>
+               </property>
+               <property name="value">
+                <number>8</number>
                </property>
               </widget>
              </item>
@@ -2734,7 +2767,10 @@
                 <double>10000000000.000000000000000</double>
                </property>
                <property name="singleStep">
-                <double>1.000000000000000</double>
+                <double>0.000001000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000010000000000</double>
                </property>
               </widget>
              </item>
@@ -2745,6 +2781,9 @@
                </property>
                <property name="minimum">
                 <number>1</number>
+               </property>
+               <property name="value">
+                <number>8</number>
                </property>
               </widget>
              </item>
@@ -2769,6 +2808,9 @@
                </property>
                <property name="minimum">
                 <number>1</number>
+               </property>
+               <property name="value">
+                <number>8</number>
                </property>
               </widget>
              </item>
@@ -2818,6 +2860,13 @@
                  <string>nm</string>
                 </property>
                </item>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="simParamsMinDecrementdBLabel">
+               <property name="text">
+                <string/>
+               </property>
               </widget>
              </item>
             </layout>
@@ -3389,6 +3438,147 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>openEMSTab</tabstop>
+  <tabstop>objectAssignmentFilterLeft</tabstop>
+  <tabstop>objectAssignmentFilterLeftButton</tabstop>
+  <tabstop>objectAssignmentLeftTreeWidget</tabstop>
+  <tabstop>moveRightButton</tabstop>
+  <tabstop>moveLeftButton</tabstop>
+  <tabstop>objectAssignmentRightTreeWidget</tabstop>
+  <tabstop>objectAssignmentPriorityTreeView</tabstop>
+  <tabstop>moveupPriorityButton</tabstop>
+  <tabstop>movedownPriorityButton</tabstop>
+  <tabstop>meshPriorityTreeView</tabstop>
+  <tabstop>moveupMeshPriorityButton</tabstop>
+  <tabstop>movedownMeshPriorityButton</tabstop>
+  <tabstop>eraseAuxGridButton</tabstop>
+  <tabstop>auxGridAxis</tabstop>
+  <tabstop>gridSettingsTreeView</tabstop>
+  <tabstop>gridSettingsNameInput</tabstop>
+  <tabstop>gridRectangularRadio</tabstop>
+  <tabstop>gridCylindricalRadio</tabstop>
+  <tabstop>gridUnitsInput</tabstop>
+  <tabstop>gridUnitsInput_2</tabstop>
+  <tabstop>gridXEnable</tabstop>
+  <tabstop>gridYEnable</tabstop>
+  <tabstop>gridZEnable</tabstop>
+  <tabstop>fixedCountRadioButton</tabstop>
+  <tabstop>fixedCountXNumberInput</tabstop>
+  <tabstop>fixedCountYNumberInput</tabstop>
+  <tabstop>fixedCountZNumberInput</tabstop>
+  <tabstop>fixedDistanceRadioButton</tabstop>
+  <tabstop>fixedDistanceXNumberInput</tabstop>
+  <tabstop>fixedDistanceYNumberInput</tabstop>
+  <tabstop>fixedDistanceZNumberInput</tabstop>
+  <tabstop>userDefinedRadioButton</tabstop>
+  <tabstop>gridGenerateLinesInsideCheckbox</tabstop>
+  <tabstop>gridTopPriorityLinesCheckbox</tabstop>
+  <tabstop>userDefinedGridLinesTextInput</tabstop>
+  <tabstop>createUserdefGridLinesFromCurrentButton</tabstop>
+  <tabstop>displayXYGridLinesInModelButton</tabstop>
+  <tabstop>displayXZGridLinesInModelButton</tabstop>
+  <tabstop>displayYZGridLinesInModelButton</tabstop>
+  <tabstop>gridSettingsAddButton</tabstop>
+  <tabstop>gridSettingsRemoveButton</tabstop>
+  <tabstop>gridSettingsUpdateButton</tabstop>
+  <tabstop>materialSettingsTreeView</tabstop>
+  <tabstop>materialSettingsNameInput</tabstop>
+  <tabstop>materialMetalRadioButton</tabstop>
+  <tabstop>materialUserDefinedRadioButton</tabstop>
+  <tabstop>materialEpsilonNumberInput</tabstop>
+  <tabstop>materialMueNumberInput</tabstop>
+  <tabstop>materialSigmaNumberInput</tabstop>
+  <tabstop>materialKappaNumberInput</tabstop>
+  <tabstop>materialSettingsAddButton</tabstop>
+  <tabstop>materialSettingsRemoveButton</tabstop>
+  <tabstop>materialSettingsUpdateButton</tabstop>
+  <tabstop>excitationSettingsTreeView</tabstop>
+  <tabstop>excitationSettingsNameInput</tabstop>
+  <tabstop>excitationUnitsNumberInput</tabstop>
+  <tabstop>sinusodialExcitationRadioButton</tabstop>
+  <tabstop>sinusodialExcitationF0NumberInput</tabstop>
+  <tabstop>gaussianExcitationRadioButton</tabstop>
+  <tabstop>gaussianExcitationF0NumberInput</tabstop>
+  <tabstop>gaussianExcitationFcNumberInput</tabstop>
+  <tabstop>customExcitationRadioButton</tabstop>
+  <tabstop>customExcitationTextInput</tabstop>
+  <tabstop>customExcitationF0NumberInput</tabstop>
+  <tabstop>excitationSettingsAddButton</tabstop>
+  <tabstop>excitationSettingsRemoveButton</tabstop>
+  <tabstop>excitationSettingsUpdateButton</tabstop>
+  <tabstop>portSettingsTreeView</tabstop>
+  <tabstop>portSettingsNameInput</tabstop>
+  <tabstop>lumpedPortRadioButton</tabstop>
+  <tabstop>microstripPortRadioButton</tabstop>
+  <tabstop>circularWaveguidePortRadioButton</tabstop>
+  <tabstop>rectangularWaveguidePortRadioButton</tabstop>
+  <tabstop>etDumpPortRadioButton</tabstop>
+  <tabstop>htDumpPortRadioButton</tabstop>
+  <tabstop>nf2ffBoxPortRadioButton</tabstop>
+  <tabstop>portResistanceInput</tabstop>
+  <tabstop>portResistanceUnitsInput</tabstop>
+  <tabstop>portDirectionInput</tabstop>
+  <tabstop>portActive</tabstop>
+  <tabstop>portWaveguideModeName</tabstop>
+  <tabstop>portWaveguidePolarizationAngle</tabstop>
+  <tabstop>portWaveguideExcitationAmplitude</tabstop>
+  <tabstop>portSettingsAddButton</tabstop>
+  <tabstop>portSettingsRemoveButton</tabstop>
+  <tabstop>portSettingsUpdateButton</tabstop>
+  <tabstop>lumpedPartTreeView</tabstop>
+  <tabstop>lumpedPartSettingsNameInput</tabstop>
+  <tabstop>lumpedPartREnable</tabstop>
+  <tabstop>lumpedPartRInput</tabstop>
+  <tabstop>lumpedPartRUnits</tabstop>
+  <tabstop>lumpedPartLEnable</tabstop>
+  <tabstop>lumpedPartLInput</tabstop>
+  <tabstop>lumpedPartLUnits</tabstop>
+  <tabstop>lumpedPartCEnable</tabstop>
+  <tabstop>lumpedPartCInput</tabstop>
+  <tabstop>lumpedPartCUnits</tabstop>
+  <tabstop>lumpedPartSettingsAddButton</tabstop>
+  <tabstop>lumpedPartSettingsRemoveButton</tabstop>
+  <tabstop>lumpedPartSettingsUpdateButton</tabstop>
+  <tabstop>simParamsMaxTimesteps</tabstop>
+  <tabstop>simParamsMinDecrement</tabstop>
+  <tabstop>simParamsDeltaUnitList</tabstop>
+  <tabstop>BCxmin</tabstop>
+  <tabstop>BCxmax</tabstop>
+  <tabstop>BCymin</tabstop>
+  <tabstop>BCymax</tabstop>
+  <tabstop>BCzmin</tabstop>
+  <tabstop>BCzmax</tabstop>
+  <tabstop>PMLxmincells</tabstop>
+  <tabstop>PMLxmaxcells</tabstop>
+  <tabstop>PMLymincells</tabstop>
+  <tabstop>PMLymaxcells</tabstop>
+  <tabstop>PMLzmincells</tabstop>
+  <tabstop>PMLzmaxcells</tabstop>
+  <tabstop>genParamMinGridSpacingX</tabstop>
+  <tabstop>genParamMinGridSpacingY</tabstop>
+  <tabstop>genParamMinGridSpacingZ</tabstop>
+  <tabstop>generateJustPreviewCheckbox</tabstop>
+  <tabstop>generateDebugPECCheckbox</tabstop>
+  <tabstop>octaveExecCommandList</tabstop>
+  <tabstop>runSimulationButton</tabstop>
+  <tabstop>abortSimulationButton</tabstop>
+  <tabstop>displaySimulationModelButton</tabstop>
+  <tabstop>drawS21Button</tabstop>
+  <tabstop>drawS11Button</tabstop>
+  <tabstop>writeNf2ffButton</tabstop>
+  <tabstop>portNf2ffObjectList</tabstop>
+  <tabstop>portNf2ffFreq</tabstop>
+  <tabstop>portNf2ffThetaStart</tabstop>
+  <tabstop>portNf2ffThetaStop</tabstop>
+  <tabstop>portNf2ffThetaStep</tabstop>
+  <tabstop>portNf2ffPhiStart</tabstop>
+  <tabstop>portNf2ffPhiStop</tabstop>
+  <tabstop>portNf2ffPhiStep</tabstop>
+  <tabstop>loadCurrentSettingsButton</tabstop>
+  <tabstop>saveCurrentSettingsButton</tabstop>
+  <tabstop>generateOpenEMSScriptButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
