@@ -868,7 +868,7 @@
              <item>
               <widget class="QLabel" name="label_5">
                <property name="text">
-                <string>User defined grid lines</string>
+                <string>User defined grid lines (in geometry units)</string>
                </property>
               </widget>
              </item>
@@ -2823,7 +2823,7 @@
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OpenEMS deltaUnit first specified by setRectilinearGrid. This unit is applied to objects as drawingunit.&lt;br/&gt;FreeCAD STL files are exported in FreeCAD standard units (mm) and imported with the appropriate scaling factor to match drawing units.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>geometry unit</string>
+                <string>geometry units</string>
                </property>
               </widget>
              </item>

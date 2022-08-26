@@ -14,6 +14,9 @@ import json
 # UI file (use Qt Designer to modify)
 path_to_ui = "./ui/dialog.ui"
 
+def _bool(s):
+	return s in ('True', 'true', '1', 'yes', True)
+
 class OpenEMS:
 	def getOpenEMSObjects(self, filterStr = ""):
 		currentObjects = App.ActiveDocument.Objects
@@ -187,7 +190,7 @@ class SettingsItem:
 			outNumber = 0
 		return outNumber
 
-# FreeCAD part object
+# FreeCAD part class
 #
 class FreeCADSettingsItem(SettingsItem):
 	def __init__(self, name = "", type = "FreeCADSettingItem"):
@@ -200,7 +203,7 @@ class FreeCADSettingsItem(SettingsItem):
 		serializedString += "}"
 		return serializedString
 
-# Grid settings
+# Grid settings class
 #	Fixed Count    - fixed number per axes
 #	Fixed Distance - gridlines have fixed distance between them
 #	User Defined   - user has to provide coordinates where lines should be
@@ -221,7 +224,7 @@ class GridSettingsItem(SettingsItem):
 		self.topPriorityLines = True
 
 	#Return xyz distances, count or user defined array based what user asked for.
-	def getXYZ(self, referenceUnit):
+	def getXYZ(self, referenceUnit=1):
 		if (self.type == "Fixed Count"):
 			return self.fixedCount
 		if (self.type == "Fixed Distance"):
@@ -416,7 +419,7 @@ class BoxTaskPanel:
 		self.form.dialogVertLayout.addWidget(self.statusBar)
 		
 		#
-		# TOP LEVEL ITEMS (excitation, grid, materials, ...)
+		# TOP LEVEL ITEMS / Category Items (excitation, grid, materials, ...)
 		#
 		self.initRightColumnTopLevelItems()
 
@@ -778,9 +781,6 @@ class BoxTaskPanel:
 		if ("FreeCADSettingItem" in currSetting.type ):
 			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
 				currSetting = currItem.parent().data(0, QtCore.Qt.UserRole)
-				currSetting.xenabled = currSetting.xenabled in ('True', 'true', '1', 'yes', True)
-				currSetting.yenabled = currSetting.yenabled in ('True', 'true', '1', 'yes', True)
-				currSetting.zenabled = currSetting.zenabled in ('True', 'true', '1', 'yes', True)
 			else:
 				return
 
@@ -1345,7 +1345,7 @@ CSX = InitCSX();
 										genScript += 'portDirection = [0 0 1];\n'
 			
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+									if (currSetting.isActive):
 										genScript_isActive = " , true"
 			
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
@@ -1491,7 +1491,7 @@ f_res = f0;
 								#
 								# PORT openEMS GENERATION INTO VARIABLE
 								#
-								if (currSetting.getType() == 'lumped' and currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+								if (currSetting.getType() == 'lumped' and currSetting.isActive):
 									genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
 									genScript += 'portR = ' + str(currSetting.R) + ';\n'
@@ -1505,7 +1505,7 @@ f_res = f0;
 										genScript += 'portDirection = [0 0 1];\n'
 			
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+									if (currSetting.isActive):
 										genScript_isActive = " , true"
 			
 									genScript += '[CSX port] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
@@ -1740,8 +1740,74 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
 
 		return priorityItemValue
+		
+	#
+	# Universal function to add items into categories in GUI.
+	#
+	def addSettingsItemGui(self, settingsItem):
+		treeItemName = settingsItem.name
+		treeItem = QtGui.QTreeWidgetItem([treeItemName])
 
-	#   __  __ ______  _____ _    _     _____  _____  _____ ____  _____  _____ _________     __   _____  _____ _____  _____ _____ _______ 
+		itemTypeReg = re.search("__main__.(.*)SettingsItem", str(type(settingsItem)))
+		typeStr = itemTypeReg.group(1)
+		print(typeStr)
+
+		treeItem.setIcon(0, QtGui.QIcon("./img/" + typeStr.lower() + ".svg"))
+		treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+
+		#add item into excitation list
+		treeWidgetRef = {}
+		itemChangedRef = {}
+		if (typeStr.lower() == "excitation"):
+			treeWidgetRef = self.form.excitationSettingsTreeView
+		elif (typeStr.lower() == "port"):
+			treeWidgetRef = self.form.portSettingsTreeView
+		elif (typeStr.lower() == "grid"):
+			treeWidgetRef = self.form.gridSettingsTreeView
+		elif (typeStr.lower() == "material"):
+			treeWidgetRef = self.form.materialSettingsTreeView
+		elif (typeStr.lower() == "lumpedpart"):
+			treeWidgetRef = self.form.lumpedPartTreeView
+		else:
+			print('cannot assign item ' + typeStr)
+			return
+
+		treeWidgetRef.insertTopLevelItem(0, treeItem)
+		treeWidgetRef.setCurrentItem(treeWidgetRef.topLevelItem(0))
+
+		#adding excitation also into OBJCET ASSIGNMENT WINDOW
+		targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
+		targetGroup[0].addChild(treeItem.clone())
+
+	###
+	#	Removing from Priority List
+	###
+	def removePriorityName(self, priorityName):
+		print("Removing from oibjects priority list tree view:" + priorityName)
+		priorityItemRemoved = True
+		while priorityItemRemoved:
+			priorityItemRemoved = False
+
+			#search item in priority list for OBJECTS
+			priorityItemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
+			for k in range(priorityItemsCount):
+				priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
+				if priorityName in priorityItem.text(0):
+					self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
+					priorityItemRemoved = True
+					break
+
+			#search item also in priority list for MESH
+			if not priorityItemRemoved:
+				priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+				for k in range(priorityItemsCount):
+					priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
+					if priorityName in priorityItem.text(0):
+						self.form.meshPriorityTreeView.takeTopLevelItem(k)
+						priorityItemRemoved = True
+						break
+
+	#  __  __ ______  _____ _    _     _____  _____  _____ ____  _____  _____ _________     __   _____  _____ _____  _____ _____ _______ 
 	# |  \/  |  ____|/ ____| |  | |   |  __ \|  __ \|_   _/ __ \|  __ \|_   _|__   __\ \   / /  / ____|/ ____|  __ \|_   _|  __ \__   __|
 	# | \  / | |__  | (___ | |__| |   | |__) | |__) | | || |  | | |__) | | |    | |   \ \_/ /  | (___ | |    | |__) | | | | |__) | | |   
 	# | |\/| |  __|  \___ \|  __  |   |  ___/|  _  /  | || |  | |  _  /  | |    | |    \   /    \___ \| |    |  _  /  | | |  ___/  | |   
@@ -1753,6 +1819,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#	for them which looks like someVariable is False or someVariable == 'false' similar for true value!
 	#
 	def getMeshPriorityScriptLines(self, meshPriorityIdentifier):
+		genScript = ""
+		
 		meshPriorityIdentifierArray = meshPriorityIdentifier.split(',')		#split identifier based on commas
 		freecadObjName = meshPriorityIdentifierArray[2].strip()
 		
@@ -1764,12 +1832,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		item = self.form.objectAssignmentRightTreeWidget.findItems(meshPriorityIdentifierArray[1].strip(), QtCore.Qt.MatchRecursive)[0]
 		currSetting = item.data(0, QtCore.Qt.UserRole)	#obtain current grid category settings
 		
-		currSetting.xenabled = currSetting.xenabled in ('True', 'true', '1', 'yes', True)
-		currSetting.yenabled = currSetting.yenabled in ('True', 'true', '1', 'yes', True)
-		currSetting.zenabled = currSetting.zenabled in ('True', 'true', '1', 'yes', True)
-
 		#if grid settings topPriorityLines is disabled then don't do nothing and return empty string
-		if currSetting.topPriorityLines == False or currSetting.topPriorityLines == 'false':
+		if currSetting.topPriorityLines == False:
 			return ""
 		
 		print("Mesh priority generating, grid category found - " + item.text(0))
@@ -1779,7 +1843,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		freecadObjects = [i for i in objs if (i.Label) == freecadObjName]	#get FreeCAD object with name from priority list 
 
 		#print(freecadObjects)
-		genScript = ""
+
 		for obj in freecadObjects:
 			# obj = FreeCAD Object class
 
@@ -1852,80 +1916,206 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				pass
-			elif (currSetting.getType() == 'User Defined'):
-				#UNIT FOR MESH										
-				genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
-				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
-				pass
 
 		return genScript
 
-	#
-	# Universal function to add items into categories in GUI.
-	#
-	def addSettingsItemGui(self, settingsItem):
-		treeItemName = settingsItem.name
-		treeItem = QtGui.QTreeWidgetItem([treeItemName])
+						
+	def getExcitationScriptLines(self):  
+		genScript = ""
+		
+		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+		if len(excitationCategory) >= 0:
+			print("Excitation Settings detected")
+			print("#")
+			print("#EXCITATION")
 
-		itemTypeReg = re.search("__main__.(.*)SettingsItem", str(type(settingsItem)))
-		typeStr = itemTypeReg.group(1)
-		print(typeStr)
+			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
+			if (excitationCategory[0].childCount() > 0):
+				item = excitationCategory[0].child(0)
+				currSetting = item.data(0, QtCore.Qt.UserRole)	# At index 0 is Default Excitation. 
+				# Currently only 1 excitation is allowed. Multiple excitations could be managed by setting one of them as "selected" or "active", while all others are deactivated.
+				# This would help the user to manage different analysis scenarios / excitation ranges.
 
-		treeItem.setIcon(0, QtGui.QIcon("./img/" + typeStr.lower() + ".svg"))
-		treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+				print("#name: " + currSetting.getName())
+				print("#type: " + currSetting.getType())
 
-		#add item into excitation list
-		treeWidgetRef = {}
-		itemChangedRef = {}
-		if (typeStr.lower() == "excitation"):
-			treeWidgetRef = self.form.excitationSettingsTreeView
-		elif (typeStr.lower() == "port"):
-			treeWidgetRef = self.form.portSettingsTreeView
-		elif (typeStr.lower() == "grid"):
-			treeWidgetRef = self.form.gridSettingsTreeView
-		elif (typeStr.lower() == "material"):
-			treeWidgetRef = self.form.materialSettingsTreeView
-		elif (typeStr.lower() == "lumpedpart"):
-			treeWidgetRef = self.form.lumpedPartTreeView
+				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+				genScript += "% EXCITATION " + currSetting.getName() + "\n"
+				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+				#EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
+				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
+				if (currSetting.getType() == 'sinusodial'):
+					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
+					genScript += "max_res = c0 / f0 / 20;\n"
+					self.maxGridResolution_m = 3e8 / (currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
+					pass
+				elif (currSetting.getType() == 'gaussian'):
+					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
+					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
+					self.maxGridResolution_m = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc']) * currSetting.getUnitsAsNumber(currSetting.units) *  20)
+					pass
+				elif (currSetting.getType() == 'custom'):
+					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
+					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+					genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
+					genScript += "max_res = 0;\n"
+					self.maxGridResolution_m = 0
+					pass
+				pass
+				
+				genScript += "\n"
+			else:
+				self.displayMessage("Missing excitation, please define one.")
+				pass
+			pass
+		return genScript
+		
+	
+	def getBoundaryConditionsScriptLines(self):
+		genScript = ""
+		
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% BOUNDARY CONDITIONS\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+	
+		strBC = ""
+		strBC += ('\"PML_' + str(self.form.PMLxmincells.value()) + '\"' if self.form.BCxmin.currentText() == 'PML' else '\"' + self.form.BCxmin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLxmaxcells.value()) + '\"' if self.form.BCxmax.currentText() == 'PML' else '\"' + self.form.BCxmax.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLymincells.value()) + '\"' if self.form.BCymin.currentText() == 'PML' else '\"' + self.form.BCymin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLymaxcells.value()) + '\"' if self.form.BCymax.currentText() == 'PML' else '\"' + self.form.BCymax.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLzmincells.value()) + '\"' if self.form.BCzmin.currentText() == 'PML' else '\"' + self.form.BCzmin.currentText() + "\"") + ","
+		strBC += ('\"PML_' + str(self.form.PMLzmaxcells.value()) + '\"' if self.form.BCzmax.currentText() == 'PML' else '\"' + self.form.BCzmax.currentText() + "\"")  
+
+		""" THIS IS ORIGINAL NON GENERATED CODE FOR BOUNDARIES CONDITIONS
+		genScript += "BC = {'MUR' 'MUR' 'MUR' 'MUR' 'MUR' 'MUR'}; % boundary conditions\n"
+		genScript += "if (use_pml>0)\n"
+		genScript += "    BC = {'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8'}; % use pml instead of mur\n"
+		genScript += "end\n"
+		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
+		genScript += "\n"
+		"""
+		genScript += "BC = {" + strBC + "};\n"
+		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
+		genScript += "\n"
+		
+		return genScript
+		
+
+	def getCoordinateSystemScriptLines(self):
+		genScript = ""
+		
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% COORDINATE SYSTEM\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+		# Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
+		
+		"""
+		gridCoordsType = self.getModelCoordsType()
+		if (gridCoordsType == "rectangular"):
+			genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+		elif (gridCoordsType == "cylindrical"):
+			genScript += "CSX = InitCSX('CoordSystem',1); % Cylindrical coordinate system.\n"
 		else:
-			print('cannot assign item ' + typeStr)
-			return
+			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
+		"""
+		genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+		genScript += "mesh.x = []; % mesh variable initialization (Note: x y z implies type Cartesian).\n"
+		genScript += "mesh.y = [];\n"
+		genScript += "mesh.z = [];\n"
+		genScript += "CSX = DefineRectGrid(CSX, unit, mesh); % First call with empty mesh to set deltaUnit attribute.\n" 
+		genScript += "\n"
+		
+		return genScript
+		
 
-		treeWidgetRef.insertTopLevelItem(0, treeItem)
-		treeWidgetRef.setCurrentItem(treeWidgetRef.topLevelItem(0))
-
-		#adding excitation also into OBJCET ASSIGNMENT WINDOW
-		targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
-		targetGroup[0].addChild(treeItem.clone())
-
-	###
-	#	Removing from Priority List
-	###
-	def removePriorityName(self, priorityName):
-		print("Removing from oibjects priority list tree view:" + priorityName)
-		priorityItemRemoved = True
-		while priorityItemRemoved:
-			priorityItemRemoved = False
-
-			#search item in priority list for OBJECTS
-			priorityItemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
-			for k in range(priorityItemsCount):
-				priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
-				if priorityName in priorityItem.text(0):
-					self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
-					priorityItemRemoved = True
-					break
-
-			#search item also in priority list for MESH
-			if not priorityItemRemoved:
-				priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
-				for k in range(priorityItemsCount):
-					priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
-					if priorityName in priorityItem.text(0):
-						self.form.meshPriorityTreeView.takeTopLevelItem(k)
-						priorityItemRemoved = True
-						break
+	def getMaterialDefinitionsScriptLines(self, items):
+		genScript = ""	
+	
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% MATERIALS\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+	
+		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
+		# Note that the user will need to create a metal named 'PEC' and populate it to avoid a warning
+		# about "no primitives assigned to metal 'PEC'".
+		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
+		genScript += "\n"
+		
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+		return genScript	
+		
+		
+	def getPortDefinitionsScriptLines(self, items):
+		genScript = ""	
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+			
+		return genScript
+		
+		
+	def getGridDefinitionsScriptLines(self, items):
+		genScript = ""	
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+			
+		return genScript
+		
+		
+	def getMaterialDefinitionsScriptLines(self, items):
+		genScript = ""	
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+			
+		return genScript
+		
+		
+	def getLumpedPartDefinitionsScriptLines(self, items):
+		genScript = ""	
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+			
+		return genScript
+		
+		
+	def getNF2FFDefinitionsScriptLines(self, items):
+		genScript = ""	
+		if not items:
+			return genScript
+			
+		for [item, itemData] in items:
+			# TODO
+			pass
+			
+		return genScript
+		
+		
 
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
@@ -1937,53 +2127,44 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#   __/ |                                                   | |                                       
 	#  |___/                    
 	#
-	#	GENERATE SCRIPT CLICKED
+	#	GENERATE SCRIPT CLICKED - go through object assignment tree categories, output child item data.
 	#
 	def generateOpenEMSScriptButtonClicked(self):
+	
+		# Update status bar to inform user that exporting has begun.
+	
 		if self.statusBar is not None:
 			self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
 			QtGui.QApplication.processEvents()
-
-		#get reference to each category item
-		#
-		# HERE IS ORDER IN WHICH LIST WILL BE EXECUTED AND ITEMS WILL BE TRANSLATED STEP BY STEP based on their type
-		#
-		#   _____ ______ _______     _____ ______ _   _ ______ _____         _______ ______ _____     _____       _______ ______ _____  ____  _____  _____ ______  _____ 
-		#  / ____|  ____|__   __|   / ____|  ____| \ | |  ____|  __ \     /\|__   __|  ____|  __ \   / ____|   /\|__   __|  ____/ ____|/ __ \|  __ \|_   _|  ____|/ ____|
-		# | (___ | |__     | |     | |  __| |__  |  \| | |__  | |__) |   /  \  | |  | |__  | |  | | | |       /  \  | |  | |__ | |  __| |  | | |__) | | | | |__  | (___  
-		#  \___ \|  __|    | |     | | |_ |  __| | . ` |  __| |  _  /   / /\ \ | |  |  __| | |  | | | |      / /\ \ | |  |  __|| | |_ | |  | |  _  /  | | |  __|  \___ \ 
-		#  ____) | |____   | |     | |__| | |____| |\  | |____| | \ \  / ____ \| |  | |____| |__| | | |____ / ____ \| |  | |___| |__| | |__| | | \ \ _| |_| |____ ____) |
-		# |_____/|______|  |_|      \_____|______|_| \_|______|_|  \_\/_/    \_\_|  |______|_____/   \_____/_/    \_\_|  |______\_____|\____/|_|  \_\_____|______|_____/ 
-		#                                                                                                                                                               
-		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
+			
+		# Constants and variable initialization.
 		
+		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
 		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 		refUnitStr = self.form.simParamsDeltaUnitList.currentText()
 		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
-			
-		allItems = []
-		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-		for k in range(childCount):
-			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
-
-		#go through categories children, output their data inside
-		"""
-		for m in range(len(allItems)):
-			currItem = allItems[m]
-			for k in range(currItem.childCount()):
-				item = currItem.child(k)
+     
+		# List categories and items.
+		
+		categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		categoryNodes = [self.form.objectAssignmentRightTreeWidget.topLevelItem(k) for k in range(categoryCount)]
+		itemsByClassName = {}
+		for m, categoryNode in enumerate(categoryNodes): # for each category
+			for k in range(categoryNode.childCount()):   # for each child item in a given category
+				item = categoryNode.child(k)
 				itemData = item.data(0, QtCore.Qt.UserRole)
-				print("User datatype: " + item.text(0) + " - " + str(type(itemData)))
-				if (itemData):
-					print(itemData.serializeToString())
-		"""
-
-		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
-		genScript = ''
-
-		#
-		# Generating script beginning
-		#
+				if not itemData:
+					continue 
+				itemClassName = itemData.__class__.__name__
+				if not (itemClassName in itemsByClassName):
+					itemsByClassName[itemClassName] = [[item, itemData]]
+				else:
+					itemsByClassName[itemClassName].append([item, itemData])
+			
+		# Write script header.
+		
+		genScript = ""
+		
 		genScript += "% OpenEMS FDTD Analysis Automation Script\n"
 		genScript += "%\n"
 		genScript += "% To be run with GNU Octave or MATLAB.\n"
@@ -2023,157 +2204,75 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "openEMS_opts = '" + " ".join(openEMS_opt)+ "';\n"		
 		genScript += "\n"
 
-		#
-		# SIMULATION SETTINGS
-		#
+		# Write simulation settings.
+
 		genScript += "%% constants\n"
 		genScript += "physical_constants;\n"
 		genScript += "unit    = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
 		genScript += "fc_unit = " + str(self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
-		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % cell size: lambda/20\n"
+		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % maximum cell size: lambda/20\n"
 		genScript += "\n"
+		
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
 		genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
 		genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"
 		genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
 		genScript += "\n"
+		
 		genScript += "%% setup FDTD parameter & excitation function\n"
 		genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value())  + ";\n"
 		genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 		genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
 		genScript += "\n"
 
-		#default structure for mesh
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% MESH variable init\n"
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "mesh.x = [];\n"
-		genScript += "mesh.y = [];\n"
-		genScript += "mesh.z = [];\n"
+		# Write boundary conditions definitions.
+		
+		genScript += self.getBoundaryConditionsScriptLines()
 
-		#
-		#	EXCITATION
-		#  ________   _______ _____ _______    _______ _____ ____  _   _                                   _           _                 _      
-		# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |                                 | |         | |               | |     
-		# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| |   __ _  ___ _ __   ___ _ __ __ _| |_ ___  __| |   ___ ___   __| | ___ 
-		# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \/ _` |  / __/ _ \ / _` |/ _ \
-		# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  | | (_| |  __/ | | |  __/ | | (_| | ||  __/ (_| | | (_| (_) | (_| |  __/
-		# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
-		#                                                                   __/ |                                                               
-		#                                                                  |___/                                                                
-		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
-		if len(excitationCategory) >= 0:
-			print("Excitation Settings detected")
-			print("#")
-			print("#EXCITATION")
+		# Write coordinate system definitions.
+		
+		genScript += self.getCoordinateSystemScriptLines()
+		
+		# Write excitation definition.
+		
+		genScript += self.getExcitationScriptLines()
 
-			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-			if (excitationCategory[0].childCount() > 0):
-				item = excitationCategory[0].child(0)
-				currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
-
-				print("#name: " + currSetting.getName())
-				print("#type: " + currSetting.getType())
-
-				#DON'T KNOW WHY I HAD THIS IN EXCITATION BEFORE, I WILL SEE
-				#portName = "port_" + str(100*m+k)
-
-				#
-				# EXCITATION openEMS GENERATION INTO VARIABLE
-				#
-				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-				genScript += "% EXCITATION " + currSetting.getName() + "\n"
-				genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-
-				#EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
-				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
-				if (currSetting.getType() == 'sinusodial'):
-					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
-					genScript += "max_res = c0 / f0 / 20;\n"
-					self.maxGridResolution_m = 3e8 / (currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
-					pass
-				elif (currSetting.getType() == 'gaussian'):
-					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
-					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
-					self.maxGridResolution_m = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc']) * currSetting.getUnitsAsNumber(currSetting.units) *  20)
-					pass
-				elif (currSetting.getType() == 'custom'):
-					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
-					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
-					genScript += "max_res = 0;\n"
-					self.maxGridResolution_m = 0
-					pass
-				pass
-			else:
-				self.displayMessage("Missing excitation, please define one.")
-				pass
-			pass
-
-		#
-		# BOUNDARY CONDITIONS SETTING, OK
-		#
-		strBC = ""
-		strBC += ('\"PML_' + str(self.form.PMLxmincells.value()) + '\"' if self.form.BCxmin.currentText() == 'PML' else '\"' + self.form.BCxmin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLxmaxcells.value()) + '\"' if self.form.BCxmax.currentText() == 'PML' else '\"' + self.form.BCxmax.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLymincells.value()) + '\"' if self.form.BCymin.currentText() == 'PML' else '\"' + self.form.BCymin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLymaxcells.value()) + '\"' if self.form.BCymax.currentText() == 'PML' else '\"' + self.form.BCymax.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLzmincells.value()) + '\"' if self.form.BCzmin.currentText() == 'PML' else '\"' + self.form.BCzmin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLzmaxcells.value()) + '\"' if self.form.BCzmax.currentText() == 'PML' else '\"' + self.form.BCzmax.currentText() + "\"")  
-
-		""" THIS IS ORIGINAL NON GENERATED CODE FOR BOUNDARIES CONDITIONS
-		genScript += "BC = {'MUR' 'MUR' 'MUR' 'MUR' 'MUR' 'MUR'}; % boundary conditions\n"
-		genScript += "if (use_pml>0)\n"
-		genScript += "    BC = {'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8'}; % use pml instead of mur\n"
-		genScript += "end\n"
-		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
-		genScript += "\n"
-		"""
-		genScript += "BC = {" + strBC + "}; % boundary conditions\n"
-		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
-		genScript += "\n"
-
-		#
-		# COORDINATION SYSTEM
-		#	Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
-		#
-		"""
-		gridCoordsType = self.getModelCoordsType()
-		if (gridCoordsType == "rectangular"):
-			genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
-		elif (gridCoordsType == "cylindrical"):
-			genScript += "CSX = InitCSX('CoordSystem',1); % Cylindrical coordinate system.\n"
-		else:
-			genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
-		"""
-		genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
-		genScript += "CSX = DefineRectGrid(CSX, unit, mesh); % First call with empty mesh to set deltaUnit attribute.\n" 
-		genScript += "\n"
-
-		#
-		# DEFAULT MATERIAL definitions
-		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
-		# Note that the user will need to create a metal named 'PEC' and populate it to avoid a warning
-		# about "no primitives assigned to metal 'PEC'".
-		#
-		genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
-		genScript += "\n"
-
-		# GENERATE OCTAVE SCRIPT FOR OPENEMS item by item
-		genScriptPortCount = 1
+		# Write material definitions.
+		
+		genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None))
 
 		print("======================== REPORT BEGIN ========================\n")
-		for m in range(len(allItems)):
-			currItem = allItems[m]
-
-			for k in range(currItem.childCount()):
-				item = currItem.child(k)
+		
+		# Write port definitions.
+		
+		genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+		
+		# Write grid definitions.
+		
+		genScript += self.getGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+		
+		# Write material definitions.
+		
+		genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None))
+		
+		# Write lumped part definitions.
+		
+		genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+		
+		# Write NF2FF probe grid definitions.
+		
+		genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+		
+		genScriptPortCount = 1
+		
+		for m, categoryNode in enumerate(categoryNodes): # for each category
+			for k in range(categoryNode.childCount()): # for each child item in a given category
+			
+				item = categoryNode.child(k)
 				itemData = item.data(0, QtCore.Qt.UserRole)
 				if (itemData):
+					itemClassName = itemData.__class__.__name__
 					#
 					#	PORT
 					#  ____    ____  _____ _______                                   _           _                 _      
@@ -2185,7 +2284,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#                                 __/ |                                                               
 					#                                |___/                                                                
 					#
-					if (itemData.__class__.__name__ == "PortSettingsItem"):
+					
+					if (itemClassName == "PortSettingsItem"):
+						
 						print("Port Settings detected")
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print("#")
@@ -2233,7 +2334,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 										genScript += 'portDirection = [0 0 1];\n'
 
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+									if (currSetting.isActive):
 										genScript_isActive = ", true"
 
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
@@ -2252,7 +2353,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 										genScript += 'portDirection = [0 0 1];\n'
 
 									genScript_isActive = ""
-									if (currSetting.isActive in ('True', 'true', '1', 'yes', True)):
+									if currSetting.isActive:
 										genScript_isActive = ", 'ExcitePort', true"
 
 									genScript_R = ""
@@ -2302,19 +2403,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#                                __/ |                                                               
 					#                               |___/                                                                
 					#
-					elif (itemData.__class__.__name__ == "GridSettingsItem"):
+					elif (itemClassName == "GridSettingsItem"):
 						print("Grid Settings detected")
 						currentObjects = App.ActiveDocument.Objects						
 						if (str(item.parent().text(0)) == "Grid"):
 							print("Current item is GRID setting")
 							currSetting = item.data(0, QtCore.Qt.UserRole)
-							currSetting.xenabled = currSetting.xenabled in ('True', 'true', '1', 'yes', True)
-							currSetting.yenabled = currSetting.yenabled in ('True', 'true', '1', 'yes', True)
-							currSetting.zenabled = currSetting.zenabled in ('True', 'true', '1', 'yes', True)
-
-							#
-							# OCTAVE SCRIPT GOES HERE...
-							#
+							
 							print("#")
 							print("#GRID " + currSetting.getType())
 							print("#name " + currSetting.getName())
@@ -2407,55 +2502,43 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 									genScript += "% MESH - " + currSetting.getName() + " - " + childName + "\n"
 									genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 									if (currSetting.getType() == 'Fixed Distance'):
-										#UNIT FOR MESH										
+									
 										if (currSetting.xenabled):
-											#genScript += "mesh.x = [mesh.x (" + str(sf*bbCoords.XMin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(sf*bbCoords.XMax) + ") + " + str(offsetX) + "];\n"
 											genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(currSetting.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") + " + str(offsetX) + "];\n"
 										if (currSetting.yenabled):
-											#genScript += "mesh.y = [mesh.y (" + str(sf*bbCoords.YMin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(sf*bbCoords.YMax) + ") + " + str(offsetY) + "];\n"
 											genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(currSetting.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") + " + str(offsetY) + "];\n"
 										if (currSetting.zenabled):
-											#genScript += "mesh.z = [mesh.z (" + str(sf*bbCoords.ZMin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(sf*bbCoords.ZMax) + ") + " + str(offsetZ) + "];\n"
 											genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(currSetting.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") + " + str(offsetZ) + "];\n"
 										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
-									elif (currSetting.getType() == 'Fixed Count'):
-										#if just one line is defined then is place in middle										
+									elif (currSetting.getType() == 'Fixed Count'):						
 										if (currSetting.xenabled):
-											if (not currSetting.getXYZ(refUnit)['x'] == 1):
-												#genScript += "mesh.x = [mesh.x linspace(" + str(sf*bbCoords.XMin) + "," + str(sf*bbCoords.XMax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
+											if (not currSetting.getXYZ(refUnit)['x'] == 1): #if just one line is defined then is place in middle	
 												genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(currSetting.getXYZ(refUnit)['x']) + ") + " + str(offsetX) + "];\n"
 											else:
-												#genScript += "mesh.x = [mesh.x " + str((sf*bbCoords.XMin + sf*bbCoords.XMax)/2) + " + " + str(offsetX) + "];\n"
 												genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " + " + str(offsetX) + "];\n"
 
 										if (currSetting.yenabled):
 											if (not currSetting.getXYZ(refUnit)['y'] == 1):
-												#genScript += "mesh.y = [mesh.y linspace(" + str(sf*bbCoords.YMin) + "," + str(sf*bbCoords.YMax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 												genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(currSetting.getXYZ(refUnit)['y']) + ") + " + str(offsetY) + "];\n"
 											else:
-												#genScript += "mesh.y = [mesh.y " + str((sf*bbCoords.YMin + sf*bbCoords.YMax)/2) + " + " + str(offsetY) + "];\n"
 												genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " + " + str(offsetY) + "];\n"
 
 										if (currSetting.zenabled):
 											if (not currSetting.getXYZ(refUnit)['z'] == 1):
-												#genScript += "mesh.z = [mesh.z linspace(" + str(sf*bbCoords.ZMin) + "," + str(sf*bbCoords.ZMax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 												genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(currSetting.getXYZ(refUnit)['z']) + ") + " + str(offsetZ) + "];\n"
 											else:
-												#genScript += "mesh.z = [mesh.z " + str((sf*bbCoords.ZMin + sf*bbCoords.ZMax)/2) + " + " + str(offsetZ) + "];\n"
 												genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " + " + str(offsetZ) + "];\n"
 
 										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
-									elif (currSetting.getType() == 'User Defined'):
-										#UNIT FOR MESH										
-										genScript += "meshUnit = " + currSetting.getUnitAsScriptLine() + "; % all length in mm\n"
-										genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
+									elif (currSetting.getType() == 'User Defined'):									
+										genScript += "mesh = " + currSetting.getXYZ() + ";\n" # 
 										genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 										pass
 
 							pass
-
+							
 					#
 					# MATERIALS
 					#  __  __       _______ ______ _____  _____          _                                        _           _                 _      
@@ -2466,7 +2549,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______|  \__, |\___|_| |_|\___|_|  \__,_|\__\___|\__,_|  \___\___/ \__,_|\___|
 					#                                                              __/ |                                                               
 					#                                                             |___/                                                               					#                                                                                                                                                                                                                                         
-					elif (itemData.__class__.__name__ == "MaterialSettingsItem"):
+					elif (itemClassName == "MaterialSettingsItem"):
 						currSetting = item.data(0, QtCore.Qt.UserRole)
 						print(currSetting)
 						if (currSetting.getName() != 'Material Default'):
@@ -2595,7 +2678,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#                                                                         __/ | |         
 					#                                                                        |___/|_|        
 					#
-					elif (itemData.__class__.__name__ == "FreeCADSettingsItem"):
+					elif (itemClassName == "FreeCADSettingsItem"):
 						print("FreeCAD Settings detected")
 
 						#
@@ -2624,6 +2707,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 							pass
 
 						pass
+					
 					#  _     _    _ __  __ _____  ______ _____    _____        _____ _______ 
 					# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|
 					# | |   | |  | | \  / | |__) | |__  | |  | | | |__) /  \  | |__) | | |   
@@ -2631,7 +2715,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# | |___| |__| | |  | | |    | |____| |__| | | |  / ____ \| | \ \  | |   
 					# |______\____/|_|  |_|_|    |______|_____/  |_| /_/    \_\_|  \_\ |_|   
 					#                                                                        
-					elif (itemData.__class__.__name__ == "LumpedPartSettingsItem"):
+					elif (itemClassName == "LumpedPartSettingsItem"):
 						print("LumpedPart Settings detected")
 						genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 						genScript += "% LUMPED PART " + currSetting.getName() + "\n"
@@ -2695,7 +2779,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# |_____|  |_|  |______|_|  |_|  \____/|_| \_|_|\_\_| \_|\____/   \/  \/   |_| \_|
 					#                                                                                                          
 					else:
-						print("unknown: " + itemData.__class__.__name__ + "\n")
+						print("unknown: " + itemClassName + "\n")
 						pass
 				else:
 					print("Object has no UserRole data inside defined")
@@ -2704,48 +2788,34 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		print("======================== REPORT END ========================\n")
 
-		#   _____ _____  _____ _____       _____  _____  _____ ____  _____  _____ _______ _____ ______  _____ 
-		#  / ____|  __ \|_   _|  __ \     |  __ \|  __ \|_   _/ __ \|  __ \|_   _|__   __|_   _|  ____|/ ____|
-		# | |  __| |__) | | | | |  | |    | |__) | |__) | | || |  | | |__) | | |    | |    | | | |__  | (___  
-		# | | |_ |  _  /  | | | |  | |    |  ___/|  _  /  | || |  | |  _  /  | |    | |    | | |  __|  \___ \ 
-		# | |__| | | \ \ _| |_| |__| |    | |    | | \ \ _| || |__| | | \ \ _| |_   | |   _| |_| |____ ____) |
-		#  \_____|_|  \_\_____|_____/     |_|    |_|  \_\_____\____/|_|  \_\_____|  |_|  |_____|______|_____/ 
-		#                                                                                                     
-
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% GRID PRIORITIES GENERATION\n"
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-
-		meshPrioritiesCount = self.form.meshPriorityTreeView.topLevelItemCount()
-		for k in reversed(range(meshPrioritiesCount)):
-			meshPriorityIdentifier = self.form.meshPriorityTreeView.topLevelItem(k).text(0)
-			print("GRID PRIORITY SCRIPT GENERATION " + meshPriorityIdentifier)
-			genScript += self.getMeshPriorityScriptLines(meshPriorityIdentifier)
-
 		#  _   _ ______ ___  ______ ______    _____ _____  _____ _____  _      _____ _   _ ______  _____ 
 		# | \ | |  ____|__ \|  ____|  ____|  / ____|  __ \|_   _|  __ \| |    |_   _| \ | |  ____|/ ____|
 		# |  \| | |__     ) | |__  | |__    | |  __| |__) | | | | |  | | |      | | |  \| | |__  | (___  
 		# | . ` |  __|   / /|  __| |  __|   | | |_ |  _  /  | | | |  | | |      | | | . ` |  __|  \___ \ 
 		# | |\  | |     / /_| |    | |      | |__| | | \ \ _| |_| |__| | |____ _| |_| |\  | |____ ____) |
 		# |_| \_|_|    |____|_|    |_|       \_____|_|  \_\_____|_____/|______|_____|_| \_|______|_____/ 
-		#                                                                                                
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% NF2FF PROBES GRIDLINES\n"
-		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		#            
 
-		if (len(nf2ff_gridlines['x']) > 0):
-			genScript += "mesh.x = [mesh.x " + " ".join(str(i) for i in nf2ff_gridlines['x']) + "];\n"
-		if (len(nf2ff_gridlines['y']) > 0):
-			genScript += "mesh.y = [mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + "];\n"
-		if (len(nf2ff_gridlines['z']) > 0):
-			genScript += "mesh.z = [mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + "];\n"
+		# Add NF2FF gridlines to mesh.
+
+		writeNF2FFlines = (len(nf2ff_gridlines['x']) > 0) or (len(nf2ff_gridlines['y']) > 0) or (len(nf2ff_gridlines['z']) > 0)
 		
-		# add nf2ff gridlines to mesh
-		genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+		if writeNF2FFlines:
+			genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+			genScript += "% NF2FF PROBES GRIDLINES\n"
+			genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+			if (len(nf2ff_gridlines['x']) > 0):
+				genScript += "mesh.x = [mesh.x " + " ".join(str(i) for i in nf2ff_gridlines['x']) + "];\n"
+			if (len(nf2ff_gridlines['y']) > 0):
+				genScript += "mesh.y = [mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + "];\n"
+			if (len(nf2ff_gridlines['z']) > 0):
+				genScript += "mesh.z = [mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + "];\n"
+			
+			genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
                                                                                                 
-		#
-		# WRITE GENERATED SCRIPT INTO FILE
-		#
+		# Finalize script.
+		
 		genScript += "WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
 		genScript += "CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
 		genScript += "\n"
@@ -2754,14 +2824,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "    RunOpenEMS( Sim_Path, Sim_CSX, openEMS_opts );\n"
 		genScript += "end\n"
 
-		#
-		# WRITE OpenEMS Script file into current dir
-		#
+		# Write _OpenEMS.m script file to current directory.
+
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_openEMS.m"
 		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
+		
+		# Show message or update status bar to inform user that exporting has finished.
 		
 		self.displayMessage('Simulation script written to: ' + fileName, forceModal=False)
 		print('Simulation script written to: ' + fileName)
@@ -3003,8 +3074,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	#	tree widget is just important to erase because all items contains userdata items which contains its configuration and whole
 	#	gui is generating code based on these information, so when items are erased and new ones created everything is ok
 	def deleteAllSettings(self):
-		self.form.objectAssignmentRightTreeWidget.clear()		#init right column as at startup to have default structure cleared
-		self.initRightColumnTopLevelItems()					#rerecreate default simulation structure
+		self.form.objectAssignmentRightTreeWidget.clear()	#init right column as at startup to have default structure cleared
+		self.initRightColumnTopLevelItems()			#rerecreate default simulation structure
 
 		self.form.objectAssignmentPriorityTreeView.clear()	#delete OBJECT ASSIGNMENTS entries
 		self.form.gridSettingsTreeView.clear()			#delete GRID entries
@@ -3648,12 +3719,12 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		else:
 			pass
 			
-		self.form.gridXEnable.setChecked(currSetting.xenabled in ('true', 'True', '1', 'yes', True))
-		self.form.gridYEnable.setChecked(currSetting.yenabled in ('true', 'True', '1', 'yes', True))
-		self.form.gridZEnable.setChecked(currSetting.zenabled in ('true', 'True', '1', 'yes', True))
+		self.form.gridXEnable.setChecked(currSetting.xenabled)
+		self.form.gridYEnable.setChecked(currSetting.yenabled)
+		self.form.gridZEnable.setChecked(currSetting.zenabled)
 
-		self.form.gridGenerateLinesInsideCheckbox.setChecked(currSetting.generateLinesInside in ('true', 'True', '1', 'yes', True))
-		self.form.gridTopPriorityLinesCheckbox.setChecked(currSetting.topPriorityLines in ('true', 'True', '1', 'yes', True))
+		self.form.gridGenerateLinesInsideCheckbox.setChecked(currSetting.generateLinesInside)
+		self.form.gridTopPriorityLinesCheckbox.setChecked(currSetting.topPriorityLines)
 
 		return
 
@@ -3753,7 +3824,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		else:
 			pass #no gui update
 
-		self.form.portActive.setChecked(currSetting.isActive in ('true', 'True', '1', 'yes', True))	#convert value from INI file to bool
+		self.form.portActive.setChecked(currSetting.isActive)	#convert value from INI file to bool
 
 		return
 
@@ -4063,15 +4134,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				categorySettings.name = itemName
 				categorySettings.coordsType = settings.value('coordsType')
 				categorySettings.type = settings.value('type')
-				categorySettings.xenabled = settings.value('xenabled')
-				categorySettings.yenabled = settings.value('yenabled')
-				categorySettings.zenabled = settings.value('zenabled')
+				categorySettings.xenabled = _bool(settings.value('xenabled'))
+				categorySettings.yenabled = _bool(settings.value('yenabled'))
+				categorySettings.zenabled = _bool(settings.value('zenabled'))
 				categorySettings.units = settings.value('units')
 				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
 				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
 				categorySettings.userDefined = json.loads(settings.value('userDefined'))
-				categorySettings.generateLinesInside = settings.value('generateLinesInside')
-				categorySettings.topPriorityLines = settings.value('topPriorityLines')
+				categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
+				categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
 				settings.endGroup()
 
 			elif (re.compile("PORT").search(settingsGroup)):
@@ -4082,7 +4153,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				categorySettings.type = settings.value('type')
 				categorySettings.R = settings.value('R')
 				categorySettings.RUnits = settings.value('RUnits')
-				categorySettings.isActive = settings.value('isActive')
+				categorySettings.isActive = _bool(settings.value('isActive'))
 				categorySettings.direction = settings.value('direction')
 
 				if (categorySettings.type == "circular waveguide"):
