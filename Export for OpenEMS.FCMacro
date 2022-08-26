@@ -3059,12 +3059,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 	def getGridItemFromGui(self):
 		name = self.form.gridSettingsNameInput.text()
-		gridType = ""
+
 		gridX = 0
 		gridY = 0
 		gridZ = 0
-		gridUnits = ""
-		gridUserDefined = ""
 
 		gridItem = GridSettingsItem()
 		gridItem.name = name
@@ -3082,12 +3080,11 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			gridItem.coordsType = "cylindrical"
 
 		if (self.form.fixedCountRadioButton.isChecked()):
-			gridType = "Fixed Count"
+			gridItem.type = "Fixed Count"
 			gridX = self.form.fixedCountXNumberInput.value()
 			gridY = self.form.fixedCountYNumberInput.value()
 			gridZ = self.form.fixedCountZNumberInput.value()
 
-			gridItem.type = gridType
 			gridItem.fixedCount = {}
 			gridItem.fixedCount['x'] = gridX
 			gridItem.fixedCount['y'] = gridY
@@ -3097,23 +3094,19 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			print(str(gridX) + " " + str(gridY) + " " + str(gridZ))
 
 		if (self.form.fixedDistanceRadioButton.isChecked()):
-			gridType = "Fixed Distance"
+			gridItem.type = "Fixed Distance"
 			gridX = self.form.fixedDistanceXNumberInput.value()
 			gridY = self.form.fixedDistanceYNumberInput.value()
 			gridZ = self.form.fixedDistanceZNumberInput.value()
 
-			gridItem.type = gridType
 			gridItem.fixedDistance = {}
 			gridItem.fixedDistance['x'] = gridX
 			gridItem.fixedDistance['y'] = gridY
 			gridItem.fixedDistance['z'] = gridZ
 
 		if (self.form.userDefinedRadioButton.isChecked()):
-			gridType = "User Defined"
-			gridUserDefined = self.form.userDefinedGridLinesTextInput.toPlainText()
-
-			gridItem.type = gridType
-			gridItem.userDefined = gridUserDefined
+			gridItem.type = "User Defined"
+			gridItem.userDefined['data'] = self.form.userDefinedGridLinesTextInput.toPlainText()
 
 		gridItem.units = self.form.gridUnitsInput.currentText()
 		gridItem.units2 = self.form.gridUnitsInput_2.currentText()
@@ -3121,6 +3114,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
 
 		return gridItem
+		
 
 	def gridSettingsAddButtonClicked(self):		
 		settingsInst = self.getGridItemFromGui()

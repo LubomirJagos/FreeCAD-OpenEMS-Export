@@ -880,6 +880,9 @@
                <property name="tabChangesFocus">
                 <bool>false</bool>
                </property>
+               <property name="plainText">
+                <string>struct('x',[mesh.x ..], 'y', [mesh.y ..], 'z', [mesh.z ..])</string>
+               </property>
               </widget>
              </item>
             </layout>
