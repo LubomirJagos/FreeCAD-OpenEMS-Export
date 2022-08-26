@@ -228,7 +228,7 @@ class GridSettingsItem(SettingsItem):
 			dict_mult = lambda d, x : {n: d[n]*x for n in d.keys()}
 			return dict_mult( self.fixedDistance, self.getUnitsAsNumber(self.units) / referenceUnit )
 		if (self.type == "User Defined"):
-			return self.userDefined
+			return self.userDefined['data']
 	
 	def getUnitAsScriptLine(self):
 		return str(self.getUnitsAsNumber(self.units))
@@ -784,12 +784,8 @@ class BoxTaskPanel:
 			else:
 				return
 
-		bbCoords = gridObj[0].Shape.BoundBox 
-		
-		offsetX = 0	#units: mm
-		offsetY = 0
-		offsetZ = 0
-
+		bbCoords = gridObj[0].Shape.BoundBox
+	
 		print("Start drawing aux grid for: " + currSetting.name)
 		print("Enabled coords: " + str(currSetting.xenabled) + " " + str(currSetting.yenabled) + " " + str(currSetting.zenabled))
 
@@ -1767,6 +1763,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		#find grid named by identifier using 2nd item what is grid category name
 		item = self.form.objectAssignmentRightTreeWidget.findItems(meshPriorityIdentifierArray[1].strip(), QtCore.Qt.MatchRecursive)[0]
 		currSetting = item.data(0, QtCore.Qt.UserRole)	#obtain current grid category settings
+		
 		currSetting.xenabled = currSetting.xenabled in ('True', 'true', '1', 'yes', True)
 		currSetting.yenabled = currSetting.yenabled in ('True', 'true', '1', 'yes', True)
 		currSetting.zenabled = currSetting.zenabled in ('True', 'true', '1', 'yes', True)
@@ -4165,7 +4162,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("\t" + objCategory)
 				settings.endGroup()
 
-				#adding excitation also into OBJCET ASSIGNMENT WINDOW
+				#adding excitation also into OBJECT ASSIGNMENT WINDOW
 				targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(objCategory, QtCore.Qt.MatchExactly)
 				print("\t" + str(targetGroup))
 				for k in range(len(targetGroup)):					
