@@ -380,9 +380,11 @@ class LumpedPartSettingsItem(SettingsItem):
 	def getR(self):
 		outStr = str(self.params['R']) + "*" + str(self.getUnits('R'))
 		return outStr
+		
 	def getL(self):
 		outStr = str(self.params['L']) + "*" + str(self.getUnits('L'))
 		return outStr
+		
 	def getC(self):
 		outStr = str(self.params['C']) + "*" + str(self.getUnits('C'))
 		return outStr
@@ -573,10 +575,26 @@ class BoxTaskPanel:
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
+		
+		# MinDecrement changed 
+		self.form.simParamsMinDecrement.valueChanged.connect(self.simParamsMinDecrementValueChanged)
+		
+		### Other Initialization
+		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value()) # initialize label with converted value
+	
+	
+	def simParamsMinDecrementValueChanged(self, newValue):
+		if newValue == 0:
+			s = '( -inf dB )'
+		else:
+			s = '( ' + str(np.round(10 * np.log10(newValue), decimals=2)) + ' dB )' 
+		self.form.simParamsMinDecrementdBLabel.setText(s)
+		
 	
 	def getUnitLengthFromUI_m(self):
 		unitStr = self.form.simParamsDeltaUnitList.currentText()
 		return SettingsItem.getUnitsAsNumber(unitStr)
+		
 	
 	def getFreeCADUnitLength_m(self):
 		# # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
@@ -584,11 +602,13 @@ class BoxTaskPanel:
 		# [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), App.Units.Scheme.SI2 )
 		# return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
 		return 0.001
+		
 	
 	def getOctaveExecCommand(self, mFileName, options=""):
 		cmd = self.form.octaveExecCommandList.currentText()
 		cmd = cmd.format(opt=options, filename=mFileName)
 		return cmd
+		
 
 	def BCxminCurrentIndexChanged(self, index):
 		self.form.PMLxmincells.setEnabled(self.form.BCxmin.currentText() == "PML")
@@ -3379,7 +3399,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 	# |_|     \____/|_|  \_\ |_|    |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
 	#    
 
-	def getPortItemFromGui():
+	def getPortItemFromGui(self):
 		name = self.form.portSettingsNameInput.text()
 
 		portItem = PortSettingsItem()
