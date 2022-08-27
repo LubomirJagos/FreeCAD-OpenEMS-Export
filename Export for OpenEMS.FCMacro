@@ -2036,7 +2036,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript = ""	
 	
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		genScript += "% MATERIALS\n"
+		genScript += "% MATERIALS AND GEOMETRY\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 	
 		# PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
@@ -2299,7 +2299,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		for [item, currSetting] in items:
 
-			currentObjects = App.ActiveDocument.Objects						
+			# currentObjects = App.ActiveDocument.Objects						
 			if (str(item.parent().text(0)) == "Grid"):
 				print("Current item is GRID setting")
 				currSetting = item.data(0, QtCore.Qt.UserRole)
@@ -2322,7 +2322,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("#")
 
 				objs = FreeCAD.ActiveDocument.Objects
-				objsExport = []
+				# objsExport = []
 
 				#item = current GRID ITEM
 				#currSetting = current GRID ITEM data ie. topPriorityLines, ...
@@ -2573,6 +2573,51 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("Parent of FreeCADSettingItem UNKNOWN")
 				pass
 		
+		
+	def getOrderedGridDefinitionsScriptLines(self, items):
+		genScript = ""				
+		meshPrioritiesCount = self.form.meshPriorityTreeView.topLevelItemCount()
+				
+		if (not items) or (meshPrioritiesCount == 0):
+			return genScript
+		
+		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
+		refUnitStr = self.form.simParamsDeltaUnitList.currentText()
+		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+		
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% GRID LINES\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		
+		# Create lists and dict to be able to resolve ordered list of (grid settings instance <-> FreeCAD object) associations.
+		# In its current form, this implies user-defined grid lines have to be associated with the simulation volume.
+		_assoc = lambda idx : list(map( str.strip, self.form.meshPriorityTreeView.topLevelItem(idx).text(0).split(',') ))
+		orderedAssociations = [ _assoc(k) for k in reversed(range(meshPrioritiesCount)) ]
+		gridSettingsNodeNames = [ gridSettingsNode.text(0) for [gridSettingsNode, gridSettingsInst] in items ]
+		fcObjects = { obj.Label:obj for obj in App.ActiveDocument.Objects }
+		
+		for gridSettingsNodeName in gridSettingsNodeNames:
+			print("Grid type : " + gridSettingsNodeName)
+			
+		for k, [categoryName, gridName, FreeCADObjectName] in enumerate(orderedAssociations):
+			print("Grid priority level {} : {} :: {}".format(k, FreeCADObjectName, gridName))
+			
+			itemListIdx = gridSettingsNodeNames.index(gridName)
+			gridSettingsInst = items[itemListIdx][1] if itemListIdx >= 0 else None
+			fcObject = fcObjects.get(FreeCADObjectName, None)
+			
+			if (not gridSettingsInst) :
+				print("Failed to resolve '{}'.".format(gridName))
+				continue
+			if (not gridSettingsInst):
+				print("Failed to resolve '{}'.".format(FreeCADObjectName))
+				continue				
+			
+			# TODO: Produce script output.
+			
+		return genScript
+		
+		
 
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
@@ -2710,11 +2755,11 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 		
 		# Write grid definitions.
+		""" 
 		# TODO : rework grid definition generation - single pass through meshPriorityTreeView items in ascending priority order while applying grid line removal. 
 		
 		genScript += self.getGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 		
-		""" 
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		genScript += "% GRID PRIORITIES GENERATION\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -2725,6 +2770,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			print("GRID PRIORITY SCRIPT GENERATION " + meshPriorityIdentifier)
 			genScript += self.getMeshPriorityScriptLines(meshPriorityIdentifier)
 		"""
+		
+		genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 		
 		# Write lumped part definitions.
 		
@@ -2910,10 +2957,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("parent grid found")
 				print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
 				print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
-				if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
-					self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
-				else:
-					self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
+			#	if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
+			#		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
+			#	else:
+			#		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
 
 		"""
 		# If grid item is set to have priority lines it means it should be highlighted in mesh priority widget
