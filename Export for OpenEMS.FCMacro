@@ -2653,7 +2653,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "display(currDir);\n"
 		genScript += "\n"
 		
-		genScript += "%	--no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
+		genScript += "% --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
 		genScript += "% --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
 		openEMS_opt = []
 		if self.form.generateDebugPECCheckbox.isChecked():
