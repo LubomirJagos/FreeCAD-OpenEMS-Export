@@ -2588,7 +2588,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		genScript += "% GRID LINES\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-		
+		genScript += "\n"
+			
 		# Create lists and dict to be able to resolve ordered list of (grid settings instance <-> FreeCAD object) associations.
 		# In its current form, this implies user-defined grid lines have to be associated with the simulation volume.
 		_assoc = lambda idx : list(map( str.strip, self.form.meshPriorityTreeView.topLevelItem(idx).text(0).split(',') ))
@@ -2600,20 +2601,92 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			print("Grid type : " + gridSettingsNodeName)
 			
 		for k, [categoryName, gridName, FreeCADObjectName] in enumerate(orderedAssociations):
+		
 			print("Grid priority level {} : {} :: {}".format(k, FreeCADObjectName, gridName))
 			
-			itemListIdx = gridSettingsNodeNames.index(gridName)
-			gridSettingsInst = items[itemListIdx][1] if itemListIdx >= 0 else None
-			fcObject = fcObjects.get(FreeCADObjectName, None)
-			
-			if (not gridSettingsInst) :
+			if not (gridName in gridSettingsNodeNames):
 				print("Failed to resolve '{}'.".format(gridName))
 				continue
-			if (not gridSettingsInst):
+			itemListIdx = gridSettingsNodeNames.index(gridName)
+			gridSettingsInst = items[itemListIdx][1]
+			
+			fcObject = fcObjects.get(FreeCADObjectName, None)			
+			if (not fcObject):
 				print("Failed to resolve '{}'.".format(FreeCADObjectName))
 				continue				
 			
-			# TODO: Produce script output.
+			### Produce script output.
+			
+			if (not "Shape" in dir(fcObject)):
+				continue
+
+			bbCoords = fcObject.Shape.BoundBox
+
+			# If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+			if gridSettingsInst.generateLinesInside:
+				delta = self.maxGridResolution_m / refUnit
+				print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + " " + refUnitStr)
+			else:
+				delta = 0
+													
+			xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
+			ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
+			zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
+			xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
+			ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
+			zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
+
+			# Write grid definition.
+			
+			genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + "\n"
+			
+			if (gridSettingsInst.getType() == 'Fixed Distance'):										
+				if gridSettingsInst.xenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
+					genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") ];\n"
+				if gridSettingsInst.yenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
+					genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") ];\n"
+				if gridSettingsInst.zenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
+					genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") ];\n"
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+				
+			elif (gridSettingsInst.getType() == 'Fixed Count'):									
+				if gridSettingsInst.xenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
+					if (not gridSettingsInst.getXYZ()['x'] == 1):
+						genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(gridSettingsInst.getXYZ(refUnit)['x']) + ") ];\n"
+					else:
+						genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " ];\n"
+
+				if gridSettingsInst.yenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
+					if (not gridSettingsInst.getXYZ()['y'] == 1):
+						genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(gridSettingsInst.getXYZ(refUnit)['y']) + ") ];\n"
+					else:
+						genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " ];\n"
+
+				if gridSettingsInst.zenabled:
+					if gridSettingsInst.topPriorityLines:
+						genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
+					if (not gridSettingsInst.getXYZ()['z'] == 1):
+						genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(gridSettingsInst.getXYZ(refUnit)['z']) + ") ];\n"
+					else:
+						genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " ];\n"
+
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+				
+			elif (gridSettingsInst.getType() == 'User Defined'):									
+				genScript += "mesh = " + gridSettingsInst.getXYZ() + ";\n"
+				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"		
+			
+			genScript += "\n"
 			
 		return genScript
 		
