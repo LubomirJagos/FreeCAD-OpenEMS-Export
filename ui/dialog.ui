@@ -2959,27 +2959,17 @@
                     </item>
                     <item>
                      <property name="text">
-                      <string>octave-cli {opt} &quot;{filename}&quot;</string>
+                      <string>START octave {opt} &quot;{filename}&quot;</string>
                      </property>
                     </item>
                     <item>
                      <property name="text">
-                      <string>octave-gui {opt} &quot;{filename}&quot;</string>
+                      <string>octave --force-gui {opt} &quot;{filename}&quot;</string>
                      </property>
                     </item>
                     <item>
                      <property name="text">
-                      <string>start octave {opt} &quot;{filename}&quot;</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>start octave-cli {opt} &quot;{filename}&quot;</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>start octave-gui {opt} &quot;{filename}&quot;</string>
+                      <string>&quot;{filename}&quot;</string>
                      </property>
                     </item>
                    </widget>
