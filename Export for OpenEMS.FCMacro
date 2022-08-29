@@ -154,10 +154,10 @@ class SettingsItem:
 		self.name = name
 		self.type = type
 		self.priority = priority
-
+	"""
 	def serializeToString(self):
 		return "{}"
-
+	"""
 	# basic type property common for all kind of settings
 	def getType(self):
 		return self.type
@@ -197,12 +197,13 @@ class FreeCADSettingsItem(SettingsItem):
 		self.name = name
 		self.type = type
 		return
-
+	"""
 	def serializeToString(self):
 		serializedString = "{'name': '" + self.name #+ "', 'type': '
 		serializedString += "}"
 		return serializedString
-
+	"""
+	
 # Grid settings class
 #	Fixed Count    - fixed number per axes
 #	Fixed Distance - gridlines have fixed distance between them
@@ -247,16 +248,17 @@ class MaterialSettingsItem(SettingsItem):
 		self.name = name
 		self.type = type
 		self.constants = constants
-
+	"""
 	def serializeToString(self):
-		serializedString = "{'name': '" + self.name
-		serializedString += ", 'epsilon': " + str(self.constants['epsilon'])
-		serializedString += ", 'mue': " + str(self.constants['mue'])
-		serializedString += ", 'kappa': " + str(self.constants['kappa'])
-		serializedString += ", 'sigma': " + str(self.constants['sigma'])
-		serializedString += "}"
-		return serializedString
-
+		jsonStr = "{'name': '" + self.name
+		jsonStr += ", 'epsilon': " + str(self.constants['epsilon'])
+		jsonStr += ", 'mue': " + str(self.constants['mue'])
+		jsonStr += ", 'kappa': " + str(self.constants['kappa'])
+		jsonStr += ", 'sigma': " + str(self.constants['sigma'])
+		jsonStr += "}"
+		return jsonStr
+	"""
+	
 	#def getAllItems(self):
 	#	return super(MaterialSettingItem, self).getAllItems()
 
@@ -275,20 +277,21 @@ class ExcitationSettingsItem(SettingsItem):
 		self.custom = custom
 		self.units = units
 		return
-
+	"""
 	def serializeToString(self):
-		serializedString = "{'name': '" + self.name + "', "
-		serializedString += "'type': '" + self.type + "', "
+		jsonStr = "{'name': '" + self.name + "', "
+		jsonStr += "'type': '" + self.type + "', "
 		if (self.type == "sinusodial"):
-			serializedString += "'f0': '" + str(self.sinusodial['f0']) + "', "
+			jsonStr += "'f0': '" + str(self.sinusodial['f0']) + "', "
 		if (self.type == "gaussian"):
-			serializedString += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
+			jsonStr += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
 		if (self.type == "custom"):
-			serializedString += "'f': '" + str(self.custom['functionStr']) + "', 'f0': '" + str(self.custom['f0']) + "' "
+			jsonStr += "'f': '" + str(self.custom['functionStr']) + "', 'f0': '" + str(self.custom['f0']) + "' "
 
-		serializedString += "'units': \"" + self.units + "\""
-		serializedString += "}"
-		return serializedString
+		jsonStr += "'units': \"" + self.units + "\""
+		jsonStr += "}"
+		return jsonStr
+	"""
 
 	def getType(self):
 		return self.type
@@ -300,35 +303,42 @@ class ExcitationSettingsItem(SettingsItem):
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", R = 0, RUnits = "", isActive = False, direction = "z"):
+	def __init__(self, name = "", type = "", R = 0, RUnits = "", isActive = False, direction = "z", mslPropagation = "x", mslFeedShift="", mslMeasPlaneShift=""):
 		self.name = name
 		self.type = type
 		self.R = R
 		self.RUnits = RUnits
 		self.isActive = isActive
+		self.mslPropagation = mslPropagation 
 		self.direction = direction
+		self.mslFeedShift = mslFeedShift
+		self.mslMeasPlaneShift = mslMeasPlaneShift
 		return
 
 	def serializeToString(self):
-		serializedString = "{'name': '" + self.name
-		serializedString += ", 'R': " + self.R
-		serializedString += ", 'RUnits': '" + self.RUnits + "'"
-		serializedString += ", 'isActive': " + str(self.isActive)
+		jsonString = "{'name': '" + self.name
+		jsonString += ", 'R': " + self.R
+		jsonString += ", 'RUnits': '" + self.RUnits + "'"
+		jsonString += ", 'isActive': " + str(self.isActive)
 		if (self.type == "lumped"):
-			serializedString += ", 'type': 'lumped'"
+			jsonString += ", 'type': 'lumped'"
 		if (self.type == "microstrip"):
-			serializedString += ", 'type': 'microstrip'"
+			jsonString += ", 'type': 'microstrip'"
+			jsonString += ", 'mslPropagation': " + self.mslPropagation
+			jsonString += ", 'mslFeedShift': " + self.mslFeedShift
+			jsonString += ", 'mslMeasPlaneShift': " + self.mslMeasPlaneShift	
 		if (self.type == "circular waveguide"):
-			serializedString += ", 'type': 'circular waveguide'"
+			jsonString += ", 'type': 'circular waveguide'"
 		if (self.type == "rectangular waveguide"):
-			serializedString += ", 'type': 'rectangular waveguide'"
+			jsonString += ", 'type': 'rectangular waveguide'"
 		if (self.type == "nf2ff box"):
-			serializedString += ", 'type': 'nf2ff box'"
-		serializedString += "}"
-		return serializedString
+			jsonString += ", 'type': 'nf2ff box'"	
+		jsonString += "}"
+		return jsonString
 
 	def getRUnits(self):
 		return self.getUnitsAsNumber(self.RUnits)
+		
 
 # Smulation settings
 class SimulationSettingsItem(SettingsItem):
@@ -337,13 +347,15 @@ class SimulationSettingsItem(SettingsItem):
 		self.params = {}
 		self.params = json.loads(params)
 		return
-
+		
+	"""
 	def serializeToString(self):
 		jsonStr = ""
 		jsonStr +=  '{"name": "' + self.name + '", "params": '
 		jsonStr +=  json.dumps(self.params)
 		jsonStr +=  '}'
 		return jsonStr
+	"""		
 
 class LumpedPartSettingsItem(SettingsItem):
 	def __init__(self, name = "DefaultSimlationName", params='{"R": 0, "RUnits": "Ohm", "REnabled": 0, "L": 0, "LUnits": "uH", "LEnabled": 0, "C": 0, "CUnits": "pF", "CEnabled": 0}'):
@@ -351,14 +363,16 @@ class LumpedPartSettingsItem(SettingsItem):
 		self.params = {}
 		self.params = json.loads(params)
 		return
-
+		
+	"""
 	def serializeToString(self):
 		jsonStr = ""
 		jsonStr +=  '{"name": "' + self.name + '", "params": '
 		jsonStr +=  json.dumps(self.params)
 		jsonStr +=  '}'
 		return jsonStr
-
+	"""
+	
 	def getType(self):
 		typeStr = ''
 		if (self.params['LEnabled']):
@@ -1251,154 +1265,60 @@ pause
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
 		print(result)
+		
 
 	def drawS21ButtonClicked(self):
 		genScript = ""
-		genScript += """close all
-clear
-clc
-
-Sim_Path = "tmp";
-CSX = InitCSX();
-
-"""
-		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
-		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
-
+		genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
+		genScript += "%\n"
+		genScript += self.getInitScriptLines()	
 		
-		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
-		if len(excitationCategory) >= 0:
-			#FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-			item = excitationCategory[0].child(0)
-			currSetting = item.data(0, QtCore.Qt.UserRole)	#at index 0 is Default Excitation
-
-			if (currSetting.getType() == 'sinusodial'):
-				genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
-				pass
-			elif (currSetting.getType() == 'gaussian'):
-				genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-				genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-				pass
-			elif (currSetting.getType() == 'custom'):
-				genScript += "%custom\n"
-				pass
-			pass
-
+		# List categories and items.
 		
-		allItems = []
-		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-		for k in range(childCount):
-			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
+		itemsByClassName = self.getItemsByClassName()	
 
-		for m in range(len(allItems)):
-			currItem = allItems[m]
+		# Write excitation definition.
+		
+		genScript += self.getExcitationScriptLines(definitionsOnly = True)
+		
+		# Write port definitions.
+		
+		genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))		
 
-			for k in range(currItem.childCount()):
-				item = currItem.child(k)
-				itemData = item.data(0, QtCore.Qt.UserRole)
-				if (itemData):
-					if (itemData.__class__.__name__ == "PortSettingsItem"):
-						print("Port Settings detected")
-						currSetting = item.data(0, QtCore.Qt.UserRole)
-						print("#")
-						print("#PORT")
-						print("#name: " + currSetting.getName())
-						print("#type: " + currSetting.getType())
+		# Post-processing and plot generation.
 
-						objs = FreeCAD.ActiveDocument.Objects
-						for k in range(item.childCount()):
-							childName = item.child(k).text(0)
-			
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
-							genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-			
-							print("##Children:")
-							print("\t" + childName)
-							freecadObjects = [i for i in objs if (i.Label) == childName] 
-			
-							#print(freecadObjects)
-							for obj in freecadObjects:
-								#BOUNDING BOX
-								bbCoords = obj.Shape.BoundBox
-			
-								#
-								#	getting item priority
-								#
-								priorityItemName = item.parent().text(0) + ", " + item.text(0)+ ", " + childName
-								priorityIndex = self.getItemPriority(priorityItemName)
-			
-								#
-								# PORT openEMS GENERATION INTO VARIABLE
-								#
-								if (currSetting.getType() == 'lumped'):
-									genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-									genScript += 'portStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
-									genScript += 'portR = ' + str(currSetting.R) + ';\n'
-									genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% POST-PROCESSING AND PLOT GENERATION\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+							
+		genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
+		genScript += "\n"
+		genScript += "port = calcPort( port, Sim_Path, freq);\n"
+		genScript += "\n"
+		genScript += "s11 = port{1}.uf.ref./ port{1}.uf.inc;\n"
+		genScript += "s21 = port{2}.uf.ref./ port{1}.uf.inc;\n"
+		genScript += "\n"
+		genScript += "plot(freq/1e9,20*log10(abs(s11)),'k-','LineWidth',2);\n"
+		genScript += "hold on;\n"
+		genScript += "grid on;\n"
+		genScript += "plot(freq/1e9,20*log10(abs(s21)),'r--','LineWidth',2);\n"
+		genScript += "legend('S_{11}','S_{21}');\n"
+		genScript += "ylabel('S-Parameter (dB)','FontSize',12);\n"
+		genScript += "xlabel('frequency (GHz) \\rightarrow','FontSize',12);\n"
+		genScript += "ylim([-40 2]);\n"
+		genScript += "\n"
 
-									if (currSetting.direction == 'x'):
-										genScript += 'portDirection = [1 0 0];\n'
-									elif (currSetting.direction == 'y'):
-										genScript += 'portDirection = [0 1 0];\n'
-									elif (currSetting.direction == 'z'):
-										genScript += 'portDirection = [0 0 1];\n'
-			
-									genScript_isActive = ""
-									if (currSetting.isActive):
-										genScript_isActive = " , true"
-			
-									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
-			
-									genScriptPortCount += 1
-								elif (currSetting.getType() == 'microstrip'):
-									genScript += "%% AddMSLPort(CSX, " + str(priorityIndex) + " ,1 , 'microstrip', p1.stop, p1.start,'x', [0 0 sourceEz], 'ExcitePort',true, 'Feed_R',p1.R);\n"
-								elif (currSetting.getType() == 'circular waveguide'):
-									genScript += "%% circular port openEMS code should be here\n"
-								elif (currSetting.getType() == 'rectangular waveguide'):
-									genScript += "%% rectangular port openEMS code should be here\n"
-								elif (currSetting.getType() == 'et dump'):
-									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
-									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-								elif (currSetting.getType() == 'ht dump'):
-									genScript += "CSX = AddDump( CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-									genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-									genScript += 'dumpStop  = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
-									genScript += "CSX = AddBox( CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-								else:
-									genScript += '% Unknown port type. Nothing was generated. \n'
+		# Write OpenEMS Script file into current dir.
 
-		genScript += """%% postprocessing & do the plots
-freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-
-port = calcPort( port, Sim_Path, freq);
- 
-s11 = port{1}.uf.ref./ port{1}.uf.inc;
-s21 = port{2}.uf.ref./ port{1}.uf.inc;
- 
-plot(freq/1e9,20*log10(abs(s11)),'k-','LineWidth',2);
-hold on;
-grid on;
-plot(freq/1e9,20*log10(abs(s21)),'r--','LineWidth',2);
-legend('S_{11}','S_{21}');
-ylabel('S-Parameter (dB)','FontSize',12);
-xlabel('frequency (GHz) \\rightarrow','FontSize',12);
-ylim([-40 2]);
-"""
-
-		#
-		# WRITE OpenEMS Script file into current dir
-		#
 		currDir, nameBase = self.getCurrDir()
 		fileName = nameBase + "_draw_S21.m"
 		f = open(fileName, "w", encoding='utf-8')
 		f.write(genScript)
 		f.close()
-		print('Draw result from simulation file written into: ' + fileName)
+		print('Draw result from simulation file written to: ' + fileName)
 
-		# run octave script using command shell
+		# Run octave script using command shell.
+
 		cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
 		print('Running command: ' + cmdToRun)
 		result = os.system(cmdToRun)
@@ -1808,7 +1728,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						break
 
 						
-	def getExcitationScriptLines(self):  
+	def getExcitationScriptLines(self, definitionsOnly = False):  
 		genScript = ""
 		
 		excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
@@ -1835,21 +1755,24 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				#maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
 				if (currSetting.getType() == 'sinusodial'):
 					genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
+					if not definitionsOnly:
+						genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
 					genScript += "max_res = c0 / f0 / 20;\n"
 					self.maxGridResolution_m = 3e8 / (currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
 					pass
 				elif (currSetting.getType() == 'gaussian'):
 					genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
 					genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
+					if not definitionsOnly:
+						genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
 					genScript += "max_res = c0 / (f0 + fc) / 20;\n"
 					self.maxGridResolution_m = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian['fc']) * currSetting.getUnitsAsNumber(currSetting.units) *  20)
 					pass
 				elif (currSetting.getType() == 'custom'):
 					f0 = currSetting.custom['f0']*currSetting.getUnitsAsNumber(currSetting.units)
 					genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-					genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
+					if not definitionsOnly:
+						genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace('f0', str(f0)) + "' );\n"
 					genScript += "max_res = 0;\n"
 					self.maxGridResolution_m = 0
 					pass
@@ -2069,6 +1992,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
 		genScriptPortCount = 1
 		
+		baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z':'[0 0 1]'}
+		mslDirStr = {'x': '0', 'y': '1', 'z': '2'}
+		
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		genScript += "% PORTS\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -2109,42 +2035,37 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 						genScript += 'portR = ' + str(currSetting.R) + ';\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-
-						if (currSetting.direction == 'x'):
-							genScript += 'portDirection = [1 0 0];\n'
-						elif (currSetting.direction == 'y'):
-							genScript += 'portDirection = [0 1 0];\n'
-						elif (currSetting.direction == 'z'):
-							genScript += 'portDirection = [0 0 1];\n'
-
-						genScript_isActive = ""
-						if (currSetting.isActive):
-							genScript_isActive = ", true"
-
-						genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+						genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+						
+						isActiveStr = {False: '', True: ', true'}
+						
+						genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' +\
+							str(priorityIndex) + ', ' +\
+							str(genScriptPortCount) + ', ' +\
+							'portR*portUnits, portStart, portStop, portDirection' +\
+							isActiveStr.get(currSetting.isActive) + ');\n'
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'microstrip'):
 						genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
 						genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+						genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
+						genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
-						if (currSetting.direction == 'x'):
-							genScript += 'portDirection = [1 0 0];\n'
-						elif (currSetting.direction == 'y'):
-							genScript += 'portDirection = [0 1 0];\n'
-						elif (currSetting.direction == 'z'):
-							genScript += 'portDirection = [0 0 1];\n'
-
-						genScript_isActive = ""
-						if currSetting.isActive:
-							genScript_isActive = ", 'ExcitePort', true"
+						isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
 						genScript_R = ""
 						if (currSetting.R > 0):
 							genScript_R = ", 'Feed_R', " + str(currSettings.R)
 
-						genScript += "AddMSLPort(CSX, " + str(priorityIndex) + " ," + str(genScriptPortCount) + " , 'PEC'," + portStart + ", " + portStop + ", portDirection" + genScript_isActive + genScript_R + ");\n"
+						genScript += "AddMSLPort(CSX, " +\
+							str(priorityIndex) + " ," +\
+							str(genScriptPortCount) + " , 'PEC'," +\
+							portStart + ", " +\
+							portStop + ", mslDir, mslEVec, " +\
+							isActiveMSLStr.get(currSetting.isActive) +\
+							genScript_R + ");\n"
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'circular waveguide'):
@@ -2435,6 +2356,56 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		return genScript
 		
 		
+	def getInitScriptLines(self):
+		genScript = ""
+		genScript += "% To be run with GNU Octave or MATLAB.\n"
+		genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos, \n"
+		genScript += "% see https://github.com/LubomirJagos/FreeCAD-OpenEMS-Export\n"
+		genScript += "%\n"
+		genScript += "% This file has been automatically generated. Manual changes may be overwritten.\n"
+		genScript += "%\n"
+		genScript += "\n"
+		genScript += "close all\n"
+		genScript += "clear\n"
+		genScript += "clc\n"
+		genScript += "\n"
+		genScript += "%% Change the current folder to the folder of this m-file.\n"
+		genScript += "if(~isdeployed)\n"
+		genScript += "  mfile_name          = mfilename('fullpath');\n"
+		genScript += "  [pathstr,name,ext]  = fileparts(mfile_name);\n"
+		genScript += "  cd(pathstr);\n"
+		genScript += "end\n"
+		genScript += "\n"
+		
+		genScript += "%% constants\n"
+		genScript += "physical_constants;\n"
+		genScript += "unit    = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
+		genScript += "fc_unit = " + str(self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
+		genScript += "\n"
+
+		return genScript
+
+
+	def getItemsByClassName(self):
+		categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
+		categoryNodes = [self.form.objectAssignmentRightTreeWidget.topLevelItem(k) for k in range(categoryCount)]
+		itemsByClassName = {}
+		for m, categoryNode in enumerate(categoryNodes): # for each category
+			for k in range(categoryNode.childCount()):   # for each child item in a given category
+				item = categoryNode.child(k)
+				itemData = item.data(0, QtCore.Qt.UserRole)
+				if not itemData:
+					continue 
+				itemClassName = itemData.__class__.__name__
+				if not (itemClassName in itemsByClassName):
+					itemsByClassName[itemClassName] = [[item, itemData]]
+				else:
+					itemsByClassName[itemClassName].append([item, itemData])
+					
+		print("generateOpenEMSScript: Item classes found = " + ", ".join(itemsByClassName.keys()))	
+		
+		return itemsByClassName
+
 
 	#########################################################################################################################
 	#                                  _                       _       _          _ _      _            _ 
@@ -2464,23 +2435,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
      
 		# List categories and items.
 		
-		categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-		categoryNodes = [self.form.objectAssignmentRightTreeWidget.topLevelItem(k) for k in range(categoryCount)]
-		itemsByClassName = {}
-		for m, categoryNode in enumerate(categoryNodes): # for each category
-			for k in range(categoryNode.childCount()):   # for each child item in a given category
-				item = categoryNode.child(k)
-				itemData = item.data(0, QtCore.Qt.UserRole)
-				if not itemData:
-					continue 
-				itemClassName = itemData.__class__.__name__
-				if not (itemClassName in itemsByClassName):
-					itemsByClassName[itemClassName] = [[item, itemData]]
-				else:
-					itemsByClassName[itemClassName].append([item, itemData])
-					
-		print("generateOpenEMSScript: Item classes found = " + ", ".join(itemsByClassName.keys()))	
-			
+		itemsByClassName = self.getItemsByClassName()
 			
 		# Write script header.
 		
@@ -2488,24 +2443,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		
 		genScript += "% OpenEMS FDTD Analysis Automation Script\n"
 		genScript += "%\n"
-		genScript += "% To be run with GNU Octave or MATLAB.\n"
-		genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos, \n"
-		genScript += "% see https://github.com/LubomirJagos/FreeCAD-OpenEMS-Export\n"
-		genScript += "%\n"
-		genScript += "% This file has been automatically generated. Manual changes may be overwritten.\n"
-		genScript += "%\n"
-		genScript += "\n"
-		genScript += "close all\n"
-		genScript += "clear\n"
-		genScript += "clc\n"
-		genScript += "\n"
-		genScript += "%% Change the current folder to the folder of this m-file.\n"
-		genScript += "if(~isdeployed)\n"
-		genScript += "  mfile_name          = mfilename('fullpath');\n"
-		genScript += "  [pathstr,name,ext]  = fileparts(mfile_name);\n"
-		genScript += "  cd(pathstr);\n"
-		genScript += "end\n"
-		genScript += "\n"
+
+		genScript += self.getInitScriptLines()	
+			
 		genScript += "%% switches & options\n"
 		genScript += "postprocessing_only = 0;\n"
 		genScript += "draw_3d_pattern = 0; % this may take a while...\n"
@@ -2526,13 +2466,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "\n"
 
 		# Write simulation settings.
-
-		genScript += "%% constants\n"
-		genScript += "physical_constants;\n"
-		genScript += "unit    = " + str(self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
-		genScript += "fc_unit = " + str(self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
-		#genScript += "max_res = c0 / (f0+fc) / unit / 20; % maximum cell size: lambda/20\n"
-		genScript += "\n"
 		
 		genScript += "%% prepare simulation folder\n"
 		genScript += "Sim_Path = 'tmp';\n"
@@ -2613,6 +2546,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		print('Simulation script written to: ' + fileName)
 
 		return
+
 
 	def show(self):
 		self.form.show()
@@ -3670,12 +3604,12 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			QtGui.QApplication.processEvents()
 
 		if (os.path.exists(outFile)):
-			os.remove(outFile)	# wif there already is settings file, erase to not
-								# cause problems with already written objects inside
+			os.remove(outFile)	# Remove outFile in case an old version exists.
 
 		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
 
-		#SAVE MATERIAL SETTINGS INTO FILE
+		# SAVE MATERIAL SETTINGS
+		
 		materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
 		for k in range(len(materialList)):
 			print("Save new MATERIAL constants into file: ")
@@ -3689,7 +3623,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue("material_sigma", materialList[k].constants['sigma'])
 			settings.endGroup()
 
-		#SAVE GRID INTO FILE
+		# SAVE GRID SETTINGS
+		
 		gridList = self.openEMSObj.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
 		for k in range(len(gridList)):
 			print("Save new GRID constants into file: " + gridList[k].getName())
@@ -3708,7 +3643,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
 			settings.endGroup()
 
-		#SAVE EXCITATION INTO FILE
+		# SAVE EXCITATION
+		
 		excitationList = self.openEMSObj.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
 		for k in range(len(excitationList)):
 			print("Save new EXCITATION constants into file: " + excitationList[k].getName())
@@ -3721,7 +3657,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue("units", excitationList[k].units)
 			settings.endGroup()
 
-		#SAVE PORT SETTINGS INTO FILE
+		# SAVE PORT SETTINGS
+		
 		portList = self.openEMSObj.getAllTreeWidgetItems(self.form.portSettingsTreeView)
 		for k in range(len(portList)):
 			print("Save new PORT constants into file: " + portList[k].getName())
@@ -3740,7 +3677,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 			settings.endGroup()
 
-		#SIMULATION PARAMS SAVE INTO FILE
+		# SAVE SIMULATION PARAMS
+		
 		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
 		
 		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
@@ -3772,8 +3710,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		settings.setValue("params", json.dumps(simulationSettings.params))
 		settings.endGroup()
 
-
-		#SAVE OBJECT ASSIGNMENTS		
+		#SAVE OBJECT ASSIGNMENTS	
+		
 		topItemsCount = self.form.objectAssignmentRightTreeWidget.topLevelItemCount()
 		objCounter = 0
 		for k in range(topItemsCount):
@@ -3796,11 +3734,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					settings.endGroup()
 
 					objCounter += 1
+					
+		#SAVE LUMPED PART SETTINGS
 
-
-
-
-		#SAVE LUMPED PART SETTINGS INTO FILE
 		lumpedPartList = self.openEMSObj.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
 		print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
 		for k in range(len(lumpedPartList)):
@@ -3810,9 +3746,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue("params", json.dumps(lumpedPartList[k].params))
 			settings.endGroup()
 
+		#SAVE PRIORITY OBJECT LIST SETTINGS
 
-
-		#SAVE PRIORITY OBJECT LIST SETTINGS INTO FILE
 		settings.beginGroup("PRIORITYLIST-OBJECTS")
 		priorityObjList = self.form.objectAssignmentPriorityTreeView
 
@@ -3823,7 +3758,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			settings.setValue(priorityObjName, str(k))
 		settings.endGroup()
 
-		#SAVE MESH PRIORITY INTO FILE
+		#SAVE MESH PRIORITY
+
 		settings.beginGroup("PRIORITYLIST-MESH")
 		priorityMeshObjList = self.form.meshPriorityTreeView
 
@@ -3836,6 +3772,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 
 		#SAVE POSTPROCESSING OPTIONS
+
 		settings.beginGroup("POSTPROCESSING-DefaultName")
 		settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
 		settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
@@ -3852,6 +3789,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		print("Current settings saved to file: " + outFile)
 		self.displayMessage("Settings saved to file: " + outFile, forceModal=False)
 		return
+
 
 	#  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
 	# | |    / __ \   /\   |  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
