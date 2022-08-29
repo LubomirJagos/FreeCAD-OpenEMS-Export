@@ -1271,7 +1271,12 @@ pause
 		genScript = ""
 		genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
 		genScript += "%\n"
+		
 		genScript += self.getInitScriptLines()	
+		
+		genScript += "Sim_Path = 'tmp';\n"
+		genScript += "CSX = InitCSX('CoordSystem',0);\n"
+		genScript += "\n"
 		
 		# List categories and items.
 		
@@ -1290,23 +1295,48 @@ pause
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		genScript += "% POST-PROCESSING AND PLOT GENERATION\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-							
+		genScript += "\n"	
 		genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
-		genScript += "\n"
 		genScript += "port = calcPort( port, Sim_Path, freq);\n"
 		genScript += "\n"
 		genScript += "s11 = port{1}.uf.ref./ port{1}.uf.inc;\n"
 		genScript += "s21 = port{2}.uf.ref./ port{1}.uf.inc;\n"
 		genScript += "\n"
-		genScript += "plot(freq/1e9,20*log10(abs(s11)),'k-','LineWidth',2);\n"
+		genScript += "s11_dB = 20*log10(abs(s11));\n"
+		genScript += "s21_dB = 20*log10(abs(s21));\n"
+		genScript += "\n"
+		genScript += "plot(freq/1e9,s11_dB,'k-','LineWidth',2);\n"
 		genScript += "hold on;\n"
 		genScript += "grid on;\n"
-		genScript += "plot(freq/1e9,20*log10(abs(s21)),'r--','LineWidth',2);\n"
+		genScript += "plot(freq/1e9,s21_dB,'r--','LineWidth',2);\n"
 		genScript += "legend('S_{11}','S_{21}');\n"
 		genScript += "ylabel('S-Parameter (dB)','FontSize',12);\n"
 		genScript += "xlabel('frequency (GHz) \\rightarrow','FontSize',12);\n"
 		genScript += "ylim([-40 2]);\n"
 		genScript += "\n"
+
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "% SAVE PLOT DATA\n"
+		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		genScript += "\n"
+		genScript += "save_plot_data = 0;\n"
+		genScript += "\n"
+		genScript += "if (save_plot_data != 0)\n"
+		genScript += "	mfile_name = mfilename('fullpath');\n"
+		genScript += "	[pathstr,name,ext] = fileparts(mfile_name);\n"
+		genScript += "	output_fn = strcat(pathstr, '/', name, '.csv')\n"
+		genScript += "	\n"
+		genScript += "	%% write header to file\n"
+		genScript += "	textHeader = '#f(Hz)\\tS11(dB)\\tS21(dB)';\n"
+		genScript += "	fid = fopen(output_fn, 'w');\n"
+		genScript += "	fprintf(fid, '%s\\n', textHeader);\n"
+		genScript += "	fclose(fid);\n"
+		genScript += "	\n"
+		genScript += "	%% write data to end of file\n"
+		genScript += "	dlmwrite(output_fn, [abs(freq)', s11_dB', s21_dB'],'delimiter','\t','precision',6, '-append');\n"
+		genScript += "end\n"
+		genScript += "\n"
+		
 
 		# Write OpenEMS Script file into current dir.
 
