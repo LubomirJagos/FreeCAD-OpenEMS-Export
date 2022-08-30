@@ -2004,8 +2004,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# PORT openEMS GENERATION INTO VARIABLE
 					#
 					if (currSetting.getType() == 'lumped'):
-						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portR = ' + str(currSetting.R) + ';\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2020,8 +2020,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'microstrip'):
-						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
 						genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2047,17 +2047,17 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += "%% rectangular port openEMS code should be here\n"
 					elif (currSetting.getType() == 'et dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'ht dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'nf2ff box'):
-						genScript += 'nf2ffStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'nf2ffStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 						genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 						# NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
@@ -2104,8 +2104,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#PLACEMENT BOX
 					print(obj.Placement)
 
-					genScript += 'lumpedPartStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-					genScript += 'lumpedPartStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+					genScript += 'lumpedPartStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+					genScript += 'lumpedPartStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 
 					lumpedPartName = currentSetting.name
 					lumpedPartParams = ''
