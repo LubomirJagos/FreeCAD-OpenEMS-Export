@@ -17,6 +17,9 @@ path_to_ui = "./ui/dialog.ui"
 def _bool(s):
 	return s in ('True', 'true', '1', 'yes', True)
 
+def _r(x):
+	return np.round(x, 14)
+
 class OpenEMS:
 	def getOpenEMSObjects(self, filterStr = ""):
 		currentObjects = App.ActiveDocument.Objects
@@ -154,10 +157,7 @@ class SettingsItem:
 		self.name = name
 		self.type = type
 		self.priority = priority
-	"""
-	def serializeToString(self):
-		return "{}"
-	"""
+
 	# basic type property common for all kind of settings
 	def getType(self):
 		return self.type
@@ -197,12 +197,7 @@ class FreeCADSettingsItem(SettingsItem):
 		self.name = name
 		self.type = type
 		return
-	"""
-	def serializeToString(self):
-		serializedString = "{'name': '" + self.name #+ "', 'type': '
-		serializedString += "}"
-		return serializedString
-	"""
+
 	
 # Grid settings class
 #	Fixed Count    - fixed number per axes
@@ -248,16 +243,6 @@ class MaterialSettingsItem(SettingsItem):
 		self.name = name
 		self.type = type
 		self.constants = constants
-	"""
-	def serializeToString(self):
-		jsonStr = "{'name': '" + self.name
-		jsonStr += ", 'epsilon': " + str(self.constants['epsilon'])
-		jsonStr += ", 'mue': " + str(self.constants['mue'])
-		jsonStr += ", 'kappa': " + str(self.constants['kappa'])
-		jsonStr += ", 'sigma': " + str(self.constants['sigma'])
-		jsonStr += "}"
-		return jsonStr
-	"""
 	
 	#def getAllItems(self):
 	#	return super(MaterialSettingItem, self).getAllItems()
@@ -277,21 +262,6 @@ class ExcitationSettingsItem(SettingsItem):
 		self.custom = custom
 		self.units = units
 		return
-	"""
-	def serializeToString(self):
-		jsonStr = "{'name': '" + self.name + "', "
-		jsonStr += "'type': '" + self.type + "', "
-		if (self.type == "sinusodial"):
-			jsonStr += "'f0': '" + str(self.sinusodial['f0']) + "', "
-		if (self.type == "gaussian"):
-			jsonStr += "'f0': '" + str(self.gaussian['f0']) + "', 'fc': '" + str(self.gaussian['fc']) + "' "
-		if (self.type == "custom"):
-			jsonStr += "'f': '" + str(self.custom['functionStr']) + "', 'f0': '" + str(self.custom['f0']) + "' "
-
-		jsonStr += "'units': \"" + self.units + "\""
-		jsonStr += "}"
-		return jsonStr
-	"""
 
 	def getType(self):
 		return self.type
@@ -347,15 +317,7 @@ class SimulationSettingsItem(SettingsItem):
 		self.params = {}
 		self.params = json.loads(params)
 		return
-		
-	"""
-	def serializeToString(self):
-		jsonStr = ""
-		jsonStr +=  '{"name": "' + self.name + '", "params": '
-		jsonStr +=  json.dumps(self.params)
-		jsonStr +=  '}'
-		return jsonStr
-	"""		
+
 
 class LumpedPartSettingsItem(SettingsItem):
 	def __init__(self, name = "DefaultSimlationName", params='{"R": 0, "RUnits": "Ohm", "REnabled": 0, "L": 0, "LUnits": "uH", "LEnabled": 0, "C": 0, "CUnits": "pF", "CEnabled": 0}'):
@@ -363,16 +325,7 @@ class LumpedPartSettingsItem(SettingsItem):
 		self.params = {}
 		self.params = json.loads(params)
 		return
-		
-	"""
-	def serializeToString(self):
-		jsonStr = ""
-		jsonStr +=  '{"name": "' + self.name + '", "params": '
-		jsonStr +=  json.dumps(self.params)
-		jsonStr +=  '}'
-		return jsonStr
-	"""
-	
+
 	def getType(self):
 		typeStr = ''
 		if (self.params['LEnabled']):
@@ -1333,7 +1286,7 @@ pause
 		genScript += "	fclose(fid);\n"
 		genScript += "	\n"
 		genScript += "	%% write data to end of file\n"
-		genScript += "	dlmwrite(output_fn, [abs(freq)', s11_dB', s21_dB'],'delimiter','\t','precision',6, '-append');\n"
+		genScript += "	dlmwrite(output_fn, [abs(freq)', s11_dB', s21_dB'],'delimiter','\\t','precision',6, '-append');\n"
 		genScript += "end\n"
 		genScript += "\n"
 		
@@ -1823,23 +1776,15 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "% BOUNDARY CONDITIONS\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
-	
+		_bcStr = lambda pml_val, text: '\"PML_{}\"'.format(str(pml_val)) if text == 'PML' else '\"{}\"'.format(text)
 		strBC = ""
-		strBC += ('\"PML_' + str(self.form.PMLxmincells.value()) + '\"' if self.form.BCxmin.currentText() == 'PML' else '\"' + self.form.BCxmin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLxmaxcells.value()) + '\"' if self.form.BCxmax.currentText() == 'PML' else '\"' + self.form.BCxmax.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLymincells.value()) + '\"' if self.form.BCymin.currentText() == 'PML' else '\"' + self.form.BCymin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLymaxcells.value()) + '\"' if self.form.BCymax.currentText() == 'PML' else '\"' + self.form.BCymax.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLzmincells.value()) + '\"' if self.form.BCzmin.currentText() == 'PML' else '\"' + self.form.BCzmin.currentText() + "\"") + ","
-		strBC += ('\"PML_' + str(self.form.PMLzmaxcells.value()) + '\"' if self.form.BCzmax.currentText() == 'PML' else '\"' + self.form.BCzmax.currentText() + "\"")  
+		strBC += _bcStr( self.form.PMLxmincells.value(), self.form.BCxmin.currentText() ) + ","
+		strBC += _bcStr( self.form.PMLxmaxcells.value(), self.form.BCxmax.currentText() ) + ","
+		strBC += _bcStr( self.form.PMLymincells.value(), self.form.BCymin.currentText() ) + ","
+		strBC += _bcStr( self.form.PMLymaxcells.value(), self.form.BCymax.currentText() ) + ","
+		strBC += _bcStr( self.form.PMLzmincells.value(), self.form.BCzmin.currentText() ) + ","
+		strBC += _bcStr( self.form.PMLzmaxcells.value(), self.form.BCzmax.currentText() )
 
-		""" THIS IS ORIGINAL NON GENERATED CODE FOR BOUNDARIES CONDITIONS
-		genScript += "BC = {'MUR' 'MUR' 'MUR' 'MUR' 'MUR' 'MUR'}; % boundary conditions\n"
-		genScript += "if (use_pml>0)\n"
-		genScript += "    BC = {'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8' 'PML_8'}; % use pml instead of mur\n"
-		genScript += "end\n"
-		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
-		genScript += "\n"
-		"""
 		genScript += "BC = {" + strBC + "};\n"
 		genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
 		genScript += "\n"
@@ -1854,9 +1799,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		genScript += "% COORDINATE SYSTEM\n"
 		genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
-		# Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
-		
-		"""
+		""" # Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
 		gridCoordsType = self.getModelCoordsType()
 		if (gridCoordsType == "rectangular"):
 			genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
@@ -2061,8 +2004,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# PORT openEMS GENERATION INTO VARIABLE
 					#
 					if (currSetting.getType() == 'lumped'):
-						genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-						genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
+						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portR = ' + str(currSetting.R) + ';\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2077,8 +2020,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'microstrip'):
-						genScript += 'portStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-						genScript += 'portStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
+						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
 						genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2104,17 +2047,17 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += "%% rectangular port openEMS code should be here\n"
 					elif (currSetting.getType() == 'et dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-						genScript += 'dumpStop  =[' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
+						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'ht dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-						genScript += 'dumpStop  =[' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
+						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'nf2ff box'):
-						genScript += 'nf2ffStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + '];\n'
-						genScript += 'nf2ffStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + '];\n'
+						genScript += 'nf2ffStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'nf2ffStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 						genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 						# NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
@@ -2161,8 +2104,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#PLACEMENT BOX
 					print(obj.Placement)
 
-					genScript += 'lumpedPartStart = [' + str(sf*bbCoords.XMin) + ', ' + str(sf*bbCoords.YMin) + ', ' + str(sf*bbCoords.ZMin) + ']\n'
-					genScript += 'lumpedPartStop = [' + str(sf*bbCoords.XMax) + ', ' + str(sf*bbCoords.YMax) + ', ' + str(sf*bbCoords.ZMax) + ']\n'
+					genScript += 'lumpedPartStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+					genScript += 'lumpedPartStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 
 					lumpedPartName = currentSetting.name
 					lumpedPartParams = ''
@@ -2333,47 +2276,47 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 			# Write grid definition.
 			
-			genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + "\n"
+			genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() +")\n"
 			
 			if (gridSettingsInst.getType() == 'Fixed Distance'):										
 				if gridSettingsInst.xenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
-					genScript += "mesh.x = [mesh.x (" + str(xmin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['x']) + ":" + str(xmax) + ") ];\n"
+						genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
+					genScript += "mesh.x = [ mesh.x ({0:g}:{1:g}:{2:g}) ];\n".format(_r(xmin), _r(gridSettingsInst.getXYZ(refUnit)['x']), _r(xmax))
 				if gridSettingsInst.yenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
-					genScript += "mesh.y = [mesh.y (" + str(ymin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['y']) + ":" + str(ymax) + ") ];\n"
+						genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
+					genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(gridSettingsInst.getXYZ(refUnit)['y']), _r(ymax))
 				if gridSettingsInst.zenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
-					genScript += "mesh.z = [mesh.z (" + str(zmin) + ":" + str(gridSettingsInst.getXYZ(refUnit)['z']) + ":" + str(zmax) + ") ];\n"
+						genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
+					genScript += "mesh.z = [ mesh.z ({0:g}:{1:g}:{2:g}) ];\n".format(_r(zmin), _r(gridSettingsInst.getXYZ(refUnit)['z']), _r(zmax))
 				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				
 			elif (gridSettingsInst.getType() == 'Fixed Count'):									
 				if gridSettingsInst.xenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.x(mesh.x >= " + str(xmin) + " & mesh.x <= " + str(xmax) + ") = [];\n"
+						enScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
 					if (not gridSettingsInst.getXYZ()['x'] == 1):
-						genScript += "mesh.x = [mesh.x linspace(" + str(xmin) + "," + str(xmax) + "," + str(gridSettingsInst.getXYZ(refUnit)['x']) + ") ];\n"
+						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
 					else:
-						genScript += "mesh.x = [mesh.x " + str((xmin+xmax)/2) + " ];\n"
+						genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((xmin+xmax)/2))
 
 				if gridSettingsInst.yenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.y(mesh.y >= " + str(ymin) + " & mesh.y <= " + str(ymax) + ") = [];\n"
+						genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
 					if (not gridSettingsInst.getXYZ()['y'] == 1):
-						genScript += "mesh.y = [mesh.y linspace(" + str(ymin) + "," + str(ymax) + "," + str(gridSettingsInst.getXYZ(refUnit)['y']) + ") ];\n"
+						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(gridSettingsInst.getXYZ(refUnit)['y']))
 					else:
-						genScript += "mesh.y = [mesh.y " + str((ymin+ymax)/2) + " ];\n"
+						genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((ymin+ymax)/2))
 
 				if gridSettingsInst.zenabled:
 					if gridSettingsInst.topPriorityLines:
-						genScript += "mesh.z(mesh.z >= " + str(zmin) + " & mesh.z <= " + str(zmax) + ") = [];\n"
+						genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
 					if (not gridSettingsInst.getXYZ()['z'] == 1):
-						genScript += "mesh.z = [mesh.z linspace(" + str(zmin) + "," + str(zmax) + "," + str(gridSettingsInst.getXYZ(refUnit)['z']) + ") ];\n"
+						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(gridSettingsInst.getXYZ(refUnit)['z']))
 					else:
-						genScript += "mesh.z = [mesh.z " + str((zmin+zmax)/2) + " ];\n"
+						genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((zmin+zmax)/2))
 
 				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				
@@ -2704,13 +2647,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		else:
 				self.displayMessage("Item must be added into some settings inside category.")
 
-		"""
-		print("Item ")
-		print(leftItem.text(0))
-		print("added into ")
-		print(rightItem.text(0))
-		rightItem.addChild(leftItem)
-		"""	
 
 	def updateMeshPriorityDisableItems(self):
 		itemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
