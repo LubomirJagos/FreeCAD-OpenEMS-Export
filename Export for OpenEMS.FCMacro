@@ -197,7 +197,10 @@ class FreeCADSettingsItem(SettingsItem):
 		self.name = name
 		self.type = type
 		return
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 	
 # Grid settings class
 #	Fixed Count    - fixed number per axes
@@ -358,11 +361,88 @@ class LumpedPartSettingsItem(SettingsItem):
 	def getC(self):
 		outStr = str(self.params['C']) + "*" + str(self.getUnits('C'))
 		return outStr
+		
+
+# evtHandler : helper class that manages adding, removing and calls to a list of event handlers.
+class evtHandler(object): 
+	def __init__(self): 
+		self.__handlers = [] 
+		
+	def __iadd__(self, Ehandler): 
+		self.__handlers.append(Ehandler) 
+		return self
+		
+	def __isub__(self, Ehandler): 
+		self.__handlers.remove(Ehandler) 
+		return self
+		
+	def __call__(self, *args, **keywargs): 
+		for h in self.__handlers: 
+			h(*args, **keywargs) 
+	
+	
+# FreeCADDocObserver : implements a sub-set of the FreeCAD documentObserver to provide event handling. For a full list,
+# see https://github.com/FreeCAD/FreeCAD/blob/42a71ccbbd2937d270e46c1688b9411a7f82f13d/src/Gui/DocumentObserverPython.h#L37
+# and https://github.com/FreeCAD/FreeCAD/blob/8efe30c8a90305d688fa164048941be1fd474918/src/Mod/Test/Document.py#L1619 .		
+class FreeCADDocObserver():
+	def __init__(self):
+		self.documentCreated   = evtHandler()
+		self.documentActivated = evtHandler()
+		self.documentDeleted   = evtHandler()
+		self.objectRecomputed  = evtHandler()
+		self.objectCreated     = evtHandler()
+		self.objectChanged     = evtHandler()
+		self.objectDeleted     = evtHandler()
+		
+	def startObservation(self):
+		# set up document observer
+		App.addDocumentObserver(self)
+		#print("Observation started.")	
+		
+	def endObservation(self):
+		App.removeDocumentObserver(self)		
+		#print("Observation terminated.")
+		
+	def slotCreatedDocument(self,doc):
+		#print ("Create document")
+		self.documentCreated(doc)
+		
+	def slotActivateDocument(self, doc):
+		#print ("Activate document")
+		self.documentActivated(doc)
+		
+	def slotDeletedDocument(self,doc):
+		#print ("Delete document")
+		self.documentDeleted(doc)
+		
+	def slotRecomputedObject(self,obj):
+		#print("recomputation triggered")
+		self.objectRecomputed(obj)
+	
+	def slotCreatedObject(self,obj):
+		#print("A new object was added")
+		self.objectCreated(obj)
+		
+	def slotChangedObject(self,obj,prop):
+		#print("you have changed an object: " + repr(obj))
+		self.objectChanged(obj, prop)
+		
+	def slotDeletedObject(self,obj):
+		#print("you have queued an object for deletion: " + repr(obj))
+		self.objectDeleted(obj)
+
 
 #
 # Main GUI panel class
 #
-class BoxTaskPanel:
+class BoxTaskPanel():
+	def __del__(self):
+		return
+		
+	def finished(self):
+		self.observer.endObservation()
+		self.observer = None
+
 	def __init__(self):
 
 		#
@@ -379,6 +459,10 @@ class BoxTaskPanel:
 
 		# this will create a Qt widget from our ui file
 		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui)
+<<<<<<< HEAD
+=======
+		self.form.finished.connect(self.finished)
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 		
 		# add a statusBar widget (comment to revert to QMessageBox if there are any problems)
 		self.statusBar = QtGui.QStatusBar()
@@ -550,9 +634,50 @@ class BoxTaskPanel:
 		self.form.simParamsMinDecrement.valueChanged.connect(self.simParamsMinDecrementValueChanged)
 		
 		### Other Initialization
+<<<<<<< HEAD
 		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value()) # initialize label with converted value
 	
 	
+=======
+		
+		# initialize dB preview label with converted value
+		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value()) 
+	
+		# create observer instance
+		self.observer = FreeCADDocObserver()
+		self.observer.objectCreated += self.freecadObjectCreated
+		self.observer.objectChanged += self.freecadObjectChanged
+		self.observer.objectDeleted += self.freecadBeforeObjectDeleted
+		self.observer.startObservation()	
+		
+	
+	def freecadObjectCreated(self, obj):
+		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
+		# A new object has been created. Only the list of available objects needs to be updated.
+		filterStr = self.form.objectAssignmentFilterLeft.text()
+		self.initLeftColumnTopLevelItems(filterStr)
+		
+	
+	def freecadObjectChanged(self, obj, prop):
+		print("freecadObjectChanged :{} ('{}') property changed: {}".format(obj.FullName, obj.Label, prop))
+		if prop == 'Label':
+			# The label (displayed name) of an object has changed.
+			# (TODO) Update all mentions in the ObjectAssigments panel.
+			filterStr = self.form.objectAssignmentFilterLeft.text()
+			self.initLeftColumnTopLevelItems(filterStr)
+		
+		
+	def freecadBeforeObjectDeleted(self,obj):
+		# event is generated before object is being removed, so observing instances have to 
+		# (TODO) un-list the object without drawing upon the FreeCAD objects list, and
+		# (TODO) propagate changes to prevent corruption. 
+		#    Simple approach: delete dependent entries.
+		#    Advanced: remember and gray out deleted objects to allow settings to be restored when
+		#    the user brings the object back with Redo.
+		print("freecadObjectDeleted :{} ('{}')".format(obj.FullName, obj.Label))
+		
+		
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 	def simParamsMinDecrementValueChanged(self, newValue):
 		if newValue == 0:
 			s = '( -inf dB )'
@@ -2004,8 +2129,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# PORT openEMS GENERATION INTO VARIABLE
 					#
 					if (currSetting.getType() == 'lumped'):
+<<<<<<< HEAD
 						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+=======
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 						genScript += 'portR = ' + str(currSetting.R) + ';\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2020,8 +2150,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'microstrip'):
+<<<<<<< HEAD
 						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+=======
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
 						genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2047,6 +2182,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += "%% rectangular port openEMS code should be here\n"
 					elif (currSetting.getType() == 'et dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+<<<<<<< HEAD
 						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
@@ -2058,6 +2194,19 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					elif (currSetting.getType() == 'nf2ff box'):
 						genScript += 'nf2ffStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 						genScript += 'nf2ffStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+=======
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+					elif (currSetting.getType() == 'ht dump'):
+						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+					elif (currSetting.getType() == 'nf2ff box'):
+						genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 						genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 						genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 						# NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
@@ -2104,8 +2253,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#PLACEMENT BOX
 					print(obj.Placement)
 
+<<<<<<< HEAD
 					genScript += 'lumpedPartStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 					genScript += 'lumpedPartStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+=======
+					genScript += 'lumpedPartStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+					genScript += 'lumpedPartStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+>>>>>>> 5c04621ac65a40cfc0a3b49c9cced2095a094789
 
 					lumpedPartName = currentSetting.name
 					lumpedPartParams = ''
