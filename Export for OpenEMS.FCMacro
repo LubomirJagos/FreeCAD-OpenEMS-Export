@@ -232,6 +232,14 @@ class GridSettingsItem(SettingsItem):
 	def getUnitAsScriptLine(self):
 		return str(self.getUnitsAsNumber(self.units))
 
+	def getSettingsUnitAsNumber(self):
+		"""
+		:return: Self units as float number, ie.:
+				mm -> 1.0e-3
+				m  -> 1.0
+		"""
+		return self.getUnitsAsNumber(self.units)
+
 # Material settings, basic are epsilon and mue, kappa and sigma are extended
 #	epsilon - permitivity
 #	mue     - permeability
@@ -412,6 +420,7 @@ class BoxTaskPanel:
 		
 		self.form.objectAssignmentRightTreeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
 		self.form.objectAssignmentRightTreeWidget.customContextMenuRequested.connect(self.objectAssignmentRightTreeWidgetContextClicked)
+		self.form.objectAssignmentRightTreeWidget.itemDoubleClicked.connect(self.objectAssignmentRightTreeWidgetItemDoubleClicked)
 
 		#########################################################################################################
 		#########################################################################################################
@@ -627,6 +636,8 @@ class BoxTaskPanel:
 		self.displayMessage("createUserdefGridLinesFromCurrentButtonClicked")
 
 	def displayXYGridLinesInModelButtonClicked(self):        
+		print('displayXYGridLinesInModelButtonClicked: start draw whole XY grid for each object')
+
 		gridCategory = self.form.objectAssignmentRightTreeWidget.findItems("Grid", QtCore.Qt.MatchFixedString)[0]
 		for gridItemIndex in range(gridCategory.childCount()):
 			for objIndex in range(gridCategory.child(gridItemIndex).childCount()):
@@ -745,11 +756,15 @@ class BoxTaskPanel:
 
 		#	must be selected FreeCAD object which is child of grid item which gridlines will be draw
 		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(currItem.text(0))
-		if ("FreeCADSettingItem" in currSetting.type ):
+		if ("FreeCADSettingItem" in currSetting.type):
 			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
 				currSetting = currItem.parent().data(0, QtCore.Qt.UserRole)
 			else:
+				self.displayMessage('Cannot draw grid for non-grid item object.')
 				return
+		else:
+			self.displayMessage('Cannot draw grid for object group.')
+			return
 
 		bbCoords = gridObj[0].Shape.BoundBox
 	
@@ -763,6 +778,10 @@ class BoxTaskPanel:
 		#THERE IS QUESTION IN WHICH PLANE GRID SHOULD BE DRAWN IF in XY, XZ or YZ
 		currGridAxis = self.form.auxGridAxis.currentText().lower()
 		print("Aux grid axis: " + currGridAxis)
+
+		refUnit = currSetting.getSettingsUnitAsNumber()
+		#refUnit = 1
+		print("Current object grid units set as number to: refUnit: " + str(refUnit))
 
 		"""
 		axisList = collections.deque(['x', 'y', 'z'])
@@ -889,7 +908,7 @@ class BoxTaskPanel:
 				if (currSetting.zenabled):
 					if float(currSetting.getXYZ(refUnit)['z']) != 0:
 						if float(currSetting.getXYZ(refUnit)['z']) == 1:
-							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
+							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 						else:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 							
@@ -905,7 +924,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))
+							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
@@ -916,7 +935,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))
+							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 
 						for yGridLine in ylines:
 							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
@@ -971,7 +990,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))   #collecting Z coordinates where grid layers will be drawn
+							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))   #collecting Z coordinates where grid layers will be drawn
 							
 						for xGridLine in xlines:
 							xAuxGridCoordList.append(xGridLine)
@@ -985,7 +1004,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['z']) == 1:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 						else:
-							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 						
 						for zGridLine in zlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
@@ -995,7 +1014,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))
+							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 						
 						for yGridLine in ylines:
 								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
@@ -1049,7 +1068,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['y']) == 1:
 							ylines = np.array([(bbCoords.YMin + bbCoords.YMax)/2])
 						else:
-							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, float(currSetting.getXYZ(refUnit)['y']))   #collecting Y coordinates where grid layers will be drawn
+							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))   #collecting Y coordinates where grid layers will be drawn
 
 						for yGridLine in ylines:
 							yAuxGridCoordList.append(yGridLine)
@@ -1063,7 +1082,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['z']) == 1:
 							zlines = np.array([(bbCoords.ZMin + bbCoords.ZMax)/2])
 						else:
-							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, float(currSetting.getXYZ(refUnit)['z']))
+							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 
 						for zGridLine in zlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
@@ -1073,7 +1092,7 @@ class BoxTaskPanel:
 						if float(currSetting.getXYZ(refUnit)['x']) == 1:
 							xlines = np.array([(bbCoords.XMin + bbCoords.XMax)/2])
 						else:
-							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, float(currSetting.getXYZ(refUnit)['x']))
+							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 
 						for xGridLine in xlines:
 							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
@@ -1200,7 +1219,6 @@ ylabel( 'reflection coefficient |S_{11}|' );
 
 P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
 
-pause
 """
 	
 		#
@@ -1993,6 +2011,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				for obj in freecadObjects:
 					#BOUNDING BOX
 					bbCoords = obj.Shape.BoundBox
+					print('\tFreeCAD lumped port BoundBox: ' + str(bbCoords))
+					print('\t\tXMin: ' + str(bbCoords.XMin))
+					print('\t\tYMin: ' + str(bbCoords.YMin))
+					print('\t\tZMin: ' + str(bbCoords.ZMin))
 
 					#
 					#	getting item priority
@@ -2004,12 +2026,16 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					# PORT openEMS GENERATION INTO VARIABLE
 					#
 					if (currSetting.getType() == 'lumped'):
-						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portR = ' + str(currSetting.R) + ';\n'
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 						
+						print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin), _r(bbCoords.ZMin)))
+						print('\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax), _r(bbCoords.ZMax)))
+
+
 						isActiveStr = {False: '', True: ', true'}
 						
 						genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' +\
@@ -2020,8 +2046,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 						genScriptPortCount += 1
 					elif (currSetting.getType() == 'microstrip'):
-						genScript += 'portStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'portStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 						genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
 						genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -2047,18 +2073,18 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += "%% rectangular port openEMS code should be here\n"
 					elif (currSetting.getType() == 'et dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'ht dump'):
 						genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-						genScript += 'dumpStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'dumpStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
 					elif (currSetting.getType() == 'nf2ff box'):
-						genScript += 'nf2ffStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-						genScript += 'nf2ffStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
-						genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
+						genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+						genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+						#genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
 						genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 						# NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
 					else:
@@ -2104,8 +2130,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#PLACEMENT BOX
 					print(obj.Placement)
 
-					genScript += 'lumpedPartStart = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
-					genScript += 'lumpedPartStop  = [ {0:g}, {0:g}, {0:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
+					genScript += 'lumpedPartStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
+					genScript += 'lumpedPartStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 
 					lumpedPartName = currentSetting.name
 					lumpedPartParams = ''
@@ -2266,13 +2292,22 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + " " + refUnitStr)
 			else:
 				delta = 0
-													
-			xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
-			ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
-			zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
-			xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta    
-			ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta    
-			zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta    
+
+			#
+			#	THIS IS HARD WIRED HERE, NEED TO BE CHANGED, LuboJ, September 2022
+			#
+			#DEBUG - DISABLED - generate grid inside using 1/20 of maximum lambda, it's not that equation,
+			#	ie. for 3.4GHz simulation 1/20th is 4mm what is wrong for delta to generate
+			#	gridlines inside object, must be much much lower like 10times
+			delta = 0
+			debugHardLimit = 0.1e-3	#debug hard limit to get gridlines inside STL objects
+
+			xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta - debugHardLimit
+			ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta - debugHardLimit
+			zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta - debugHardLimit
+			xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta + debugHardLimit
+			ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta + debugHardLimit
+			zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta + debugHardLimit
 
 			# Write grid definition.
 			
@@ -2296,7 +2331,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			elif (gridSettingsInst.getType() == 'Fixed Count'):									
 				if gridSettingsInst.xenabled:
 					if gridSettingsInst.topPriorityLines:
-						enScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
+						genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
 					if (not gridSettingsInst.getXYZ()['x'] == 1):
 						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
 					else:
@@ -2306,17 +2341,17 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					if gridSettingsInst.topPriorityLines:
 						genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
 					if (not gridSettingsInst.getXYZ()['y'] == 1):
-						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(gridSettingsInst.getXYZ(refUnit)['y']))
+						genScript += "mesh.y = [ mesh.y linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(gridSettingsInst.getXYZ(refUnit)['y']))
 					else:
-						genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((ymin+ymax)/2))
+						genScript += "mesh.y = [ mesh.y {0:g} ];\n".format(_r((ymin+ymax)/2))
 
 				if gridSettingsInst.zenabled:
 					if gridSettingsInst.topPriorityLines:
 						genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
 					if (not gridSettingsInst.getXYZ()['z'] == 1):
-						genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(gridSettingsInst.getXYZ(refUnit)['z']))
+						genScript += "mesh.z = [ mesh.z linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(gridSettingsInst.getXYZ(refUnit)['z']))
 					else:
-						genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((zmin+zmax)/2))
+						genScript += "mesh.z = [ mesh.z {0:g} ];\n".format(_r((zmin+zmax)/2))
 
 				genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 				
@@ -2487,7 +2522,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		
 		# Write NF2FF probe grid definitions.
 		
-		genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+		genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
 		print("======================== REPORT END ========================\n")
                                                                                                 

@@ -359,7 +359,7 @@
              <item>
               <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
@@ -414,11 +414,11 @@
              <item>
               <widget class="QTreeWidget" name="meshPriorityTreeView">
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
-                 <string notr="true">1</string>
+                 <string notr="true">Grid - remove overlapping lines priority </string>
                 </property>
                </column>
               </widget>
@@ -739,6 +739,9 @@
                <layout class="QGridLayout" name="gridLayout">
                 <item row="1" column="1">
                  <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
@@ -777,6 +780,9 @@
                 </item>
                 <item row="1" column="3">
                  <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
@@ -805,6 +811,9 @@
                 </item>
                 <item row="1" column="2">
                  <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
