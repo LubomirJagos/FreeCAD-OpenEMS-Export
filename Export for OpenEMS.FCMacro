@@ -1366,6 +1366,8 @@ freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 f_res = f0;
 """
 		genScriptPortCount = 1
+		genNF2FFBoxCounter = 1
+
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
 		for k in range(childCount):
@@ -1429,26 +1431,35 @@ f_res = f0;
 									if (currSetting.isActive):
 										genScript_isActive = " , true"
 			
-									genScript += '[CSX port] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
-									genScript += 'port = calcPort( port, Sim_Path, freq);\n'
+									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
+									genScript += 'port{' + str(genScriptPortCount) + '} = calcPort( port{' + str(genScriptPortCount) + '}, Sim_Path, freq);\n'
 			
 									genScriptPortCount += 1
 								elif (currSetting.getType() == 'nf2ff box'):
 									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-									genScript += "[CSX nf2ff] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+									genScript += "[CSX nf2ffBox{" + str(genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+
+									#increase nf2ff port counter
+									genNF2FFBoxCounter += 1
 
 		genScript += """
 %% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % get accepted antenna power at frequency f0
-P_in_0 = interp1(freq, port.P_acc, f0);
+%
+%	WARNING - hardwired 1st port
+%
+P_in_0 = interp1(freq, port{1}.P_acc, f0);
 
 % calculate the far field at phi=0 degrees and at phi=90 degrees
 thetaRange = unique([0:0.5:90 90:180]);
 phiRange = (0:2:360) - 180;
 disp( 'calculating the 3D far field...' );
 
-nf2ff = CalcNF2FF(nf2ff, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180,'Mode',0,'Outfile','3D_Pattern.h5','Verbose',1);
+%
+%	WARNING - hardwired 1st nf2ff box
+%
+nf2ff = CalcNF2FF(nf2ffBox{1}, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180,'Mode',0,'Outfile','3D_Pattern.h5','Verbose',1);
 
 theta_HPBW = interp1(nf2ff.E_norm{1}(:,1)/max(nf2ff.E_norm{1}(:,1)),thetaRange,1/sqrt(2))*2;
 
@@ -1981,8 +1992,13 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
+
+		#port index counter, they are generated into port{} cell variable for octave, cells index starts at 1
 		genScriptPortCount = 1
-		
+
+		#nf2ff box counter, they are stored inside octave cell variable {} so this is to index them properly, in octave cells index starts at 1
+		genNF2FFBoxCounter = 1
+
 		baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z':'[0 0 1]'}
 		mslDirStr = {'x': '0', 'y': '1', 'z': '2'}
 		
@@ -2085,8 +2101,10 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 						genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMin), _r(sf*bbCoords.YMin), _r(sf*bbCoords.ZMin))
 						genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf*bbCoords.XMax), _r(sf*bbCoords.YMax), _r(sf*bbCoords.ZMax))
 						#genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
-						genScript += "[CSX " + currSetting.name + "] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+						genScript += "[CSX nf2ffBox{" + str(genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
 						# NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
+
+						genNF2FFBoxCounter += 1
 					else:
 						genScript += '% Unknown port type. Nothing was generated. \n'
 
@@ -2166,7 +2184,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		refUnit = self.getUnitLengthFromUI_m() # Coordinates need to be given in drawing units
 		sf = self.getFreeCADUnitLength_m() / refUnit # scaling factor for FreeCAD units to drawing units
 		nf2ff_gridlines = {'x':[], 'y':[], 'z':[]}
-				
+
 		for [item, currSetting] in items:
 			
 			objs = FreeCAD.ActiveDocument.Objects
