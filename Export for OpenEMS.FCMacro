@@ -193,11 +193,19 @@ class SettingsItem:
 # FreeCAD part class
 #
 class FreeCADSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "FreeCADSettingItem"):
+	def __init__(self, name = "", type = "FreeCADSettingItem", freeCadId = ""):
 		self.name = name
 		self.type = type
+		self.freeCadId = freeCadId
 		return
-	
+	def setFreeCadId(self, idStr):
+		self.freeCadId = idStr
+		return
+
+	def getFreeCadId(self):
+		return self.freeCadId
+
+
 # Grid settings class
 #	Fixed Count    - fixed number per axes
 #	Fixed Distance - gridlines have fixed distance between them
@@ -1234,7 +1242,7 @@ class BoxTaskPanel():
 			# ADDING ITEMS with UserData object which storethem in intelligent way
 			#
 			topItem = QtGui.QTreeWidgetItem([i.Label])
-			itemData = FreeCADSettingsItem(i.Label)
+			itemData = FreeCADSettingsItem(name = i.Label, freeCadId = i.Name)
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
 			if (i.Name.find("Sketch") > -1):
 				topItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
@@ -1479,6 +1487,7 @@ f_res = f0;
 """
 		genScriptPortCount = 1
 		genNF2FFBoxCounter = 1
+		currentNF2FFBoxIndex = 1
 
 		allItems = []
 		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
@@ -1545,12 +1554,16 @@ f_res = f0;
 			
 									genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(priorityIndex) + ', ' + str(genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
 									genScript += 'port{' + str(genScriptPortCount) + '} = calcPort( port{' + str(genScriptPortCount) + '}, Sim_Path, freq);\n'
-			
+
 									genScriptPortCount += 1
 								elif (currSetting.getType() == 'nf2ff box'):
 									genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
 									genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
 									genScript += "[CSX nf2ffBox{" + str(genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+
+									#update nf2ffBox index for which far field diagram will be calculated in octave script
+									if self.form.portNf2ffObjectList.currentText() == currSetting.name:
+										currentNF2FFBoxIndex = genNF2FFBoxCounter
 
 									#increase nf2ff port counter
 									genNF2FFBoxCounter += 1
@@ -1569,9 +1582,12 @@ phiRange = (0:2:360) - 180;
 disp( 'calculating the 3D far field...' );
 
 %
-%	WARNING - hardwired 1st nf2ff box
+%	nf2ffBox{index} - index is set based on GUI option choosed which NF2FF box should be calculated
 %
-nf2ff = CalcNF2FF(nf2ffBox{1}, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180,'Mode',0,'Outfile','3D_Pattern.h5','Verbose',1);
+%	'Mode',1 - always recalculate data
+%		url: https://github.com/thliebig/openEMS/blob/master/matlab/CalcNF2FF.m
+%
+nf2ff = CalcNF2FF(nf2ffBox{""" + str(currentNF2FFBoxIndex) + """}, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180, 'Mode', 1, 'Outfile', '3D_Pattern.h5', 'Verbose', 1);
 
 theta_HPBW = interp1(nf2ff.E_norm{1}(:,1)/max(nf2ff.E_norm{1}(:,1)),thetaRange,1/sqrt(2))*2;
 
@@ -3852,16 +3868,20 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			for m in range(topItem.childCount()):
 				childItem = topItem.child(m)
 				childItemName = childItem.text(0)
-				print("Save new OBJECT ASSIGNMENTS for catgeroy -> settings profile: ")
+				print("Save new OBJECT ASSIGNMENTS for category -> settings profile: ")
 				print("\t" + topItemName + " --> " + childItemName)
 				for n in range(childItem.childCount()):
 					objItem = childItem.child(n)
 					objItemName = objItem.text(0)
+
+					#get unique FreeCAD internal item ID saved in FreeCADSettingsItem
+					objItemId = objItem.data(0, QtCore.Qt.UserRole).getFreeCadId()
 	
 					settings.beginGroup("_OBJECT" + str(objCounter) + "-" + objItemName)
 					settings.setValue("type", "FreeCadObj")
 					settings.setValue("parent", childItemName)
 					settings.setValue("category", topItemName)
+					settings.setValue("freeCadId", objItemId)
 					settings.endGroup()
 
 					objCounter += 1
@@ -4073,6 +4093,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				settings.beginGroup(settingsGroup)
 				objParent = settings.value('parent')
 				objCategory = settings.value('category')
+				objFreeCadId = settings.value('freeCadId')
 				print("\t" + objParent)
 				print("\t" + objCategory)
 				settings.endGroup()
@@ -4090,17 +4111,43 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 							#treeItem = QtGui.QTreeWidgetItem([itemName])
 							treeItem = QtGui.QTreeWidgetItem()
 							treeItem.setText(0, itemName)
-							#treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
-							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
 							#set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
-							freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0]
+							errorLoadByName = False
+							try:
+								freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0]
+							except:
+								#
+								#	ERROR - need to be check if this is enough to auto-repair load errors
+								#
+								if len(objFreeCadId) > 0:
+									freeCadObj = FreeCAD.ActiveDocument.getObject(objFreeCadId)
+									treeItem.setText(0, freeCadObj.Label)	#auto repair name, replace it with current name
+									errorLoadByName = True
+
+							#
+							#	ERROR - here needs to be checked if freeCadObj was even found based on its Label if no try looking based on its ID from file,
+							#	need to do this this way due backward compatibility
+							#		- also FreeCAD should have set uniqe label for objects in Preferences
+							#
+							#set unique FreeCAD inside name as ID
+							settingsItem.setFreeCadId(freeCadObj.Name)
+
+							#SAVE settings object into GUI tree item
+							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
+
 							if (freeCadObj.Name.find("Sketch") > -1):
 								treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
 							elif (freeCadObj.Name.find("Discretized_Edge") > -1):
 								treeItem.setIcon(0, QtGui.QIcon("./img/curve.svg")) 
 							else:
-								treeItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
+								treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
+
+							#
+							#	THERE IS MISMATCH BETWEEN NAME STORED IN IN FILE AND FREECAD NAME
+							#
+							if errorLoadByName:
+								treeItem.setIcon(0, QtGui.QIcon("./img/errorLoadObject.svg"))
 
 							targetGroup[k].child(m).addChild(treeItem)
 							print("\tItem added")
