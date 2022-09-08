@@ -1,5 +1,6 @@
 from PySide import QtGui, QtCore
-import FreeCAD, FreeCADGui, Part, os
+import FreeCAD as App
+import FreeCADGui, Part, os
 import re
 import Mesh
 import Draft
@@ -76,9 +77,9 @@ class OpenEMS:
 		return itemList
 
 	def selectObjectByLabel(self, objLabel):
-		freecadObj = FreeCAD.ActiveDocument.getObjectsByLabel(objLabel)
+		freecadObj = App.ActiveDocument.getObjectsByLabel(objLabel)
 		if (freecadObj):
-			FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name,freecadObj[0].Name,'')
+			FreeCADGui.Selection.addSelection(App.ActiveDocument.Name,freecadObj[0].Name,'')
 
 	#
 	#	Draw line in Draft mode, this will be to show grid when going through object assigned to grid.
@@ -87,17 +88,17 @@ class OpenEMS:
 	#		rotation hardwires now pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
 	#
 	def drawDraftLine(self, lineName, p1Array, p2Array, gridLineStyle = "Solid"):
-		pl = FreeCAD.Placement()
+		pl = App.Placement()
 		pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
-		pl.Base = FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2])
-		points = [FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2])]
+		pl.Base = App.Vector(p1Array[0], p1Array[1], p1Array[2])
+		points = [App.Vector(p1Array[0], p1Array[1], p1Array[2]), App.Vector(p2Array[0], p2Array[1], p2Array[2])]
 		line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None)
 		line.Label = lineName		#set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
 		FreeCADGui.ActiveDocument.getObject(line.Name).DrawStyle = gridLineStyle		
 		Draft.autogroup(line)
 
 	def drawDraftCircle(self, lineName, centerPoint, radius):
-		pl = FreeCAD.Placement()
+		pl = App.Placement()
 		pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
 		pl.Base = centerPoint
 		circle = Draft.makeCircle(radius=radius, placement=pl, face=False, support=None)
@@ -119,7 +120,7 @@ class OpenEMS:
 					for k in range(child_count3):
 						print(root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName())
 						freeCadObjName = root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName()
-						freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(freeCadObjName)
+						freeCadObj = App.ActiveDocument.getObjectsByLabel(freeCadObjName)
 						itemList.append(freeCadObj)
 
 		#values initialization, for minimal values must have be init to big numbers to be sure they will be overwritten, for max values have to put their small numbers to be sure to be overwritten
@@ -729,17 +730,17 @@ class BoxTaskPanel():
 
 	def eraseAuxGridButtonClicked(self):
 		print("--> Start removing auxiliary gridlines from 3D view.")
-		auxGridLines = FreeCAD.ActiveDocument.Objects
+		auxGridLines = App.ActiveDocument.Objects
 		for gridLine in auxGridLines:
 			print("--> Removing " + gridLine.Label + " from 3D view.")
 			if "auxGridLine" in gridLine.Label:
-				FreeCAD.ActiveDocument.removeObject(gridLine.Name)
+				App.ActiveDocument.removeObject(gridLine.Name)
 		print("--> End removing auxiliary gridlines from 3D view.")
 
 	def createUserdefGridLinesFromCurrentButtonClicked(self):
 		"""
 		print("--> Start creating user defined grid from 3D model.")
-		allObjects = FreeCAD.ActiveDocument.Objects
+		allObjects = App.ActiveDocument.Objects
 		gridLineListX = []
 		gridLineListY = []
 		gridLineListZ = []
@@ -875,8 +876,13 @@ class BoxTaskPanel():
 		genScript = ""
 
 		#	must be selected FreeCAD object which is child of grid item which gridlines will be draw
+<<<<<<< HEAD:Export for OpenEMS.FCMacro
 		gridObj =  FreeCAD.ActiveDocument.getObjectsByLabel(currItem.text(0))
 		if ("FreeCADSettingItem" in currSetting.type):
+=======
+		gridObj =  App.ActiveDocument.getObjectsByLabel(currItem.text(0))
+		if ("FreeCADSettingItem" in currSetting.type ):
+>>>>>>> e709bc2 (macro repository: introduce launcher .FCMacro for  parent directory):Export for OpenEMS.py
 			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
 				currSetting = currItem.parent().data(0, QtCore.Qt.UserRole)
 			else:
@@ -938,7 +944,7 @@ class BoxTaskPanel():
 	
 				for zAuxGridCoord in zAuxGridCoordList:
 					
-					bbPointsVectors = [FreeCAD.Vector(bbCoords.YMin, bbCoords.XMin, 0), FreeCAD.Vector(bbCoords.YMin, bbCoords.XMax, 0), FreeCAD.Vector(bbCoords.YMax, bbCoords.XMin, 0), FreeCAD.Vector(bbCoords.YMax, bbCoords.XMax, 0)]
+					bbPointsVectors = [App.Vector(bbCoords.YMin, bbCoords.XMin, 0), App.Vector(bbCoords.YMin, bbCoords.XMax, 0), App.Vector(bbCoords.YMax, bbCoords.XMin, 0), App.Vector(bbCoords.YMax, bbCoords.XMax, 0)]
 					angle1 = math.atan2(bbCoords.YMin, bbCoords.XMin) + 2*math.pi % (2*math.pi)
 					angle2 = math.atan2(bbCoords.YMin, bbCoords.XMax) + 2*math.pi % (2*math.pi)
 					angle3 = math.atan2(bbCoords.YMax, bbCoords.XMin) + 2*math.pi % (2*math.pi)
@@ -960,7 +966,7 @@ class BoxTaskPanel():
 						indicesMax = a.argmax()
 						closestLineToCenter = bbPointsVectors[indicesMin] - bbPointsVectors[indicesMax]
 
-						#minRadius = closestLineToCenter.distanceToPoint(FreeCAD.Vector(0,0,0))
+						#minRadius = closestLineToCenter.distanceToPoint(App.Vector(0,0,0))
 						minRadius = abs((bbPointsVectors[indicesMax].x - bbPointsVectors[indicesMin].x)*bbPointsVectors[indicesMin].y - (bbPointsVectors[indicesMax].y - bbPointsVectors[indicesMin].y)*bbPointsVectors[indicesMin].x)/closestLineToCenter.Length
 						maxRadius = max([math.sqrt(bbCoords.XMin**2 + bbCoords.YMin**2), math.sqrt(bbCoords.XMax**2 + bbCoords.YMax**2)])
 
@@ -970,7 +976,7 @@ class BoxTaskPanel():
 							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
-							self.openEMSObj.drawDraftCircle("auxGridLine", FreeCAD.Vector(0,0,zAuxGridCoord), xGridLine)
+							self.openEMSObj.drawDraftCircle("auxGridLine", App.Vector(0,0,zAuxGridCoord), xGridLine)
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):												
@@ -1223,7 +1229,7 @@ class BoxTaskPanel():
 				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
 
 		#update whole document
-		FreeCAD.ActiveDocument.recompute()
+		App.ActiveDocument.recompute()
 		print("---> Aux grid drawing finished. \n" + genScript)
 
 	#######################################################################################################################################################################
@@ -1509,7 +1515,7 @@ f_res = f0;
 						print("#name: " + currSetting.getName())
 						print("#type: " + currSetting.getType())
 
-						objs = FreeCAD.ActiveDocument.Objects
+						objs = App.ActiveDocument.Objects
 						for k in range(item.childCount()):
 							childName = item.child(k).text(0)
 			
@@ -1808,7 +1814,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		treeItemName = settingsItem.name
 		treeItem = QtGui.QTreeWidgetItem([treeItemName])
 
-		itemTypeReg = re.search("__main__.(.*)SettingsItem", str(type(settingsItem)))
+		itemTypeReg = re.search(__name__+".(.*)SettingsItem", str(type(settingsItem)))
 		typeStr = itemTypeReg.group(1)
 		print(typeStr)
 
@@ -2042,7 +2048,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 				objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
 				#getting reference to FreeCAD object
-				freeCadObj =  [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName][0]
+				freeCadObj =  [i for i in App.ActiveDocument.Objects if (i.Label) == childName][0]
 
 				if (freeCadObj.Name.find("Discretized_Edge") > -1):
 					#
@@ -2103,7 +2109,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 					#going through each concrete material items and generate their .stl files
 					 
 					currDir = os.path.dirname(App.ActiveDocument.FileName)
-					partToExport = [i for i in FreeCAD.ActiveDocument.Objects if (i.Label) == childName]
+					partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
 					exportFileName = currDir + "/" + stlModelFileName
 					Mesh.export(partToExport,exportFileName)
 					print("Material object exported as STL into: " + stlModelFileName)
@@ -2141,7 +2147,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			print("#name: " + currSetting.getName())
 			print("#type: " + currSetting.getType())
 
-			objs = FreeCAD.ActiveDocument.Objects
+			objs = App.ActiveDocument.Objects
 			for k in range(item.childCount()):
 				childName = item.child(k).text(0)
 
@@ -2257,7 +2263,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 			genScript += "% LUMPED PARTS " + currSetting.getName() + "\n"
 
 			#traverse through all children item for this particular lumped part settings
-			objs = FreeCAD.ActiveDocument.Objects
+			objs = App.ActiveDocument.Objects
 			objsExport = []
 			for k in range(item.childCount()):
 				childName = item.child(k).text(0)
@@ -2315,7 +2321,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 
 		for [item, currSetting] in items:
 			
-			objs = FreeCAD.ActiveDocument.Objects
+			objs = App.ActiveDocument.Objects
 			for k in range(item.childCount()):
 				childName = item.child(k).text(0)
 
@@ -2760,7 +2766,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 
 		#check if item is type of SettingsItem based on its class name and if yes then add subitems into it
-		reResult = re.search("__main__.(.*)SettingsItem", str(type(rightItem.data(0, QtCore.Qt.UserRole))))
+		reResult = re.search(__name__+".(.*)SettingsItem", str(type(rightItem.data(0, QtCore.Qt.UserRole))))
 		if (reResult):
 			if (reResult.group(1).lower() == 'excitation'):
 				self.displayMessage("Excitation doesn't accept any objects.")
@@ -4113,6 +4119,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 							treeItem.setText(0, itemName)
 
 							#set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
+<<<<<<< HEAD:Export for OpenEMS.FCMacro
 							errorLoadByName = False
 							try:
 								freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(itemName)[0]
@@ -4136,6 +4143,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 							#SAVE settings object into GUI tree item
 							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
+=======
+							freeCadObj = App.ActiveDocument.getObjectsByLabel(itemName)[0]
+>>>>>>> e709bc2 (macro repository: introduce launcher .FCMacro for  parent directory):Export for OpenEMS.py
 							if (freeCadObj.Name.find("Sketch") > -1):
 								treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
 							elif (freeCadObj.Name.find("Discretized_Edge") > -1):
@@ -4263,6 +4273,6 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 # End of PANEL definition
 ####################################################################################################################################################################
  
-panel = BoxTaskPanel()
-#FreeCADGui.Control.showDialog(panel)
-panel.show()
+if __name__ == "__main__":
+	panel = BoxTaskPanel()
+	panel.show()

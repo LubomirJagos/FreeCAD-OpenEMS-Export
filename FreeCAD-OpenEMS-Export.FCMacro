@@ -1,0 +1,30 @@
+#!python3
+
+# FreeCAD-OpenEMS-Export Launcher Macro Instructions:
+# * It is recommended to clone the repository into FreeCAD\Macro sub-folder FreeCAD-OpenEMS-Export
+#   (Windows default Macro directory: C:\Users\<your_user_name>\AppData\Roaming\FreeCAD\Macro)
+# * Copy FreeCAD-OpenEMS-Export.FCMacro and paste it in the parent directory
+#   
+#  Macro
+#  |_FreeCAD-OpenEMS-Export.FCMacro (this file)
+#  |_FreeCAD-OpenEMS-Export (repository directory)
+#     |_FreeCAD OpenEMS Export.py 
+#     ...
+
+from importlib import util
+import os
+import sys
+import inspect
+
+FILE_PATH    = os.path.realpath(__file__)  # full path of this file
+FILE_DIR     = os.path.split(FILE_PATH)[0] # directory of this file 
+FOE_MOD_NAME = "FreeCAD_OpenEMS_Export"
+FOE_MOD_PATH = os.path.join(FILE_DIR, "FreeCAD-OpenEMS-Export\\Export for OpenEMS.py") # construct path to target file w.r.t. to this file
+
+FOE_spec = importlib.util.spec_from_file_location(FOE_MOD_NAME, FOE_MOD_PATH)
+FOE_mod  = importlib.util.module_from_spec(FOE_spec)
+
+FOE_spec.loader.exec_module(FOE_mod)
+
+dlgPanel = FOE_mod.BoxTaskPanel()
+dlgPanel.show()
