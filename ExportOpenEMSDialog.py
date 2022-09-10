@@ -219,6 +219,8 @@ class ExportOpenEMSDialog():
 		####################################################################################################
 		self.form.saveCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.write)
 		self.form.loadCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.read)
+		self.form.saveToFileSettingsButton.clicked.connect(self.simulationSettingsFile.writeToFile)
+		self.form.loadFromFileSettingsButton.clicked.connect(self.simulationSettingsFile.readFromFile)
 
 		#
 		# FILTER LEFT COLUMN ITEMS

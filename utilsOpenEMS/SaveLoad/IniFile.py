@@ -27,6 +27,16 @@ class IniFile:
         self.freeCADHelpers = FreeCADHelpers()
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
 
+    def writeToFile(self):
+        freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
+        filename, filter = QtGui.QFileDialog.getSaveFileName(parent=self.form, caption='Write simulation settings file', dir=freeCadFileDir, filter='*.ini')
+        self.write(filename)
+
+    def readFromFile(self):
+        freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
+        filename, filter = QtGui.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
+        self.read(filename)
+
     #   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____
     #  / ____|  /\ \    / /  ____|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
     # | (___   /  \ \  / /| |__    | (___ | |__     | |     | |    | | |  \| | |  __| (___
@@ -34,11 +44,16 @@ class IniFile:
     #  ____) / ____ \  /  | |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
     # |_____/_/    \_\/   |______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/
     #
-    def write(self):
-        programname = os.path.basename(App.ActiveDocument.FileName)
-        programdir = os.path.dirname(App.ActiveDocument.FileName)
-        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-        outFile = programdir + '/' + programbase + "_settings.ini"
+    def write(self, filename=None):
+
+        if filename is None or filename == False:
+            programname = os.path.basename(App.ActiveDocument.FileName)
+            programdir = os.path.dirname(App.ActiveDocument.FileName)
+            programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+            outFile = programdir + '/' + programbase + "_settings.ini"
+        else:
+            outFile = filename
+
         print("Saving settings to file: " + outFile)
         if self.statusBar is not None:
             self.statusBar.showMessage("Saving settings to file...", 5000)
@@ -241,7 +256,7 @@ class IniFile:
     # | |___| |__| / ____ \| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
     # |______\____/_/    \_\_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/
     #
-    def read(self):
+    def read(self, filename=None):
         print("Load current values from file.")
         if self.statusBar is not None:
             self.statusBar.showMessage("Loading current values from file...", 5000)
@@ -250,19 +265,26 @@ class IniFile:
         # FIRST DELETE ALL GUI TREE WIDGET ITEMS
         self.guiHelpers.deleteAllSettings()
 
-        #
-        # DEBUG: now read hardwired file name with __file__ + "_settings.ini"
-        #
-        programname = os.path.basename(App.ActiveDocument.FileName)
-        programdir = os.path.dirname(App.ActiveDocument.FileName)
-        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-        outFile = programdir + '/' + programbase + "_settings.ini"
+        if filename is None or filename == False:
+            #
+            # DEBUG: now read hardwired file name with __file__ + "_settings.ini"
+            #
+            print("setting default filename...")
+            programname = os.path.basename(App.ActiveDocument.FileName)
+            programdir = os.path.dirname(App.ActiveDocument.FileName)
+            programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+            outFile = programdir + '/' + programbase + "_settings.ini"
+        else:
+            outFile = filename
+
         print("Loading data from file: " + outFile)
         settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)
 
         #
         # LOADING ITEMS FROM SETTINGS FILE
         #
+        failedLoadedFreeCadObjects = []
+
         print("Settings file groups:", end="")
         print(settings.childGroups())
         for settingsGroup in settings.childGroups():
@@ -374,9 +396,15 @@ class IniFile:
                 self.form.PMLzmincells.setValue(simulationSettings.params['PMLzmincells'])
                 self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
 
-                self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
-                self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
-                self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
+                #
+                #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
+                #
+                try:
+                    self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
+                    self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
+                    self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
+                except:
+                    pass
 
                 continue  # there is no tree widget to add item to
 
@@ -412,7 +440,11 @@ class IniFile:
                                 #
                                 #	ERROR - need to be check if this is enough to auto-repair load errors
                                 #
-                                if len(objFreeCadId) > 0:
+                                if objFreeCadId is None:
+                                    failedLoadedFreeCadObjects.append(itemName)
+                                    continue
+
+                                elif len(objFreeCadId) > 0:
                                     freeCadObj = App.ActiveDocument.getObject(objFreeCadId)
                                     treeItem.setText(0, freeCadObj.Label)  # auto repair name, replace it with current name
                                     errorLoadByName = True
@@ -548,7 +580,21 @@ class IniFile:
             # start with expanded treeWidget
             self.form.objectAssignmentRightTreeWidget.expandAll()
 
+        #
+        #   Failed loaded objects name listed in message for user
+        #
+        if len(failedLoadedFreeCadObjects) > 0:
+            missingObjects = ""
+            auxCounter = 0
+            for objName in failedLoadedFreeCadObjects:
+                missingObjects += (", " if auxCounter > 0 else "") + objName
+                auxCounter += 1
+
+            self.guiHelpers.displayMessage(f"Fail to load:\n{missingObjects}")
+
+        #
+        #   Final message from which file were settings loaded
+        #
         self.guiHelpers.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
 
         return
-
