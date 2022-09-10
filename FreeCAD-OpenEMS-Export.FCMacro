@@ -11,7 +11,7 @@
 #     |_FreeCAD OpenEMS Export.py 
 #     ...
 
-from importlib import util
+import importlib
 import os
 import sys
 import inspect
@@ -19,12 +19,12 @@ import inspect
 FILE_PATH    = os.path.realpath(__file__)  # full path of this file
 FILE_DIR     = os.path.split(FILE_PATH)[0] # directory of this file 
 FOE_MOD_NAME = "FreeCAD_OpenEMS_Export"
-FOE_MOD_PATH = os.path.join(FILE_DIR, "FreeCAD-OpenEMS-Export\\Export for OpenEMS.py") # construct path to target file w.r.t. to this file
+FOE_MOD_PATH = os.path.join(FILE_DIR, "FreeCAD-OpenEMS-Export/ExportOpenEMSDialog.py") # construct path to target file w.r.t. to this file
 
 FOE_spec = importlib.util.spec_from_file_location(FOE_MOD_NAME, FOE_MOD_PATH)
 FOE_mod  = importlib.util.module_from_spec(FOE_spec)
 
 FOE_spec.loader.exec_module(FOE_mod)
 
-dlgPanel = FOE_mod.BoxTaskPanel()
+dlgPanel = FOE_mod.ExportOpenEMSDialog()
 dlgPanel.show()
