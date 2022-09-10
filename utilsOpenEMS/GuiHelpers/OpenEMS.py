@@ -1,7 +1,6 @@
 from PySide import QtGui, QtCore
 import FreeCAD as App
-import FreeCADGui, Part, os
-import json
+import FreeCADGui, Part
 
 class OpenEMS:
     def getOpenEMSObjects(self, filterStr=""):

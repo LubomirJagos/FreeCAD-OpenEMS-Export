@@ -8,14 +8,9 @@ import numpy as np
 import collections
 import math
 
-from PySide.QtCore import QSettings
-import json	
-
 #import needed local classes
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
-
-from utilsOpenEMS.OpenEMS import OpenEMS
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
@@ -28,13 +23,16 @@ from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 
-from utilsOpenEMS.FreeCADDocObserver import FreeCADDocObserver
-
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
+from utilsOpenEMS.GuiHelpers.OpenEMS import OpenEMS
+from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
+
+from utilsOpenEMS.SaveLoad.IniFile import IniFile
 
 # UI file (use Qt Designer to modify)
-path_to_ui = "./ui/dialog.ui"
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
+
+path_to_ui = "./ui/dialog.ui"
 
 #
 # Main GUI panel class
@@ -81,9 +79,14 @@ class ExportOpenEMSDialog():
 		self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
 
 		#
+		# INI file object to used for save/load operation
+		#
+		self.simulationSettingsFile = IniFile(self.form, statusBar = self.statusBar)
+
+		#
 		# TOP LEVEL ITEMS / Category Items (excitation, grid, materials, ...)
 		#
-		self.initRightColumnTopLevelItems()
+		self.guiHelpers.initRightColumnTopLevelItems()
 
 		#select first item
 		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
@@ -214,8 +217,8 @@ class ExportOpenEMSDialog():
 		####################################################################################################
 		# GUI SAVE/LOAD from file
 		####################################################################################################
-		self.form.saveCurrentSettingsButton.clicked.connect(self.saveCurrentSettingsButtonClicked)
-		self.form.loadCurrentSettingsButton.clicked.connect(self.loadCurrentSettingsButtonClicked)
+		self.form.saveCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.write)
+		self.form.loadCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.read)
 
 		#
 		# FILTER LEFT COLUMN ITEMS
@@ -805,89 +808,6 @@ class ExportOpenEMSDialog():
 		filterStr = self.form.objectAssignmentFilterLeft.text()
 		self.initLeftColumnTopLevelItems(filterStr)
 
-	def initRightColumnTopLevelItems(self):
-		#
-		# Default items for each section
-		#
-		""" NO DEFAULT ITEMS!
-		topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
-		defaultMaterialItem = QtGui.QTreeWidgetItem(["Material Default"])
-		defaultExcitationItem = QtGui.QTreeWidgetItem(["Excitation Default"])
-		defaultGridItem = QtGui.QTreeWidgetItem(["Grid Default"])
-		defaultPortItem = QtGui.QTreeWidgetItem(["Port Default"])
-		defaultLumpedPartItem = QtGui.QTreeWidgetItem(["LumpedPart Default"])
-		"""
-
-		#
-		# Default items in each subsection have user data FreeCADSttingsItem classes to have just basic information like genereal freecad object
-		#
-		""" NO DEFAULT ITEMS!
-		defaultMaterialItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Material Default"))
-		defaultExcitationItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Excitation Default"))
-		defaultGridItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Grid Default"))
-		defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
-		defaultLumpedPartItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("LumpedPart Default"))
-		"""
-
-		# MATERIALS
-		topItem = QtGui.QTreeWidgetItem(["Material"])
-		topItem.setIcon(0, QtGui.QIcon("./img/material.svg"))
-		#topItem.addChildren([defaultMaterialItem])	#NO DEFAULT ITEM
-		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-		#LuboJ
-		self.MaterialsItem = topItem	#aux item materials item to have some reference here to be sure for future access it
-
-		# EXCITATION
-		topItem = QtGui.QTreeWidgetItem(["Excitation"])
-		topItem.setIcon(0, QtGui.QIcon("./img/excitation.svg"))
-		#topItem.addChildren([defaultExcitationItem])	#NO DEFAULT ITEM
-		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-		# GRID
-		topItem = QtGui.QTreeWidgetItem(["Grid"])
-		topItem.setIcon(0, QtGui.QIcon("./img/grid.svg"))
-		#topItem.addChildren([defaultGridItem])	#NO DEFAULT ITEM
-		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-		# PORTS
-		topItem = QtGui.QTreeWidgetItem(["Port"])
-		topItem.setIcon(0, QtGui.QIcon("./img/port.svg"))
-		#topItem.addChildren([defaultPortItem])	#NO DEFAULT ITEM
-		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-		# LUMPED PART
-		topItem = QtGui.QTreeWidgetItem(["LumpedPart"])
-		topItem.setIcon(0, QtGui.QIcon("./img/lumpedpart.svg"))
-		#topItem.addChildren([defaultLumpedPartItem])	#NO DEFAULT ITEM
-		self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-		return
-
-	""" DUPLICATION
-	def saveCurrentSettingsButtonClicked(self):
-		print("objectAssignmentShowSettingsButtonClicked entered")
-
-		#get reference to each category item
-		allItems = []
-		childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-		for k in range(childCount):
-			allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
-
-		#go through categories children
-		#output their data inside
-		for m in range(len(allItems)):
-			currItem = allItems[m]
-			for k in range(currItem.childCount()):
-				item = currItem.child(k)
-				itemData = item.data(0, QtCore.Qt.UserRole)
-				print("User datatype: " + item.text(0) + " - " + str(type(itemData)))
-				if (itemData):
-					print(itemData.serializeToString())
-
-		return
-	"""
-
 	#
 	#	Get COORDINATION TYPE
 	#		this function traverse priority tree view and return coordination type of the most high item
@@ -926,43 +846,6 @@ class ExportOpenEMSDialog():
 	def getSimParamsF0Str(self):
 		units = self.getSimParamsUnitsStr()
 		return str(self.form.simParamF0NumberInput.value()) + units
-
-	#
-	# Universal function to add items into categories in GUI.
-	#
-	def addSettingsItemGui(self, settingsItem):
-		treeItemName = settingsItem.name
-		treeItem = QtGui.QTreeWidgetItem([treeItemName])
-
-		itemTypeReg = re.search("(.*)SettingsItem", str(settingsItem.__class__.__name__))
-		typeStr = itemTypeReg.group(1)
-
-		treeItem.setIcon(0, QtGui.QIcon("./img/" + typeStr.lower() + ".svg"))
-		treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
-
-		#add item into excitation list
-		treeWidgetRef = {}
-		itemChangedRef = {}
-		if (typeStr.lower() == "excitation"):
-			treeWidgetRef = self.form.excitationSettingsTreeView
-		elif (typeStr.lower() == "port"):
-			treeWidgetRef = self.form.portSettingsTreeView
-		elif (typeStr.lower() == "grid"):
-			treeWidgetRef = self.form.gridSettingsTreeView
-		elif (typeStr.lower() == "material"):
-			treeWidgetRef = self.form.materialSettingsTreeView
-		elif (typeStr.lower() == "lumpedpart"):
-			treeWidgetRef = self.form.lumpedPartTreeView
-		else:
-			print('cannot assign item ' + typeStr)
-			return
-
-		treeWidgetRef.insertTopLevelItem(0, treeItem)
-		treeWidgetRef.setCurrentItem(treeWidgetRef.topLevelItem(0))
-
-		#adding excitation also into OBJCET ASSIGNMENT WINDOW
-		targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
-		targetGroup[0].addChild(treeItem.clone())
 
 	###
 	#	Removing from Priority List
@@ -1104,7 +987,7 @@ class ExportOpenEMSDialog():
 				#
 				# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
 				#
-				self.updateMeshPriorityDisableItems()
+				self.guiHelpers.updateMeshPriorityDisableItems()
 				
 				leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
 				print("Object " + leftItem2.text(0)+ " added into priority list")
@@ -1118,42 +1001,6 @@ class ExportOpenEMSDialog():
 		else:
 				self.guiHelpers.displayMessage("Item must be added into some settings inside category.")
 
-
-	def updateMeshPriorityDisableItems(self):
-		itemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
-		for k in range(itemsCount):
-			priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
-			itemNameFields = priorityItem.text(0).split(',')
-			print("Searching......" + itemNameFields[1])
-			gridParent = self.form.objectAssignmentRightTreeWidget.findItems(itemNameFields[1].strip(), QtCore.Qt.MatchRecursive)
-			if len(gridParent) > 0:
-				print("parent grid found")
-				print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
-				print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
-			#	if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
-			#		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
-			#	else:
-			#		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
-
-		"""
-		# If grid item is set to have priority lines it means it should be highlighted in mesh priority widget
-		# to display it is special generated in script for simulation
-		if rightItem.data(0, QtCore.Qt.UserRole).topPriorityLines:
-			#self.form.meshPriorityTreeView.topLevelItem(0).setFont(0, QtGui.QFont("Courier", weight = QtGui.QFont.Bold))
-			self.form.meshPriorityTreeView.topLevelItem(0).setDisabled(True)
-		else:
-			#self.form.meshPriorityTreeView.topLevelItem(0).setFont(0, QtGui.QFont("Courier", weight = QtGui.QFont.Bold))
-			self.form.meshPriorityTreeView.topLevelItem(0).setDisabled(False)
-		"""
-
-	def removeAllMeshPriorityItems(self):
-		print("START REMOVING MESH PRIORITY WIDGET ITEMS")
-		print("ITEM TO REMOVE: " + str(self.form.meshPriorityTreeView.invisibleRootItem().childCount()))
-
-		priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
-		for k in reversed(range(priorityItemsCount)):
-			print("REMOVING ITEM " + self.form.meshPriorityTreeView.takeTopLevelItem(k).text(0))
-			self.form.meshPriorityTreeView.takeTopLevelItem(k)
 
 	#
 	#	PRIORITY OBJECT LIST move item UP
@@ -1207,22 +1054,6 @@ class ExportOpenEMSDialog():
 				self.guiHelpers.displayMessage("Please change name, item with this name already exists.", True)
 			iterator +=1
 		return isDuplicityName
-
-	#this should erase all items from tree widgets and everything before loading new configuration to everything pass right
-	#	tree widget is just important to erase because all items contains userdata items which contains its configuration and whole
-	#	gui is generating code based on these information, so when items are erased and new ones created everything is ok
-	def deleteAllSettings(self):
-		self.form.objectAssignmentRightTreeWidget.clear()	#init right column as at startup to have default structure cleared
-		self.initRightColumnTopLevelItems()			#rerecreate default simulation structure
-
-		self.form.objectAssignmentPriorityTreeView.clear()	#delete OBJECT ASSIGNMENTS entries
-		self.form.gridSettingsTreeView.clear()			#delete GRID entries
-		self.form.materialSettingsTreeView.clear()		#delete MATERIAL entries
-		self.form.excitationSettingsTreeView.clear()		#delete EXCITATION entries
-		self.form.portSettingsTreeView.clear()			#delete PORT entries
-		self.form.lumpedPartTreeView.clear()			#delete LUMPED PART entries
-		
-		return
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1347,8 +1178,8 @@ class ExportOpenEMSDialog():
 				self.form.auxGridAxis.setEnabled(False)				
 
 			#add item into gui tree views
-			self.addSettingsItemGui(settingsInst)
-			self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+			self.guiHelpers.addSettingsItemGui(settingsInst)
+			self.guiHelpers.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
@@ -1375,7 +1206,7 @@ class ExportOpenEMSDialog():
 		self.form.gridSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		gridGroupItem.parent().removeChild(gridGroupItem)
 
-		self.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+		self.guiHelpers.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
 
 	def gridSettingsUpdateButtonClicked(self):
 		### capture UI settings	
@@ -1391,7 +1222,7 @@ class ExportOpenEMSDialog():
 		# replace oudated copy of settingsInst 
 		self.updateObjectAssignmentRightTreeWidgetItemData("Grid", selectedItems[0].text(0), settingsInst)		
 		# update grid priority table at object assignment panel
-		self.updateMeshPriorityDisableItems() 	
+		self.guiHelpers.updateMeshPriorityDisableItems()
 		
 
 	def gridCoordsTypeChoosed(self):
@@ -1467,7 +1298,7 @@ class ExportOpenEMSDialog():
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.materialSettingsTreeView, materialItem.name)
 
 		if (not isDuplicityName):
-			self.addSettingsItemGui(materialItem)
+			self.guiHelpers.addSettingsItemGui(materialItem)
 			
 
 	def materialSettingsRemoveButtonClicked(self):
@@ -1554,7 +1385,7 @@ class ExportOpenEMSDialog():
 			self.guiHelpers.displayMessage("There could be just one excitation!")
 			return
 		
-		self.addSettingsItemGui(settingsInst)
+		self.guiHelpers.addSettingsItemGui(settingsInst)
 		
 
 	def excitationSettingsRemoveButtonClicked(self):
@@ -1640,7 +1471,7 @@ class ExportOpenEMSDialog():
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name)
 
 		if (not isDuplicityName):
-			self.addSettingsItemGui(settingsInst)
+			self.guiHelpers.addSettingsItemGui(settingsInst)
 			if (settingsInst.type == "nf2ff box"):
 				self.updateNF2FFList()
 
@@ -1734,7 +1565,7 @@ class ExportOpenEMSDialog():
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.lumpedPartTreeView, settingsInst.name)
 		if (not isDuplicityName):
-			self.addSettingsItemGui(settingsInst)
+			self.guiHelpers.addSettingsItemGui(settingsInst)
 			
 
 	def lumpedPartSettingsRemoveButtonClicked(self):
@@ -2004,541 +1835,6 @@ class ExportOpenEMSDialog():
 		if index >= 0:
 			self.form.lumpedPartCUnits.setCurrentIndex(index)
 
-		return
-
-	def setSimlationParamBC(self, comboBox, strValue):
-		index = comboBox.findText(strValue, QtCore.Qt.MatchFixedString)
-		if index >= 0:
-			comboBox.setCurrentIndex(index)
-
-	####################################################################################################################################################################
-	# GUI SAVE/LOAD buttons
-	####################################################################################################################################################################
-
-	#   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____ 
-	#  / ____|  /\ \    / /  ____|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | (___   /  \ \  / /| |__    | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	#  \___ \ / /\ \ \/ / |  __|    \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	#  ____) / ____ \  /  | |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	# |_____/_/    \_\/   |______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#
-	def saveCurrentSettingsButtonClicked(self):
-		programname = os.path.basename(App.ActiveDocument.FileName)
-		programdir = os.path.dirname(App.ActiveDocument.FileName)
-		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		outFile = programdir + '/' + programbase + "_settings.ini"
-		print("Saving settings to file: " + outFile)
-		if self.statusBar is not None:
-			self.statusBar.showMessage("Saving settings to file...", 5000)
-			QtGui.QApplication.processEvents()
-
-		if (os.path.exists(outFile)):
-			os.remove(outFile)	# Remove outFile in case an old version exists.
-
-		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
-
-		# SAVE MATERIAL SETTINGS
-		
-		materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
-		for k in range(len(materialList)):
-			print("Save new MATERIAL constants into file: ")
-			print(materialList[k].constants)
-	
-			settings.beginGroup("MATERIAL-" + materialList[k].getName())
-			settings.setValue("type", materialList[k].type)
-			settings.setValue("material_epsilon", materialList[k].constants['epsilon'])
-			settings.setValue("material_mue", materialList[k].constants['mue'])
-			settings.setValue("material_kappa", materialList[k].constants['kappa'])
-			settings.setValue("material_sigma", materialList[k].constants['sigma'])
-			settings.endGroup()
-
-		# SAVE GRID SETTINGS
-		
-		gridList = self.openEMSObj.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
-		for k in range(len(gridList)):
-			print("Save new GRID constants into file: " + gridList[k].getName())
-	
-			settings.beginGroup("GRID-" + gridList[k].getName())
-			settings.setValue("coordsType", gridList[k].coordsType)
-			settings.setValue("type", gridList[k].type)
-			settings.setValue("units", gridList[k].units)
-			settings.setValue("xenabled", gridList[k].xenabled)
-			settings.setValue("yenabled", gridList[k].yenabled)
-			settings.setValue("zenabled", gridList[k].zenabled)
-			settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
-			settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
-			settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
-			settings.setValue("generateLinesInside", gridList[k].generateLinesInside)
-			settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
-			settings.endGroup()
-
-		# SAVE EXCITATION
-		
-		excitationList = self.openEMSObj.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
-		for k in range(len(excitationList)):
-			print("Save new EXCITATION constants into file: " + excitationList[k].getName())
-	
-			settings.beginGroup("EXCITATION-" + excitationList[k].getName())
-			settings.setValue("type", excitationList[k].type)
-			settings.setValue("sinusodial", json.dumps(excitationList[k].sinusodial))
-			settings.setValue("gaussian", json.dumps(excitationList[k].gaussian))
-			settings.setValue("custom", json.dumps(excitationList[k].custom))
-			settings.setValue("units", excitationList[k].units)
-			settings.endGroup()
-
-		# SAVE PORT SETTINGS
-		
-		portList = self.openEMSObj.getAllTreeWidgetItems(self.form.portSettingsTreeView)
-		for k in range(len(portList)):
-			print("Save new PORT constants into file: " + portList[k].getName())
-	
-			settings.beginGroup("PORT-" + portList[k].getName())
-			settings.setValue("type", portList[k].type)
-			settings.setValue("R", portList[k].R)
-			settings.setValue("RUnits", portList[k].RUnits)
-			settings.setValue("isActive", portList[k].isActive)
-			settings.setValue("direction", portList[k].direction)
-
-			if (portList[k].type == "circular waveguide"):
-				settings.setValue("modeName", portList[k].modeName)
-				settings.setValue("polarizationAngle", portList[k].polarizationAngle)
-				settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
-
-			settings.endGroup()
-
-		# SAVE SIMULATION PARAMS
-		
-		simulationSettings = SimulationSettingsItem("Hardwired Name 1")
-		
-		simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
-		simulationSettings.params['min_decrement']  = self.form.simParamsMinDecrement.value()
-		
-		simulationSettings.params['generateJustPreview'] = self.form.generateJustPreviewCheckbox.isChecked()
-		simulationSettings.params['generateDebugPEC']    = self.form.generateDebugPECCheckbox.isChecked()
-		simulationSettings.params['mFileExecCommand']    = self.form.octaveExecCommandList.currentText()
-		simulationSettings.params['base_length_unit_m']  = self.form.simParamsDeltaUnitList.currentText()
-		
-		simulationSettings.params['BCxmin'] = self.form.BCxmin.currentText()
-		simulationSettings.params['BCxmax'] = self.form.BCxmax.currentText()
-		simulationSettings.params['BCymin'] = self.form.BCymin.currentText()
-		simulationSettings.params['BCymax'] = self.form.BCymax.currentText()
-		simulationSettings.params['BCzmin'] = self.form.BCzmin.currentText()
-		simulationSettings.params['BCzmax'] = self.form.BCzmax.currentText()
-		simulationSettings.params['PMLxmincells'] = self.form.PMLxmincells.value()
-		simulationSettings.params['PMLxmaxcells'] = self.form.PMLxmaxcells.value()
-		simulationSettings.params['PMLymincells'] = self.form.PMLymincells.value()
-		simulationSettings.params['PMLymaxcells'] = self.form.PMLymaxcells.value()
-		simulationSettings.params['PMLzmincells'] = self.form.PMLzmincells.value()
-		simulationSettings.params['PMLzmaxcells'] = self.form.PMLzmaxcells.value()
-		simulationSettings.params['min_gridspacing_x'] = self.form.genParamMinGridSpacingX.value()
-		simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
-		simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
-
-		settings.beginGroup("SIMULATION-" + simulationSettings.name)
-		settings.setValue("name", simulationSettings.name)
-		settings.setValue("params", json.dumps(simulationSettings.params))
-		settings.endGroup()
-
-		#SAVE OBJECT ASSIGNMENTS	
-		
-		topItemsCount = self.form.objectAssignmentRightTreeWidget.topLevelItemCount()
-		objCounter = 0
-		for k in range(topItemsCount):
-			topItem = self.form.objectAssignmentRightTreeWidget.topLevelItem(k)
-			topItemName = topItem.text(0)
-			print("---> topItem: " + topItem.text(0))
-			for m in range(topItem.childCount()):
-				childItem = topItem.child(m)
-				childItemName = childItem.text(0)
-				print("Save new OBJECT ASSIGNMENTS for category -> settings profile: ")
-				print("\t" + topItemName + " --> " + childItemName)
-				for n in range(childItem.childCount()):
-					objItem = childItem.child(n)
-					objItemName = objItem.text(0)
-
-					#get unique FreeCAD internal item ID saved in FreeCADSettingsItem
-					objItemId = objItem.data(0, QtCore.Qt.UserRole).getFreeCadId()
-	
-					settings.beginGroup("_OBJECT" + str(objCounter) + "-" + objItemName)
-					settings.setValue("type", "FreeCadObj")
-					settings.setValue("parent", childItemName)
-					settings.setValue("category", topItemName)
-					settings.setValue("freeCadId", objItemId)
-					settings.endGroup()
-
-					objCounter += 1
-					
-		#SAVE LUMPED PART SETTINGS
-
-		lumpedPartList = self.openEMSObj.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
-		print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
-		for k in range(len(lumpedPartList)):
-			print("Saving new LUMPED PART " + lumpedPartList[k].getName())
-	
-			settings.beginGroup("LUMPEDPART-" + lumpedPartList[k].getName())
-			settings.setValue("params", json.dumps(lumpedPartList[k].params))
-			settings.endGroup()
-
-		#SAVE PRIORITY OBJECT LIST SETTINGS
-
-		settings.beginGroup("PRIORITYLIST-OBJECTS")
-		priorityObjList = self.form.objectAssignmentPriorityTreeView
-
-		print("Priority list contains " + str(priorityObjList.topLevelItemCount()) + " items.")
-		for k in range(priorityObjList.topLevelItemCount()):
-			priorityObjName = priorityObjList.topLevelItem(k).text(0)
-			print("Saving new PRIORITY for " + priorityObjName)	
-			settings.setValue(priorityObjName, str(k))
-		settings.endGroup()
-
-		#SAVE MESH PRIORITY
-
-		settings.beginGroup("PRIORITYLIST-MESH")
-		priorityMeshObjList = self.form.meshPriorityTreeView
-
-		print("Priority list contains " + str(priorityMeshObjList.topLevelItemCount()) + " items.")
-		for k in range(priorityMeshObjList.topLevelItemCount()):
-			priorityMeshObjName = priorityMeshObjList.topLevelItem(k).text(0)
-			print("Saving new MESH PRIORITY for " + priorityMeshObjName)	
-			settings.setValue(priorityMeshObjName, str(k))
-		settings.endGroup()
-
-
-		#SAVE POSTPROCESSING OPTIONS
-
-		settings.beginGroup("POSTPROCESSING-DefaultName")
-		settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
-		settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
-		settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
-		settings.setValue("nf2ffThetaStop", self.form.portNf2ffThetaStop.value())
-		settings.setValue("nf2ffThetaStep", self.form.portNf2ffThetaStep.value())
-		settings.setValue("nf2ffPhiStart", self.form.portNf2ffPhiStart.value())
-		settings.setValue("nf2ffPhiStop", self.form.portNf2ffPhiStop.value())
-		settings.setValue("nf2ffPhiStep", self.form.portNf2ffPhiStep.value())
-		settings.endGroup()
-
-
-		#sys.exit()  # prevents second call
-		print("Current settings saved to file: " + outFile)
-		self.guiHelpers.displayMessage("Settings saved to file: " + outFile, forceModal=False)
-		return
-
-
-	#  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
-	# | |    / __ \   /\   |  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | |   | |  | | /  \  | |  | | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	# | |   | |  | |/ /\ \ | |  | |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	# | |___| |__| / ____ \| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	# |______\____/_/    \_\_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#                                                                                       
-	def loadCurrentSettingsButtonClicked(self):
-		print("Load current values from file.")
-		if self.statusBar is not None:
-			self.statusBar.showMessage("Loading current values from file...", 5000)
-			QtGui.QApplication.processEvents()
-
-		#FIRST DELETE ALL GUI TREE WIDGET ITEMS
-		self.deleteAllSettings()
-
-		#
-		# DEBUG: now read hardwired file name with __file__ + "_settings.ini"
-		#
-		programname = os.path.basename(App.ActiveDocument.FileName)
-		programdir = os.path.dirname(App.ActiveDocument.FileName)
-		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		outFile = programdir + '/' + programbase + "_settings.ini"
-		print("Loading data from file: " + outFile)
-		settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)    
-
-		#
-		# LOADING ITEMS FROM SETTINGS FILE
-		#
-		print("Settings file groups:", end="")
-		print(settings.childGroups())
-		for settingsGroup in settings.childGroups():
-
-			#extract category name from ini name
-			itemNameReg = re.search("-(.*)", settingsGroup)
-			itemName = itemNameReg.group(1)
-
-			if (re.compile("EXCITATION").search(settingsGroup)):
-				print("Excitation item settings found.")
-				settings.beginGroup(settingsGroup)
-				categorySettings = ExcitationSettingsItem()
-				categorySettings.name = itemName
-				categorySettings.type = settings.value('type')
-				categorySettings.sinusodial = json.loads(settings.value('sinusodial'))
-				categorySettings.gaussian = json.loads(settings.value('gaussian'))
-				categorySettings.custom = json.loads(settings.value('custom'))
-				categorySettings.units = settings.value('units')
-				settings.endGroup()
-
-			elif (re.compile("GRID").search(settingsGroup)):
-				print("GRID item settings found.")
-				settings.beginGroup(settingsGroup)
-				categorySettings = GridSettingsItem()
-				categorySettings.name = itemName
-				categorySettings.coordsType = settings.value('coordsType')
-				categorySettings.type = settings.value('type')
-				categorySettings.xenabled = _bool(settings.value('xenabled'))
-				categorySettings.yenabled = _bool(settings.value('yenabled'))
-				categorySettings.zenabled = _bool(settings.value('zenabled'))
-				categorySettings.units = settings.value('units')
-				categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
-				categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
-				categorySettings.userDefined = json.loads(settings.value('userDefined'))
-				categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
-				categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
-				settings.endGroup()
-
-			elif (re.compile("PORT").search(settingsGroup)):
-				print("PORT item settings found.")
-				settings.beginGroup(settingsGroup)
-				categorySettings = PortSettingsItem()
-				categorySettings.name = itemName
-				categorySettings.type = settings.value('type')
-				categorySettings.R = settings.value('R')
-				categorySettings.RUnits = settings.value('RUnits')
-				categorySettings.isActive = _bool(settings.value('isActive'))
-				categorySettings.direction = settings.value('direction')
-
-				if (categorySettings.type == "circular waveguide"):
-					categorySettings.modeName = settings.value('modeName')
-					categorySettings.polarizationAngle = settings.value('polarizationAngle')
-					categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
-				elif (categorySettings.type == "nf2ff box"):
-					#
-					#	Add nf2ff box item into list of possible object in postprocessing tab
-					#
-					self.form.portNf2ffObjectList.addItem(categorySettings.name)
-
-
-				settings.endGroup()
-
-			elif (re.compile("MATERIAL").search(settingsGroup)):
-				print("Material item settings found.")
-				settings.beginGroup(settingsGroup)
-				categorySettings = MaterialSettingsItem()
-				categorySettings.name = itemName
-				categorySettings.type = settings.value('type')
-				categorySettings.constants = {}
-				categorySettings.constants['epsilon'] = settings.value('material_epsilon')
-				categorySettings.constants['mue'] = settings.value('material_mue')
-				categorySettings.constants['kappa'] = settings.value('material_kappa')
-				categorySettings.constants['sigma'] = settings.value('material_sigma')
-				settings.endGroup()
-
-			elif (re.compile("SIMULATION").search(settingsGroup)):
-				print("Simulation params item settings found.")
-				settings.beginGroup(settingsGroup)
-				simulationSettings = SimulationSettingsItem()
-				simulationSettings.name = itemName
-				simulationSettings.type = settings.value('type')
-				simulationSettings.params = json.loads(settings.value('params'))
-				print('SIMULATION PARAMS:')
-				print(simulationSettings.params)
-				settings.endGroup()
-
-				self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
-				self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
-				self.form.generateJustPreviewCheckbox.setCheckState(
-					QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview', False) else QtCore.Qt.Unchecked)
-				self.form.generateDebugPECCheckbox.setCheckState(
-					QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC'   , False) else QtCore.Qt.Unchecked)
-				self.form.octaveExecCommandList.setCurrentText(
-					simulationSettings.params.get("mFileExecCommand", self.form.octaveExecCommandList.itemData(0)))
-				self.form.simParamsDeltaUnitList.setCurrentText(
-					simulationSettings.params.get("base_length_unit_m", self.form.simParamsDeltaUnitList.itemData(0))) 
-
-				self.setSimlationParamBC(self.form.BCxmin, simulationSettings.params['BCxmin'])
-				self.setSimlationParamBC(self.form.BCxmax, simulationSettings.params['BCxmax'])
-				self.setSimlationParamBC(self.form.BCymin, simulationSettings.params['BCymin'])
-				self.setSimlationParamBC(self.form.BCymax, simulationSettings.params['BCymax'])
-				self.setSimlationParamBC(self.form.BCzmin, simulationSettings.params['BCzmin'])
-				self.setSimlationParamBC(self.form.BCzmax, simulationSettings.params['BCzmax'])
-
-				self.form.PMLxmincells.setValue(simulationSettings.params['PMLxmincells'])
-				self.form.PMLxmaxcells.setValue(simulationSettings.params['PMLxmaxcells'])
-				self.form.PMLymincells.setValue(simulationSettings.params['PMLymincells'])
-				self.form.PMLymaxcells.setValue(simulationSettings.params['PMLymaxcells'])
-				self.form.PMLzmincells.setValue(simulationSettings.params['PMLzmincells'])
-				self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
-
-				self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
-				self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
-				self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
-
-				continue	#there is no tree widget to add item to
-
-			elif (re.compile("_OBJECT").search(settingsGroup)):
-				print("FreeCadObject item settings found.")
-				settings.beginGroup(settingsGroup)
-				objParent = settings.value('parent')
-				objCategory = settings.value('category')
-				objFreeCadId = settings.value('freeCadId')
-				print("\t" + objParent)
-				print("\t" + objCategory)
-				settings.endGroup()
-
-				#adding excitation also into OBJECT ASSIGNMENT WINDOW
-				targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(objCategory, QtCore.Qt.MatchExactly)
-				print("\t" + str(targetGroup))
-				for k in range(len(targetGroup)):					
-					print("\t" + targetGroup[k].text(0))
-					for m in range(targetGroup[k].childCount()):
-						print("\t" + targetGroup[k].child(m).text(0))
-						if (targetGroup[k].child(m).text(0) == objParent):
-							settingsItem = FreeCADSettingsItem(itemName)
-
-							#treeItem = QtGui.QTreeWidgetItem([itemName])
-							treeItem = QtGui.QTreeWidgetItem()
-							treeItem.setText(0, itemName)
-
-							#set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
-							errorLoadByName = False
-							try:
-								freeCadObj = App.ActiveDocument.getObjectsByLabel(itemName)[0]
-							except:
-								#
-								#	ERROR - need to be check if this is enough to auto-repair load errors
-								#
-								if len(objFreeCadId) > 0:
-									freeCadObj = App.ActiveDocument.getObject(objFreeCadId)
-									treeItem.setText(0, freeCadObj.Label)	#auto repair name, replace it with current name
-									errorLoadByName = True
-
-							#
-							#	ERROR - here needs to be checked if freeCadObj was even found based on its Label if no try looking based on its ID from file,
-							#	need to do this this way due backward compatibility
-							#		- also FreeCAD should have set uniqe label for objects in Preferences
-							#
-							#set unique FreeCAD inside name as ID
-							settingsItem.setFreeCadId(freeCadObj.Name)
-
-							#SAVE settings object into GUI tree item
-							treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
-
-							if (freeCadObj.Name.find("Sketch") > -1):
-								treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
-							elif (freeCadObj.Name.find("Discretized_Edge") > -1):
-								treeItem.setIcon(0, QtGui.QIcon("./img/curve.svg")) 
-							else:
-								treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
-
-							#
-							#	THERE IS MISMATCH BETWEEN NAME STORED IN IN FILE AND FREECAD NAME
-							#
-							if errorLoadByName:
-								treeItem.setIcon(0, QtGui.QIcon("./img/errorLoadObject.svg"))
-
-							targetGroup[k].child(m).addChild(treeItem)
-							print("\tItem added")
-							
-				continue #items is already added into tree widget nothing more needed
-
-			elif (re.compile("LUMPEDPART").search(settingsGroup)):
-				print("LumpedPart item settings found.")
-				settings.beginGroup(settingsGroup)
-				categorySettings = LumpedPartSettingsItem()
-				categorySettings.name = itemName
-				categorySettings.params = json.loads(settings.value('params'))
-				settings.endGroup()
-
-			elif (re.compile("PRIORITYLIST-OBJECTS").search(settingsGroup)):
-				print("PriorityList group settings found.")
-
-				#start reading priority objects configuration in ini file
-				settings.beginGroup(settingsGroup)
-
-				#add each priority item from ini file into GUI tree widget
-				topItemsList = [0 for i in range(len(settings.childKeys()))]
-				print("Priority objects list array initialized with size " +  str(len(topItemsList)))
-				for prioritySettingsKey in settings.childKeys():
-					prioritySettingsOrder = int(settings.value(prioritySettingsKey))
-					prioritySettingsType = prioritySettingsKey.split(", ")
-					print("Priority list adding item " + prioritySettingsKey)
-
-					#adding item into priority list
-					topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
-					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
-					topItemsList[prioritySettingsOrder] = topItem
-
-				self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0,topItemsList)
-
-				settings.endGroup()
-				continue
-
-			elif (re.compile("PRIORITYLIST-MESH").search(settingsGroup)):
-				print("PriorityList mesh group settings found.")
-
-				#clear all items from mesh tree widget
-				self.removeAllMeshPriorityItems()
-
-				#start reading priority objects configuration in ini file
-				settings.beginGroup(settingsGroup)
-
-				#add each priority item from ini file into GUI tree widget
-				topItemsList = [0 for i in range(len(settings.childKeys()))]
-				print("Priority list array initialized with size " +  str(len(topItemsList)))
-				for prioritySettingsKey in settings.childKeys():
-					prioritySettingsOrder = int(settings.value(prioritySettingsKey))
-					prioritySettingsType = prioritySettingsKey.split(", ")
-					print("Priority list adding item " + prioritySettingsKey)
-
-					#adding item into priority list
-					topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
-					topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-					topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
-					topItemsList[prioritySettingsOrder] = topItem
-
-				self.form.meshPriorityTreeView.insertTopLevelItems(0,topItemsList)
-
-				settings.endGroup()
-
-				#
-				# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
-				#
-				self.updateMeshPriorityDisableItems()
-
-				continue
-
-			elif (re.compile("POSTPROCESSING").search(settingsGroup)):
-				print("POSTPROCESSING item settings found.")
-				settings.beginGroup(settingsGroup)
-				#
-				#	In case of error just continue and do nothing to correct values
-				#
-				try:
-					index = self.form.portNf2ffObjectList.findText(settings.value("nf2ffObject"), QtCore.Qt.MatchFixedString)
-					if index >= 0:
-						 self.form.portNf2ffObjectList.setCurrentIndex(index)
-						 
-					self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreq"))
-					self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
-					self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
-					self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
-					self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
-					self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
-					self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
-				except:
-					pass
-
-				settings.endGroup()
-				continue
-
-			else:
-				#if no item recognized then conitnue next run, at the end there is adding into object assignment tab
-				#and if category is not known it's need to goes for another one
-				continue
-
-			# add all items
-			self.addSettingsItemGui(categorySettings)
-			# start with expanded treeWidget
-			self.form.objectAssignmentRightTreeWidget.expandAll()
-
-		self.guiHelpers.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
-		
 		return
 
 ####################################################################################################################################################################
