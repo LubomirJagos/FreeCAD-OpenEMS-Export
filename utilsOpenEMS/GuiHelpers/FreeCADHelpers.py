@@ -2,7 +2,7 @@ from PySide import QtGui, QtCore
 import FreeCAD as App
 import FreeCADGui, Part
 
-class OpenEMS:
+class FreeCADHelpers:
     def getOpenEMSObjects(self, filterStr=""):
         currentObjects = App.ActiveDocument.Objects
 

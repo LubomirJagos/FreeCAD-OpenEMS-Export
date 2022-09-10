@@ -24,7 +24,7 @@ from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
-from utilsOpenEMS.GuiHelpers.OpenEMS import OpenEMS
+from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
 from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
 
 from utilsOpenEMS.SaveLoad.IniFile import IniFile
@@ -50,7 +50,7 @@ class ExportOpenEMSDialog():
 		#
 		# LOCAL OPENEMS OBJECT
 		#
-		self.openEMSObj = OpenEMS()
+		self.freeCADHelpers = FreeCADHelpers()
 
 		#
 		# Change current path to script file folder
@@ -359,7 +359,7 @@ class ExportOpenEMSDialog():
 		print(currItemLabel)
 		if (currItemLabel):
 			FreeCADGui.Selection.clearSelection()
-			self.openEMSObj.selectObjectByLabel(currItemLabel)
+			self.freeCADHelpers.selectObjectByLabel(currItemLabel)
 
 			
 	def objectAssignmentRightTreeWidgetContextClicked(self, event):
@@ -393,7 +393,7 @@ class ExportOpenEMSDialog():
 		#
 		#	Drawing auxiliary object grid for meshing.
 		#
-		#		example how to draw line for grid: self.openEMSObj.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
+		#		example how to draw line for grid: self.freeCADHelpers.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
 
 		currSetting = currItem.data(0, QtCore.Qt.UserRole)
 		genScript = ""
@@ -416,7 +416,7 @@ class ExportOpenEMSDialog():
 		print("Enabled coords: " + str(currSetting.xenabled) + " " + str(currSetting.yenabled) + " " + str(currSetting.zenabled))
 
 		#getting model boundaries to draw gridlines properly
-		modelMinX, modelMinY, modelMinZ, modelMaxX, modelMaxY, modelMaxZ = self.openEMSObj.getModelBoundaryBox(self.form.objectAssignmentRightTreeWidget)
+		modelMinX, modelMinY, modelMinZ, modelMaxX, modelMaxY, modelMaxZ = self.freeCADHelpers.getModelBoundaryBox(self.form.objectAssignmentRightTreeWidget)
 
 		#don't know why I put here this axis list code snippet probably to include case if there are some auxiliary axis but now seems useless
 		#THERE IS QUESTION IN WHICH PLANE GRID SHOULD BE DRAWN IF in XY, XZ or YZ
@@ -494,7 +494,7 @@ class ExportOpenEMSDialog():
 							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
-							self.openEMSObj.drawDraftCircle("auxGridLine", App.Vector(0,0,zAuxGridCoord), xGridLine)
+							self.freeCADHelpers.drawDraftCircle("auxGridLine", App.Vector(0,0,zAuxGridCoord), xGridLine)
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):												
@@ -506,7 +506,7 @@ class ExportOpenEMSDialog():
 						print(ylines)
 
 						for yGridLine in ylines:
-							self.openEMSObj.drawDraftLine("auxGridLine", [0, 0, zAuxGridCoord], [math.cos(yGridLine)*radius, math.sin(yGridLine)*radius, zAuxGridCoord])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [0, 0, zAuxGridCoord], [math.cos(yGridLine)*radius, math.sin(yGridLine)*radius, zAuxGridCoord])
 
 		elif (currSetting.coordsType == 'rectangular' and currGridAxis == "z"):
 
@@ -534,16 +534,16 @@ class ExportOpenEMSDialog():
 						if float(currSetting.getXYZ(refUnit)['x']) !=  0:
 							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
-								#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
+								#self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
 						if float(currSetting.getXYZ(refUnit)['y']) != 0:
 							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
-								#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+								#self.freeCADHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -571,8 +571,8 @@ class ExportOpenEMSDialog():
 							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
-							#self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
+							#self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
@@ -582,8 +582,8 @@ class ExportOpenEMSDialog():
 							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 
 						for yGridLine in ylines:
-							#self.openEMSObj.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+							#self.freeCADHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -616,14 +616,14 @@ class ExportOpenEMSDialog():
 						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
 							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
-								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
 						if float(currSetting.getXYZ(refUnit)['y']) != 0:
 							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
-								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -651,7 +651,7 @@ class ExportOpenEMSDialog():
 							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 						
 						for zGridLine in zlines:
-							self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
@@ -661,7 +661,7 @@ class ExportOpenEMSDialog():
 							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 						
 						for yGridLine in ylines:
-								self.openEMSObj.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -694,14 +694,14 @@ class ExportOpenEMSDialog():
 						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
 							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
-								self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
 						if float(currSetting.getXYZ(refUnit)['x']) != 0:
 							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
-								self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+								self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -729,7 +729,7 @@ class ExportOpenEMSDialog():
 							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 
 						for zGridLine in zlines:
-							self.openEMSObj.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
@@ -739,7 +739,7 @@ class ExportOpenEMSDialog():
 							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 
 						for xGridLine in xlines:
-							self.openEMSObj.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+							self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -757,7 +757,7 @@ class ExportOpenEMSDialog():
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
 
-		items = self.openEMSObj.getOpenEMSObjects(filterStr)
+		items = self.freeCADHelpers.getOpenEMSObjects(filterStr)
 		treeItems = []
 		for i in items:
 			print("openEMS object to export:" + i.Label)

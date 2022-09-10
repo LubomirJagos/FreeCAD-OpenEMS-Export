@@ -6,7 +6,7 @@ from PySide import QtGui, QtCore
 import FreeCAD as App
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
-from utilsOpenEMS.GuiHelpers.OpenEMS import OpenEMS
+from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
@@ -24,7 +24,7 @@ class IniFile:
     def __init__(self, form, statusBar = None):
         self.form = form
         self.statusBar = statusBar
-        self.openEMSObj = OpenEMS()
+        self.freeCADHelpers = FreeCADHelpers()
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
 
     #   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____
@@ -51,7 +51,7 @@ class IniFile:
 
         # SAVE MATERIAL SETTINGS
 
-        materialList = self.openEMSObj.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
+        materialList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
         for k in range(len(materialList)):
             print("Save new MATERIAL constants into file: ")
             print(materialList[k].constants)
@@ -66,7 +66,7 @@ class IniFile:
 
         # SAVE GRID SETTINGS
 
-        gridList = self.openEMSObj.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
+        gridList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
         for k in range(len(gridList)):
             print("Save new GRID constants into file: " + gridList[k].getName())
 
@@ -86,7 +86,7 @@ class IniFile:
 
         # SAVE EXCITATION
 
-        excitationList = self.openEMSObj.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
+        excitationList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
         for k in range(len(excitationList)):
             print("Save new EXCITATION constants into file: " + excitationList[k].getName())
 
@@ -100,7 +100,7 @@ class IniFile:
 
         # SAVE PORT SETTINGS
 
-        portList = self.openEMSObj.getAllTreeWidgetItems(self.form.portSettingsTreeView)
+        portList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.portSettingsTreeView)
         for k in range(len(portList)):
             print("Save new PORT constants into file: " + portList[k].getName())
 
@@ -182,7 +182,7 @@ class IniFile:
 
         # SAVE LUMPED PART SETTINGS
 
-        lumpedPartList = self.openEMSObj.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
+        lumpedPartList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
         print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
         for k in range(len(lumpedPartList)):
             print("Saving new LUMPED PART " + lumpedPartList[k].getName())
@@ -471,7 +471,7 @@ class IniFile:
                     # adding item into priority list
                     topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-                    topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
+                    topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
                 self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0, topItemsList)
@@ -499,7 +499,7 @@ class IniFile:
                     # adding item into priority list
                     topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-                    topItem.setIcon(0, self.openEMSObj.getIconByCategory(prioritySettingsType))
+                    topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
                 self.form.meshPriorityTreeView.insertTopLevelItems(0, topItemsList)
