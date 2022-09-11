@@ -1088,6 +1088,14 @@ f_res = f0;
                                     # increase nf2ff port counter
                                     genNF2FFBoxCounter += 1
 
+        thetaStart = str(self.form.portNf2ffThetaStart.value())
+        thetaStop = str(self.form.portNf2ffThetaStop.value())
+        thetaStep = str(self.form.portNf2ffThetaStep.value())
+
+        phiStart = str(self.form.portNf2ffPhiStart.value())
+        phiStop = str(self.form.portNf2ffPhiStop.value())
+        phiStep = str(self.form.portNf2ffPhiStep.value())
+
         genScript += """
 %% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % get accepted antenna power at frequency f0
@@ -1097,8 +1105,13 @@ f_res = f0;
 P_in_0 = interp1(freq, port{1}.P_acc, f0);
 
 % calculate the far field at phi=0 degrees and at phi=90 degrees
-thetaRange = unique([0:0.5:90 90:180]);
-phiRange = (0:2:360) - 180;
+
+%thetaRange = unique([0:0.5:90 90:180]);
+thetaRange = unique([""" + thetaStart + """:""" + thetaStep + """:""" + thetaStop + """]);
+
+%phiRange = (0:2:360) - 180;
+phiRange = (""" + phiStart + """:""" + phiStep + """:""" + phiStop + """) - 180;
+
 disp( 'calculating the 3D far field...' );
 
 %

@@ -1,6 +1,8 @@
+import re
 from PySide import QtGui, QtCore
 import FreeCAD as App
 import FreeCADGui, Part
+import Draft
 
 class FreeCADHelpers:
     def getOpenEMSObjects(self, filterStr=""):

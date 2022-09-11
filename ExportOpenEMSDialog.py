@@ -226,7 +226,8 @@ class ExportOpenEMSDialog():
 		# FILTER LEFT COLUMN ITEMS
 		#
 		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
-		
+		self.form.objectAssignmentFilterResetLeftButton.clicked.connect(self.objectAssignmentFilterResetLeftButtonClicked)
+
 		# MinDecrement changed 
 		self.form.simParamsMinDecrement.valueChanged.connect(self.simParamsMinDecrementValueChanged)
 		
@@ -810,6 +811,10 @@ class ExportOpenEMSDialog():
 		filterStr = self.form.objectAssignmentFilterLeft.text()
 		self.initLeftColumnTopLevelItems(filterStr)
 
+	def objectAssignmentFilterResetLeftButtonClicked(self):
+		print("Filter reset left column")
+		self.initLeftColumnTopLevelItems("")
+
 	#
 	#	Get COORDINATION TYPE
 	#		this function traverse priority tree view and return coordination type of the most high item
@@ -848,34 +853,6 @@ class ExportOpenEMSDialog():
 	def getSimParamsF0Str(self):
 		units = self.getSimParamsUnitsStr()
 		return str(self.form.simParamF0NumberInput.value()) + units
-
-	###
-	#	Removing from Priority List
-	###
-	def removePriorityName(self, priorityName):
-		print("Removing from oibjects priority list tree view:" + priorityName)
-		priorityItemRemoved = True
-		while priorityItemRemoved:
-			priorityItemRemoved = False
-
-			#search item in priority list for OBJECTS
-			priorityItemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
-			for k in range(priorityItemsCount):
-				priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
-				if priorityName in priorityItem.text(0):
-					self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
-					priorityItemRemoved = True
-					break
-
-			#search item also in priority list for MESH
-			if not priorityItemRemoved:
-				priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
-				for k in range(priorityItemsCount):
-					priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
-					if priorityName in priorityItem.text(0):
-						self.form.meshPriorityTreeView.takeTopLevelItem(k)
-						priorityItemRemoved = True
-						break
 
 	def show(self):
 		self.form.show()
@@ -1202,7 +1179,7 @@ class ExportOpenEMSDialog():
 
 		#	Remove from Priority List
 		priorityName = gridGroupItem.parent().text(0) + ", " + gridGroupItem.text(0);
-		self.removePriorityName(priorityName)
+		self.guiHelpers.removePriorityName(priorityName)
 
 		#	Remove from Assigned Object
 		self.form.gridSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
@@ -1319,7 +1296,7 @@ class ExportOpenEMSDialog():
 
 		# Remove from Priority list
 		priorityName = materialGroupItem.parent().text(0) + ", " + materialGroupItem.text(0);
-		self.removePriorityName(priorityName)
+		self.guiHelpers.removePriorityName(priorityName)
 		
 		# Remove from Materials list
 		self.form.materialSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
@@ -1494,7 +1471,7 @@ class ExportOpenEMSDialog():
 
 		# Removing from Priority List
 		priorityName = portGroupItem.parent().text(0) + ", " + portGroupItem.text(0);
-		self.removePriorityName(priorityName)
+		self.guiHelpers.removePriorityName(priorityName)
 
 		# Removing from Object Assugnment Tree
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
@@ -1588,7 +1565,7 @@ class ExportOpenEMSDialog():
 		#	Removing from Priority List
 		###
 		priorityName = lumpedPartGroupItem.parent().text(0) + ", " + lumpedPartGroupItem.text(0);
-		self.removePriorityName(priorityName)
+		self.guiHelpers.removePriorityName(priorityName)
 
 		self.form.lumpedPartTreeView.invisibleRootItem().removeChild(selectedItem)
 		lumpedPartGroupItem.parent().removeChild(lumpedPartGroupItem)

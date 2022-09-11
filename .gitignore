@@ -2,3 +2,6 @@
 /*.srctrldb
 /*.srctrlprj
 /drawResult.m
+__pycache__
+.idea
+sourcetrail_code_inspection

@@ -170,8 +170,27 @@
                  </item>
                  <item>
                   <widget class="QPushButton" name="objectAssignmentFilterLeftButton">
+                   <property name="maximumSize">
+                    <size>
+                     <width>60</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string>Filter</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="objectAssignmentFilterResetLeftButton">
+                   <property name="maximumSize">
+                    <size>
+                     <width>60</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Reset</string>
                    </property>
                   </widget>
                  </item>
@@ -418,7 +437,7 @@
                </attribute>
                <column>
                 <property name="text">
-                 <string notr="true">Grid - remove overlapping lines priority </string>
+                 <string notr="true"> Mesh - script lines order (bottom to top)</string>
                 </property>
                </column>
               </widget>
@@ -1387,54 +1406,10 @@
                 <string>Excitation Settings</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_3">
-                <item row="2" column="1">
-                 <widget class="QLabel" name="label_12">
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_14">
                   <property name="text">
-                   <string>f0 - center frequency</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>User Defined Function e(t)</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="1">
-                 <widget class="QLineEdit" name="customExcitationTextInput"/>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QRadioButton" name="customExcitationRadioButton">
-                  <property name="text">
-                   <string>Custom</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="3">
-                 <widget class="QLabel" name="label_13">
-                  <property name="text">
-                   <string>fc - half width at -20dB cutoff</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="gaussianExcitationRadioButton">
-                  <property name="text">
-                   <string>Gaussian</string>
+                   <string>f0 - excitation frequency</string>
                   </property>
                  </widget>
                 </item>
@@ -1445,36 +1420,10 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="sinusodialExcitationF0NumberInput">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="label_14">
+                <item row="5" column="0">
+                 <widget class="QRadioButton" name="customExcitationRadioButton">
                   <property name="text">
-                   <string>f0 - excitation frequency</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
-                  <property name="text">
-                   <string>Sinusodial</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
+                   <string>Custom</string>
                   </property>
                  </widget>
                 </item>
@@ -1507,6 +1456,37 @@
                   </property>
                  </widget>
                 </item>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="gaussianExcitationRadioButton">
+                  <property name="text">
+                   <string>Gaussian</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>f0 - center frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>User Defined Function e(t)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="sinusodialExcitationRadioButton">
+                  <property name="text">
+                   <string>Sinusodial</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
                 <item row="4" column="3">
                  <widget class="QLabel" name="label_46">
                   <property name="text">
@@ -1514,7 +1494,60 @@
                   </property>
                  </widget>
                 </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="sinusodialExcitationF0NumberInput">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="QLabel" name="label_13">
+                  <property name="text">
+                   <string>fc - half width at -20dB cutoff</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QLineEdit" name="customExcitationTextInput"/>
+                </item>
                </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_51">
+               <property name="text">
+                <string>Hints:
+
+Custom option using fparser lib, possible using user-defined equitaion:
+    sin(t)
+    cos(t)
+    if(A,B,C)
+
+ Usage will be specified later.</string>
+               </property>
               </widget>
              </item>
              <item>
@@ -3142,6 +3175,16 @@
                 <string>Post-Processing: NF2FF Display Script</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_9">
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="writeNf2ffButton">
+                  <property name="text">
+                   <string>Write NF2FF </string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QComboBox" name="portNf2ffObjectList"/>
+                </item>
                 <item row="3" column="1">
                  <layout class="QGridLayout" name="gridLayout_10">
                   <property name="leftMargin">
@@ -3169,6 +3212,19 @@
                     </property>
                    </widget>
                   </item>
+                  <item row="2" column="3">
+                   <widget class="QDoubleSpinBox" name="portNf2ffPhiStep">
+                    <property name="decimals">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <double>360.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>2.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
                   <item row="1" column="2">
                    <widget class="QDoubleSpinBox" name="portNf2ffThetaStop">
                     <property name="decimals">
@@ -3180,22 +3236,15 @@
                     <property name="maximum">
                      <double>360.000000000000000</double>
                     </property>
+                    <property name="value">
+                     <double>90.000000000000000</double>
+                    </property>
                    </widget>
                   </item>
                   <item row="2" column="0">
                    <widget class="QLabel" name="label_42">
                     <property name="text">
                      <string>phi (deg)</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="3">
-                   <widget class="QDoubleSpinBox" name="portNf2ffThetaStep">
-                    <property name="decimals">
-                     <number>1</number>
-                    </property>
-                    <property name="maximum">
-                     <double>360.000000000000000</double>
                     </property>
                    </widget>
                   </item>
@@ -3210,21 +3259,7 @@
                     <property name="maximum">
                      <double>360.000000000000000</double>
                     </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="0">
-                   <widget class="QLabel" name="label_41">
-                    <property name="text">
-                     <string>theta (deg)</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="3">
-                   <widget class="QDoubleSpinBox" name="portNf2ffPhiStep">
-                    <property name="decimals">
-                     <number>1</number>
-                    </property>
-                    <property name="maximum">
+                    <property name="value">
                      <double>360.000000000000000</double>
                     </property>
                    </widget>
@@ -3242,17 +3277,30 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1">
-                   <widget class="QLabel" name="label_43">
-                    <property name="text">
-                     <string>Start</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="0" column="2">
                    <widget class="QLabel" name="label_44">
                     <property name="text">
                      <string>Stop</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_41">
+                    <property name="text">
+                     <string>theta (deg)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="3">
+                   <widget class="QDoubleSpinBox" name="portNf2ffThetaStep">
+                    <property name="decimals">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <double>360.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.500000000000000</double>
                     </property>
                    </widget>
                   </item>
@@ -3263,14 +3311,14 @@
                     </property>
                    </widget>
                   </item>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="label_43">
+                    <property name="text">
+                     <string>Start</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="writeNf2ffButton">
-                  <property name="text">
-                   <string>Write NF2FF </string>
-                  </property>
-                 </widget>
                 </item>
                 <item row="2" column="1">
                  <layout class="QHBoxLayout" name="horizontalLayout_24">
@@ -3305,8 +3353,15 @@
                   </item>
                  </layout>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QComboBox" name="portNf2ffObjectList"/>
+                <item row="4" column="1">
+                 <widget class="QLabel" name="label_50">
+                  <property name="text">
+                   <string>Hints:
+360deg display settings:
+    theta: start: 0deg stop:90deg
+    phi: start: 0deg stop: 360deg</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </widget>

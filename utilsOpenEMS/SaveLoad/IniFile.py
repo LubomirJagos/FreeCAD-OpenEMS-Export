@@ -432,22 +432,47 @@ class IniFile:
                             treeItem = QtGui.QTreeWidgetItem()
                             treeItem.setText(0, itemName)
 
-                            # set icon during load, if object is some solid object it has object icon, if it's sketch it will have wire/antenna or whatever indicates wire icon
+                            #
+                            #   Check if object valid during load, ie. if object label was changed this will try to find if some other object with
+                            #   original label is there, if not then object is found based on its freeCad ID and new label is set.
+                            #   If object is under Grid or Material settings also material priority list and mesh priority list must be updated.
+                            #
                             errorLoadByName = False
                             try:
                                 freeCadObj = App.ActiveDocument.getObjectsByLabel(itemName)[0]
                             except:
                                 #
-                                #	ERROR - need to be check if this is enough to auto-repair load errors
+                                #   Object is not available using its label so it found based on it freeCad ID
                                 #
                                 if objFreeCadId is None:
-                                    failedLoadedFreeCadObjects.append(itemName)
+                                    #
+                                    #   If freeCad ID is not provided then don't continue and object will not appears in GUI
+                                    #   It will be added to list of missing objects and displayed do user.
+                                    #
+                                    failedLoadedFreeCadObjects.append(f"{objCategory}, {objParent}, {itemName}")
                                     continue
 
                                 elif len(objFreeCadId) > 0:
                                     freeCadObj = App.ActiveDocument.getObject(objFreeCadId)
-                                    treeItem.setText(0, freeCadObj.Label)  # auto repair name, replace it with current name
-                                    errorLoadByName = True
+                                    if not freeCadObj is None:
+                                        #
+                                        #   Object was found based on its freeCad ID, icon will be set as warning icon
+                                        #
+                                        treeItem.setText(0, freeCadObj.Label)  # auto repair name, replace it with current name
+                                        errorLoadByName = True
+
+                                        #update mesh priority and object priority list if object is under grid settings, material or port settings
+                                        if objCategory == "Grid":
+                                            self.renameMeshPriorityItem(objParent, itemName, freeCadObj.Label)
+                                        elif objCategory in ["Material", "Port"]:
+                                            self.renameObjectsPriorityItem(objCategory, objParent, itemName, freeCadObj.Label)
+
+                                    else:
+                                        #
+                                        #   Object was not found based on its freeCad ID, probably deleted, added to list of missing objects.
+                                        #
+                                        failedLoadedFreeCadObjects.append(f"{objCategory}, {objParent}, {itemName}")
+                                        continue
 
                             #
                             #	ERROR - here needs to be checked if freeCadObj was even found based on its Label if no try looking based on its ID from file,
@@ -581,14 +606,20 @@ class IniFile:
             self.form.objectAssignmentRightTreeWidget.expandAll()
 
         #
-        #   Failed loaded objects name listed in message for user
+        #   Failed loaded objects name listed in message for user and
+        #   will be removed in priority list if they are mesh, material
+        #   or port objects
         #
         if len(failedLoadedFreeCadObjects) > 0:
             missingObjects = ""
             auxCounter = 0
             for objName in failedLoadedFreeCadObjects:
-                missingObjects += (", " if auxCounter > 0 else "") + objName
+                #add object name and place in tree into message for user
+                missingObjects += (", " if auxCounter > 0 else "") + "{" + objName + "}"
                 auxCounter += 1
+
+                #remove p[articular line for object from priority list if its there
+                self.guiHelpers.removePriorityName(objName)
 
             self.guiHelpers.displayMessage(f"Fail to load:\n{missingObjects}")
 
@@ -598,3 +629,21 @@ class IniFile:
         self.guiHelpers.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
 
         return
+
+    def renameMeshPriorityItem(self, gridGroupName, oldName, newName):
+        meshItemName = "Grid, " + gridGroupName + ", " + oldName
+        meshItemNameNew = "Grid, " + gridGroupName + ", " + newName
+
+        meshPriorityItemsToRename = self.form.meshPriorityTreeView.findItems(meshItemName, QtCore.Qt.MatchExactly)
+        for meshItemPriority in meshPriorityItemsToRename:
+            meshItemPriority.setText(0, meshItemNameNew)
+            meshItemPriority.setIcon(0, QtGui.QIcon("./img/errorLoadObject.svg"))
+
+    def renameObjectsPriorityItem(self, objCategory, objParentItemName, oldName, newName):
+        objItemName = objCategory + ", " + objParentItemName + ", " + oldName
+        objItemNameNew = objCategory + ", " + objParentItemName + ", " + newName
+
+        objPriorityItemsToRename = self.form.objectAssignmentPriorityTreeView.findItems(objItemName, QtCore.Qt.MatchExactly)
+        for objItemPriority in objPriorityItemsToRename:
+            objItemPriority.setText(0, objItemNameNew)
+            objItemPriority.setIcon(0, QtGui.QIcon("./img/errorLoadObject.svg"))

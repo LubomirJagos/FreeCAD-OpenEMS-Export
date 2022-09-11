@@ -88,6 +88,7 @@ class GuiHelpers:
         self.form.portSettingsTreeView.clear()  # delete PORT entries
         self.form.lumpedPartTreeView.clear()  # delete LUMPED PART entries
 
+        self.form.portNf2ffObjectList.clear()   #clear NF2FF combobox
         return
 
     def setSimlationParamBC(self, comboBox, strValue):
@@ -170,3 +171,31 @@ class GuiHelpers:
         # adding excitation also into OBJCET ASSIGNMENT WINDOW
         targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(typeStr, QtCore.Qt.MatchExactly)
         targetGroup[0].addChild(treeItem.clone())
+
+    ###
+    #	Removing from Priority List
+    ###
+    def removePriorityName(self, priorityName):
+        print("Removing from oibjects priority list tree view:" + priorityName)
+        priorityItemRemoved = True
+        while priorityItemRemoved:
+            priorityItemRemoved = False
+
+            # search item in priority list for OBJECTS
+            priorityItemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
+            for k in range(priorityItemsCount):
+                priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
+                if priorityName in priorityItem.text(0):
+                    self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(k)
+                    priorityItemRemoved = True
+                    break
+
+            # search item also in priority list for MESH
+            if not priorityItemRemoved:
+                priorityItemsCount = self.form.meshPriorityTreeView.topLevelItemCount()
+                for k in range(priorityItemsCount):
+                    priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
+                    if priorityName in priorityItem.text(0):
+                        self.form.meshPriorityTreeView.takeTopLevelItem(k)
+                        priorityItemRemoved = True
+                        break
