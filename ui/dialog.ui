@@ -145,7 +145,7 @@
                 <widget class="QTreeWidget" name="objectAssignmentLeftTreeWidget">
                  <column>
                   <property name="text">
-                   <string notr="true">FreeCAD objects list</string>
+                   <string notr="true">FreeCAD Object List</string>
                   </property>
                  </column>
                 </widget>
@@ -327,7 +327,7 @@
                </attribute>
                <column>
                 <property name="text">
-                 <string notr="true">Objects priority (descending order)</string>
+                 <string notr="true">Object Priority (Descending Order)</string>
                 </property>
                </column>
               </widget>
@@ -382,7 +382,7 @@
                </attribute>
                <column>
                 <property name="text">
-                 <string notr="true"> Mesh - script lines order (descending order)</string>
+                 <string notr="true"> Mesh Priority (Descending Order)</string>
                 </property>
                </column>
               </widget>
