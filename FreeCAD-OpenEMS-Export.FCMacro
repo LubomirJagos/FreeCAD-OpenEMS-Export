@@ -8,7 +8,7 @@
 #  Macro
 #  |_FreeCAD-OpenEMS-Export.FCMacro (this file)
 #  |_FreeCAD-OpenEMS-Export (repository directory)
-#     |_FreeCAD OpenEMS Export.py 
+#     |_FreeCAD ExportOpenEMSDialog.py 
 #     ...
 
 import importlib
