@@ -1152,6 +1152,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',
 DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3);
 DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3);
 
+E_far_normalized = nf2ff.E_norm{1} / max(nf2ff.E_norm{1}(:)) * nf2ff.Dmax;
+DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3);
 """
         #
         # WRITE OpenEMS Script file into current dir
@@ -1237,6 +1239,15 @@ ylabel( 'reflection coefficient |S_{11}|' );
 
 P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
 
+%
+%   Write S11, real and imag Z_in into CSV file separated by ';'
+%
+filename = 'openEMS_simulation_s11_dB.csv';
+fid = fopen(filename, 'w');
+fprintf(fid, 'freq (MHz);s11 (dB);real Z_in (Ohm); imag Z_in (Ohm)\\n');
+fclose(fid)
+s11_dB = horzcat((freq/1e6)', 20*log10(abs(s11))', real(Zin)', imag(Zin)');
+dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 """
 
         #
@@ -1253,7 +1264,7 @@ P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
         cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
         print('Running command: ' + cmdToRun)
         result = os.system(cmdToRun)
-        print(result)
+        #print(result)
 
     def drawS21ButtonClicked(self):
         genScript = ""

@@ -3361,7 +3361,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   <property name="text">
                    <string>Hints:
 360deg display settings:
-    theta: start: 0deg stop:90deg
+    theta: start: 0deg stop:180deg
     phi: start: 0deg stop: 360deg</string>
                   </property>
                  </widget>

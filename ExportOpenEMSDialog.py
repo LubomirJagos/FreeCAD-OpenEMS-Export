@@ -912,7 +912,8 @@ class ExportOpenEMSDialog():
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 
 		#check if item is type of SettingsItem based on its class name and if yes then add subitems into it
-		reResult = re.search(__name__+".(.*)SettingsItem", str(type(rightItem.data(0, QtCore.Qt.UserRole))))
+		print("Adding item into right column, type: " + str(type(rightItem.data(0, QtCore.Qt.UserRole))))
+		reResult = re.search("([A-Za-z]*)SettingsItem'", str(type(rightItem.data(0, QtCore.Qt.UserRole))))
 		if (reResult):
 			if (reResult.group(1).lower() == 'excitation'):
 				self.guiHelpers.displayMessage("Excitation doesn't accept any objects.")

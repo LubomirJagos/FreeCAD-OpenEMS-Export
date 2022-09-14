@@ -215,7 +215,7 @@ class IniFile:
         for k in range(priorityObjList.topLevelItemCount()):
             priorityObjName = priorityObjList.topLevelItem(k).text(0)
             print("Saving new PRIORITY for " + priorityObjName)
-            settings.setValue(priorityObjName, str(k))
+            settings.setValue(priorityObjName, str(k*10))           #multiply priority by 10 to left there some numbers between
         settings.endGroup()
 
         # SAVE MESH PRIORITY
@@ -227,7 +227,7 @@ class IniFile:
         for k in range(priorityMeshObjList.topLevelItemCount()):
             priorityMeshObjName = priorityMeshObjList.topLevelItem(k).text(0)
             print("Saving new MESH PRIORITY for " + priorityMeshObjName)
-            settings.setValue(priorityMeshObjName, str(k))
+            settings.setValue(priorityMeshObjName, str(k*10))          #multiply priority by 10 to left there some numbers between
         settings.endGroup()
 
         # SAVE POSTPROCESSING OPTIONS
@@ -517,11 +517,20 @@ class IniFile:
                 # start reading priority objects configuration in ini file
                 settings.beginGroup(settingsGroup)
 
-                # add each priority item from ini file into GUI tree widget
-                topItemsList = [0 for i in range(len(settings.childKeys()))]
-                print("Priority objects list array initialized with size " + str(len(topItemsList)))
+                #
+                #   Better approach how to add priority into GUI, now priorities doesn't have to be sequential numbers
+                #   and can be repeated, yes there will be oreder mistakes, but this is more robust and doesn't crash
+                #   when priorities were modified by hand and are repeating.
+                #
+
+                #init top item list with zeros, but as key is used order of each key
+                topItemsList = {}
                 for prioritySettingsKey in settings.childKeys():
                     prioritySettingsOrder = int(settings.value(prioritySettingsKey))
+                    #if key number already used increment by 1 to make it unique
+                    while (prioritySettingsOrder in list(topItemsList.keys())):
+                        prioritySettingsOrder += 1
+
                     prioritySettingsType = prioritySettingsKey.split(", ")
                     print("Priority list adding item " + prioritySettingsKey)
 
@@ -531,7 +540,12 @@ class IniFile:
                     topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
-                self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0, topItemsList)
+                #sort topItemList using its keys
+                sortedTopItemsList = []
+                for key in sorted(topItemsList):
+                    sortedTopItemsList.append(topItemsList[key])
+
+                self.form.objectAssignmentPriorityTreeView.insertTopLevelItems(0, sortedTopItemsList)
 
                 settings.endGroup()
                 continue
@@ -545,11 +559,20 @@ class IniFile:
                 # start reading priority objects configuration in ini file
                 settings.beginGroup(settingsGroup)
 
-                # add each priority item from ini file into GUI tree widget
-                topItemsList = [0 for i in range(len(settings.childKeys()))]
-                print("Priority list array initialized with size " + str(len(topItemsList)))
+                #
+                #   Better approach how to add priority into GUI, now priorities doesn't have to be sequential numbers
+                #   and can be repeated, yes there will be oreder mistakes, but this is more robust and doesn't crash
+                #   when priorities were modified by hand and are repeating.
+                #
+
+                #init top item list with zeros, but as key is used order of each key
+                topItemsList = {}
                 for prioritySettingsKey in settings.childKeys():
                     prioritySettingsOrder = int(settings.value(prioritySettingsKey))
+                    #if key number already used increment by 1 to make it unique
+                    while (prioritySettingsOrder in list(topItemsList.keys())):
+                        prioritySettingsOrder += 1
+
                     prioritySettingsType = prioritySettingsKey.split(", ")
                     print("Priority list adding item " + prioritySettingsKey)
 
@@ -559,7 +582,13 @@ class IniFile:
                     topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
-                self.form.meshPriorityTreeView.insertTopLevelItems(0, topItemsList)
+                #sort topItemList using its keys
+                sortedTopItemsList = []
+                for key in sorted(topItemsList):
+                    sortedTopItemsList.append(topItemsList[key])
+
+                self.form.meshPriorityTreeView.insertTopLevelItems(0, sortedTopItemsList)
+                print("Priority list array initialized with size " + str(len(sortedTopItemsList)))
 
                 settings.endGroup()
 
