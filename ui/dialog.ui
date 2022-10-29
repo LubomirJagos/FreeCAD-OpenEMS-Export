@@ -3371,7 +3371,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
             </size>
            </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from &amp;lt;project filename&amp;gt;_settings.ini if it exists.&lt;/p&gt;&lt;p&gt;Any changes made will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from a selected file.&lt;/p&gt;&lt;p&gt;Settings currently displayed will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Open...</string>
@@ -3402,7 +3402,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
             </size>
            </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from &amp;lt;project filename&amp;gt;_settings.ini if it exists.&lt;/p&gt;&lt;p&gt;Any changes made will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save the displayed FreeCAD-OpenEMS Export configuration to a specified file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Save as...</string>
@@ -3448,8 +3448,14 @@ Custom option using fparser lib, possible using user-defined equitaion:
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from &amp;lt;project filename&amp;gt;_settings.ini if it exists.&lt;/p&gt;&lt;p&gt;Any changes made will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from the default file (&amp;lt;project filename&amp;gt;_settings.ini).&lt;/p&gt;&lt;p&gt;Any settings currently displayed will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Load</string>
@@ -3479,8 +3485,14 @@ Custom option using fparser lib, possible using user-defined equitaion:
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current settings to &amp;lt;project filename&amp;gt;_settings.ini. &lt;/p&gt;&lt;p&gt;The existing .ini file will be overwritten, external changes will be lost.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current settings to the default file (&amp;lt;project filename&amp;gt;_settings.ini). &lt;/p&gt;&lt;p&gt;An existing file with the default name will be overwritten. &lt;/p&gt;&lt;p&gt;To discard the current settings, start this dialog and use &lt;span style=&quot; font-weight:600;&quot;&gt;Save&lt;/span&gt; instead of initially clicking &lt;span style=&quot; font-weight:600;&quot;&gt;Load&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Save</string>
@@ -3522,6 +3534,12 @@ Custom option using fparser lib, possible using user-defined equitaion:
              <width>160</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
            </property>
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Export geometry as .stl and generate OpenEMS automation script.&lt;/p&gt;&lt;p&gt;The script will only be saved, but not executed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
