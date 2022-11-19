@@ -37,16 +37,20 @@ path_to_ui = "./ui/dialog.ui"
 #
 # Main GUI panel class
 #
-class ExportOpenEMSDialog():
-	def __del__(self):
-		return
-		
+class ExportOpenEMSDialog(QtCore.QObject):
+
 	def finished(self):
 		self.observer.endObservation()
 		self.observer = None
+		print("Observer terminated.")
 
-	def __init__(self):
-
+	def eventFilter(self, object, event):
+		if event.type() == QtCore.QEvent.Close:
+			self.finished()
+		return super(ExportOpenEMSDialog, self).eventFilter(object, event)
+		
+	def __init__(self):		
+		QtCore.QObject.__init__(self)
 		#
 		# LOCAL OPENEMS OBJECT
 		#
@@ -60,8 +64,9 @@ class ExportOpenEMSDialog():
 		os.chdir(dname)
 
 		# this will create a Qt widget from our ui file
-		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui)
-		self.form.finished.connect(self.finished)
+		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui, self)
+		# self.form.finished.connect(self.finished) # QDialog event
+		self.form.installEventFilter(self)
 		
 		# add a statusBar widget (comment to revert to QMessageBox if there are any problems)
 		self.statusBar = QtGui.QStatusBar()
@@ -225,8 +230,7 @@ class ExportOpenEMSDialog():
 		#
 		# FILTER LEFT COLUMN ITEMS
 		#
-		self.form.objectAssignmentFilterLeftButton.clicked.connect(self.objectAssignmentFilterLeftButtonClicked)
-		self.form.objectAssignmentFilterResetLeftButton.clicked.connect(self.objectAssignmentFilterResetLeftButtonClicked)
+		self.form.objectAssignmentFilterLeft.returnPressed.connect(self.applyObjectAssignmentFilter)
 
 		# MinDecrement changed 
 		self.form.simParamsMinDecrement.valueChanged.connect(self.simParamsMinDecrementValueChanged)
@@ -806,14 +810,10 @@ class ExportOpenEMSDialog():
 			self.form.materialKappaNumberInput.setEnabled(False)
 			self.form.materialSigmaNumberInput.setEnabled(False)
 
-	def objectAssignmentFilterLeftButtonClicked(self):
+	def applyObjectAssignmentFilter(self):
 		print("Filter left column")
 		filterStr = self.form.objectAssignmentFilterLeft.text()
 		self.initLeftColumnTopLevelItems(filterStr)
-
-	def objectAssignmentFilterResetLeftButtonClicked(self):
-		print("Filter reset left column")
-		self.initLeftColumnTopLevelItems("")
 
 	#
 	#	Get COORDINATION TYPE
