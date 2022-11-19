@@ -821,7 +821,7 @@
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>shift gridlines inward by ?min/20</string>
+                   <string>shift gridlines inward by λmin/20</string>
                   </property>
                  </widget>
                 </item>
@@ -2842,7 +2842,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                </item>
                <item>
                 <property name="text">
-                 <string>�m</string>
+                 <string>µm</string>
                 </property>
                </item>
                <item>
