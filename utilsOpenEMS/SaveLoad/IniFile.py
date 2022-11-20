@@ -485,7 +485,7 @@ class IniFile:
                             #
                             #	ERROR - here needs to be checked if freeCadObj was even found based on its Label if no try looking based on its ID from file,
                             #	need to do this this way due backward compatibility
-                            #		- also FreeCAD should have set uniqe label for objects in Preferences
+                            #		- also FreeCAD should have set unique label for objects in Preferences
                             #
                             # set unique FreeCAD inside name as ID
                             settingsItem.setFreeCadId(freeCadObj.Name)
