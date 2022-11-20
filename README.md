@@ -13,7 +13,7 @@ This method is easy to implement based on Yee's method (https://en.wikipedia.org
 
 What's this plugin for
 ======================
-OpenEMS itself is FDTD solver implemented in C++ language. Its author Tobias Liebzig made outstanding work, not just to implement solver itself but also provided Matlab (also Octave) interface and programmed AppCSXCAD application to visualize scripted model to visualy inspect model, its meshing and also to modify model itself.
+OpenEMS itself is FDTD solver implemented in C++ language. Its author Tobias Liebzig made outstanding work, not just to implement solver itself but also provided Matlab (also Octave) interface and programmed AppCSXCAD application to visualize scripted model to visually inspect model, its meshing and also to modify model itself.
 
 So when using openEMS you have to define your model in Matlab/Octave script what required to study Matlab/Octave interface and its quite exhausting and many thing can go wrong till you figure out how to write your script right. Also to script your model is easy till you want to simulate simple structures but become hard at point you want to simulate more complex structure composed from different materials not mentioning if you want to define complex shapes and still have easy control over their geometry.
 

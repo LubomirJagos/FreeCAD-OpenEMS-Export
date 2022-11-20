@@ -113,7 +113,7 @@ class OctaveScriptLinesGenerator:
         if outputDir is None or outputDir == False:
             outputDir = f"{programbase}_openEMS_simulation"
 
-        #Create output dircetory if not exists
+        #Create output directory if not exists
         absoluteOutputDir = f"{programdir}/{outputDir}"
         if not os.path.exists(absoluteOutputDir):
             os.makedirs(absoluteOutputDir)
@@ -1150,7 +1150,7 @@ phiRange = (""" + phiStart + """:""" + phiStep + """:""" + phiStop + """) - 180;
 disp( 'calculating the 3D far field...' );
 
 %
-%	nf2ffBox{index} - index is set based on GUI option choosed which NF2FF box should be calculated
+%	nf2ffBox{index} - index is set based on GUI option chosen which NF2FF box should be calculated
 %
 %	'Mode',1 - always recalculate data
 %		url: https://github.com/thliebig/openEMS/blob/master/matlab/CalcNF2FF.m
