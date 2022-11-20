@@ -32,12 +32,18 @@ class IniFile:
         filename, filter = QtGui.QFileDialog.getSaveFileName(parent=self.form, caption='Write simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
             self.write(filename)
+            return filename
+
+        return None
 
     def readFromFile(self):
         freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
         filename, filter = QtGui.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
-        if filename != '':	
+        if filename != '':
             self.read(filename)
+            return filename
+
+        return None
 
     #   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____
     #  / ____|  /\ \    / /  ____|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|

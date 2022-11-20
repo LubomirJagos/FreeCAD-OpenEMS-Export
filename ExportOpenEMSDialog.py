@@ -51,6 +51,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		
 	def __init__(self):		
 		QtCore.QObject.__init__(self)
+
+		#
+		#	Direcotry for generated .m file for openEMS
+		#		- by default set to None, that means simulation file should be generated into current directory
+		#
+		self.simulationOutputDir = None
+
 		#
 		# LOCAL OPENEMS OBJECT
 		#
@@ -157,7 +164,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# Clicked on "Generate OpenEMS Script"
 		#		
-		self.form.generateOpenEMSScriptButton.clicked.connect(self.octaveScriptGenerator.generateOpenEMSScriptButtonClicked)
+		self.form.generateOpenEMSScriptButton.clicked.connect(self.generateOpenEMSScriptButtonClicked)
 
 		#
 		# Clicked on BUTTONS FOR OBJECT PRIORITIES
@@ -174,13 +181,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		#	Octave/Matlab script generating buttons handlers
 		#
-		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)											# Clicked on "Erase aux Grid"
-		self.form.abortSimulationButton.clicked.connect(self.abortSimulationButtonClicked)										# Clicked on "Write ABORT Simulation File"
-		self.form.drawS11Button.clicked.connect(self.octaveScriptGenerator.drawS11ButtonClicked)								# Clicked on "Write Draw S11 Script"
-		self.form.drawS21Button.clicked.connect(self.octaveScriptGenerator.drawS21ButtonClicked)								# Clicked on "Write Draw S21 Script"
-		self.form.displaySimulationModelButton.clicked.connect(self.octaveScriptGenerator.displaySimulationModelButtonClicked)	# Clicked on "Display Simulation Model"
-		self.form.runSimulationButton.clicked.connect(self.octaveScriptGenerator.runSimulationButtonClicked)					# Clicked on "Run Simulation"
-		self.form.writeNf2ffButton.clicked.connect(self.octaveScriptGenerator.writeNf2ffButtonClicked)							# Clicked on "Write NF2FF"
+		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)														# Clicked on "Erase aux Grid"
+		self.form.abortSimulationButton.clicked.connect(lambda: self.abortSimulationButtonClicked(self.simulationOutputDir))													# Clicked on "Write ABORT Simulation File"
+		self.form.drawS11Button.clicked.connect(lambda: self.octaveScriptGenerator.drawS11ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S11 Script"
+		self.form.drawS21Button.clicked.connect(lambda: self.octaveScriptGenerator.drawS21ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S21 Script"
+		self.form.writeNf2ffButton.clicked.connect(lambda: self.octaveScriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir))	# Clicked on "Write NF2FF"
 
 		#
 		# GRID
@@ -222,10 +227,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		####################################################################################################
 		# GUI SAVE/LOAD from file
 		####################################################################################################
-		self.form.saveCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.write)
-		self.form.loadCurrentSettingsButton.clicked.connect(self.simulationSettingsFile.read)
-		self.form.saveToFileSettingsButton.clicked.connect(self.simulationSettingsFile.writeToFile)
-		self.form.loadFromFileSettingsButton.clicked.connect(self.simulationSettingsFile.readFromFile)
+		self.form.saveToFileSettingsButton.clicked.connect(self.saveToFileSettingsButtonClicked)
+		self.form.loadFromFileSettingsButton.clicked.connect(self.loadFromFileSettingsButtonClicked)
 
 		#
 		# FILTER LEFT COLUMN ITEMS
@@ -789,9 +792,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#	ABORT simulation button handler
 	#		write empty file ABORT into tmp/ folder what should abort simulation in next iteration
 	#
-	def abortSimulationButtonClicked(self):
+	def abortSimulationButtonClicked(self, outputDir=None):
 		programdir = os.path.dirname(App.ActiveDocument.FileName)
-		outFile = programdir + '/tmp/ABORT'
+
+		if not outputDir is None:
+			outFile = f"{programdir}/{outputDir}/tmp/ABORT"
+		else:
+			outFile = f"{programdir}/tmp/ABORT"
 		print("------------->" + outFile)
 
 		f = open(outFile, "w+", encoding='utf-8')
@@ -1034,6 +1041,43 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.displayMessage("Please change name, item with this name already exists.", True)
 			iterator +=1
 		return isDuplicityName
+
+	#
+	#	Save button clicked
+	#
+	def saveToFileSettingsButtonClicked(self):
+		outputFile = self.simulationSettingsFile.writeToFile()
+
+		if outputFile is None:
+			return
+
+		programname = os.path.basename(outputFile)
+		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+		self.simulationOutputDir = f"{programbase}"
+		print(f"-----> saveToFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
+
+	def loadFromFileSettingsButtonClicked(self):
+		outputFile = self.simulationSettingsFile.readFromFile()
+
+		if outputFile is None:
+			return
+
+		programname = os.path.basename(outputFile)
+		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+		self.simulationOutputDir = f"{programbase}"
+		print(f"-----> loadFromFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
+
+	#
+	#	After click on generate openEMS script file button there is check if settings are saved, if not user is asked if he want's to save settings if not
+	#	all simulation connected files will be generated inside local directory next to freecad file.
+	#
+	def generateOpenEMSScriptButtonClicked(self):
+		if (self.simulationOutputDir is None or self.simulationOutputDir == ""):
+			saveSettingsFlag = self.guiHelpers.displayYesNoMessage("Simulation settings aren't saved till now, do you want to save them? It's recommended to save sttings, otherwise simulaation files will be generated in same folder as FreeCAD file.")
+			if saveSettingsFlag:
+				self.saveToFileSettingsButtonClicked()
+
+		self.octaveScriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
