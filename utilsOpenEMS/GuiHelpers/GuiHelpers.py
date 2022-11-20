@@ -15,6 +15,16 @@ class GuiHelpers:
             msgBox.setText(msgText)
             msgBox.exec()
 
+    #
+    #   Display messagebox wit Save/Cancel buttons and after user choice return True/False
+    #
+    def displayYesNoMessage(self, msgText):
+        msgBox = QtGui.QMessageBox()
+        msgBox.setText(msgText)
+        #msgBox.setInformativeText("Do you want to save your changes?")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Save | QtGui.QMessageBox.Cancel)
+        return msgBox.exec() == QtGui.QMessageBox.Save
+
     def initRightColumnTopLevelItems(self):
         #
         # Default items for each section

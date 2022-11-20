@@ -2982,25 +2982,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                 <item>
                  <layout class="QVBoxLayout" name="verticalLayout_21">
                   <item>
-                   <widget class="QPushButton" name="runSimulationButton">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>160</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>Run OpenEMS Script</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="abortSimulationButton">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -3019,25 +3000,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     </property>
                     <property name="text">
                      <string>Terminate OpenEMS With ABORT File</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="displaySimulationModelButton">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>160</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>Display Simulation Model</string>
                     </property>
                    </widget>
                   </item>
@@ -3303,7 +3265,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   <property name="text">
                    <string>Hints:
 360deg display settings:
-    theta: start: 0deg stop:90deg
+    theta: start: 0deg stop:180deg
     phi: start: 0deg stop: 360deg</string>
                   </property>
                  </widget>
@@ -3360,7 +3322,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
            </property>
            <property name="minimumSize">
             <size>
-             <width>80</width>
+             <width>120</width>
              <height>40</height>
             </size>
            </property>
@@ -3374,7 +3336,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from a selected file.&lt;/p&gt;&lt;p&gt;Settings currently displayed will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Open...</string>
+            <string>Open Settings</string>
            </property>
           </widget>
          </item>
@@ -3391,7 +3353,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
            </property>
            <property name="minimumSize">
             <size>
-             <width>80</width>
+             <width>120</width>
              <height>40</height>
             </size>
            </property>
@@ -3405,97 +3367,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save the displayed FreeCAD-OpenEMS Export configuration to a specified file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Save as...</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_11">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QPushButton" name="loadCurrentSettingsButton">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>40</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load FreeCAD-OpenEMS Export configuration from the default file (&amp;lt;project filename&amp;gt;_settings.ini).&lt;/p&gt;&lt;p&gt;Any settings currently displayed will be discarded.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Load</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="saveCurrentSettingsButton">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>40</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current settings to the default file (&amp;lt;project filename&amp;gt;_settings.ini). &lt;/p&gt;&lt;p&gt;An existing file with the default name will be overwritten. &lt;/p&gt;&lt;p&gt;To discard the current settings, start this dialog and use &lt;span style=&quot; font-weight:600;&quot;&gt;Save&lt;/span&gt; instead of initially clicking &lt;span style=&quot; font-weight:600;&quot;&gt;Load&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Save</string>
+            <string>Save Settings</string>
            </property>
           </widget>
          </item>
@@ -3678,9 +3550,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
   <tabstop>generateJustPreviewCheckbox</tabstop>
   <tabstop>generateDebugPECCheckbox</tabstop>
   <tabstop>octaveExecCommandList</tabstop>
-  <tabstop>runSimulationButton</tabstop>
   <tabstop>abortSimulationButton</tabstop>
-  <tabstop>displaySimulationModelButton</tabstop>
   <tabstop>drawS21Button</tabstop>
   <tabstop>drawS11Button</tabstop>
   <tabstop>writeNf2ffButton</tabstop>
@@ -3692,8 +3562,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
   <tabstop>portNf2ffPhiStart</tabstop>
   <tabstop>portNf2ffPhiStop</tabstop>
   <tabstop>portNf2ffPhiStep</tabstop>
-  <tabstop>loadCurrentSettingsButton</tabstop>
-  <tabstop>saveCurrentSettingsButton</tabstop>
   <tabstop>generateOpenEMSScriptButton</tabstop>
  </tabstops>
  <resources/>
