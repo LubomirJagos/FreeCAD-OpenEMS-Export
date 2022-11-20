@@ -87,15 +87,37 @@ class OctaveScriptLinesGenerator:
 
         return priorityItemValue
 
+    #
+    #   Returns current FreeCAD file:
+    #       - absolute directory
+    #       - name without extension
+    #
     def getCurrDir(self):
         programname = os.path.basename(App.ActiveDocument.FileName)
-        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
         programDir = os.path.dirname(App.ActiveDocument.FileName)
-        programNameBase = programDir + '/' + programbase
 
-        print('--->' + programNameBase)
+        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+
+        print('--->' + programbase)
         print('--->' + programDir)
-        return [programDir, programNameBase]
+        return [programDir, programbase]
+
+    #
+    #   Creates output dir in current FreeCAD file directory if not exists.
+    #
+    def createOuputDir(self, outputDir):
+        programname = os.path.basename(App.ActiveDocument.FileName)
+        programdir = os.path.dirname(App.ActiveDocument.FileName)
+        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
+
+        if outputDir is None or outputDir == False:
+            outputDir = f"{programbase}_openEMS_simulation"
+
+        #Create output dircetory if not exists
+        absoluteOutputDir = f"{programdir}/{outputDir}"
+        if not os.path.exists(absoluteOutputDir):
+            os.makedirs(absoluteOutputDir)
+            print(f"Created directory for simulation: {outputDir}")
 
     def reportFreeCADItemSettings(self, items):
         # "FreeCAD item detection everywhere in Main Tree!!! need to get rid this, now it's tolerated during development!"
@@ -178,7 +200,7 @@ class OctaveScriptLinesGenerator:
 
         return genScript
 
-    def getMaterialDefinitionsScriptLines(self, items):
+    def getMaterialDefinitionsScriptLines(self, items, outputDir=None):
         genScript = ""
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -311,7 +333,13 @@ class OctaveScriptLinesGenerator:
 
                     currDir = os.path.dirname(App.ActiveDocument.FileName)
                     partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
-                    exportFileName = currDir + "/" + stlModelFileName
+
+                    #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
+                    if (not outputDir is None):
+                        exportFileName = f"{currDir}/{outputDir}/{stlModelFileName}"
+                    else:
+                        exportFileName = f"{currDir}/{stlModelFileName}"
+
                     Mesh.export(partToExport, exportFileName)
                     print("Material object exported as STL into: " + stlModelFileName)
 
@@ -826,9 +854,12 @@ class OctaveScriptLinesGenerator:
     #
     #	GENERATE SCRIPT CLICKED - go through object assignment tree categories, output child item data.
     #
-    def generateOpenEMSScriptButtonClicked(self):
-        # Update status bar to inform user that exporting has begun.
+    def generateOpenEMSScript(self, outputDir=None):
 
+        #create outputDir relative to local FreeCAD file if output dir does not exists
+        self.createOuputDir(outputDir)
+
+        # Update status bar to inform user that exporting has begun.
         if self.statusBar is not None:
             self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
             QtGui.QApplication.processEvents()
@@ -905,7 +936,7 @@ class OctaveScriptLinesGenerator:
 
         # Write material definitions.
 
-        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None))
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir)
 
         # Write port definitions.
 
@@ -940,9 +971,13 @@ class OctaveScriptLinesGenerator:
         genScript += "end\n"
 
         # Write _OpenEMS.m script file to current directory.
-
         currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + "_openEMS.m"
+
+        if (not outputDir is None):
+            fileName = f"{currDir}/{outputDir}/{outputDir}_openEMS.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_openEMS.m"
+
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
         f.close()
@@ -957,7 +992,7 @@ class OctaveScriptLinesGenerator:
     #
     #	Write NF2FF Button clicked, generate script to display far field pattern
     #
-    def writeNf2ffButtonClicked(self):
+    def writeNf2ffButtonClicked(self, outputDir=None):
         genScript = ""
         genScript += """close all
 clear
@@ -1159,13 +1194,19 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
         # WRITE OpenEMS Script file into current dir
         #
         currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + "_draw_NF2FF.m"
+
+        self.createOuputDir(outputDir)
+        if (not outputDir is None):
+            fileName = f"{currDir}/{outputDir}/{nameBase}_draw_NF2FF.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_draw_NF2FF.m"
+
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
         f.close()
         print('Script to display far field written into: ' + fileName)
 
-    def drawS11ButtonClicked(self):
+    def drawS11ButtonClicked(self, outputDir=None):
         genScript = ""
 
         excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
@@ -1254,7 +1295,13 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         # WRITE OpenEMS Script file into current dir
         #
         currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + "_draw_S11.m"
+
+        self.createOuputDir(outputDir)
+        if (not outputDir is None):
+            fileName = f"{currDir}/{outputDir}/{nameBase}_draw_S11.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_draw_S11.m"
+
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
         f.close()
@@ -1266,7 +1313,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         result = os.system(cmdToRun)
         #print(result)
 
-    def drawS21ButtonClicked(self):
+    def drawS21ButtonClicked(self, outputDir=None):
         genScript = ""
         genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
         genScript += "%\n"
@@ -1339,7 +1386,13 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         # Write OpenEMS Script file into current dir.
 
         currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + "_draw_S21.m"
+
+        self.createOuputDir(outputDir)
+        if (not outputDir is None):
+            fileName = f"{currDir}/{outputDir}/{nameBase}_draw_S21.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_draw_S21.m"
+
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
         f.close()
@@ -1349,48 +1402,5 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 
         cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
         print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        print(result)
-
-
-    #
-    #	Generate Octave script which run openEMS AppCSXCAD to explore model, this is done using octave because path to openEMS folder should be known to octave
-    #
-    def displaySimulationModelButtonClicked(self):
-        runCmd = ""
-        runCmd += "modelFile = ['\"' '" + os.path.splitext(os.path.dirname(App.ActiveDocument.FileName))[0] + "/tmp/' '" + \
-                  os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml' '\"'];\n"
-        runCmd += 'runFile  = [dir_in_loadpath("openEMS/matlab","all"){1} "/../AppCSXCAD.exe " modelFile];'
-        runCmd += "\n";
-        runCmd += 'runFile = strrep(runFile, "/", filesep());'
-        runCmd += "\n";
-        runCmd += 'system(runFile);'
-        runCmd += "\n";
-
-        # store octave script to drive
-        currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + '_runCmd_AppCSXCAD.m'
-        f = open(fileName, "w", encoding='utf-8')
-        f.write(runCmd)
-        f.close()
-
-        # run octave script using command shell
-        cmdToRun = self.getOctaveExecCommand(fileName)
-        print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        print(result)
-
-
-    #
-    #	Run current model openEMS Simulation Script
-    #
-    def runSimulationButtonClicked(self):
-        currDir, nameBase = self.getCurrDir()
-        fileName = nameBase + "_openEMS.m"
-
-        # run octave script using command shell
-        cmdToRun = self.getOctaveExecCommand(fileName)
-        print('Running command: ' + cmdToRun)
-        os.chdir(currDir)
         result = os.system(cmdToRun)
         print(result)
