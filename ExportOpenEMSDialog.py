@@ -365,12 +365,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						self.form.portNf2ffObjectList.addItem(self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0))
 
 	def updateObjectAssignmentRightTreeWidgetItemData(self, groupName, itemName, data):
-		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+		updatedItems = self.form.objectAssignmentRightTreeWidget.findItems(
 			itemName, 
 			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
 			)
-		for item in gridGroupWidgetItems:
-			if (groupName == "Grid"):
+
+		#there can be more items in right column which has same name, like air under MAterials and Grid, so always is needed to compare if parent
+		#is same as parent from update function when this was called to update new settings
+		for item in updatedItems:
+			if item.parent().text(0) == groupName:
 				item.setData(0, QtCore.Qt.UserRole, data)
 
 
@@ -806,11 +809,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		programdir = os.path.dirname(App.ActiveDocument.FileName)
 
 		if not outputDir is None:
-			absoluteOutputDir = f"{outputDir}/tmp"
+			absoluteOutputDir = os.path.join(outputDir, "tmp")
 		else:
-			absoluteOutputDir = f"{programdir}/tmp"
+			absoluteOutputDir = os.path.join(programdir, "tmp")
 
-		outFile = f"absoluteOutputDir/ABORT"
+		outFile = os.path.join(absoluteOutputDir, "ABORT")
 		print("------------->" + outFile)
 
 		if os.path.exists(absoluteOutputDir):
@@ -1472,14 +1475,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### replace old with new settingsInst
 		selectedItems = self.form.excitationSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
+			self.guiHelpers.displayMessage("Excitation ERROR during update.", forceModal=False)
 			return
 		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 		
 		### update other UI elements to propagate changes
 		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)	
-
-
+		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)
+		self.guiHelpers.displayMessage("Excitation updated.", forceModal=False)
 
 	# PORT SETTINGS
 	#  _____   ____  _____ _______    _____ ______ _______ _______ _____ _   _  _____  _____ 

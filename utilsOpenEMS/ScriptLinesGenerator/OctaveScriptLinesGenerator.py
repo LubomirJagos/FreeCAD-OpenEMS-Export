@@ -885,7 +885,7 @@ class OctaveScriptLinesGenerator:
         genScript += self.getInitScriptLines()
 
         genScript += "%% switches & options\n"
-        genScript += "postprocessing_only = " + (1 if self.form.generateJustPreviewCheckbox.isChecked() else 0)+ ";\n"
+        genScript += "postprocessing_only = " + ('1' if self.form.generateJustPreviewCheckbox.isChecked() else '0')+ ";\n"
         genScript += "draw_3d_pattern = 0; % this may take a while...\n"
         genScript += "use_pml = 0;         % use pml boundaries instead of mur\n"
         genScript += "\n"
