@@ -181,7 +181,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 
                     #genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
                     #    objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
-                    genScript += f"material_{materialCounter}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority})\n"
+                    genScript += f"material_{materialCounter}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
 
                     #   _____ _______ _                                        _   _
                     #  / ____|__   __| |                                      | | (_)
