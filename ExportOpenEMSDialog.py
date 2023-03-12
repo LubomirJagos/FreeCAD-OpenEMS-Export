@@ -10,6 +10,7 @@ import math
 
 #import needed local classes
 import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
@@ -22,6 +23,7 @@ from utilsOpenEMS.SettingsItem.GridSettingsItem import GridSettingsItem
 from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
@@ -81,9 +83,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.dialogVertLayout.addWidget(self.statusBar)
 
 		#
-		# instantiate OCTAVE script generator using this dialog form
+		# instantiate script generators using this dialog form
 		#
 		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
+		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
+		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
+
+		#
+		#	Connect function to change script generator
+		#
+		self.form.radioButton_octaveType.clicked.connect(self.radioButtonOutputScriptsTypeClicked)
+		self.form.radioButton_pythonType.clicked.connect(self.radioButtonOutputScriptsTypeClicked)
 
 		#
 		# GUI helpers function like display message box and so
@@ -183,9 +193,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)														# Clicked on "Erase aux Grid"
 		self.form.abortSimulationButton.clicked.connect(lambda: self.abortSimulationButtonClicked(self.simulationOutputDir))													# Clicked on "Write ABORT Simulation File"
-		self.form.drawS11Button.clicked.connect(lambda: self.octaveScriptGenerator.drawS11ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S11 Script"
-		self.form.drawS21Button.clicked.connect(lambda: self.octaveScriptGenerator.drawS21ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S21 Script"
-		self.form.writeNf2ffButton.clicked.connect(lambda: self.octaveScriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir))	# Clicked on "Write NF2FF"
+		self.form.drawS11Button.clicked.connect(lambda: self.scriptGenerator.drawS11ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S11 Script"
+		self.form.drawS21Button.clicked.connect(lambda: self.scriptGenerator.drawS21ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S21 Script"
+		self.form.writeNf2ffButton.clicked.connect(lambda: self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir))	# Clicked on "Write NF2FF"
 
 		#
 		# GRID
@@ -355,12 +365,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						self.form.portNf2ffObjectList.addItem(self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0))
 
 	def updateObjectAssignmentRightTreeWidgetItemData(self, groupName, itemName, data):
-		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+		updatedItems = self.form.objectAssignmentRightTreeWidget.findItems(
 			itemName, 
 			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
 			)
-		for item in gridGroupWidgetItems:
-			if (groupName == "Grid"):
+
+		#there can be more items in right column which has same name, like air under MAterials and Grid, so always is needed to compare if parent
+		#is same as parent from update function when this was called to update new settings
+		for item in updatedItems:
+			if item.parent().text(0) == groupName:
 				item.setData(0, QtCore.Qt.UserRole, data)
 
 
@@ -796,14 +809,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		programdir = os.path.dirname(App.ActiveDocument.FileName)
 
 		if not outputDir is None:
-			outFile = f"{programdir}/{outputDir}/tmp/ABORT"
+			absoluteOutputDir = os.path.join(outputDir, "tmp")
 		else:
-			outFile = f"{programdir}/tmp/ABORT"
+			absoluteOutputDir = os.path.join(programdir, "tmp")
+
+		outFile = os.path.join(absoluteOutputDir, "ABORT")
 		print("------------->" + outFile)
 
-		f = open(outFile, "w+", encoding='utf-8')
-		f.write("THIS CAN BE JUST EMPTY FILE. ABORT simulation.")
-		f.close()
+		if os.path.exists(absoluteOutputDir):
+			f = open(outFile, "w+", encoding='utf-8')
+			f.write("THIS CAN BE JUST EMPTY FILE. ABORT simulation.")
+			f.close()
+			print(f"ABORT file written into {absoluteOutputDir}")
+			self.guiHelpers.displayMessage(f"ABORT file written into {absoluteOutputDir}", forceModal=False)
+		else:
+			print(f"Simulation tmp/ folder not found at expected path: {absoluteOutputDir}")
+			self.guiHelpers.displayMessage(f"Simulation tmp/ folder not found at expected path: {absoluteOutputDir}", forceModal=False)
 
 	def materialUserDeinedRadioButtonToggled(self):
 		if (self.form.materialUserDefinedRadioButton.isChecked()):
@@ -1053,7 +1074,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		programname = os.path.basename(outputFile)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		self.simulationOutputDir = f"{programbase}"
+		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_openEMS_simulation"
 		print(f"-----> saveToFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
 
 	def loadFromFileSettingsButtonClicked(self):
@@ -1064,8 +1085,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		programname = os.path.basename(outputFile)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		self.simulationOutputDir = f"{programbase}"
+		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_openEMS_simulation"
 		print(f"-----> loadFromFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
+
+	#
+	#	Change current scripts type generator based on radiobutton from UI
+	#		if no type by accident is choosed, octave script generator is used
+	#
+	def radioButtonOutputScriptsTypeClicked(self):
+		if self.form.radioButton_octaveType.isChecked():
+			self.scriptGenerator = self.octaveScriptGenerator
+			self.guiHelpers.displayMessage("Output type changed to octave", forceModal=False)
+		elif self.form.radioButton_pythonType.isChecked():
+			self.scriptGenerator = self.pythonScriptGenerator
+			self.guiHelpers.displayMessage("Output type changed to python", forceModal=False)
+		else:
+			self.scriptGenerator = self.octaveScriptGenerator
+			self.guiHelpers.displayMessage("Some error - output type changed to default octave", forceModal=False)
 
 	#
 	#	After click on generate openEMS script file button there is check if settings are saved, if not user is asked if he want's to save settings if not
@@ -1077,7 +1113,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if saveSettingsFlag:
 				self.saveToFileSettingsButtonClicked()
 
-		self.octaveScriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
+		#write result .m file into subfolder named after .ini file next to simulation settings .ini file
+		print(f"----> start saving file into {self.simulationOutputDir}")
+
+		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1436,14 +1475,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### replace old with new settingsInst
 		selectedItems = self.form.excitationSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
+			self.guiHelpers.displayMessage("Excitation ERROR during update.", forceModal=False)
 			return
 		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 		
 		### update other UI elements to propagate changes
 		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)	
-
-
+		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)
+		self.guiHelpers.displayMessage("Excitation updated.", forceModal=False)
 
 	# PORT SETTINGS
 	#  _____   ____  _____ _______    _____ ______ _______ _______ _____ _   _  _____  _____ 

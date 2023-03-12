@@ -169,6 +169,11 @@ class IniFile:
         simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
         simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
 
+        simulationSettings.params['outputScriptType'] = 'octave'
+        if self.form.radioButton_pythonType.isChecked():
+            simulationSettings.params['outputScriptType'] = 'python'
+
+        # write parameters frp, above into JSON
         settings.beginGroup("SIMULATION-" + simulationSettings.name)
         settings.setValue("name", simulationSettings.name)
         settings.setValue("params", json.dumps(simulationSettings.params))
@@ -411,6 +416,12 @@ class IniFile:
                     self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
                     self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
                     self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
+
+                    self.form.radioButton_octaveType.setChecked(True)                                                       # by default octave type is checked
+                    self.form.radioButton_octaveType.setChecked(simulationSettings.params['outputScriptType'] == 'octave')
+                    if simulationSettings.params['outputScriptType'] == 'python':
+                        self.form.radioButton_pythonType.setChecked(simulationSettings.params['outputScriptType'] == 'python')
+                        self.form.radioButton_pythonType.clicked.emit()
                 except:
                     pass
 

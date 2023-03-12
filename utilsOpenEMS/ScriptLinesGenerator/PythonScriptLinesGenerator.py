@@ -8,10 +8,10 @@ import Mesh
 import numpy as np
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
-from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
+from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 
-class OctaveScriptLinesGenerator:
+class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 
     #
     #   constructor, get access to form GUI
@@ -25,176 +25,31 @@ class OctaveScriptLinesGenerator:
         #
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
 
-    def getUnitLengthFromUI_m(self):
-        unitStr = self.form.simParamsDeltaUnitList.currentText()
-        return SettingsItem.getUnitsAsNumber(unitStr)
-
-    def getFreeCADUnitLength_m(self):
-        # # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
-        # # Below is one way to retrieve this value from schemaTranslate() without implying it.
-        # [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), App.Units.Scheme.SI2 )
-        # return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
-        return 0.001
-
-    def getItemsByClassName(self):
-        categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-        categoryNodes = [self.form.objectAssignmentRightTreeWidget.topLevelItem(k) for k in range(categoryCount)]
-        itemsByClassName = {}
-        for m, categoryNode in enumerate(categoryNodes):  # for each category
-            for k in range(categoryNode.childCount()):  # for each child item in a given category
-                item = categoryNode.child(k)
-                itemData = item.data(0, QtCore.Qt.UserRole)
-                if not itemData:
-                    continue
-                itemClassName = itemData.__class__.__name__
-                if not (itemClassName in itemsByClassName):
-                    itemsByClassName[itemClassName] = [[item, itemData]]
-                else:
-                    itemsByClassName[itemClassName].append([item, itemData])
-
-        print("generateOpenEMSScript: Item classes found = " + ", ".join(itemsByClassName.keys()))
-
-        return itemsByClassName
-
-    #
-    #	Returns object priority
-    #		priorityItemName - string which identifies item by its text in priority tree view widget
-    #
-    def getItemPriority(self, priorityItemName):
-        #
-        #	priority is read from tree view
-        #
-        priorityItemValue = 42
-        itemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
-        for k in range(itemsCount):
-            priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
-            if priorityItemName in priorityItem.text(0):
-                #
-                #	THIS IS MY FORMULA TO HAVE AT LEAST TWO 0 AT END AND NOT HAVE PRIORITY INDEX 0 BUT START AT 100 AT LEAST!
-                #		ATTENTION: higher number means higher priority so fromual is: (1001 - k)     ...to get item at top of tree view with highest priority numbers!
-                #
-                priorityItemValue = (100 - k) * 100
-                break  # this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
-
-        return priorityItemValue
-
-    #
-    #   Returns current FreeCAD file:
-    #       - absolute directory
-    #       - name without extension
-    #
-    def getCurrDir(self):
-        programname = os.path.basename(App.ActiveDocument.FileName)
-        programDir = os.path.dirname(App.ActiveDocument.FileName)
-
-        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-
-        print('--->' + programbase)
-        print('--->' + programDir)
-        return [programDir, programbase]
-
-    #
-    #   Creates output dir in current FreeCAD file directory if not exists.
-    #       outputDir - absolute path to directory where folder with simulation files should be created
-    #
-    def createOuputDir(self, outputDir):
-        programname = os.path.basename(App.ActiveDocument.FileName)     # FreeCAD filename with extension
-        programdir = os.path.dirname(App.ActiveDocument.FileName)       # FreeCAD file directory
-        programbase, ext = os.path.splitext(programname)                # FreeCAD filename without extension
-
-        #
-        #   Simulation files will be saved in folder named based on FreeCAD filename and suffix _openEMS_simulation
-        #       If parameter outputDir is not set this folder will be generated in the same folder as FreeCAD file.
-        #       If outputDir is set folder with simulation folder with files is genenrated next to .ini file
-        #
-        if outputDir is None or outputDir == False:
-            absoluteOutputDir = f"{programdir}/{programbase}_openEMS_simulation"
-        else:
-            absoluteOutputDir = outputDir
-
-        if not os.path.exists(absoluteOutputDir):
-            os.makedirs(absoluteOutputDir)
-            print(f"Created directory for simulation: {outputDir}")
-
-        return absoluteOutputDir
-
-    def reportFreeCADItemSettings(self, items):
-        # "FreeCAD item detection everywhere in Main Tree!!! need to get rid this, now it's tolerated during development!"
-        if not items:
-            return
-
-        for [item, currSetting] in items:
-            #	GET PARENT NODE DATATYPE
-            print("#")
-            print("#FREECAD OBJ.")
-            if (str(item.parent().text(0)) == "Grid"):
-                print("name: Grid Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Ports"):
-                print("name: Port Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Excitation"):
-                print("name: Excitation Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Materials"):
-                print("name: Material Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            else:
-                print("Parent of FreeCADSettingItem UNKNOWN")
-                pass
-
-    def getOctaveExecCommand(self, mFileName, options=""):
-        cmd = self.form.octaveExecCommandList.currentText()
-        cmd = cmd.format(opt=options, filename=mFileName)
-        return cmd
-
-    def getBoundaryConditionsScriptLines(self):
-        genScript = ""
-
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% BOUNDARY CONDITIONS\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-
-        _bcStr = lambda pml_val, text: '\"PML_{}\"'.format(str(pml_val)) if text == 'PML' else '\"{}\"'.format(text)
-        strBC = ""
-        strBC += _bcStr(self.form.PMLxmincells.value(), self.form.BCxmin.currentText()) + ","
-        strBC += _bcStr(self.form.PMLxmaxcells.value(), self.form.BCxmax.currentText()) + ","
-        strBC += _bcStr(self.form.PMLymincells.value(), self.form.BCymin.currentText()) + ","
-        strBC += _bcStr(self.form.PMLymaxcells.value(), self.form.BCymax.currentText()) + ","
-        strBC += _bcStr(self.form.PMLzmincells.value(), self.form.BCzmin.currentText()) + ","
-        strBC += _bcStr(self.form.PMLzmaxcells.value(), self.form.BCzmax.currentText())
-
-        genScript += "BC = {" + strBC + "};\n"
-        genScript += "FDTD = SetBoundaryCond( FDTD, BC );\n"
-        genScript += "\n"
-
-        return genScript
-
     def getCoordinateSystemScriptLines(self):
         genScript = ""
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% COORDINATE SYSTEM\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# COORDINATE SYSTEM\n"
+        genScript += "#######################################################################################################################################\n"
 
         """ # Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
         gridCoordsType = self.getModelCoordsType()
         if (gridCoordsType == "rectangular"):
-            genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+            genScript += "CSX = InitCSX('CoordSystem',0); # Cartesian coordinate system.\n"
         elif (gridCoordsType == "cylindrical"):
-            genScript += "CSX = InitCSX('CoordSystem',1); % Cylindrical coordinate system.\n"
+            genScript += "CSX = InitCSX('CoordSystem',1); # Cylindrical coordinate system.\n"
         else:
             genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
         """
-        genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
-        genScript += "mesh.x = []; % mesh variable initialization (Note: x y z implies type Cartesian).\n"
-        genScript += "mesh.y = [];\n"
-        genScript += "mesh.z = [];\n"
-        genScript += "CSX = DefineRectGrid(CSX, unit, mesh); % First call with empty mesh to set deltaUnit attribute.\n"
+        genScript += "FDTD.SetCoordSystem(0) # Cartesian coordinate system.\n"
+        genScript += "def mesh():\n"
+        genScript += "\tx,y,z\n"
+        genScript += "\n"
+        genScript += "mesh.x = np.array([]); # mesh variable initialization (Note: x y z implies type Cartesian).\n"
+        genScript += "mesh.y = np.array([]);\n"
+        genScript += "mesh.z = np.array([]);\n"
+        genScript += "openEMS_grid = CSX.GetGrid()\n"
+        genScript += "openEMS_grid.SetDeltaUnit(unit) # First call with empty mesh to set deltaUnit attribute.\n"
         genScript += "\n"
 
         return genScript
@@ -202,20 +57,27 @@ class OctaveScriptLinesGenerator:
     def getMaterialDefinitionsScriptLines(self, items, outputDir=None):
         genScript = ""
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% MATERIALS AND GEOMETRY\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# MATERIALS AND GEOMETRY\n"
+        genScript += "#######################################################################################################################################\n"
 
         # PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
         # Note that the user will need to create a metal named 'PEC' and populate it to avoid a warning
         # about "no primitives assigned to metal 'PEC'".
-        genScript += "CSX = AddMetal( CSX, 'PEC' );\n"
+        genScript += "PEC = CSX.AddMetal('PEC');\n"
         genScript += "\n"
 
         if not items:
             return genScript
 
+        materialCounter = 0
+        simObjectCounter = 0
         for [item, currSetting] in items:
+
+            #
+            #   Materials are stored in variables in python script, so this is counter to create universal name ie. material_1, material_2, ...
+            #
+            materialCounter += 1
 
             print(currSetting)
             if (currSetting.getName() == 'Material Default'):
@@ -230,25 +92,25 @@ class OctaveScriptLinesGenerator:
             print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(
                 currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
 
-            genScript += "%% MATERIAL - " + currSetting.getName() + "\n"
+            genScript += "## MATERIAL - " + currSetting.getName() + "\n"
 
             # when material metal use just AddMetal for simulator
             if (currSetting.type == 'metal'):
-                genScript += "CSX = AddMetal( CSX, '" + currSetting.getName() + "' );\n"
+                genScript += f"material_{materialCounter} = CSX.AddMetal('{currSetting.getName()}');\n"
             elif (currSetting.type == 'userdefined'):
-                genScript += "CSX = AddMaterial( CSX, '" + currSetting.getName() + "' );\n"
+                genScript += f"material_{materialCounter} = CSX.AddMaterial('{currSetting.getName()}');\n"
 
-                smp_args = ["CSX", "'" + currSetting.getName() + "'"]
+                smp_args = []
                 if str(currSetting.constants['epsilon']) != "0":
-                    smp_args += ["'Epsilon'", str(currSetting.constants['epsilon'])]
+                    smp_args.append(f"epsilon={str(currSetting.constants['epsilon'])}")
                 if str(currSetting.constants['mue']) != "0":
-                    smp_args += ["'Mue'", str(currSetting.constants['mue'])]
+                    smp_args.append(f"mue={str(currSetting.constants['mue'])}")
                 if str(currSetting.constants['kappa']) != "0":
-                    smp_args += ["'Kappa'", str(currSetting.constants['kappa'])]
+                    smp_args.append(f"kappa={str(currSetting.constants['kappa'])}")
                 if str(currSetting.constants['sigma']) != "0":
-                    smp_args += ["'Sigma'", str(currSetting.constants['sigma'])]
+                    smp_args.append(f"sigma={str(currSetting.constants['sigma'])}")
 
-                genScript += "CSX = SetMaterialProperty( " + ", ".join(smp_args) + " );\n"
+                genScript += f"material_{materialCounter}.SetMaterialProperty(" + ", ".join(smp_args) + ")\n"
 
             # first print all current material children names
             for k in range(item.childCount()):
@@ -258,6 +120,7 @@ class OctaveScriptLinesGenerator:
 
             # now export material children, if it's object export as STL, if it's curve export as curve
             for k in range(item.childCount()):
+                simObjectCounter += 1               #counter for objects
                 childName = item.child(k).text(0)
 
                 #
@@ -316,8 +179,9 @@ class OctaveScriptLinesGenerator:
                     currDir, baseName = self.getCurrDir()
                     stlModelFileName = childName + "_gen_model.stl"
 
-                    genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
-                        objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
+                    #genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
+                    #    objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
+                    genScript += f"material_{materialCounter}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
 
                     #   _____ _______ _                                        _   _
                     #  / ____|__   __| |                                      | | (_)
@@ -335,9 +199,9 @@ class OctaveScriptLinesGenerator:
 
                     #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
                     if (not outputDir is None):
-                        exportFileName = f"{outputDir}/{stlModelFileName}"
+                        exportFileName = os.path.join(outputDir, stlModelFileName)
                     else:
-                        exportFileName = f"{currDir}/{stlModelFileName}"
+                        exportFileName = os.path.join(currDir, stlModelFileName)
 
                     Mesh.export(partToExport, exportFileName)
                     print("Material object exported as STL into: " + stlModelFileName)
@@ -363,9 +227,10 @@ class OctaveScriptLinesGenerator:
         baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z': '[0 0 1]'}
         mslDirStr = {'x': '0', 'y': '1', 'z': '2'}
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% PORTS\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# PORTS\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "port = {}\n"
 
         for [item, currSetting] in items:
 
@@ -378,7 +243,7 @@ class OctaveScriptLinesGenerator:
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
-                genScript += "%% PORT - " + currSetting.getName() + " - " + childName + "\n"
+                genScript += "## PORT - " + currSetting.getName() + " - " + childName + "\n"
 
                 print("##Children:")
                 print("\t" + childName)
@@ -403,40 +268,43 @@ class OctaveScriptLinesGenerator:
                     # PORT openEMS GENERATION INTO VARIABLE
                     #
                     if (currSetting.getType() == 'lumped'):
-                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += 'portR = ' + str(currSetting.R) + ';\n'
-                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += 'portR = ' + str(currSetting.R) + '\n'
+                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + '\n'
+                        genScript += 'portDirection = \'' + currSetting.direction + '\'\n'
 
                         print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
                                                                                 _r(bbCoords.ZMin)))
                         print('\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
                                                                                 _r(bbCoords.ZMax)))
 
-                        isActiveStr = {False: '', True: ', true'}
-
-                        genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + \
-                                     str(priorityIndex) + ', ' + \
-                                     str(genScriptPortCount) + ', ' + \
-                                     'portR*portUnits, portStart, portStop, portDirection' + \
-                                     isActiveStr.get(currSetting.isActive) + ');\n'
+                        genScript += 'port[' + str(genScriptPortCount) + '] = FDTD.AddLumpedPort(' + \
+                                     'port_nr=' + str(genScriptPortCount) + ', ' + \
+                                     'R=portR*portUnits, start=portStart, stop=portStop, p_dir=portDirection, ' + \
+                                     'priority=' + str(priorityIndex) + ', ' + \
+                                     'excite=' + ('1.0' if currSetting.isActive else '0') + ');\n'
 
                         genScriptPortCount += 1
+
+                    #
+                    #   ERROR - BELOW STILL NOT REWRITTEN INTO PYTHON!!!
+                    #
+
                     elif (currSetting.getType() == 'microstrip'):
-                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
-                        genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + '\n'
+                        genScript += 'mslDir = {}'.format(mslDirStr.get(currentSetting.propagation, '?'))
+                        genScript += 'mslEVec = {}\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
@@ -458,33 +326,70 @@ class OctaveScriptLinesGenerator:
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         genScript += "%% rectangular port openEMS code should be here\n"
                     elif (currSetting.getType() == 'et dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                        #
+                        #   see doc: https://docs.openems.de/python/CSXCAD/CSProperties/CSPropDumpBox.html#CSXCAD.CSProperties.CSPropDumpBox
+                        #   PARAMETERS:
+                        #       dump_type
+                        #       dump_mode
+                        #       file_type
+                        #       frequency
+                        #       sub_sampling
+                        #       opt_resolution
+                        #
+                        #   DUMP TYPES:
+                        #       0: for E - field time - domain dump (default)
+                        #       1 : for H-field time-domain dump
+                        #       2 : for electric current time-domain dump
+                        #       3 : for total current density (rot(H)) time-domain dump
+                        #       10 : for E-field frequency-domain dump
+                        #       11 : for H-field frequency-domain dump
+                        #       12 : for electric current frequency-domain dump
+                        #       13 : for total current density (rot(H)) frequency-domain dump
+                        #       20 : local SAR frequency-domain dump
+                        #       21 : 1g averaging SAR frequency-domain dump
+                        #       22 : 10g averaging SAR frequency-domain dump
+                        #       29 : raw data needed for SAR calculations (electric field FD, cell volume, conductivity and density)
+                        #
+                        #   DUMP MODES:
+                        #      0 : no-interpolation
+                        #      1 : node-interpolation (default, see warning below)
+                        #      2 : cell-interpolation (see warning below)
+                        #
+                        #   FILE TYPES:
+                        #       0 : vtk-file (default)
+                        #       1 : hdf5-file (easier to read by python, using h5py)
+                        #
+                        genScript += f"port[{genScriptPortCount}] = CSX.AddDump('{currSetting.name}', dump_type=0)\n"
+                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+                        genScript += f"port[{genScriptPortCount}].AddBox(dumpStart, dumpStop)\n"
+
+                        genScriptPortCount += 1
                     elif (currSetting.getType() == 'ht dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                        genScript += f"port[{genScriptPortCount}] = CSX.AddDump('{currSetting.name}', dump_type=1)\n"
+                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+                        genScript += f"port[{genScriptPortCount}].AddBox(dumpStart, dumpStop)\n"
+
+                        genScriptPortCount += 1
                     elif (currSetting.getType() == 'nf2ff box'):
-                        genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                        genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
                                                                                       _r(sf * bbCoords.YMin),
                                                                                       _r(sf * bbCoords.ZMin))
-                        genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                        genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
                                                                                       _r(sf * bbCoords.YMax),
                                                                                       _r(sf * bbCoords.ZMax))
                         # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
                         genScript += "[CSX nf2ffBox{" + str(
-                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop)\n"
                         # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
 
                         genNF2FFBoxCounter += 1
@@ -623,9 +528,9 @@ class OctaveScriptLinesGenerator:
         refUnitStr = self.form.simParamsDeltaUnitList.currentText()
         sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% GRID LINES\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# GRID LINES\n"
+        genScript += "#######################################################################################################################################\n"
         genScript += "\n"
 
         # Create lists and dict to be able to resolve ordered list of (grid settings instance <-> FreeCAD object) associations.
@@ -686,92 +591,90 @@ class OctaveScriptLinesGenerator:
 
             # Write grid definition.
 
-            genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
+            genScript += "## GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
 
             if (gridSettingsInst.getType() == 'Fixed Distance'):
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
-                    genScript += "mesh.x = [ mesh.x ({0:g}:{1:g}:{2:g}) ];\n".format(_r(xmin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['x']), _r(xmax))
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
+                    genScript += "mesh.x = np.concatenate((mesh.x, np.arange({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
                 if gridSettingsInst.yenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
-                    genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['y']), _r(ymax))
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
+                    genScript += "mesh.y = np.concatenate((mesh.y, np.arange({0:g},{1:g},{2:g})))\n".format(_r(ymin),_r(ymax),_r(gridSettingsInst.getXYZ(refUnit)['y']))
                 if gridSettingsInst.zenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
-                    genScript += "mesh.z = [ mesh.z ({0:g}:{1:g}:{2:g}) ];\n".format(_r(zmin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['z']), _r(zmax))
-                genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
+                    genScript += "mesh.z = np.concatenate((mesh.z, np.arange({0:g},{1:g},{2:g})))\n".format(_r(zmin),_r(zmax),_r(gridSettingsInst.getXYZ(refUnit)['z']))
 
             elif (gridSettingsInst.getType() == 'Fixed Count'):
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
                     if (not gridSettingsInst.getXYZ()['x'] == 1):
-                        genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(xmin), _r(xmax), _r(
-                            gridSettingsInst.getXYZ(refUnit)['x']))
+                        genScript += "mesh.x = np.concatenate((mesh.x, linspace({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
                     else:
-                        genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((xmin + xmax) / 2))
+                        genScript += "mesh.x = np.append(mesh.x, {0:g})\n".format(_r((xmin + xmax) / 2))
 
                 if gridSettingsInst.yenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
                     if (not gridSettingsInst.getXYZ()['y'] == 1):
-                        genScript += "mesh.y = [ mesh.y linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(
+                        genScript += "mesh.y = np.concatenate((mesh.y, linspace({0:g},{1:g},{2:g})))\n".format(_r(ymin), _r(ymax), _r(
                             gridSettingsInst.getXYZ(refUnit)['y']))
                     else:
-                        genScript += "mesh.y = [ mesh.y {0:g} ];\n".format(_r((ymin + ymax) / 2))
+                        genScript += "mesh.y = np.append(mesh.y, {0:g})\n".format(_r((ymin + ymax) / 2))
 
                 if gridSettingsInst.zenabled:
                     if gridSettingsInst.topPriorityLines:
-                        genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
                     if (not gridSettingsInst.getXYZ()['z'] == 1):
-                        genScript += "mesh.z = [ mesh.z linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(
+                        genScript += "mesh.z = np.concatenate((mesh.z, linspace({0:g},{1:g},{2:g})))\n".format(_r(zmin), _r(zmax), _r(
                             gridSettingsInst.getXYZ(refUnit)['z']))
                     else:
-                        genScript += "mesh.z = [ mesh.z {0:g} ];\n".format(_r((zmin + zmax) / 2))
-
-                genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+                        genScript += "mesh.z = np.append(mesh.z, {0:g})\n".format(_r((zmin + zmax) / 2))
 
             elif (gridSettingsInst.getType() == 'User Defined'):
                 genScript += "mesh = " + gridSettingsInst.getXYZ() + ";\n"
-                genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             genScript += "\n"
+
+        genScript += "openEMS_grid.AddLine('x', mesh.x)\n"
+        genScript += "openEMS_grid.AddLine('y', mesh.y)\n"
+        genScript += "openEMS_grid.AddLine('z', mesh.z)\n"
+        genScript += "\n"
 
         return genScript
 
 
     def getInitScriptLines(self):
         genScript = ""
-        genScript += "% To be run with GNU Octave or MATLAB.\n"
-        genScript += "% FreeCAD to OpenEMS plugin by Lubomir Jagos, \n"
-        genScript += "% see https://github.com/LubomirJagos/FreeCAD-OpenEMS-Export\n"
-        genScript += "%\n"
-        genScript += "% This file has been automatically generated. Manual changes may be overwritten.\n"
-        genScript += "%\n"
-        genScript += "\n"
-        genScript += "close all\n"
-        genScript += "clear\n"
-        genScript += "clc\n"
-        genScript += "\n"
-        genScript += "%% Change the current folder to the folder of this m-file.\n"
-        genScript += "if(~isdeployed)\n"
-        genScript += "  mfile_name          = mfilename('fullpath');\n"
-        genScript += "  [pathstr,name,ext]  = fileparts(mfile_name);\n"
-        genScript += "  cd(pathstr);\n"
-        genScript += "end\n"
-        genScript += "\n"
+        genScript += "# To be run with python.\n"
+        genScript += "# FreeCAD to OpenEMS plugin by Lubomir Jagos, \n"
+        genScript += "# see https://github.com/LubomirJagos/FreeCAD-OpenEMS-Export\n"
+        genScript += "#\n"
+        genScript += "# This file has been automatically generated. Manual changes may be overwritten.\n"
+        genScript += "#\n"
+        genScript += "### Import Libraries\n"
+        genScript += "import os, tempfile, shutil\n"
+        genScript += "from pylab import *\n"
+        genScript += "import CSXCAD\n"
+        genScript += "from openEMS import openEMS\n"
+        genScript += "from openEMS.physical_constants import *\n"
+        genScript += "#\n"
 
-        genScript += "%% constants\n"
-        genScript += "physical_constants;\n"
+        genScript += "#\n"
+        genScript += "# Change current path to script file folder\n"
+        genScript += "#\n"
+        genScript += "abspath = os.path.abspath(__file__)\n"
+        genScript += "dname = os.path.dirname(abspath)\n"
+        genScript += "os.chdir(dname)\n"
+
+        genScript += "## constants\n"
         genScript += "unit    = " + str(
-            self.getUnitLengthFromUI_m()) + "; % Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
+            self.getUnitLengthFromUI_m()) + " # Model coordinates and lengths will be specified in " + self.form.simParamsDeltaUnitList.currentText() + ".\n"
         genScript += "fc_unit = " + str(
-            self.getFreeCADUnitLength_m()) + "; % STL files are exported in FreeCAD standard units (mm).\n"
+            self.getFreeCADUnitLength_m()) + " # STL files are exported in FreeCAD standard units (mm).\n"
         genScript += "\n"
 
         return genScript
@@ -796,40 +699,40 @@ class OctaveScriptLinesGenerator:
                 print("#name: " + currSetting.getName())
                 print("#type: " + currSetting.getType())
 
-                genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                genScript += "% EXCITATION " + currSetting.getName() + "\n"
-                genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                genScript += "#######################################################################################################################################\n"
+                genScript += "# EXCITATION " + currSetting.getName() + "\n"
+                genScript += "#######################################################################################################################################\n"
 
                 # EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
                 # maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
                 if (currSetting.getType() == 'sinusodial'):
                     genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(
-                        currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                        currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
                     if not definitionsOnly:
-                        genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
-                    genScript += "max_res = c0 / f0 / 20;\n"
+                        genScript += "FDTD.SetSinusExcite(fc);\n"
+                    genScript += "max_res = C0 / f0 / 20\n"
                     self.maxGridResolution_m = 3e8 / (
                                 currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
                     pass
                 elif (currSetting.getType() == 'gaussian'):
                     genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(
-                        currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                        currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
                     genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(
-                        currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                        currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
                     if not definitionsOnly:
-                        genScript += "FDTD = SetGaussExcite( FDTD, f0, fc );\n"
-                    genScript += "max_res = c0 / (f0 + fc) / 20;\n"
+                        genScript += "FDTD.SetGaussExcite(f0, fc)\n"
+                    genScript += "max_res = C0 / (f0 + fc) / 20\n"
                     self.maxGridResolution_m = 3e8 / ((currSetting.gaussian['f0'] + currSetting.gaussian[
                         'fc']) * currSetting.getUnitsAsNumber(currSetting.units) * 20)
                     pass
                 elif (currSetting.getType() == 'custom'):
                     f0 = currSetting.custom['f0'] * currSetting.getUnitsAsNumber(currSetting.units)
                     genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(
-                        currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                        currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
                     if not definitionsOnly:
-                        genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace(
-                            'f0', str(f0)) + "' );\n"
-                    genScript += "max_res = 0;\n"
+                        genScript += "FDTD.SetCustomExcite(f0, '" + currSetting.custom['functionStr'].replace(
+                            'f0', str(f0)) + "' )\n"
+                    genScript += "max_res = 0\n"
                     self.maxGridResolution_m = 0
                     pass
                 pass
@@ -839,6 +742,28 @@ class OctaveScriptLinesGenerator:
                 self.guiHelpers.displayMessage("Missing excitation, please define one.")
                 pass
             pass
+        return genScript
+
+    def getBoundaryConditionsScriptLines(self):
+        genScript = ""
+
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# BOUNDARY CONDITIONS\n"
+        genScript += "#######################################################################################################################################\n"
+
+        _bcStr = lambda pml_val, text: '\"PML_{}\"'.format(str(pml_val)) if text == 'PML' else '\"{}\"'.format(text)
+        strBC = ""
+        strBC += _bcStr(self.form.PMLxmincells.value(), self.form.BCxmin.currentText()) + ","
+        strBC += _bcStr(self.form.PMLxmaxcells.value(), self.form.BCxmax.currentText()) + ","
+        strBC += _bcStr(self.form.PMLymincells.value(), self.form.BCymin.currentText()) + ","
+        strBC += _bcStr(self.form.PMLymaxcells.value(), self.form.BCymax.currentText()) + ","
+        strBC += _bcStr(self.form.PMLzmincells.value(), self.form.BCzmin.currentText()) + ","
+        strBC += _bcStr(self.form.PMLzmaxcells.value(), self.form.BCzmax.currentText())
+
+        genScript += "BC = [" + strBC + "]\n"
+        genScript += "FDTD.SetBoundaryCond(BC)\n"
+        genScript += "\n"
+
         return genScript
 
     #########################################################################################################################
@@ -879,44 +804,48 @@ class OctaveScriptLinesGenerator:
 
         genScript = ""
 
-        genScript += "% OpenEMS FDTD Analysis Automation Script\n"
-        genScript += "%\n"
+        genScript += "# OpenEMS FDTD Analysis Automation Script\n"
+        genScript += "#\n"
 
         genScript += self.getInitScriptLines()
 
-        genScript += "%% switches & options\n"
-        genScript += "postprocessing_only = " + ('1' if self.form.generateJustPreviewCheckbox.isChecked() else '0')+ ";\n"
-        genScript += "draw_3d_pattern = 0; % this may take a while...\n"
-        genScript += "use_pml = 0;         % use pml boundaries instead of mur\n"
+        genScript += "## switches & options\n"
+        genScript += "postprocessing_only = " + ('True' if self.form.generateJustPreviewCheckbox.isChecked() else 'False')+ ";\n"
+        genScript += "draw_3d_pattern = 0  # this may take a while...\n"
+        genScript += "use_pml = 0          # use pml boundaries instead of mur\n"
         genScript += "\n"
-        genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
-        genScript += "display(currDir);\n"
+        genScript += "currDir = os.getcwd()\n"
+        genScript += "print(currDir)\n"
         genScript += "\n"
 
-        genScript += "% --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
-        genScript += "% --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
+        genScript += "# --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
+        genScript += "# --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
         openEMS_opt = []
         if self.form.generateDebugPECCheckbox.isChecked():
             openEMS_opt.append('--debug-PEC')
         if self.form.generateJustPreviewCheckbox.isChecked():
             openEMS_opt.append('--no-simulation')
-        genScript += "openEMS_opts = '" + " ".join(openEMS_opt) + "';\n"
+        genScript += "openEMS_opts = '" + " ".join(openEMS_opt) + "'\n"
         genScript += "\n"
 
         # Write simulation settings.
 
-        genScript += "%% prepare simulation folder\n"
-        genScript += "Sim_Path = 'tmp';\n"
-        genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
-        genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"
-        genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
+        genScript += "## prepare simulation folder\n"
+        genScript += "Sim_Path = os.path.join(currDir, 'tmp')\n"
+        genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml'\n"
+
+        genScript += "if os.path.exists(Sim_Path):\n"
+        genScript += "\tshutil.rmtree(Sim_Path)   # clear previous directory\n"
+        genScript += "\tos.mkdir(Sim_Path)    # create empty simulation folder\n"
         genScript += "\n"
 
-        genScript += "%% setup FDTD parameter & excitation function\n"
-        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + ";\n"
+        genScript += "## setup FDTD parameter & excitation function\n"
+        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + "\n"
         genScript += "min_decrement = " + str(
-            self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
-        genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement );\n"
+            self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
+        genScript += "CSX = CSXCAD.ContinuousStructure()\n"
+        genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
+        genScript += "FDTD.SetCSX(CSX)\n"
         genScript += "\n"
 
         print("======================== REPORT BEGIN ========================\n")
@@ -949,35 +878,38 @@ class OctaveScriptLinesGenerator:
 
         # Write lumped part definitions.
 
-        genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+        #genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
 
         # Write NF2FF probe grid definitions.
 
-        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+        #genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         print("======================== REPORT END ========================\n")
 
         # Finalize script.
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% RUN\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# RUN\n"
+        genScript += "#######################################################################################################################################\n"
 
-        genScript += "WriteOpenEMS( [Sim_Path '/' Sim_CSX], FDTD, CSX );\n"
-        genScript += "CSXGeomPlot( [Sim_Path '/' Sim_CSX] );\n"
+        genScript += "### Run the simulation\n"
+        genScript += "CSX_file = os.path.join(Sim_Path, Sim_CSX)\n"
+        genScript += "if not os.path.exists(Sim_Path):\n"
+        genScript += "\tos.mkdir(Sim_Path)\n"
+        genScript += "CSX.Write2XML(CSX_file)\n"
+        genScript += "from CSXCAD import AppCSXCAD_BIN\n"
+        genScript += "os.system(AppCSXCAD_BIN + ' \"{}\"'.format(CSX_file))\n"
         genScript += "\n"
-        genScript += "if (postprocessing_only==0)\n"
-        genScript += "    %% run openEMS\n"
-        genScript += "    RunOpenEMS( Sim_Path, Sim_CSX, openEMS_opts );\n"
-        genScript += "end\n"
+        genScript += "if not postprocessing_only:\n"
+        genScript += "\tFDTD.Run(Sim_Path, verbose=3, cleanup=True)\n"
 
-        # Write _OpenEMS.m script file to current directory.
+        # Write _OpenEMS.py script file to current directory.
         currDir, nameBase = self.getCurrDir()
 
         if (not outputDir is None):
-            fileName = f"{outputDir}/{nameBase}_openEMS.m"
+            fileName = f"{outputDir}/{nameBase}_openEMS.py"
         else:
-            fileName = f"{currDir}/{nameBase}_openEMS.m"
+            fileName = f"{currDir}/{nameBase}_openEMS.py"
 
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
@@ -1198,9 +1130,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
 
         self.createOuputDir(outputDir)
         if (not outputDir is None):
-            fileName = f"{outputDir}/{nameBase}_draw_NF2FF.m"
+            fileName = f"{outputDir}/{nameBase}_draw_NF2FF.py"
         else:
-            fileName = f"{currDir}/{nameBase}_draw_NF2FF.m"
+            fileName = f"{currDir}/{nameBase}_draw_NF2FF.py"
 
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
@@ -1300,9 +1232,9 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 
         self.createOuputDir(outputDir)
         if (not outputDir is None):
-            fileName = f"{outputDir}/{nameBase}_draw_S11.m"
+            fileName = f"{outputDir}/{nameBase}_draw_S11.py"
         else:
-            fileName = f"{currDir}/{nameBase}_draw_S11.m"
+            fileName = f"{currDir}/{nameBase}_draw_S11.py"
 
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
@@ -1392,9 +1324,9 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 
         self.createOuputDir(outputDir)
         if (not outputDir is None):
-            fileName = f"{outputDir}/{nameBase}_draw_S21.m"
+            fileName = f"{outputDir}/{nameBase}_draw_S21.py"
         else:
-            fileName = f"{currDir}/{nameBase}_draw_S21.m"
+            fileName = f"{currDir}/{nameBase}_draw_S21.py"
 
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)
