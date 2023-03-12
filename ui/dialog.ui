@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1130</width>
-    <height>722</height>
+    <width>1134</width>
+    <height>731</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1158,6 +1158,134 @@
                   </item>
                  </layout>
                 </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QRadioButton" name="materialConductingSheetRadioButton">
+                    <property name="text">
+                     <string>Conducting Sheet</string>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_11">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_25">
+                  <property name="leftMargin">
+                   <number>5</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>5</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>5</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>5</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_28">
+                    <property name="text">
+                     <string>Thickness</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="materialConductingSheetThickness">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.100000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>40.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="materialConductingSheetUnits">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                    <property name="currentIndex">
+                     <number>3</number>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>m</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>cm</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>mm</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>um</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>nm</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>pm</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_18">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
                </layout>
               </widget>
              </item>
@@ -1645,27 +1773,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
-                  <property name="text">
-                   <string>Rectangular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="microstripPortRadioButton">
-                  <property name="text">
-                   <string>Microstrip</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-                  <property name="text">
-                   <string>Circular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QRadioButton" name="etDumpPortRadioButton">
                   <property name="text">
@@ -1683,6 +1790,46 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                   <property name="text">
                    <string>NF2FF Box</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <layout class="QHBoxLayout" name="horizontalLayout_26">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QRadioButton" name="microstripPortRadioButton">
+                    <property name="text">
+                     <string>Microstrip</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="microstripPortMaterialComboBox"/>
+                  </item>
+                 </layout>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                  <property name="text">
+                   <string>Circular Waveguide</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                  <property name="text">
+                   <string>Rectangular Waveguide</string>
                   </property>
                  </widget>
                 </item>
@@ -3541,9 +3688,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
   <tabstop>portSettingsTreeView</tabstop>
   <tabstop>portSettingsNameInput</tabstop>
   <tabstop>lumpedPortRadioButton</tabstop>
-  <tabstop>microstripPortRadioButton</tabstop>
-  <tabstop>circularWaveguidePortRadioButton</tabstop>
-  <tabstop>rectangularWaveguidePortRadioButton</tabstop>
   <tabstop>etDumpPortRadioButton</tabstop>
   <tabstop>htDumpPortRadioButton</tabstop>
   <tabstop>nf2ffBoxPortRadioButton</tabstop>
