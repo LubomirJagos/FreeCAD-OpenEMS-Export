@@ -84,18 +84,22 @@ class IniFile:
 
             settings.beginGroup("MATERIAL-" + materialList[k].getName())
             settings.setValue("type", materialList[k].type)
-            settings.setValue("material_epsilon", materialList[k].constants['epsilon'])
-            settings.setValue("material_mue", materialList[k].constants['mue'])
-            settings.setValue("material_kappa", materialList[k].constants['kappa'])
-            settings.setValue("material_sigma", materialList[k].constants['sigma'])
 
-            try:
-                settings.setValue("conductingSheetThicknessValue", materialList[k].constants['conductingSheetThicknessValue'])
-                settings.setValue("conductingSheetThicknessUnits", materialList[k].constants['conductingSheetThicknessUnits'])
-            except Exception as e:
-                settings.setValue("conductingSheetThicknessValue", 40.00)
-                settings.setValue("conductingSheetThicknessUnits", "um")
-                print(f"IniFile.py > write(), ERROR, set default values for conductingSheetThicknessValue, conductingSheetThicknessUnits\n{e}")
+            if (materialList[k].type == "userdefined"):
+                settings.setValue("material_epsilon", materialList[k].constants['epsilon'])
+                settings.setValue("material_mue", materialList[k].constants['mue'])
+                settings.setValue("material_kappa", materialList[k].constants['kappa'])
+                settings.setValue("material_sigma", materialList[k].constants['sigma'])
+            elif (materialList[k].type == "conducting sheet"):
+                try:
+                    settings.setValue("conductingSheetThicknessValue", materialList[k].constants['conductingSheetThicknessValue'])
+                    settings.setValue("conductingSheetThicknessUnits", materialList[k].constants['conductingSheetThicknessUnits'])
+                    settings.setValue("conductingSheetConductivity", materialList[k].constants['conductingSheetConductivity'])
+                except Exception as e:
+                    settings.setValue("conductingSheetThicknessValue", 40.00)
+                    settings.setValue("conductingSheetThicknessUnits", "um")
+                    settings.setValue("conductingSheetConductivity", 50e6)
+                    print(f"IniFile.py > write(), ERROR, set default values for conductingSheetThicknessValue, conductingSheetThicknessUnits\n{e}")
 
             settings.endGroup()
 
@@ -153,6 +157,11 @@ class IniFile:
             elif (portList[k].type == "microstrip"):
                 try:
                     settings.setValue("mslMaterial", portList[k].mslMaterial)
+                    settings.setValue("mslPropagation", portList[k].mslPropagation)
+                    settings.setValue("mslFeedShiftValue", portList[k].mslFeedShiftValue)
+                    settings.setValue("mslFeedShiftUnits", portList[k].mslFeedShiftUnits)
+                    settings.setValue("mslMeasPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
+                    settings.setValue("mslMeasPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
 
@@ -369,7 +378,17 @@ class IniFile:
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                 elif (categorySettings.type == "microstrip"):
-                    categorySettings.mslMaterial = settings.value('mslMaterial')
+                    #this is in try block to have backward compatibility
+                    try:
+                        categorySettings.mslMaterial = settings.value('mslMaterial')
+                        categorySettings.mslPropagation = settings.value('mslPropagation')
+                        categorySettings.mslFeedShiftValue = float(settings.value('mslFeedShiftValue'))
+                        categorySettings.mslFeedShiftUnits = settings.value('mslFeedShiftUnits')
+                        categorySettings.mslMeasPlaneShiftValue = float(settings.value('mslMeasPlaneShiftValue'))
+                        categorySettings.mslMeasPlaneShiftUnits = settings.value('mslMeasPlaneShiftUnits')
+                    except Exception as e:
+                        print(f"There was error during reading microstrip port settings: {e}")
+
                 elif (categorySettings.type == "nf2ff box"):
                     #
                     #	Add nf2ff box item into list of possible object in postprocessing tab
@@ -393,6 +412,7 @@ class IniFile:
                 try:
                     categorySettings.constants['conductingSheetThicknessValue'] = settings.value('conductingSheetThicknessValue')
                     categorySettings.constants['conductingSheetThicknessUnits'] = settings.value('conductingSheetThicknessUnits')
+                    categorySettings.constants['conductingSheetConductivity'] = settings.value('conductingSheetConductivity')
                 except:
                     print(f"There was error during loading conductive sheet material params for '{itemName}'")
                     pass

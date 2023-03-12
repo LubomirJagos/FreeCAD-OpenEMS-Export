@@ -265,7 +265,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.observer.objectChanged += self.freecadObjectChanged
 		self.observer.objectDeleted += self.freecadBeforeObjectDeleted
 		self.observer.startObservation()	
-		
+
+		#
+		#	add default PEC material
+		#
+		self.materialAddPEC()
 	
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
@@ -848,9 +852,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.materialConductingSheetRadioButton.isChecked()):
 			self.form.materialConductingSheetThickness.setEnabled(True)
 			self.form.materialConductingSheetUnits.setEnabled(True)
+			self.form.materialConductingSheetConductivity.setEnabled(True)
 		else:
 			self.form.materialConductingSheetThickness.setEnabled(False)
 			self.form.materialConductingSheetUnits.setEnabled(False)
+			self.form.materialConductingSheetConductivity.setEnabled(False)
 
 	def applyObjectAssignmentFilter(self):
 		print("Filter left column")
@@ -1101,6 +1107,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
 		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_openEMS_simulation"
 		print(f"-----> loadFromFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
+
+		#
+		#	Add default PEC material during load
+		#
+		self.materialAddPEC()
 
 	#
 	#	Change current scripts type generator based on radiobutton from UI
@@ -1353,6 +1364,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		try:
 			conductingSheetThicknessValue = self.form.materialConductingSheetThickness.value()
 			conductingSheetThicknessUnits = self.form.materialConductingSheetUnits.currentText()
+			conductingSheetConductivity = self.form.materialConductingSheetConductivity.value()
 		except:
 			conductingSheetThicknessValue = 40.0
 			conductingSheetThicknessUnits = "um"
@@ -1368,6 +1380,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		materialItem.constants['conductingSheetThicknessValue'] = conductingSheetThicknessValue
 		materialItem.constants['conductingSheetThicknessUnits'] = conductingSheetThicknessUnits
+		materialItem.constants['conductingSheetConductivity'] = conductingSheetConductivity
 
 		if (self.form.materialMetalRadioButton.isChecked() == 1):
 			materialItem.type = "metal"
@@ -1387,15 +1400,31 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.materialSettingsTreeView, materialItem.name)
+		isPEC = (materialItem.name.upper() == "PEC")
 
-		if (not isDuplicityName):
-			self.guiHelpers.addSettingsItemGui(materialItem)
-			self.guiSignals.materialsChanged.emit("add")
+		if (isPEC and materialItem.type != "metal"):
+			self.guiHelpers.displayMessage("Material with name PEC must be just metal, cannot be something else.")
+			return
+
+		if (isDuplicityName):
+			return
+
+		self.guiHelpers.addSettingsItemGui(materialItem)
+		self.guiSignals.materialsChanged.emit("add")
 			
 
 	def materialSettingsRemoveButtonClicked(self):
 		selectedItem = self.form.materialSettingsTreeView.selectedItems()[0]
+		materialSettings = selectedItem.data(0, QtCore.Qt.UserRole)
 		print("Selected material name: " + selectedItem.text(0))
+
+		#
+		#	PEC material with type metal cannot be removed
+		#		but if it has different params by random than it can be removed.
+		#
+		if (materialSettings.name.upper() == "PEC" and materialSettings.type == "metal"):
+			self.guiHelpers.displayMessage("Maaterial PEC which is metal cannot be removed.")
+			return
 
 		materialGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
 			selectedItem.text(0), 
@@ -1445,7 +1474,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	def materialSettingsUpdateButtonClicked(self):
 		### capture UI settings
 		settingsInst = self.getMaterialItemFromGui()
-	
+
+		if (settingsInst.name.upper() == "PEC" and settingsInst.type != "metal"):
+			self.guiHelpers.displayMessage("Material PEC can be defined just as metal nothing else. This update will not perform.")
+			return
+
 		### replace old with new settingsInst
 		selectedItems = self.form.materialSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
@@ -1454,7 +1487,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		
 		### update other UI elements to propagate changes
 		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Material", selectedItems[0].text(0), settingsInst)	
+		self.updateObjectAssignmentRightTreeWidgetItemData("Material", selectedItems[0].text(0), settingsInst)
+		self.guiHelpers.displayMessage(f"Material {settingsInst.name} was updated", forceModal=False)
 
 		self.guiSignals.materialsChanged.emit("update")
 
@@ -1472,6 +1506,31 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (operation in ["add", "remove", "update"]):
 			self.portUpdateMicrostripPortMaterialComboBox()  # update microstrip port material combobox
+
+	def materialAddPEC(self):
+		"""
+		Add PEC material as metal, this is done by default due PEC must be reserved word for perfect electric conductor (metal) to not confused most simulations
+		in microwave design it's fully established name, if it will be defined as something else it will be confusing.
+		:return: None
+		"""
+		# iterates over materials due if there is PEC defined as metal
+		objectAssignemntRightPortParent = self.form.objectAssignmentRightTreeWidget.findItems(
+			"Material",
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)[0]
+
+		# here metal and conducting sheet are added into microstrip possible material combobox
+		for k in range(objectAssignemntRightPortParent.childCount()):
+			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
+			if (materialData.name == "PEC" and materialData.type == "metal"):
+				return
+			elif (materialData.name == "PEC" and materialData.type != "metal"):
+				self.guiHelpers.displayMessage("There is material defined as PEC but it's not metal, check if it's as it should be, this is not normal settings as PEC is expected to be metal.")
+				return
+
+		self.form.materialSettingsNameInput.setText("PEC")
+		self.form.materialMetalRadioButton.toggle()
+		self.form.materialSettingsAddButton.clicked.emit()
 
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1580,6 +1639,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
 			portItem.mslMaterial = self.form.microstripPortMaterialComboBox.currentText()
+			portItem.mslPropagation = self.form.microstripPortPropagationDirectionComboBox.currentText()
+			portItem.mslFeedShiftValue = self.form.microstripPortFeedpointShiftValue.value()
+			portItem.mslFeedShiftUnits = self.form.microstripPortFeedpointShiftUnits.currentText()
+			portItem.mslMeasPlaneShiftValue = self.form.microstripPortMeasureShiftValue.value()
+			portItem.mslMeasPlaneShiftUnits = self.form.microstripPortMeasureShiftUnits.currentText()
 
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
@@ -1655,10 +1719,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.updateObjectAssignmentRightTreeWidgetItemData("Port", selectedItems[0].text(0), settingsInst)	
 
 	def portSettingsTypeChoosed(self):
+		#first disable all additional settings for ports
+		self.form.microstripPortSettingsGroup.setEnabled(False)
+		self.form.waveguideSettingsGroup.setEnabled(False)
+
+		#enable current choosed radiobox settings for port
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideSettingsGroup.setEnabled(True)
-		else:
-			self.form.waveguideSettingsGroup.setEnabled(False)
+		elif (self.form.microstripPortRadioButton.isChecked()):
+			self.form.microstripPortSettingsGroup.setEnabled(True)
 
 	def portUpdateMicrostripPortMaterialComboBox(self):
 		"""
@@ -1804,6 +1873,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					self.form.materialConductingSheetUnits.setCurrentIndex(index)
 				else:
 					self.form.materialConductingSheetUnits.setCurrentIndex(0)
+
+			self.form.materialConductingSheetConductivity.setValue(float(currSetting.constants['conductingSheetConductivity']))
 		except Exception as e:
 			print(f"materialTreeWidgetItemChanged() ERROR: {e}")
 
@@ -1933,6 +2004,27 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		elif (currSetting.type.lower() == "microstrip"):
 			self.form.microstripPortRadioButton.click()
+
+			try:
+				self.form.microstripPortFeedpointShiftValue.setValue(currSetting.mslFeedShiftValue)
+				self.form.microstripPortMeasureShiftValue.setValue(currSetting.mslMeasPlaneShiftValue)
+
+				#set combobox propagation direction
+				index = self.form.microstripPortPropagationDirectionComboBox.findText(currSetting.mslPropagation, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.microstripPortPropagationDirectionComboBox.setCurrentIndex(index)
+
+				#set combobox feed shift units
+				index = self.form.microstripPortFeedpointShiftUnits.findText(currSetting.mslFeedShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.microstripPortFeedpointShiftUnits.setCurrentIndex(index)
+
+				#set combobox measure plane shift units
+				index = self.form.microstripPortMeasureShiftUnits.findText(currSetting.mslMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.microstripPortMeasureShiftUnits.setCurrentIndex(index)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update microstrip current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()

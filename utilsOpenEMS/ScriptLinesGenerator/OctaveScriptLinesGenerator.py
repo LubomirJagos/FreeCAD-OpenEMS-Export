@@ -234,9 +234,9 @@ class OctaveScriptLinesGenerator:
 
             # when material metal use just AddMetal for simulator
             if (currSetting.type == 'metal'):
-                genScript += "CSX = AddMetal( CSX, '" + currSetting.getName() + "' );\n"
+                genScript += "CSX = AddMetal(CSX, '" + currSetting.getName() + "');\n"
             elif (currSetting.type == 'userdefined'):
-                genScript += "CSX = AddMaterial( CSX, '" + currSetting.getName() + "' );\n"
+                genScript += "CSX = AddMaterial(CSX, '" + currSetting.getName() + "');\n"
 
                 smp_args = ["CSX", "'" + currSetting.getName() + "'"]
                 if str(currSetting.constants['epsilon']) != "0":
@@ -248,7 +248,9 @@ class OctaveScriptLinesGenerator:
                 if str(currSetting.constants['sigma']) != "0":
                     smp_args += ["'Sigma'", str(currSetting.constants['sigma'])]
 
-                genScript += "CSX = SetMaterialProperty( " + ", ".join(smp_args) + " );\n"
+                genScript += "CSX = SetMaterialProperty(" + ", ".join(smp_args) + ");\n"
+            elif (currSetting.type == 'conducting sheet'):
+                genScript += "CSX = AddConductingSheet(CSX, '" + currSetting.getName() + "', " + str(currSetting.constants["conductingSheetConductivity"]) + ", " + str(currSetting.constants["conductingSheetThicknessValue"]) + "*" + str(currSetting.getUnitsAsNumber(currSetting.constants["conductingSheetThicknessUnits"])) + ");\n"
 
             # first print all current material children names
             for k in range(item.childCount()):
@@ -316,8 +318,8 @@ class OctaveScriptLinesGenerator:
                     currDir, baseName = self.getCurrDir()
                     stlModelFileName = childName + "_gen_model.stl"
 
-                    genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
-                        objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
+                    genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "', " + str(
+                        objModelPriority) + ", [currDir '/" + stlModelFileName + "'], 'Transform', {'Scale', fc_unit/unit});\n"
 
                     #   _____ _______ _                                        _   _
                     #  / ____|__   __| |                                      | | (_)
@@ -435,20 +437,18 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'mslDir = {};'.format(mslDirStr.get(currentSetting.propagation, '?'))
+                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation, '?'))
                         genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
-                        genScript_R = ""
-                        if (currSetting.R > 0):
-                            genScript_R = ", 'Feed_R', " + str(currSettings.R)
+                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
-                        genScript += "AddMSLPort(CSX, " + \
-                                     str(priorityIndex) + " ," + \
-                                     str(genScriptPortCount) + " , 'PEC'," + \
-                                     portStart + ", " + \
-                                     portStop + ", mslDir, mslEVec, " + \
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddMSLPort(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "'" + currSetting.mslMaterial + "'," + \
+                                     "portStart,portStop,mslDir, mslEVec" + \
                                      isActiveMSLStr.get(currSetting.isActive) + \
                                      genScript_R + ");\n"
 
@@ -924,35 +924,27 @@ class OctaveScriptLinesGenerator:
         self.reportFreeCADItemSettings(itemsByClassName.get("FreeCADSettingsItem", None))
 
         # Write boundary conditions definitions.
-
         genScript += self.getBoundaryConditionsScriptLines()
 
         # Write coordinate system definitions.
-
         genScript += self.getCoordinateSystemScriptLines()
 
         # Write excitation definition.
-
         genScript += self.getExcitationScriptLines()
 
         # Write material definitions.
-
         genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir)
 
-        # Write port definitions.
-
-        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
-
         # Write grid definitions.
-
         genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 
-        # Write lumped part definitions.
+        # Write port definitions, due microstrip ports it must be defined after grid.
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
+        # Write lumped part definitions.
         genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
 
         # Write NF2FF probe grid definitions.
-
         genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         print("======================== REPORT END ========================\n")

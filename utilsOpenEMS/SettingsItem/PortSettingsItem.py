@@ -8,7 +8,7 @@ from .  SettingsItem import SettingsItem
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z", mslPropagation="x",
-                 mslFeedShift="", mslMeasPlaneShift="", mslMaterial=""):
+                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial=""):
         self.name = name
         self.type = type
         self.R = R
@@ -16,8 +16,10 @@ class PortSettingsItem(SettingsItem):
         self.isActive = isActive
         self.mslPropagation = mslPropagation
         self.direction = direction
-        self.mslFeedShift = mslFeedShift
-        self.mslMeasPlaneShift = mslMeasPlaneShift
+        self.mslFeedShiftValue = mslFeedShiftValue
+        self.mslFeedShiftUnits = mslFeedShiftUnits
+        self.mslMeasPlaneShiftValue = mslMeasPlaneShiftValue
+        self.mslMeasPlaneShiftUnits = mslMeasPlaneShiftUnits
         self.mslMaterial = mslMaterial
         return
 
@@ -31,8 +33,10 @@ class PortSettingsItem(SettingsItem):
         if (self.type == "microstrip"):
             jsonString += ", 'type': 'microstrip'"
             jsonString += ", 'mslPropagation': " + self.mslPropagation
-            jsonString += ", 'mslFeedShift': " + self.mslFeedShift
-            jsonString += ", 'mslMeasPlaneShift': " + self.mslMeasPlaneShift
+            jsonString += ", 'mslFeedShiftValue': " + self.mslFeedShiftValue
+            jsonString += ", 'mslFeedShiftUnits': " + self.mslFeedShiftUnits
+            jsonString += ", 'mslMeasPlaneShiftValue': " + self.mslMeasPlaneShiftValue
+            jsonString += ", 'mslMeasPlaneShiftUnits': " + self.mslMeasPlaneShiftUnits
             jsonString += ", 'mslMaterial': " + self.mslMaterial
         if (self.type == "circular waveguide"):
             jsonString += ", 'type': 'circular waveguide'"
