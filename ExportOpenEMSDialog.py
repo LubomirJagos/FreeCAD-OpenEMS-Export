@@ -1851,32 +1851,32 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.materialMetalRadioButton.click()
 		elif (currSetting.type == 'userdefined'):
 			self.form.materialUserDefinedRadioButton.click()
+
+			self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
+			self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
+			self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
+			self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
 		elif (currSetting.type == 'conducting sheet'):
 			self.form.materialConductingSheetRadioButton.click()
 
-		self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
-		self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
-		self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
-		self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
-
-		# set microstrip related values in material tab (thickness and units)
-		# if not found looks for 'um'
-		#	else set first item in combobox what is 'm'
-		try:
-			self.form.materialConductingSheetThickness.setValue(float(currSetting.constants['conductingSheetThicknessValue']))
-			index = self.form.materialConductingSheetUnits.findText(currSetting.constants['conductingSheetThicknessUnits'], QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.materialConductingSheetUnits.setCurrentIndex(index)
-			else:
-				index = self.form.materialConductingSheetUnits.findText("um", QtCore.Qt.MatchFixedString)
+			# set microstrip related values in material tab (thickness and units)
+			# if not found looks for 'um'
+			#	else set first item in combobox what is 'm'
+			try:
+				self.form.materialConductingSheetThickness.setValue(float(currSetting.constants['conductingSheetThicknessValue']))
+				index = self.form.materialConductingSheetUnits.findText(currSetting.constants['conductingSheetThicknessUnits'], QtCore.Qt.MatchFixedString)
 				if index >= 0:
 					self.form.materialConductingSheetUnits.setCurrentIndex(index)
 				else:
-					self.form.materialConductingSheetUnits.setCurrentIndex(0)
+					index = self.form.materialConductingSheetUnits.findText("um", QtCore.Qt.MatchFixedString)
+					if index >= 0:
+						self.form.materialConductingSheetUnits.setCurrentIndex(index)
+					else:
+						self.form.materialConductingSheetUnits.setCurrentIndex(0)
 
-			self.form.materialConductingSheetConductivity.setValue(float(currSetting.constants['conductingSheetConductivity']))
-		except Exception as e:
-			print(f"materialTreeWidgetItemChanged() ERROR: {e}")
+				self.form.materialConductingSheetConductivity.setValue(float(currSetting.constants['conductingSheetConductivity']))
+			except Exception as e:
+				print(f"materialTreeWidgetItemChanged() ERROR: {e}")
 
 		return
 
