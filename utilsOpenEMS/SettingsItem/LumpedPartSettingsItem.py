@@ -1,4 +1,5 @@
 from .SettingsItem import SettingsItem
+import json
 
 class LumpedPartSettingsItem(SettingsItem):
     def __init__(self, name="DefaultSimlationName",
