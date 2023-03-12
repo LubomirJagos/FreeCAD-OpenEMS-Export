@@ -186,7 +186,7 @@ class GuiHelpers:
     #	Removing from Priority List
     ###
     def removePriorityName(self, priorityName):
-        print("Removing from oibjects priority list tree view:" + priorityName)
+        print("Removing from objects priority list tree view:" + priorityName)
         priorityItemRemoved = True
         while priorityItemRemoved:
             priorityItemRemoved = False
