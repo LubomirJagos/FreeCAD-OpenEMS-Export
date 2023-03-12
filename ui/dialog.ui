@@ -1782,33 +1782,10 @@ Custom option using fparser lib, possible using user-defined equitaion:
                 <string>Port Type</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_11">
-                <item row="0" column="0">
-                 <widget class="QRadioButton" name="lumpedPortRadioButton">
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
                   <property name="text">
-                   <string>Lumped</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QRadioButton" name="htDumpPortRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Ht Dump</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QRadioButton" name="etDumpPortRadioButton">
-                  <property name="text">
-                   <string>Et Dump</string>
+                   <string>Rectangular Waveguide</string>
                   </property>
                  </widget>
                 </item>
@@ -1825,28 +1802,12 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_26">
-                  <property name="leftMargin">
-                   <number>0</number>
+                <item row="0" column="1">
+                 <widget class="QRadioButton" name="etDumpPortRadioButton">
+                  <property name="text">
+                   <string>Et Dump</string>
                   </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QRadioButton" name="microstripPortRadioButton">
-                    <property name="text">
-                     <string>Microstrip</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                 </widget>
                 </item>
                 <item row="1" column="0">
                  <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
@@ -1855,10 +1816,33 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="lumpedPortRadioButton">
                   <property name="text">
-                   <string>Rectangular Waveguide</string>
+                   <string>Lumped</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="microstripPortRadioButton">
+                  <property name="text">
+                   <string>Microstrip (experimental)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="htDumpPortRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Ht Dump</string>
                   </property>
                  </widget>
                 </item>
