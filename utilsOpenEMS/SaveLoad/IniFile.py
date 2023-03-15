@@ -157,11 +157,11 @@ class IniFile:
             elif (portList[k].type == "microstrip"):
                 try:
                     settings.setValue("mslMaterial", portList[k].mslMaterial)
-                    settings.setValue("mslPropagation", portList[k].mslPropagation)
                     settings.setValue("mslFeedShiftValue", portList[k].mslFeedShiftValue)
                     settings.setValue("mslFeedShiftUnits", portList[k].mslFeedShiftUnits)
                     settings.setValue("mslMeasPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
                     settings.setValue("mslMeasPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
+                    settings.setValue("mslPhysicalOrientation", portList[k].mslPhysicalOrientation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
 
@@ -381,11 +381,11 @@ class IniFile:
                     #this is in try block to have backward compatibility
                     try:
                         categorySettings.mslMaterial = settings.value('mslMaterial')
-                        categorySettings.mslPropagation = settings.value('mslPropagation')
                         categorySettings.mslFeedShiftValue = float(settings.value('mslFeedShiftValue'))
                         categorySettings.mslFeedShiftUnits = settings.value('mslFeedShiftUnits')
                         categorySettings.mslMeasPlaneShiftValue = float(settings.value('mslMeasPlaneShiftValue'))
                         categorySettings.mslMeasPlaneShiftUnits = settings.value('mslMeasPlaneShiftUnits')
+                        categorySettings.mslPhysicalOrientation = settings.value('mslPhysicalOrientation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
 

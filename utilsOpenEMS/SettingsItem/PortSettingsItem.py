@@ -7,20 +7,20 @@ from .  SettingsItem import SettingsItem
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-    def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z", mslPropagation="x",
-                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial=""):
+    def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
+                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPhysicalOrientation=""):
         self.name = name
         self.type = type
         self.R = R
         self.RUnits = RUnits
         self.isActive = isActive
-        self.mslPropagation = mslPropagation
         self.direction = direction
         self.mslFeedShiftValue = mslFeedShiftValue
         self.mslFeedShiftUnits = mslFeedShiftUnits
         self.mslMeasPlaneShiftValue = mslMeasPlaneShiftValue
         self.mslMeasPlaneShiftUnits = mslMeasPlaneShiftUnits
         self.mslMaterial = mslMaterial
+        self.mslPhysicalOrientation = mslPhysicalOrientation
         return
 
     def serializeToString(self):
@@ -32,12 +32,12 @@ class PortSettingsItem(SettingsItem):
             jsonString += ", 'type': 'lumped'"
         if (self.type == "microstrip"):
             jsonString += ", 'type': 'microstrip'"
-            jsonString += ", 'mslPropagation': " + self.mslPropagation
             jsonString += ", 'mslFeedShiftValue': " + self.mslFeedShiftValue
             jsonString += ", 'mslFeedShiftUnits': " + self.mslFeedShiftUnits
             jsonString += ", 'mslMeasPlaneShiftValue': " + self.mslMeasPlaneShiftValue
             jsonString += ", 'mslMeasPlaneShiftUnits': " + self.mslMeasPlaneShiftUnits
             jsonString += ", 'mslMaterial': " + self.mslMaterial
+            jsonString += ", 'mslPhysicalOrientation': " + self.mslPhysicalOrientation
         if (self.type == "circular waveguide"):
             jsonString += ", 'type': 'circular waveguide'"
         if (self.type == "rectangular waveguide"):

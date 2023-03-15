@@ -362,8 +362,13 @@ class OctaveScriptLinesGenerator:
         # nf2ff box counter, they are stored inside octave cell variable {} so this is to index them properly, in octave cells index starts at 1
         genNF2FFBoxCounter = 1
 
-        baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z': '[0 0 1]'}
-        mslDirStr = {'x': '0', 'y': '1', 'z': '2'}
+        #
+        #   This here generates string for port excitation field, ie. for z+ generates [0 0 1], for y- generates [0 -1 0]
+        #       Options for select field x,y,z were removed from GUI, but left here due there could be saved files from previous versions
+        #       with these options so to keep backward compatibility they are treated as positive direction in that directions.
+        #
+        baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z+': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z-': '[0 0 -1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', }
+        mslDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
@@ -432,21 +437,28 @@ class OctaveScriptLinesGenerator:
                     elif (currSetting.getType() == 'microstrip'):
 
                         #
-                        #   This portStart, portStop is valid just in case that microstrip is drawn in 3D that top is on higher Z value and going into negative values or lower means there is bottom of PCB
-                        #       this is only applicable when field direction is in Z, otherwise must be changed the vector parts.
-                        #       this is applicable when board is drawn that way that it's in positive direction ie. origin of microstrip is on bottom leftmost corner
-                        #       THIS IS REALLY TRICKY FEATURE, NEED TO BE FINISHED SOMEHOW TO BE USEFUL, for now at least somehow implemented to be able to use,
-                        #       also most people use it for planar structures
+                        #   It's important to generate microstrip port right, that means where is placed microstrip line, because microstrip consists from ground plane and trace
+                        #       This is just playing with X,Y,Z coordinates of boundary box for microstrip port for min, max coordinates.
                         #
-                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMin))
+                        if (currSetting.mslPhysicalOrientation == "z-"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMax))
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMin))
+                        elif (currSetting.mslPhysicalOrientation == "x-"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        elif (currSetting.mslPhysicalOrientation == "y-"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMin))
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMax))
+                        else:
+                            #
+                            #   If its direction is x+,y+,z+ then the case is same for all
+                            #
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        print(f"Microstrip port generated in physical orientation: {currSetting.mslPhysicalOrientation}")
 
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation, '?'))
+                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPhysicalOrientation, '?'))
                         genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}

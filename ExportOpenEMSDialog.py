@@ -1639,11 +1639,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
 			portItem.mslMaterial = self.form.microstripPortMaterialComboBox.currentText()
-			portItem.mslPropagation = self.form.microstripPortPropagationDirectionComboBox.currentText()
 			portItem.mslFeedShiftValue = self.form.microstripPortFeedpointShiftValue.value()
 			portItem.mslFeedShiftUnits = self.form.microstripPortFeedpointShiftUnits.currentText()
 			portItem.mslMeasPlaneShiftValue = self.form.microstripPortMeasureShiftValue.value()
 			portItem.mslMeasPlaneShiftUnits = self.form.microstripPortMeasureShiftUnits.currentText()
+			portItem.mslPhysicalOrientation = self.form.microstripPortPhysicalOrientationComboBox.currentText()
 
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
@@ -1987,8 +1987,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.portSettingsNameInput.setText(currSetting.name)
 		self.form.portResistanceInput.setValue(float(currSetting.R))
 
-		#set active port field direction
-		index = self.form.portDirectionInput.findText(currSetting.direction, QtCore.Qt.MatchFixedString)
+		#
+		# Set active port field direction
+		#	Here is correction to keep backward compatibility as before there was just x,y,z, now there are options
+		#		x+,x-,y+,y-,z+,z-
+		#	They specify port field direction like x+ = [1 0 0], x- = [-1 0 0], y+ = [0 1 0], y- = [0 -1 0], ...
+		#
+		portDirection = currSetting.direction
+		if (portDirection in ["x", "y", "z"]):
+			portDirection += "+"	#add + sign to get right text which is in GUI combobox
+		index = self.form.portDirectionInput.findText(portDirection, QtCore.Qt.MatchFixedString)
 		if index >= 0:
 			self.form.portDirectionInput.setCurrentIndex(index)		
 
@@ -2009,11 +2017,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.microstripPortFeedpointShiftValue.setValue(currSetting.mslFeedShiftValue)
 				self.form.microstripPortMeasureShiftValue.setValue(currSetting.mslMeasPlaneShiftValue)
 
-				#set combobox propagation direction
-				index = self.form.microstripPortPropagationDirectionComboBox.findText(currSetting.mslPropagation, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.microstripPortPropagationDirectionComboBox.setCurrentIndex(index)
-
 				#set combobox feed shift units
 				index = self.form.microstripPortFeedpointShiftUnits.findText(currSetting.mslFeedShiftUnits, QtCore.Qt.MatchFixedString)
 				if index >= 0:
@@ -2023,6 +2026,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				index = self.form.microstripPortMeasureShiftUnits.findText(currSetting.mslMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
 				if index >= 0:
 					self.form.microstripPortMeasureShiftUnits.setCurrentIndex(index)
+
+				# set combobox microstrip physical orientation (means where is top layer and where bottom)
+				index = self.form.microstripPortPhysicalOrientationComboBox.findText(currSetting.mslPhysicalOrientation, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.microstripPortPhysicalOrientationComboBox.setCurrentIndex(index)
+
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update microstrip current settings: {e}", forceModal=False)
 
