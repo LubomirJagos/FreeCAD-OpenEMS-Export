@@ -1653,14 +1653,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
-			portItem.modeName = self.form.portWaveguideModeName.currentText()
-			portItem.polarizationAngle = self.form.portWaveguidePolarizationAngle.currentText()
-			portItem.excitationAmplitude = self.form.portWaveguideExcitationAmplitude.value()
+			portItem.modeName = self.form.portCircWaveguideModeName.currentText()
+			portItem.polarizationAngle = self.form.portCircWaveguidePolarizationAngle.currentText()
+			portItem.excitationAmplitude = self.form.portCircWaveguideExcitationAmplitude.value()
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
-			portItem.modeName = self.form.portWaveguideModeName.currentText()
-			portItem.polarizationAngle = self.form.portWaveguidePolarizationAngle.currentText()
-			portItem.excitationAmplitude = self.form.portWaveguideExcitationAmplitude.value()
+			portItem.modeName = self.form.portRectWaveguideModeName.currentText()
+			portItem.waveguideRectDir = self.form.portRectWaveguideDirection.currentText()
+			portItem.excitationAmplitude = self.form.portRectWaveguideExcitationAmplitude.value()
 		if (self.form.etDumpPortRadioButton.isChecked()):
 			portItem.type = "et dump"
 		if (self.form.htDumpPortRadioButton.isChecked()):
@@ -1731,21 +1731,18 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	def portSettingsTypeChoosed(self):
 		#first disable all additional settings for ports
 		self.form.microstripPortSettingsGroup.setEnabled(False)
-		self.form.waveguideSettingsGroup.setEnabled(False)
+		self.form.waveguideCircSettingsGroup.setEnabled(False)
+		self.form.waveguideRectSettingsGroup.setEnabled(False)
 
 		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
 
 		#enable current choosed radiobox settings for port
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
-			self.form.waveguideSettingsGroup.setEnabled(True)
-			self.form.portWaveguideModeName.clear()
-			self.form.portWaveguideModeName.addItems(["TE11","TE21","TE01","TE31"])	#first 4 circular TE modes ordered by their appereance
-			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Waveguide")
+			self.form.waveguideCircSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("CircWaveguide")
 		elif (self.form.rectangularWaveguidePortRadioButton.isChecked()):
-			self.form.waveguideSettingsGroup.setEnabled(True)
-			self.form.portWaveguideModeName.clear()
-			self.form.portWaveguideModeName.addItems(["TE10","TE20","TE01","TE11","TE21","TE30","TE31","TE40","TE02"])	#first 9 rectangular TE modes ordered by their appereance
-			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Waveguide")
+			self.form.waveguideRectSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("RectWaveguide")
 		elif (self.form.microstripPortRadioButton.isChecked()):
 			self.form.microstripPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Microstrip")
@@ -2082,29 +2079,29 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.circularWaveguidePortRadioButton.click()
 
 			#set mode, e.g. TE11, TM21, ...
-			index = self.form.portWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
+			index = self.form.portCircWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
 			if index >= 0:
-				self.form.portWaveguideModeName.setCurrentIndex(index)
+				self.form.portCircWaveguideModeName.setCurrentIndex(index)
 
 			#set polarization angle
-			index = self.form.portWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
+			index = self.form.portCircWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
 			if index >= 0:
-				self.form.portWaveguidePolarizationAngle.setCurrentIndex(index)
+				self.form.portCircWaveguidePolarizationAngle.setCurrentIndex(index)
 
-			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
+			self.form.portCircWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
 			#set mode, e.g. TE11, TM21, ...
-			index = self.form.portWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
+			index = self.form.portRectWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
 			if index >= 0:
-				self.form.portWaveguideModeName.setCurrentIndex(index)
+				self.form.portRectWaveguideModeName.setCurrentIndex(index)
 
-			#set polarization angle
-			index = self.form.portWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
+			#set rectangular waveguide direction
+			index = self.form.portRectWaveguideDirection.findText(currSetting.waveguideRectDir, QtCore.Qt.MatchFixedString)
 			if index >= 0:
-				self.form.portWaveguidePolarizationAngle.setCurrentIndex(index)
+				self.form.portRectWaveguideDirection.setCurrentIndex(index)
 
-			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
+			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "et dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)

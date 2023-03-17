@@ -491,9 +491,54 @@ class OctaveScriptLinesGenerator:
                         genScript += "%% circular port openEMS code should be here\n"
                         #genScriptPortCount += 1
                     elif (currSetting.getType() == 'rectangular waveguide'):
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
+
+                        if (currSetting.waveguideRectDir == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.waveguideRectDir == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.waveguideRectDir == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        #
+                        #   Based on port excitation direction which is not used at waveguide due it has modes, but based on that height and width are resolved.
+                        #
+                        waveguideWidth = 0
+                        waveguideHeight = 0
+                        if (currSetting.direction[0] == "z"):
+                            waveguideWidth = abs(portStartX - portStopX)
+                            waveguideHeight = abs(portStartY - portStopY)
+                        elif (currSetting.direction[0] == "x"):
+                            waveguideWidth = abs(portStartY - portStopY)
+                            waveguideHeight = abs(portStartZ - portStopZ)
+                        elif (currSetting.direction[0] == "y"):
+                            waveguideWidth = abs(portStartX - portStopX)
+                            waveguideHeight = abs(portStartZ - portStopZ)
+
                         genScript += "%% rectangular port openEMS code should be here\n"
                         #[CSX,port] = AddRectWaveGuidePort( CSX, prio, portnr, start, stop, dir, a, b, mode_name, exc_amp, varargin )
-                        #genScriptPortCount += 1
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddRectWaveGuidePort(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "portStart,portStop," + \
+                                     "'" + currSetting.waveguideRectDir[0] + "',"  + \
+                                    str(waveguideWidth) + ", " + str(waveguideHeight) + "," + \
+                                    "'" + currSetting.modeName+ "'," + \
+                                    (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
+
+                        genScriptPortCount += 1
                     elif (currSetting.getType() == 'et dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),

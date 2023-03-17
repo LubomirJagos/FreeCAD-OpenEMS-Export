@@ -156,8 +156,8 @@ class IniFile:
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
             if (portList[k].type == "rectangular waveguide"):
                 settings.setValue("modeName", portList[k].modeName)
-                settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+                settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
             elif (portList[k].type == "microstrip"):
                 try:
                     settings.setValue("mslMaterial", portList[k].mslMaterial)
@@ -383,8 +383,8 @@ class IniFile:
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                 if (categorySettings.type == "rectangular waveguide"):
                     categorySettings.modeName = settings.value('modeName')
-                    categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.waveguideRectDir = settings.value('waveguideDirection')
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:

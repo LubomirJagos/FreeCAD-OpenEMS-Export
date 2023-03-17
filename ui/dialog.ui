@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1134</width>
-    <height>731</height>
+    <width>1309</width>
+    <height>744</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2021,15 +2021,15 @@ Custom option using fparser lib, possible using user-defined equitaion:
                 <bool>true</bool>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
-               <widget class="QWidget" name="Waveguide">
+               <widget class="QWidget" name="CircWaveguide">
                 <attribute name="title">
-                 <string>Waveguide</string>
+                 <string>CircWaveguide</string>
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_26">
                  <item>
-                  <widget class="QGroupBox" name="waveguideSettingsGroup">
+                  <widget class="QGroupBox" name="waveguideCircSettingsGroup">
                    <property name="enabled">
                     <bool>false</bool>
                    </property>
@@ -2046,7 +2046,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     </size>
                    </property>
                    <property name="title">
-                    <string>Waveguide-specific Settings</string>
+                    <string>Circular Waveguide-specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_13">
                     <item row="2" column="0">
@@ -2057,7 +2057,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                      </widget>
                     </item>
                     <item row="2" column="1">
-                     <widget class="QComboBox" name="portWaveguidePolarizationAngle">
+                     <widget class="QComboBox" name="portCircWaveguidePolarizationAngle">
                       <item>
                        <property name="text">
                         <string>0</string>
@@ -2085,10 +2085,86 @@ Custom option using fparser lib, possible using user-defined equitaion:
                      </widget>
                     </item>
                     <item row="3" column="1">
-                     <widget class="QDoubleSpinBox" name="portWaveguideExcitationAmplitude"/>
+                     <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude"/>
                     </item>
                     <item row="0" column="1">
-                     <widget class="QComboBox" name="portWaveguideModeName">
+                     <widget class="QComboBox" name="portCircWaveguideModeName">
+                      <item>
+                       <property name="text">
+                        <string>TE11</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE21</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE01</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE31</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QLabel" name="label_57">
+                      <property name="text">
+                       <string>Note: openEMS support just TE modes
+no TM modes.</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_13">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="RectWaveguide">
+                <attribute name="title">
+                 <string>RectWaveguide</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_28">
+                 <item>
+                  <widget class="QGroupBox" name="waveguideRectSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>200</width>
+                     <height>120</height>
+                    </size>
+                   </property>
+                   <property name="title">
+                    <string>Rectangular Waveguide-specific Settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_15">
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="portRectWaveguideModeName">
                       <item>
                        <property name="text">
                         <string>TE10</string>
@@ -2136,19 +2212,77 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="portRectWaveguideDirection">
+                      <item>
+                       <property name="text">
+                        <string>x+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>x-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z-</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
                     <item row="1" column="1">
-                     <widget class="QLabel" name="label_57">
+                     <widget class="QLabel" name="label_61">
                       <property name="text">
                        <string>Note: openEMS support just TE modes
 no TM modes.</string>
                       </property>
                      </widget>
                     </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_59">
+                      <property name="text">
+                       <string>Mode Name</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_58">
+                      <property name="text">
+                       <string>Waveguide direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_60">
+                      <property name="text">
+                       <string>Excitation amplitude</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <widget class="QDoubleSpinBox" name="portRectWaveguideExcitationAmplitude"/>
+                    </item>
                    </layout>
                   </widget>
                  </item>
                  <item>
-                  <spacer name="verticalSpacer_13">
+                  <spacer name="verticalSpacer_15">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
                    </property>
@@ -4024,9 +4158,9 @@ no TM modes.</string>
   <tabstop>portResistanceUnitsInput</tabstop>
   <tabstop>portDirectionInput</tabstop>
   <tabstop>portActive</tabstop>
-  <tabstop>portWaveguideModeName</tabstop>
-  <tabstop>portWaveguidePolarizationAngle</tabstop>
-  <tabstop>portWaveguideExcitationAmplitude</tabstop>
+  <tabstop>portCircWaveguideModeName</tabstop>
+  <tabstop>portCircWaveguidePolarizationAngle</tabstop>
+  <tabstop>portCircWaveguideExcitationAmplitude</tabstop>
   <tabstop>portSettingsAddButton</tabstop>
   <tabstop>portSettingsRemoveButton</tabstop>
   <tabstop>portSettingsUpdateButton</tabstop>

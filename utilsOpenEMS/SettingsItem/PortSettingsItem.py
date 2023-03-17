@@ -8,7 +8,8 @@ from .  SettingsItem import SettingsItem
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
-                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation=""):
+                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
+                 waveguideRectDir = ""):
         self.name = name
         self.type = type
         self.R = R
@@ -21,6 +22,7 @@ class PortSettingsItem(SettingsItem):
         self.mslMeasPlaneShiftUnits = mslMeasPlaneShiftUnits
         self.mslMaterial = mslMaterial
         self.mslPropagation = mslPropagation
+        self.waveguideRectDir = waveguideRectDir
         return
 
     def serializeToString(self):
@@ -42,6 +44,7 @@ class PortSettingsItem(SettingsItem):
             jsonString += ", 'type': 'circular waveguide'"
         if (self.type == "rectangular waveguide"):
             jsonString += ", 'type': 'rectangular waveguide'"
+            jsonString += ", 'waveguideDirection': " + self.waveguideRectDir
         if (self.type == "nf2ff box"):
             jsonString += ", 'type': 'nf2ff box'"
         jsonString += "}"
