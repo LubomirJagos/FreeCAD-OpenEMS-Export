@@ -8,7 +8,7 @@ from .  SettingsItem import SettingsItem
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
-                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPhysicalOrientation=""):
+                 mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation=""):
         self.name = name
         self.type = type
         self.R = R
@@ -20,7 +20,7 @@ class PortSettingsItem(SettingsItem):
         self.mslMeasPlaneShiftValue = mslMeasPlaneShiftValue
         self.mslMeasPlaneShiftUnits = mslMeasPlaneShiftUnits
         self.mslMaterial = mslMaterial
-        self.mslPhysicalOrientation = mslPhysicalOrientation
+        self.mslPropagation = mslPropagation
         return
 
     def serializeToString(self):

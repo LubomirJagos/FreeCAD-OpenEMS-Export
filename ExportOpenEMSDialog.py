@@ -58,7 +58,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		QtCore.QObject.__init__(self)
 
 		#
-		#	Direcotry for generated .m file for openEMS
+		#	Directory for generated .m file for openEMS
 		#		- by default set to None, that means simulation file should be generated into current directory
 		#
 		self.simulationOutputDir = None
@@ -231,6 +231,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.etDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.htDumpPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.nf2ffBoxPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.coaxialPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.coplanarPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.striplinePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.curvePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+
+		self.form.microstripPortPropagationComboBox.currentTextChanged.connect(self.portCheckMicrostripPortPropagationComboBox)
 
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
@@ -1643,16 +1649,18 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.mslFeedShiftUnits = self.form.microstripPortFeedpointShiftUnits.currentText()
 			portItem.mslMeasPlaneShiftValue = self.form.microstripPortMeasureShiftValue.value()
 			portItem.mslMeasPlaneShiftUnits = self.form.microstripPortMeasureShiftUnits.currentText()
-			portItem.mslPhysicalOrientation = self.form.microstripPortPhysicalOrientationComboBox.currentText()
+			portItem.mslPropagation = self.form.microstripPortPropagationComboBox.currentText()
 
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
 			portItem.modeName = self.form.portWaveguideModeName.currentText()
 			portItem.polarizationAngle = self.form.portWaveguidePolarizationAngle.currentText()
 			portItem.excitationAmplitude = self.form.portWaveguideExcitationAmplitude.value()
-
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
+			portItem.modeName = self.form.portWaveguideModeName.currentText()
+			portItem.polarizationAngle = self.form.portWaveguidePolarizationAngle.currentText()
+			portItem.excitationAmplitude = self.form.portWaveguideExcitationAmplitude.value()
 		if (self.form.etDumpPortRadioButton.isChecked()):
 			portItem.type = "et dump"
 		if (self.form.htDumpPortRadioButton.isChecked()):
@@ -1718,16 +1726,37 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# replace oudated copy of settingsInst 
 		self.updateObjectAssignmentRightTreeWidgetItemData("Port", selectedItems[0].text(0), settingsInst)	
 
+		self.guiHelpers.displayMessage(f"Port {settingsInst.name} was updated", forceModal=False)
+
 	def portSettingsTypeChoosed(self):
 		#first disable all additional settings for ports
 		self.form.microstripPortSettingsGroup.setEnabled(False)
 		self.form.waveguideSettingsGroup.setEnabled(False)
 
+		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
+
 		#enable current choosed radiobox settings for port
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideSettingsGroup.setEnabled(True)
+			self.form.portWaveguideModeName.clear()
+			self.form.portWaveguideModeName.addItems(["TE11","TE21","TE01","TE31"])	#first 4 circular TE modes ordered by their appereance
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Waveguide")
+		elif (self.form.rectangularWaveguidePortRadioButton.isChecked()):
+			self.form.waveguideSettingsGroup.setEnabled(True)
+			self.form.portWaveguideModeName.clear()
+			self.form.portWaveguideModeName.addItems(["TE10","TE20","TE01","TE11","TE21","TE30","TE31","TE40","TE02"])	#first 9 rectangular TE modes ordered by their appereance
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Waveguide")
 		elif (self.form.microstripPortRadioButton.isChecked()):
 			self.form.microstripPortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Microstrip")
+		elif (self.form.coaxialPortRadioButton.isChecked()):
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Coaxial")
+		elif (self.form.coplanarPortRadioButton.isChecked()):
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Coplanar")
+		elif (self.form.striplinePortRadioButton.isChecked()):
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Stripline")
+		elif (self.form.curvePortRadioButton.isChecked()):
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Curve")
 
 	def portUpdateMicrostripPortMaterialComboBox(self):
 		"""
@@ -1747,6 +1776,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if (materialData.type in ["metal", "conducting sheet"]):
 				self.form.microstripPortMaterialComboBox.addItem(materialData.name)
 
+	def portCheckMicrostripPortPropagationComboBox(self):
+		"""
+		Check if microstrip propagation direction is set right. If port field direction is Z then propagation must be in others axis X or Y.
+		Also when port field direction is X then propagation should be Y or Z.
+		If port field is Y then propagation should be X or Z.
+		:return: None
+		"""
+		if (self.form.microstripPortRadioButton.isChecked() and self.form.microstripPortPropagationComboBox.currentText()[0] == self.form.portDirectionInput.currentText()[0]):
+			self.guiHelpers.displayMessage("Microstrip field propagation is set to same axis as port excitation, should be different to be generated properly.")
 
 	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _
 	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
@@ -2028,9 +2066,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					self.form.microstripPortMeasureShiftUnits.setCurrentIndex(index)
 
 				# set combobox microstrip physical orientation (means where is top layer and where bottom)
-				index = self.form.microstripPortPhysicalOrientationComboBox.findText(currSetting.mslPhysicalOrientation, QtCore.Qt.MatchFixedString)
+				index = self.form.microstripPortPropagationComboBox.findText(currSetting.mslPropagation, QtCore.Qt.MatchFixedString)
 				if index >= 0:
-					self.form.microstripPortPhysicalOrientationComboBox.setCurrentIndex(index)
+					self.form.microstripPortPropagationComboBox.setCurrentIndex(index)
+
+				# set combobox microstrip material
+				index = self.form.microstripPortMaterialComboBox.findText(currSetting.mslMaterial, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.microstripPortMaterialComboBox.setCurrentIndex(index)
 
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update microstrip current settings: {e}", forceModal=False)
@@ -2049,9 +2092,19 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.portWaveguidePolarizationAngle.setCurrentIndex(index)
 
 			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
-
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
+			#set mode, e.g. TE11, TM21, ...
+			index = self.form.portWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.portWaveguideModeName.setCurrentIndex(index)
+
+			#set polarization angle
+			index = self.form.portWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.portWaveguidePolarizationAngle.setCurrentIndex(index)
+
+			self.form.portWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "et dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)

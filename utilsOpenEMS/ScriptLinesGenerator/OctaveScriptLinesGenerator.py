@@ -440,25 +440,38 @@ class OctaveScriptLinesGenerator:
                         #   It's important to generate microstrip port right, that means where is placed microstrip line, because microstrip consists from ground plane and trace
                         #       This is just playing with X,Y,Z coordinates of boundary box for microstrip port for min, max coordinates.
                         #
-                        if (currSetting.mslPhysicalOrientation == "z-"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMax))
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMin))
-                        elif (currSetting.mslPhysicalOrientation == "x-"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
-                        elif (currSetting.mslPhysicalOrientation == "y-"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMin))
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMax))
-                        else:
-                            #
-                            #   If its direction is x+,y+,z+ then the case is same for all
-                            #
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
-                        print(f"Microstrip port generated in physical orientation: {currSetting.mslPhysicalOrientation}")
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
+
+                        if (currSetting.direction == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.direction == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.direction == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        if (currSetting.mslPropagation == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.mslPropagation == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.mslPropagation == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPhysicalOrientation, '?'))
+                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation[0], '?')) #use just first letter of propagation direction
                         genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
@@ -476,8 +489,11 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'circular waveguide'):
                         genScript += "%% circular port openEMS code should be here\n"
+                        #genScriptPortCount += 1
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         genScript += "%% rectangular port openEMS code should be here\n"
+                        #[CSX,port] = AddRectWaveGuidePort( CSX, prio, portnr, start, stop, dir, a, b, mode_name, exc_amp, varargin )
+                        #genScriptPortCount += 1
                     elif (currSetting.getType() == 'et dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),

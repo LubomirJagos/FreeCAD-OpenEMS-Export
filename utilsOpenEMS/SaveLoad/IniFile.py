@@ -154,6 +154,10 @@ class IniFile:
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+            if (portList[k].type == "rectangular waveguide"):
+                settings.setValue("modeName", portList[k].modeName)
+                settings.setValue("polarizationAngle", portList[k].polarizationAngle)
+                settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
             elif (portList[k].type == "microstrip"):
                 try:
                     settings.setValue("mslMaterial", portList[k].mslMaterial)
@@ -161,7 +165,7 @@ class IniFile:
                     settings.setValue("mslFeedShiftUnits", portList[k].mslFeedShiftUnits)
                     settings.setValue("mslMeasPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
                     settings.setValue("mslMeasPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
-                    settings.setValue("mslPhysicalOrientation", portList[k].mslPhysicalOrientation)
+                    settings.setValue("mslPropagation", portList[k].mslPropagation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
 
@@ -377,6 +381,10 @@ class IniFile:
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                if (categorySettings.type == "rectangular waveguide"):
+                    categorySettings.modeName = settings.value('modeName')
+                    categorySettings.polarizationAngle = settings.value('polarizationAngle')
+                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:
@@ -385,7 +393,7 @@ class IniFile:
                         categorySettings.mslFeedShiftUnits = settings.value('mslFeedShiftUnits')
                         categorySettings.mslMeasPlaneShiftValue = float(settings.value('mslMeasPlaneShiftValue'))
                         categorySettings.mslMeasPlaneShiftUnits = settings.value('mslMeasPlaneShiftUnits')
-                        categorySettings.mslPhysicalOrientation = settings.value('mslPhysicalOrientation')
+                        categorySettings.mslPropagation = settings.value('mslPropagation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
 

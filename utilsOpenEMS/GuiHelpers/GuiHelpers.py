@@ -209,3 +209,12 @@ class GuiHelpers:
                         self.form.meshPriorityTreeView.takeTopLevelItem(k)
                         priorityItemRemoved = True
                         break
+
+    def portSpecificSettingsTabSetActiveByName(self, tabName):
+        """
+        Set active tab in Port Settings by providing its name, ie. Waveguide, Microstrip, ...
+        :return: None
+        """
+        for index in range(self.form.portSpecificSettingsTab.count()):
+            if tabName == self.form.portSpecificSettingsTab.tabText(index):
+                self.form.portSpecificSettingsTab.setCurrentIndex(index)
