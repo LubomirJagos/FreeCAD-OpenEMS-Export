@@ -1656,6 +1656,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.modeName = self.form.portCircWaveguideModeName.currentText()
 			portItem.polarizationAngle = self.form.portCircWaveguidePolarizationAngle.currentText()
 			portItem.excitationAmplitude = self.form.portCircWaveguideExcitationAmplitude.value()
+			portItem.waveguideCircDir = self.form.portCircWaveguideDirection.currentText()
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
 			portItem.modeName = self.form.portRectWaveguideModeName.currentText()
@@ -2087,6 +2088,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			index = self.form.portCircWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
 			if index >= 0:
 				self.form.portCircWaveguidePolarizationAngle.setCurrentIndex(index)
+
+			#set circular waveguide direction
+			index = self.form.portCircWaveguideDirection.findText(currSetting.waveguideCircDir, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.portCircWaveguideDirection.setCurrentIndex(index)
 
 			self.form.portCircWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "rectangular waveguide"):

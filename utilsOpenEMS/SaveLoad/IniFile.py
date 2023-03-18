@@ -154,6 +154,7 @@ class IniFile:
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+                settings.setValue("waveguideDirection", portList[k].waveguideCircDir)
             if (portList[k].type == "rectangular waveguide"):
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
@@ -381,6 +382,7 @@ class IniFile:
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.waveguideCircDir = settings.value('waveguideDirection')
                 if (categorySettings.type == "rectangular waveguide"):
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')

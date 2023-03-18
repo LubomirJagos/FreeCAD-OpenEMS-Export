@@ -2049,10 +2049,18 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <string>Circular Waveguide-specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_13">
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_3">
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_2">
                       <property name="text">
-                       <string>Polarization angle</string>
+                       <string>Mode Name</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QLabel" name="label_57">
+                      <property name="text">
+                       <string>Note: openEMS support just TE modes
+no TM modes.</string>
                       </property>
                      </widget>
                     </item>
@@ -2070,25 +2078,30 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_2">
+                    <item row="5" column="1">
+                     <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude"/>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_3">
                       <property name="text">
-                       <string>Mode Name</string>
+                       <string>Polarization angle</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="0">
+                    <item row="5" column="0">
                      <widget class="QLabel" name="label_4">
                       <property name="text">
                        <string>Excitation amplitude</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude"/>
-                    </item>
                     <item row="0" column="1">
                      <widget class="QComboBox" name="portCircWaveguideModeName">
+                      <item>
+                       <property name="text">
+                        <string>TE01</string>
+                       </property>
+                      </item>
                       <item>
                        <property name="text">
                         <string>TE11</string>
@@ -2101,22 +2114,83 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                       <item>
                        <property name="text">
-                        <string>TE01</string>
+                        <string>TE02</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>TE31</string>
+                        <string>TE12</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE22</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE03</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE13</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>TE23</string>
                        </property>
                       </item>
                      </widget>
                     </item>
-                    <item row="1" column="1">
-                     <widget class="QLabel" name="label_57">
+                    <item row="3" column="1">
+                     <widget class="QLabel" name="label_62">
                       <property name="text">
-                       <string>Note: openEMS support just TE modes
-no TM modes.</string>
+                       <string>0 = horizontal polarization
+pi/2 = vertical polarization</string>
                       </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_63">
+                      <property name="text">
+                       <string>Waveguide direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <widget class="QComboBox" name="portCircWaveguideDirection">
+                      <item>
+                       <property name="text">
+                        <string>x+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>x-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z-</string>
+                       </property>
+                      </item>
                      </widget>
                     </item>
                    </layout>

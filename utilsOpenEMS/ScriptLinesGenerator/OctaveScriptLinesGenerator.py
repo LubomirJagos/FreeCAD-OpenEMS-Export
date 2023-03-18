@@ -488,8 +488,56 @@ class OctaveScriptLinesGenerator:
 
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'circular waveguide'):
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
+
+                        if (currSetting.waveguideCircDir == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.waveguideCircDir == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.waveguideCircDir == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        #
+                        #   Based on port excitation direction which is not used at waveguide due it has modes, but based on that height and width are resolved.
+                        #
+                        waveguideRadius = 0
+                        if (currSetting.direction[0] == "z"):
+                            waveguideRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
+                        elif (currSetting.direction[0] == "x"):
+                            waveguideRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
+                        elif (currSetting.direction[0] == "y"):
+                            waveguideRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
+
                         genScript += "%% circular port openEMS code should be here\n"
-                        #genScriptPortCount += 1
+
+                        #
+                        #   This is .m file modified by me, due original from openEMS installation has hardwired value dir to 'z' direction so had to modify it to add dir parameter and copy
+                        #   evaluation for Ex,Ey,Ez,Hx,Hy,Hz from rectangular waveguide
+                        #
+                        #[CSX,port] = AddCircWaveGuidePort2( CSX, prio, portnr, start, stop, dir, radius, mode_name, pol_ang, exc_amp, varargin )
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCircWaveGuidePort2(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "portStart,portStop," + \
+                                     "'" + currSetting.waveguideCircDir[0] + "',"  + \
+                                     str(waveguideRadius) + "',"  + \
+                                     "'" + currSetting.modeName+ "'," + \
+                                     str(currSetting.polarizationAngle) + "',"  + \
+                                     (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
+
+                        genScriptPortCount += 1
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
                         portStartY = _r(sf * bbCoords.YMin)

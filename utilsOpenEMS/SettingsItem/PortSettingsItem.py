@@ -9,7 +9,8 @@ from .  SettingsItem import SettingsItem
 class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
                  mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
-                 waveguideRectDir = ""):
+                 waveguideRectDir = "",
+                 waveguideCircDir=""):
         self.name = name
         self.type = type
         self.R = R
@@ -23,6 +24,7 @@ class PortSettingsItem(SettingsItem):
         self.mslMaterial = mslMaterial
         self.mslPropagation = mslPropagation
         self.waveguideRectDir = waveguideRectDir
+        self.waveguideCircDir = waveguideCircDir
         return
 
     def serializeToString(self):
