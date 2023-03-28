@@ -369,6 +369,7 @@ class OctaveScriptLinesGenerator:
         #
         baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z+': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z-': '[0 0 -1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', }
         mslDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+        coaxialDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
@@ -618,6 +619,133 @@ class OctaveScriptLinesGenerator:
                         # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
 
                         genNF2FFBoxCounter += 1
+                    elif (currSetting.getType() == 'coaxial'):
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
+
+                        #calculate coaxial port radius, it's smaller dimension from width, height
+                        coaxialRadius = 0.0
+                        if (currSetting.coaxialPropagation[0] == "z"):
+                            coaxialRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
+                        elif (currSetting.coaxialPropagation[0] == "x"):
+                            coaxialRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
+                        elif (currSetting.coaxialPropagation[0] == "y"):
+                            coaxialRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
+
+                        #
+                        #   This is important, radius is calculated from bounding box coordinates from FreeCAD so must be multiplied by metric units used in FreeCAD.
+                        #   LuboJ ERROR: not sure if scaling done right
+                        #
+                        coaxialRadius = coaxialRadius/2 * self.getFreeCADUnitLength_m() / self.getUnitLengthFromUI_m()
+
+                        #
+                        #   LuboJ ERROR: not sure if scaling done right
+                        #
+                        coaxialInnerRadius = currSetting.coaxialInnerRadiusValue * currSetting.getUnitsAsNumber(currSetting.coaxialInnerRadiusUnits) / self.getUnitLengthFromUI_m()
+                        coaxialShellThickness = currSetting.coaxialShellThicknessValue * currSetting.getUnitsAsNumber(currSetting.coaxialShellThicknessUnits) / self.getUnitLengthFromUI_m()
+                        coaxialFeedShift = currSetting.coaxialFeedpointShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialFeedpointShiftUnits) / self.getUnitLengthFromUI_m()
+                        coaxialMeasPlaneShift = currSetting.coaxialMeasPlaneShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialMeasPlaneShiftUnits) / self.getUnitLengthFromUI_m()
+
+                        #
+                        #   Port start and end need to be shifted into middle of feed plane
+                        #
+                        if (currSetting.coaxialPropagation[0] == "z"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStartZ)
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStopZ)
+                        elif (currSetting.coaxialPropagation[0] == "x"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
+                        elif (currSetting.coaxialPropagation[0] == "y"):
+                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStartY, (portStartZ+portStopZ)/2)
+                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStopY, (portStartZ+portStopZ)/2)
+
+                        genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.coaxialPropagation[0], '?'))  # use just first letter of propagation direction
+                        genScript += 'r_i = ' + str(coaxialInnerRadius) + ';\n'
+                        genScript += 'r_o = ' + str(coaxialRadius - coaxialShellThickness) + ';\n'
+                        genScript += 'r_os = ' + str(coaxialRadius) + ';\n'
+
+                        isActiveCoaxialStr = {False: "", True: ", 'ExcitePort', true"}
+
+                        #
+                        #   LuboJ ERROR: FeedShift and MeasPlaneShift doesn't seem to be working properly, it's not moving anything, error is somewhere here in code
+                        #
+                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(coaxialFeedShift)}
+                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(coaxialMeasPlaneShift)}
+
+                        #feed resistance is NOT IMPLEMENTED IN openEMS AddCoaxialPort()
+                        #genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCoaxialPort(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "'PEC'," + \
+                                     "'" + currSetting.coaxialMaterial + "'," + \
+                                     "portStart,portStop,coaxialDir, r_i, r_o, r_os" + \
+                                     isActiveCoaxialStr.get(currSetting.isActive) + \
+                                     feedShiftStr.get(currSetting.coaxialFeedpointShiftValue > 0) + \
+                                     measPlaneStr.get(currSetting.coaxialMeasPlaneShiftValue > 0) + \
+                                     ");\n"
+
+                        genScriptPortCount += 1
+                    elif (currSetting.getType() == 'coplanar'):
+
+                        #
+                        #   It's important to generate microstrip port right, that means where is placed microstrip line, because microstrip consists from ground plane and trace
+                        #       This is just playing with X,Y,Z coordinates of boundary box for microstrip port for min, max coordinates.
+                        #
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
+
+                        if (currSetting.direction == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.direction == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.direction == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        if (currSetting.mslPropagation == "z-"):
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.mslPropagation == "x-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                        elif (currSetting.mslPropagation == "y-"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY,
+                                                                                      portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation[0],
+                                                                           '?'))  # use just first letter of propagation direction
+                        genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+
+                        isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
+
+                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddMSLPort(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "'" + currSetting.mslMaterial + "'," + \
+                                     "portStart,portStop,mslDir, mslEVec" + \
+                                     isActiveMSLStr.get(currSetting.isActive) + \
+                                     genScript_R + ");\n"
+
+                        genScriptPortCount += 1
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
 

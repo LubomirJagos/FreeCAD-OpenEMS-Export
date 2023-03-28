@@ -9,22 +9,52 @@ from .  SettingsItem import SettingsItem
 class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
                  mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
-                 waveguideRectDir = "",
-                 waveguideCircDir=""):
+                 waveguideRectDir = "", waveguideCircDir="",
+                 coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
+                 coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "",
+                 striplineMaterial = "", striplinePropagation = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = ""
+                 ):
         self.name = name
         self.type = type
+
         self.R = R
         self.RUnits = RUnits
         self.isActive = isActive
         self.direction = direction
+
         self.mslFeedShiftValue = mslFeedShiftValue
         self.mslFeedShiftUnits = mslFeedShiftUnits
         self.mslMeasPlaneShiftValue = mslMeasPlaneShiftValue
         self.mslMeasPlaneShiftUnits = mslMeasPlaneShiftUnits
         self.mslMaterial = mslMaterial
         self.mslPropagation = mslPropagation
+
         self.waveguideRectDir = waveguideRectDir
         self.waveguideCircDir = waveguideCircDir
+
+        self.coaxialMaterial = coaxialMaterial
+        self.coaxialPropagation = coaxialPropagation
+        self.coaxialInnerRadiusValue = coaxialInnerRadiusValue
+        self.coaxialInnerRadiusUnits = coaxialInnerRadiusUnits
+        self.coaxialShellThicknessValue = coaxialShellThicknessValue
+        self.coaxialShellThicknessUnits = coaxialShellThicknessUnits
+        self.coaxialFeedpointShiftValue = coaxialFeedpointShiftValue
+        self.coaxialFeedpointShiftUnits = coaxialFeedpointShiftUnits
+        self.coaxialMeasPlaneShiftValue = coaxialMeasPlaneShiftValue
+        self.coaxialMeasPlaneShiftUnits = coaxialMeasPlaneShiftUnits
+        self.coaxialExcitationAmplitude = coaxialExcitationAmplitude
+
+        self.coplanarMaterial = coplanarMaterial
+        self.coplanarPropagation = coplanarPropagation
+        self.coplanarGapValue = coplanarGapValue
+        self.coplanarGapUnits = coplanarGapUnits
+
+        self.striplineMaterial = striplineMaterial
+        self.striplinePropagation = striplinePropagation
+        self.striplineFeedpointShiftValue = striplineFeedpointShiftValue
+        self.striplineFeedpointShiftUnits = striplineFeedpointShiftUnits
+        self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
+        self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
         return
 
     def serializeToString(self):

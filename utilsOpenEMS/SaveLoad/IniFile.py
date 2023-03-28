@@ -169,6 +169,21 @@ class IniFile:
                     settings.setValue("mslPropagation", portList[k].mslPropagation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
+            elif (portList[k].type == "coaxial"):
+                try:
+                    settings.setValue("coaxialMaterial", portList[k].coaxialMaterial)
+                    settings.setValue("coaxialPropagation", portList[k].coaxialPropagation)
+                    settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
+                    settings.setValue("coaxialInnerRadiusUnits", portList[k].coaxialInnerRadiusUnits)
+                    settings.setValue("coaxialShellThicknessValue", portList[k].coaxialShellThicknessValue)
+                    settings.setValue("coaxialShellThicknessUnits", portList[k].coaxialShellThicknessUnits)
+                    settings.setValue("coaxialFeedpointShiftValue", portList[k].coaxialFeedpointShiftValue)
+                    settings.setValue("coaxialFeedpointShiftUnits", portList[k].coaxialFeedpointShiftUnits)
+                    settings.setValue("coaxialMeasPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
+                    settings.setValue("coaxialMeasPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
+                    settings.setValue("coaxialExcitationAmplitude", portList[k].coaxialExcitationAmplitude)
+                except Exception as e:
+                    print(f"{__file__} > write() coaxial material ERROR: {e}")
 
             settings.endGroup()
 
@@ -398,6 +413,21 @@ class IniFile:
                         categorySettings.mslPropagation = settings.value('mslPropagation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
+                elif (categorySettings.type == "coaxial"):
+                    try:
+                        categorySettings.coaxialMaterial = settings.value('coaxialMaterial')
+                        categorySettings.coaxialPropagation = settings.value('coaxialPropagation')
+                        categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
+                        categorySettings.coaxialInnerRadiusUnits = settings.value('coaxialInnerRadiusUnits')
+                        categorySettings.coaxialShellThicknessValue = float(settings.value('coaxialShellThicknessValue'))
+                        categorySettings.coaxialShellThicknessUnits = settings.value('coaxialShellThicknessUnits')
+                        categorySettings.coaxialFeedpointShiftValue = float(settings.value('coaxialFeedpointShiftValue'))
+                        categorySettings.coaxialFeedpointShiftUnits = settings.value('coaxialFeedpointShiftUnits')
+                        categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('coaxialMeasPlaneShiftValue'))
+                        categorySettings.coaxialMeasPlaneShiftUnits = settings.value('coaxialMeasPlaneShiftUnits')
+                        categorySettings.coaxialExcitationAmplitude = float(settings.value('coaxialExcitationAmplitude'))
+                    except Exception as e:
+                        print(f"There was error during reading coaxial port settings: {e}")
 
                 elif (categorySettings.type == "nf2ff box"):
                     #
