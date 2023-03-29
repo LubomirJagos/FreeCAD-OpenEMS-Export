@@ -809,10 +809,16 @@ class OctaveScriptLinesGenerator:
                             portStartZ = _r(sf * bbCoords.ZMin)
                             portStopZ = _r(sf * bbCoords.ZMax)
 
+                        striplineHeight =  0
+                        if (currSetting.direction[0] == "x"):
+                            striplineHeight = _r(sf * (bbCoords.XMax - bbCoords.XMin)/2)
+                        elif (currSetting.direction[0] == "y"):
+                            striplineHeight = _r(sf * (bbCoords.YMax - bbCoords.YMin)/2)
+                        elif (currSetting.direction[0] == "z"):
+                            striplineHeight = _r(sf * (bbCoords.ZMax - bbCoords.ZMin)/2)
+
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
-
-                        striplineHeight = currSetting.striplineHeightValue * currSetting.getUnitsAsNumber(currSetting.striplineHeightUnits) / self.getUnitLengthFromUI_m()
 
                         genScript += 'striplineDir = {};\n'.format(striplineDirStr.get(currSetting.striplinePropagation[0], '?'))  # use just first letter of propagation direction
                         genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))

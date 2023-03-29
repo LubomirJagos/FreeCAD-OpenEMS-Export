@@ -201,8 +201,6 @@ class IniFile:
             elif (portList[k].type == "stripline"):
                 try:
                     settings.setValue('propagation', portList[k].striplinePropagation)
-                    settings.setValue('heightValue', portList[k].striplineHeightValue)
-                    settings.setValue('heightUnits', portList[k].striplineHeightUnits)
                     settings.setValue('feedpointShiftValue', portList[k].striplineFeedpointShiftValue)
                     settings.setValue('feedpointShiftUnits', portList[k].striplineFeedpointShiftUnits)
                     settings.setValue('measPlaneShiftValue', portList[k].striplineMeasPlaneShiftValue)
@@ -470,8 +468,6 @@ class IniFile:
                 elif (categorySettings.type == "stripline"):
                     try:
                         categorySettings.striplinePropagation = settings.value('propagation')
-                        categorySettings.striplineHeightValue = float(settings.value('heightValue'))
-                        categorySettings.striplineHeightUnits = settings.value('heightUnits')
                         categorySettings.striplineFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
                         categorySettings.striplineFeedpointShiftUnits = settings.value('feedpointShiftUnits')
                         categorySettings.striplineMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))

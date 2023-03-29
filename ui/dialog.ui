@@ -3295,41 +3295,14 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="1">
-                     <widget class="QComboBox" name="striplinePortPropagationComboBox">
-                      <item>
-                       <property name="text">
-                        <string>x+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z-</string>
-                       </property>
-                      </item>
+                    <item row="2" column="0" rowspan="2">
+                     <widget class="QLabel" name="label_70">
+                      <property name="text">
+                       <string>Measure probe plane shift</string>
+                      </property>
                      </widget>
                     </item>
-                    <item row="3" column="1">
+                    <item row="2" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_29">
                       <item>
                        <widget class="QDoubleSpinBox" name="striplinePortMeasureShiftValue">
@@ -3393,21 +3366,48 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="2" column="0">
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="striplinePortPropagationComboBox">
+                      <item>
+                       <property name="text">
+                        <string>x+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>x-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y-</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z+</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z-</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
                      <widget class="QLabel" name="label_69">
                       <property name="text">
                        <string>Feedpoint shift</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_81">
-                      <property name="text">
-                       <string>Height</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="1">
+                    <item row="1" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_28">
                       <item>
                        <widget class="QDoubleSpinBox" name="striplinePortFeedpointShiftValue">
@@ -3458,77 +3458,6 @@ no TM modes.</string>
                       </item>
                       <item>
                        <spacer name="horizontalSpacer_21">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_70">
-                      <property name="text">
-                       <string>Measure probe plane shift</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_35">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="striplinePortHeightValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="striplinePortHeightUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_29">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>

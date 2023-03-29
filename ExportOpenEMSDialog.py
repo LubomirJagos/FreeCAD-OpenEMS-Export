@@ -1698,8 +1698,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.striplinePortRadioButton.isChecked()):
 			portItem.type = "stripline"
 			portItem.striplinePropagation = self.form.striplinePortPropagationComboBox.currentText()
-			portItem.striplineHeightValue = self.form.striplinePortHeightValue.value()
-			portItem.striplineHeightUnits = self.form.striplinePortHeightUnits.currentText()
 			portItem.striplineFeedpointShiftValue = self.form.striplinePortFeedpointShiftValue.value()
 			portItem.striplineFeedpointShiftUnits = self.form.striplinePortFeedpointShiftUnits.currentText()
 			portItem.striplineMeasPlaneShiftValue = self.form.striplinePortMeasureShiftValue.value()
@@ -2214,14 +2212,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (currSetting.type.lower() == "stripline"):
 			self.form.striplinePortRadioButton.click()
 			try:
-				self.form.striplinePortHeightValue.setValue(currSetting.striplineHeightValue)
 				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
 				self.form.striplinePortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
-
-				# stripline height units
-				index = self.form.striplinePortHeightUnits.findText(currSetting.striplineHeightUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.striplinePortHeightUnits.setCurrentIndex(index)
 
 				# stripline feedpoint shift units
 				index = self.form.striplinePortFeedpointShiftUnits.findText(currSetting.striplineFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
