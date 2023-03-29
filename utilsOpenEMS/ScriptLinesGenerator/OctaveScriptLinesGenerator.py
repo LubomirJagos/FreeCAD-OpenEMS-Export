@@ -371,6 +371,7 @@ class OctaveScriptLinesGenerator:
         mslDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coaxialDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coplanarDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+        striplineDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
@@ -694,6 +695,8 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'coplanar'):
 
+                        gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
+
                         #
                         #   1. set all coords to max or min, this means where coplanar waveguide is placed if on top or bottom of object but we don't know orientation now
                         #
@@ -750,13 +753,11 @@ class OctaveScriptLinesGenerator:
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
-                        gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
-
                         genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
                         genScript += 'coplanarEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
                         genScript += 'gap_width = ' + str(gapWidth) + ';\n'
 
-                        isActiveCoplanarStr = {False: "", True: ", 'ExcitePort', true"}
+                        isActiveStr = {False: "", True: ", 'ExcitePort', true"}
 
                         genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
@@ -765,7 +766,68 @@ class OctaveScriptLinesGenerator:
                                      str(genScriptPortCount) + "," + \
                                      "'" + currSetting.coplanarMaterial + "'," + \
                                      "portStart,portStop,gap_width,coplanarDir, coplanarEVec" + \
-                                     isActiveCoplanarStr.get(currSetting.isActive) + \
+                                     isActiveStr.get(currSetting.isActive) + \
+                                     genScript_R + ");\n"
+
+                        genScriptPortCount += 1
+                    elif (currSetting.getType() == 'stripline'):
+                        portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
+                        portStartY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
+                        portStartZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax)/2)
+                        portStopX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
+                        portStopY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
+                        portStopZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax)/2)
+
+                        if (currSetting.striplinePropagation in ["x+", "y+"] and currSetting.direction[0] in ["z"]):
+                            portStartX = _r(sf * bbCoords.XMin)
+                            portStopX = _r(sf * bbCoords.XMax)
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStopY = _r(sf * bbCoords.YMax)
+                        elif (currSetting.striplinePropagation in ["x+", "z+"] and currSetting.direction[0] in ["y"]):
+                            portStartX = _r(sf * bbCoords.XMin)
+                            portStopX = _r(sf * bbCoords.XMax)
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+                        elif (currSetting.striplinePropagation in ["y+", "z+"] and currSetting.direction[0] in ["x"]):
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStopY = _r(sf * bbCoords.YMax)
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+                        elif (currSetting.striplinePropagation in ["x-", "y-"] and currSetting.direction[0] in ["z"]):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+                        elif (currSetting.striplinePropagation in ["x-", "z-"] and currSetting.direction[0] in ["y"]):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        elif (currSetting.striplinePropagation in ["y-", "z-"] and currSetting.direction[0] in ["x"]):
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStopY = _r(sf * bbCoords.YMax)
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        striplineHeight = currSetting.striplineHeightValue * currSetting.getUnitsAsNumber(currSetting.striplineHeightUnits) / self.getUnitLengthFromUI_m()
+
+                        genScript += 'striplineDir = {};\n'.format(striplineDirStr.get(currSetting.striplinePropagation[0], '?'))  # use just first letter of propagation direction
+                        genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += 'striplineHeight = ' + str(striplineHeight) + ';\n'
+
+                        isActiveStr = {False: "", True: ", 'ExcitePort', true"}
+
+                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddStripLinePort(CSX," + \
+                                     str(priorityIndex) + "," + \
+                                     str(genScriptPortCount) + "," + \
+                                     "'PEC'," + \
+                                     "portStart,portStop,striplineHeight,striplineDir, striplineEVec" + \
+                                     isActiveStr.get(currSetting.isActive) + \
                                      genScript_R + ");\n"
 
                         genScriptPortCount += 1

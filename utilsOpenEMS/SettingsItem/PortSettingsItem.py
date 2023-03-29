@@ -11,8 +11,8 @@ class PortSettingsItem(SettingsItem):
                  mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
                  waveguideRectDir = "", waveguideCircDir="",
                  coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
-                 coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "",
-                 striplineMaterial = "", striplinePropagation = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = ""
+                 coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
+                 striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = ""
                  ):
         self.name = name
         self.type = type
@@ -48,6 +48,18 @@ class PortSettingsItem(SettingsItem):
         self.coplanarPropagation = coplanarPropagation
         self.coplanarGapValue = coplanarGapValue
         self.coplanarGapUnits = coplanarGapUnits
+        self.coplanarFeedpointShiftValue = coplanarFeedpointShiftValue
+        self.coplanarFeedpointShiftUnits = coplanarFeedpointShiftUnits
+        self.coplanarMeasPlaneShiftValue = coplanarMeasPlaneShiftValue
+        self.coplanarMeasPlaneShiftUnits = coplanarMeasPlaneShiftUnits
+
+        self.striplinePropagation = striplinePropagation
+        self.striplineHeightValue = striplineHeightValue
+        self.striplineHeightUnits = striplineHeightUnits
+        self.striplineFeedpointShiftValue = striplineFeedpointShiftValue
+        self.striplineFeedpointShiftUnits = striplineFeedpointShiftUnits
+        self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
+        self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
 
         self.striplineMaterial = striplineMaterial
         self.striplinePropagation = striplinePropagation

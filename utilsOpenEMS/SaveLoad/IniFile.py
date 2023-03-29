@@ -161,35 +161,52 @@ class IniFile:
                 settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
             elif (portList[k].type == "microstrip"):
                 try:
-                    settings.setValue("mslMaterial", portList[k].mslMaterial)
-                    settings.setValue("mslFeedShiftValue", portList[k].mslFeedShiftValue)
-                    settings.setValue("mslFeedShiftUnits", portList[k].mslFeedShiftUnits)
-                    settings.setValue("mslMeasPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
-                    settings.setValue("mslMeasPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
-                    settings.setValue("mslPropagation", portList[k].mslPropagation)
+                    settings.setValue("material", portList[k].mslMaterial)
+                    settings.setValue("feedShiftValue", portList[k].mslFeedShiftValue)
+                    settings.setValue("feedShiftUnits", portList[k].mslFeedShiftUnits)
+                    settings.setValue("measPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
+                    settings.setValue("measPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
+                    settings.setValue("propagation", portList[k].mslPropagation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
             elif (portList[k].type == "coaxial"):
                 try:
-                    settings.setValue("coaxialMaterial", portList[k].coaxialMaterial)
-                    settings.setValue("coaxialPropagation", portList[k].coaxialPropagation)
+                    settings.setValue("material", portList[k].coaxialMaterial)
+                    settings.setValue("propagation", portList[k].coaxialPropagation)
                     settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
                     settings.setValue("coaxialInnerRadiusUnits", portList[k].coaxialInnerRadiusUnits)
                     settings.setValue("coaxialShellThicknessValue", portList[k].coaxialShellThicknessValue)
                     settings.setValue("coaxialShellThicknessUnits", portList[k].coaxialShellThicknessUnits)
-                    settings.setValue("coaxialFeedpointShiftValue", portList[k].coaxialFeedpointShiftValue)
-                    settings.setValue("coaxialFeedpointShiftUnits", portList[k].coaxialFeedpointShiftUnits)
-                    settings.setValue("coaxialMeasPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
-                    settings.setValue("coaxialMeasPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
-                    settings.setValue("coaxialExcitationAmplitude", portList[k].coaxialExcitationAmplitude)
+                    settings.setValue("feedpointShiftValue", portList[k].coaxialFeedpointShiftValue)
+                    settings.setValue("feedpointShiftUnits", portList[k].coaxialFeedpointShiftUnits)
+                    settings.setValue("measPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
+                    settings.setValue("measPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
+                    settings.setValue("excitationAmplitude", portList[k].coaxialExcitationAmplitude)
                 except Exception as e:
                     print(f"{__file__} > write() coaxial material ERROR: {e}")
+
             elif (portList[k].type == "coplanar"):
                 try:
                     settings.setValue('coplanarMaterial', portList[k].coplanarMaterial)
                     settings.setValue('coplanarPropagation', portList[k].coplanarPropagation)
                     settings.setValue('coplanarGapValue', portList[k].coplanarGapValue)
                     settings.setValue('coplanarGapUnits', portList[k].coplanarGapUnits)
+                    settings.setValue('feedpointShiftValue', portList[k].coplanarFeedpointShiftValue)
+                    settings.setValue('feedpointShiftUnits', portList[k].coplanarFeedpointShiftUnits)
+                    settings.setValue('measPlaneShiftValue', portList[k].coplanarMeasPlaneShiftValue)
+                    settings.setValue('measPlaneShiftUnits', portList[k].coplanarMeasPlaneShiftUnits)
+                except Exception as e:
+                    print(f"{__file__} > write() coplanar ERROR: {e}")
+
+            elif (portList[k].type == "stripline"):
+                try:
+                    settings.setValue('propagation', portList[k].striplinePropagation)
+                    settings.setValue('heightValue', portList[k].striplineHeightValue)
+                    settings.setValue('heightUnits', portList[k].striplineHeightUnits)
+                    settings.setValue('feedpointShiftValue', portList[k].striplineFeedpointShiftValue)
+                    settings.setValue('feedpointShiftUnits', portList[k].striplineFeedpointShiftUnits)
+                    settings.setValue('measPlaneShiftValue', portList[k].striplineMeasPlaneShiftValue)
+                    settings.setValue('measPlaneShiftUnits', portList[k].striplineMeasPlaneShiftUnits)
                 except Exception as e:
                     print(f"{__file__} > write() coplanar ERROR: {e}")
 
@@ -413,36 +430,52 @@ class IniFile:
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:
-                        categorySettings.mslMaterial = settings.value('mslMaterial')
-                        categorySettings.mslFeedShiftValue = float(settings.value('mslFeedShiftValue'))
-                        categorySettings.mslFeedShiftUnits = settings.value('mslFeedShiftUnits')
-                        categorySettings.mslMeasPlaneShiftValue = float(settings.value('mslMeasPlaneShiftValue'))
-                        categorySettings.mslMeasPlaneShiftUnits = settings.value('mslMeasPlaneShiftUnits')
-                        categorySettings.mslPropagation = settings.value('mslPropagation')
+                        categorySettings.mslMaterial = settings.value('material')
+                        categorySettings.mslFeedShiftValue = float(settings.value('feedShiftValue'))
+                        categorySettings.mslFeedShiftUnits = settings.value('feedShiftUnits')
+                        categorySettings.mslMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.mslMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                        categorySettings.mslPropagation = settings.value('propagation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
                 elif (categorySettings.type == "coaxial"):
                     try:
-                        categorySettings.coaxialMaterial = settings.value('coaxialMaterial')
-                        categorySettings.coaxialPropagation = settings.value('coaxialPropagation')
+                        categorySettings.coaxialMaterial = settings.value('material')
+                        categorySettings.coaxialPropagation = settings.value('propagation')
                         categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
                         categorySettings.coaxialInnerRadiusUnits = settings.value('coaxialInnerRadiusUnits')
                         categorySettings.coaxialShellThicknessValue = float(settings.value('coaxialShellThicknessValue'))
                         categorySettings.coaxialShellThicknessUnits = settings.value('coaxialShellThicknessUnits')
-                        categorySettings.coaxialFeedpointShiftValue = float(settings.value('coaxialFeedpointShiftValue'))
-                        categorySettings.coaxialFeedpointShiftUnits = settings.value('coaxialFeedpointShiftUnits')
-                        categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('coaxialMeasPlaneShiftValue'))
-                        categorySettings.coaxialMeasPlaneShiftUnits = settings.value('coaxialMeasPlaneShiftUnits')
-                        categorySettings.coaxialExcitationAmplitude = float(settings.value('coaxialExcitationAmplitude'))
+                        categorySettings.coaxialFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.coaxialFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.coaxialMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                        categorySettings.coaxialExcitationAmplitude = float(settings.value('excitationAmplitude'))
                     except Exception as e:
                         print(f"There was error during reading coaxial port settings: {e}")
 
                 elif (categorySettings.type == "coplanar"):
                     try:
-                        categorySettings.coplanarMaterial = settings.value('coplanarMaterial')
-                        categorySettings.coplanarPropagation = settings.value('coplanarPropagation')
+                        categorySettings.coplanarMaterial = settings.value('material')
+                        categorySettings.coplanarPropagation = settings.value('propagation')
                         categorySettings.coplanarGapValue = float(settings.value('coplanarGapValue'))
                         categorySettings.coplanarGapUnits = settings.value('coplanarGapUnits')
+                        categorySettings.coplanarFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.coplanarFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.coplanarMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.coplanarMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                    except Exception as e:
+                        print(f"There was error during reading coplanar port settings: {e}")
+
+                elif (categorySettings.type == "stripline"):
+                    try:
+                        categorySettings.striplinePropagation = settings.value('propagation')
+                        categorySettings.striplineHeightValue = float(settings.value('heightValue'))
+                        categorySettings.striplineHeightUnits = settings.value('heightUnits')
+                        categorySettings.striplineFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.striplineFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.striplineMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.striplineMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
                     except Exception as e:
                         print(f"There was error during reading coplanar port settings: {e}")
 

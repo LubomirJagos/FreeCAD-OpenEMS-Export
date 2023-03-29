@@ -1514,7 +1514,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (operation in ["add", "remove", "update"]):
 			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)		# update microstrip port material combobox
 			self.updateMaterialComboBoxJustMetals(self.form.coplanarPortMaterialComboBox)		# update coplanar port material combobox
-			self.updateMaterialComboBoxJustMetals(self.form.striplinePortMaterialComboBox)		# update stripline port material combobox
 			self.updateMaterialComboBoxJustUserdefined(self.form.coaxialPortMaterialComboBox)	# update coaxial port material combobox
 
 	def materialAddPEC(self):
@@ -1692,10 +1691,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.coplanarPropagation = self.form.coplanarPortPropagationComboBox.currentText()
 			portItem.coplanarGapValue = self.form.coplanarPortGapValue.value()
 			portItem.coplanarGapUnits = self.form.coplanarPortGapUnits.currentText()
+			portItem.coplanarFeedpointShiftValue = self.form.coplanarPortFeedpointShiftValue.value()
+			portItem.coplanarFeedpointShiftUnits = self.form.coplanarPortFeedpointShiftUnits.currentText()
+			portItem.coplanarMeasPlaneShiftValue = self.form.coplanarPortMeasureShiftValue.value()
+			portItem.coplanarMeasPlaneShiftUnits = self.form.coplanarPortMeasureShiftUnits.currentText()
 		if (self.form.striplinePortRadioButton.isChecked()):
 			portItem.type = "stripline"
-			portItem.striplineMaterial = self.form.striplinePortMaterialComboBox.currentText()
 			portItem.striplinePropagation = self.form.striplinePortPropagationComboBox.currentText()
+			portItem.striplineHeightValue = self.form.striplinePortHeightValue.value()
+			portItem.striplineHeightUnits = self.form.striplinePortHeightUnits.currentText()
 			portItem.striplineFeedpointShiftValue = self.form.striplinePortFeedpointShiftValue.value()
 			portItem.striplineFeedpointShiftUnits = self.form.striplinePortFeedpointShiftUnits.currentText()
 			portItem.striplineMeasPlaneShiftValue = self.form.striplinePortMeasureShiftValue.value()
@@ -1718,7 +1722,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def portSettingsRemoveButtonClicked(self, name = None):
 		#if there is no name it's called from UI, if there is name it's called as function this is done to have one function removing port properly for both cases
-		if (name == None):
+		print("kokot")
+		print("----> " + str(type(name)) + " -----> " + str(name))
+		if (type(name) != "str"):
 			selectedItem = self.form.portSettingsTreeView.selectedItems()[0]
 			print("Selected port name: " + selectedItem.text(0))
 		else:
@@ -2204,6 +2210,36 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					self.form.coplanarPortMaterialComboBox.setCurrentIndex(index)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coplanar current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "stripline"):
+			self.form.striplinePortRadioButton.click()
+			try:
+				self.form.striplinePortHeightValue.setValue(currSetting.striplineHeightValue)
+				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
+				self.form.striplinePortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
+
+				# stripline height units
+				index = self.form.striplinePortHeightUnits.findText(currSetting.striplineHeightUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.striplinePortHeightUnits.setCurrentIndex(index)
+
+				# stripline feedpoint shift units
+				index = self.form.striplinePortFeedpointShiftUnits.findText(currSetting.striplineFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.striplinePortFeedpointShiftUnits.setCurrentIndex(index)
+
+				# stripline meas plane shift units
+				index = self.form.striplinePortMeasureShiftUnits.findText(currSetting.striplineMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.striplinePortMeasureShiftUnits.setCurrentIndex(index)
+
+				# propagation
+				index = self.form.striplinePortPropagationComboBox.findText(currSetting.striplinePropagation, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.striplinePortPropagationComboBox.setCurrentIndex(index)
+
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update stripline current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()
