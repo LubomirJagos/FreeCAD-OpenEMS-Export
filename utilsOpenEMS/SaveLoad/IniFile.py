@@ -187,8 +187,8 @@ class IniFile:
 
             elif (portList[k].type == "coplanar"):
                 try:
-                    settings.setValue('coplanarMaterial', portList[k].coplanarMaterial)
-                    settings.setValue('coplanarPropagation', portList[k].coplanarPropagation)
+                    settings.setValue('material', portList[k].coplanarMaterial)
+                    settings.setValue('propagation', portList[k].coplanarPropagation)
                     settings.setValue('coplanarGapValue', portList[k].coplanarGapValue)
                     settings.setValue('coplanarGapUnits', portList[k].coplanarGapUnits)
                     settings.setValue('feedpointShiftValue', portList[k].coplanarFeedpointShiftValue)

@@ -2191,11 +2191,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.coplanarPortRadioButton.click()
 			try:
 				self.form.coplanarPortGapValue.setValue(currSetting.coplanarGapValue)
+				self.form.coplanarPortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
+				self.form.coplanarPortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
 
 				# coplanar port units update
-				index = self.form.coplanarGapUnits.findText(currSetting.coplanarGapUnits, QtCore.Qt.MatchFixedString)
+				index = self.form.coplanarPortGapUnits.findText(currSetting.coplanarGapUnits, QtCore.Qt.MatchFixedString)
 				if index >= 0:
-					self.form.coplanarGapUnits.setCurrentIndex(index)
+					self.form.coplanarPortGapUnits.setCurrentIndex(index)
+
+				# coplanar feedpoint shift units update
+				index = self.form.coplanarPortFeedpointShiftUnits.findText(currSetting.coplanarFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.coplanarPortFeedpointShiftUnits.setCurrentIndex(index)
+
+				# coplanar meas plane units update
+				index = self.form.coplanarPortMeasureShiftUnits.findText(currSetting.coplanarMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.coplanarPortMeasureShiftUnits.setCurrentIndex(index)
 
 				# coplanar port wave propagation
 				index = self.form.coplanarPortPropagationComboBox.findText(currSetting.coplanarPropagation, QtCore.Qt.MatchFixedString)
