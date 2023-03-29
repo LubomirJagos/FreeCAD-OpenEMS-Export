@@ -370,6 +370,7 @@ class OctaveScriptLinesGenerator:
         baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z+': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z-': '[0 0 -1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', }
         mslDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coaxialDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+        coplanarDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
@@ -694,55 +695,77 @@ class OctaveScriptLinesGenerator:
                     elif (currSetting.getType() == 'coplanar'):
 
                         #
-                        #   It's important to generate microstrip port right, that means where is placed microstrip line, because microstrip consists from ground plane and trace
-                        #       This is just playing with X,Y,Z coordinates of boundary box for microstrip port for min, max coordinates.
+                        #   1. set all coords to max or min, this means where coplanar waveguide is placed if on top or bottom of object but we don't know orientation now
                         #
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
+                        if (currSetting.direction[1] == "+"):
+                            portStartX = _r(sf * bbCoords.XMin)
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopX = _r(sf * bbCoords.XMin)
+                            portStopY = _r(sf * bbCoords.YMin)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+                        else:
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopX = _r(sf * bbCoords.XMax)
+                            portStopY = _r(sf * bbCoords.YMax)
+                            portStopZ = _r(sf * bbCoords.ZMax)
 
-                        if (currSetting.direction == "z-"):
+                        #
+                        #   2. set coordinates of coplanar in direction of field
+                        #
+                        if (currSetting.direction[0] == "z"):
                             portStartZ = _r(sf * bbCoords.ZMax)
                             portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.direction == "x-"):
+                        elif (currSetting.direction[0] == "x"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.direction == "y-"):
+                        elif (currSetting.direction[0] == "y"):
                             portStartY = _r(sf * bbCoords.YMax)
                             portStopY = _r(sf * bbCoords.YMin)
 
-                        if (currSetting.mslPropagation == "z-"):
+                        #
+                        #   3. set coplanar direcion based on propagation
+                        #
+                        if (currSetting.coplanarPropagation == "z-"):
                             portStartZ = _r(sf * bbCoords.ZMax)
                             portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.mslPropagation == "x-"):
+                        elif (currSetting.coplanarPropagation == "x-"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.mslPropagation == "y-"):
+                        elif (currSetting.coplanarPropagation == "y-"):
                             portStartY = _r(sf * bbCoords.YMax)
                             portStopY = _r(sf * bbCoords.YMin)
+                        elif (currSetting.coplanarPropagation == "z+"):
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+                        elif (currSetting.coplanarPropagation == "x+"):
+                            portStartX = _r(sf * bbCoords.XMin)
+                            portStopX = _r(sf * bbCoords.XMax)
+                        elif (currSetting.coplanarPropagation == "y+"):
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStopY = _r(sf * bbCoords.YMax)
 
-                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY,
-                                                                                      portStartZ)
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
-                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation[0],
-                                                                           '?'))  # use just first letter of propagation direction
-                        genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
 
-                        isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
+                        genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
+                        genScript += 'coplanarEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += 'gap_width = ' + str(gapWidth) + ';\n'
+
+                        isActiveCoplanarStr = {False: "", True: ", 'ExcitePort', true"}
 
                         genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
-                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddMSLPort(CSX," + \
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCPWPort(CSX," + \
                                      str(priorityIndex) + "," + \
                                      str(genScriptPortCount) + "," + \
-                                     "'" + currSetting.mslMaterial + "'," + \
-                                     "portStart,portStop,mslDir, mslEVec" + \
-                                     isActiveMSLStr.get(currSetting.isActive) + \
+                                     "'" + currSetting.coplanarMaterial + "'," + \
+                                     "portStart,portStop,gap_width,coplanarDir, coplanarEVec" + \
+                                     isActiveCoplanarStr.get(currSetting.isActive) + \
                                      genScript_R + ");\n"
 
                         genScriptPortCount += 1

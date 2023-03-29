@@ -1512,8 +1512,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.portUpdateMicrostripPortMaterialComboBox()  	# update microstrip port material combobox
-			self.portUpdateCoaxialPortMaterialComboBox()  		# update coaxial port material combobox
+			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)		# update microstrip port material combobox
+			self.updateMaterialComboBoxJustMetals(self.form.coplanarPortMaterialComboBox)		# update coplanar port material combobox
+			self.updateMaterialComboBoxJustMetals(self.form.striplinePortMaterialComboBox)		# update stripline port material combobox
+			self.updateMaterialComboBoxJustUserdefined(self.form.coaxialPortMaterialComboBox)	# update coaxial port material combobox
 
 	def materialAddPEC(self):
 		"""
@@ -1778,46 +1780,35 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideCircSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("CircWaveguide")
+
 		elif (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideRectSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("RectWaveguide")
+
 		elif (self.form.microstripPortRadioButton.isChecked()):
 			self.form.microstripPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Microstrip")
+
 		elif (self.form.coaxialPortRadioButton.isChecked()):
 			self.form.coaxialPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Coaxial")
+
 		elif (self.form.coplanarPortRadioButton.isChecked()):
 			self.form.coplanarPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Coplanar")
+
 		elif (self.form.striplinePortRadioButton.isChecked()):
 			self.form.striplinePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Stripline")
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.portDirectionInput.setEnabled(False)
 
-	def portUpdateMicrostripPortMaterialComboBox(self):
-		"""
-		Update items in combobox for microstrip port, this add just metal and conducting sheets material types. It clears all items and fill them agains with actual values.
-		"""
-		self.form.microstripPortMaterialComboBox.clear()
 
-		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
-		objectAssignemntRightPortParent = self.form.objectAssignmentRightTreeWidget.findItems(
-			"Material",
-			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
-			)[0]
-
-		# here metal and conducting sheet are added into microstrip possible material combobox
-		for k in range(objectAssignemntRightPortParent.childCount()):
-			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
-			if (materialData.type in ["metal", "conducting sheet"]):
-				self.form.microstripPortMaterialComboBox.addItem(materialData.name)
-	def portUpdateCoaxialPortMaterialComboBox(self):
+	def updateMaterialComboBoxJustUserdefined(self, comboboxRef):
 		"""
 		Update items in combobox for coaxial port, this add just user defined material types. It clears all items and fill them agains with actual values.
 		"""
-		self.form.coaxialPortMaterialComboBox.clear()
+		comboboxRef.clear()
 
 		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
 		objectAssignemntRightPortParent = self.form.objectAssignmentRightTreeWidget.findItems(
@@ -1829,7 +1820,25 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		for k in range(objectAssignemntRightPortParent.childCount()):
 			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
 			if (materialData.type in ["userdefined"]):
-				self.form.coaxialPortMaterialComboBox.addItem(materialData.name)
+				comboboxRef.addItem(materialData.name)
+
+	def updateMaterialComboBoxJustMetals(self, comboboxRef):
+		"""
+		Update items in combobox for coaxial port, this add just metallic material types (metal, conductive sheet). It clears all items and fill them agains with actual values.
+		"""
+		comboboxRef.clear()
+
+		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
+		objectAssignemntRightPortParent = self.form.objectAssignmentRightTreeWidget.findItems(
+			"Material",
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)[0]
+
+		# here user defined are added into coaxial possible material combobox
+		for k in range(objectAssignemntRightPortParent.childCount()):
+			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
+			if (materialData.type in ["metal", "conducting sheet"]):
+				comboboxRef.addItem(materialData.name)
 
 	def portCheckMicrostripPortPropagationComboBox(self):
 		"""
@@ -2173,6 +2182,28 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					self.form.coaxialPortMaterialComboBox.setCurrentIndex(index)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coaxial current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "coplanar"):
+			self.form.coplanarPortRadioButton.click()
+			try:
+				self.form.coplanarPortGapValue.setValue(currSetting.coplanarGapValue)
+
+				# coplanar port units update
+				index = self.form.coplanarGapUnits.findText(currSetting.coplanarGapUnits, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.coplanarGapUnits.setCurrentIndex(index)
+
+				# coplanar port wave propagation
+				index = self.form.coplanarPortPropagationComboBox.findText(currSetting.coplanarPropagation, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.coplanarPortPropagationComboBox.setCurrentIndex(index)
+
+				# set combobox coaxial material
+				index = self.form.coplanarPortMaterialComboBox.findText(currSetting.coplanarMaterial, QtCore.Qt.MatchFixedString)
+				if index >= 0:
+					self.form.coplanarPortMaterialComboBox.setCurrentIndex(index)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update coplanar current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()

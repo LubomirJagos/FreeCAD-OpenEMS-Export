@@ -184,6 +184,14 @@ class IniFile:
                     settings.setValue("coaxialExcitationAmplitude", portList[k].coaxialExcitationAmplitude)
                 except Exception as e:
                     print(f"{__file__} > write() coaxial material ERROR: {e}")
+            elif (portList[k].type == "coplanar"):
+                try:
+                    settings.setValue('coplanarMaterial', portList[k].coplanarMaterial)
+                    settings.setValue('coplanarPropagation', portList[k].coplanarPropagation)
+                    settings.setValue('coplanarGapValue', portList[k].coplanarGapValue)
+                    settings.setValue('coplanarGapUnits', portList[k].coplanarGapUnits)
+                except Exception as e:
+                    print(f"{__file__} > write() coplanar ERROR: {e}")
 
             settings.endGroup()
 
@@ -428,6 +436,15 @@ class IniFile:
                         categorySettings.coaxialExcitationAmplitude = float(settings.value('coaxialExcitationAmplitude'))
                     except Exception as e:
                         print(f"There was error during reading coaxial port settings: {e}")
+
+                elif (categorySettings.type == "coplanar"):
+                    try:
+                        categorySettings.coplanarMaterial = settings.value('coplanarMaterial')
+                        categorySettings.coplanarPropagation = settings.value('coplanarPropagation')
+                        categorySettings.coplanarGapValue = float(settings.value('coplanarGapValue'))
+                        categorySettings.coplanarGapUnits = settings.value('coplanarGapUnits')
+                    except Exception as e:
+                        print(f"There was error during reading coplanar port settings: {e}")
 
                 elif (categorySettings.type == "nf2ff box"):
                     #
