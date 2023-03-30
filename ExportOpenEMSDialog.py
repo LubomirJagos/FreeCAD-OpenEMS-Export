@@ -1638,15 +1638,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		portItem = PortSettingsItem()
 		portItem.name = name
 
-		portItem.R = self.form.portResistanceInput.value()
-		portItem.RUnits = self.form.portResistanceUnitsInput.currentText()
-		portItem.isActive = self.form.portActive.isChecked()
-		portItem.direction = self.form.portDirectionInput.currentText()
-
 		if (self.form.lumpedPortRadioButton.isChecked()):
 			portItem.type = "lumped"
+			portItem.R = self.form.lumpedPortResistanceValue.value()
+			portItem.RUnits = self.form.lumpedPortResistanceUnits.currentText()
+			portItem.isActive = self.form.lumpedPortActive.isChecked()
+			portItem.direction = self.form.lumpedPortDirection.currentText()
+
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
+			portItem.R = self.form.microstripPortResistanceValue.value()
+			portItem.RUnits = self.form.microstripPortResistanceUnits.currentText()
+			portItem.isActive = self.form.microstripPortActive.isChecked()
+			portItem.direction = self.form.microstripPortDirection.currentText()
+
 			portItem.mslMaterial = self.form.microstripPortMaterialComboBox.currentText()
 			portItem.mslFeedShiftValue = self.form.microstripPortFeedpointShiftValue.value()
 			portItem.mslFeedShiftUnits = self.form.microstripPortFeedpointShiftUnits.currentText()
@@ -1656,12 +1661,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (self.form.circularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "circular waveguide"
+			portItem.isActive = self.form.portCircWaveguideActive.isChecked()
+			portItem.direction = self.form.portCircWaveguideDirection.currentText()
 			portItem.modeName = self.form.portCircWaveguideModeName.currentText()
 			portItem.polarizationAngle = self.form.portCircWaveguidePolarizationAngle.currentText()
 			portItem.excitationAmplitude = self.form.portCircWaveguideExcitationAmplitude.value()
 			portItem.waveguideCircDir = self.form.portCircWaveguideDirection.currentText()
 		if (self.form.rectangularWaveguidePortRadioButton.isChecked()):
 			portItem.type = "rectangular waveguide"
+			portItem.isActive = self.form.portRectWaveguideActive.isChecked()
+			portItem.direction = self.form.portRectWaveguideDirection.currentText()
 			portItem.modeName = self.form.portRectWaveguideModeName.currentText()
 			portItem.waveguideRectDir = self.form.portRectWaveguideDirection.currentText()
 			portItem.excitationAmplitude = self.form.portRectWaveguideExcitationAmplitude.value()
@@ -1673,6 +1682,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "nf2ff box"
 		if (self.form.coaxialPortRadioButton.isChecked()):
 			portItem.type = "coaxial"
+
+			portItem.R = self.form.coaxialPortResistanceValue.value()
+			portItem.RUnits = self.form.coaxialPortResistanceUnits.currentText()
+			portItem.isActive = self.form.coaxialPortActive.isChecked()
+			portItem.direction = self.form.coaxialPortDirection.currentText()
+
 			portItem.coaxialMaterial = self.form.coaxialPortMaterialComboBox.currentText()
 			portItem.coaxialPropagation = self.form.coaxialPortPropagationComboBox.currentText()
 			portItem.coaxialInnerRadiusValue = self.form.coaxialPortInnerRadiusValue.value()
@@ -1687,6 +1702,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (self.form.coplanarPortRadioButton.isChecked()):
 			portItem.type = "coplanar"
+
+			portItem.R = self.form.coplanarPortResistanceValue.value()
+			portItem.RUnits = self.form.coplanarPortResistanceUnits.currentText()
+			portItem.isActive = self.form.coplanarPortActive.isChecked()
+			portItem.direction = self.form.coplanarPortDirection.currentText()
+
 			portItem.coplanarMaterial = self.form.coplanarPortMaterialComboBox.currentText()
 			portItem.coplanarPropagation = self.form.coplanarPortPropagationComboBox.currentText()
 			portItem.coplanarGapValue = self.form.coplanarPortGapValue.value()
@@ -1697,6 +1718,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.coplanarMeasPlaneShiftUnits = self.form.coplanarPortMeasureShiftUnits.currentText()
 		if (self.form.striplinePortRadioButton.isChecked()):
 			portItem.type = "stripline"
+
+			portItem.R = self.form.striplinePortResistanceValue.value()
+			portItem.RUnits = self.form.striplinePortResistanceUnits.currentText()
+			portItem.isActive = self.form.striplinePortActive.isChecked()
+			portItem.direction = self.form.striplinePortDirection.currentText()
+
 			portItem.striplinePropagation = self.form.striplinePortPropagationComboBox.currentText()
 			portItem.striplineFeedpointShiftValue = self.form.striplinePortFeedpointShiftValue.value()
 			portItem.striplineFeedpointShiftUnits = self.form.striplinePortFeedpointShiftUnits.currentText()
@@ -1704,6 +1731,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.striplineMeasPlaneShiftUnits = self.form.striplinePortMeasureShiftUnits.currentText()
 		if (self.form.curvePortRadioButton.isChecked()):
 			portItem.type = "curve"
+			portItem.R = self.form.curvePortResistanceValue.value()
+			portItem.RUnits = self.form.curvePortResistanceUnits.currentText()
+			portItem.isActive = self.form.curvePortActive.isChecked()
+			portItem.direction = self.form.curvePortDirection.currentText()
 
 		return portItem
 
@@ -1769,19 +1800,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def portSettingsTypeChoosed(self):
 		#first disable all additional settings for ports
-		self.form.portDirectionInput.setEnabled(True)
-
+		self.form.lumpedPortSettingsGroup.setEnabled(False)
 		self.form.microstripPortSettingsGroup.setEnabled(False)
 		self.form.waveguideCircSettingsGroup.setEnabled(False)
 		self.form.waveguideRectSettingsGroup.setEnabled(False)
 		self.form.coaxialPortSettingsGroup.setEnabled(False)
 		self.form.coplanarPortSettingsGroup.setEnabled(False)
 		self.form.striplinePortSettingsGroup.setEnabled(False)
+		self.form.curvePortSettingsGroup.setEnabled(False)
 
 		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
 
 		#enable current choosed radiobox settings for port
-		if (self.form.circularWaveguidePortRadioButton.isChecked()):
+		if (self.form.lumpedPortRadioButton.isChecked()):
+			self.form.lumpedPortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Lumped")
+
+		elif (self.form.circularWaveguidePortRadioButton.isChecked()):
 			self.form.waveguideCircSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("CircWaveguide")
 
@@ -1804,6 +1839,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.striplinePortRadioButton.isChecked()):
 			self.form.striplinePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Stripline")
+
+		elif (self.form.curvePortRadioButton.isChecked()):
+			self.form.curvePortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Curve")
+
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.portDirectionInput.setEnabled(False)
 
@@ -1851,7 +1891,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		If port field is Y then propagation should be X or Z.
 		:return: None
 		"""
-		if (self.form.microstripPortRadioButton.isChecked() and self.form.microstripPortPropagationComboBox.currentText()[0] == self.form.portDirectionInput.currentText()[0]):
+		if (self.form.microstripPortRadioButton.isChecked() and self.form.microstripPortPropagationComboBox.currentText()[0] == self.form.microstripPortDirection.currentText()[0]):
 			self.guiHelpers.displayMessage("Microstrip field propagation is set to same axis as port excitation, should be different to be generated properly.")
 
 	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _
@@ -2091,208 +2131,136 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)
-		self.form.portResistanceInput.setValue(float(currSetting.R))
-
-		#
-		# Set active port field direction
-		#	Here is correction to keep backward compatibility as before there was just x,y,z, now there are options
-		#		x+,x-,y+,y-,z+,z-
-		#	They specify port field direction like x+ = [1 0 0], x- = [-1 0 0], y+ = [0 1 0], y- = [0 -1 0], ...
-		#
-		portDirection = currSetting.direction
-		if (portDirection in ["x", "y", "z"]):
-			portDirection += "+"	#add + sign to get right text which is in GUI combobox
-		index = self.form.portDirectionInput.findText(portDirection, QtCore.Qt.MatchFixedString)
-		if index >= 0:
-			self.form.portDirectionInput.setCurrentIndex(index)		
-
-		index = self.form.portResistanceUnitsInput.findText(currSetting.RUnits, QtCore.Qt.MatchFixedString)
-		if index >= 0:
-			self.form.portResistanceUnitsInput.setCurrentIndex(index)
-
-		self.form.portResistanceInput.setEnabled(True)
-		self.form.portResistanceUnitsInput.setEnabled(True)
 
 		if (currSetting.type.lower() == "lumped"):
 			self.form.lumpedPortRadioButton.click()
+			self.form.lumpedPortResistanceValue.setValue(float(currSetting.R))
+			self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
+			self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
+			self.form.lumpedPortActive.setChecked(currSetting.isActive)
 
 		elif (currSetting.type.lower() == "microstrip"):
 			self.form.microstripPortRadioButton.click()
 
 			try:
+				self.form.microstripPortActive.setChecked(currSetting.isActive)
+				self.form.microstripPortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.microstripPortResistanceUnits, currSetting.RUnits)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortDirection, currSetting.direction)
+
 				self.form.microstripPortFeedpointShiftValue.setValue(currSetting.mslFeedShiftValue)
 				self.form.microstripPortMeasureShiftValue.setValue(currSetting.mslMeasPlaneShiftValue)
 
-				#set combobox feed shift units
-				index = self.form.microstripPortFeedpointShiftUnits.findText(currSetting.mslFeedShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.microstripPortFeedpointShiftUnits.setCurrentIndex(index)
-
-				#set combobox measure plane shift units
-				index = self.form.microstripPortMeasureShiftUnits.findText(currSetting.mslMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.microstripPortMeasureShiftUnits.setCurrentIndex(index)
-
-				# set combobox microstrip physical orientation (means where is top layer and where bottom)
-				index = self.form.microstripPortPropagationComboBox.findText(currSetting.mslPropagation, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.microstripPortPropagationComboBox.setCurrentIndex(index)
-
-				# set combobox microstrip material
-				index = self.form.microstripPortMaterialComboBox.findText(currSetting.mslMaterial, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.microstripPortMaterialComboBox.setCurrentIndex(index)
-
+				self.guiHelpers.setComboboxItem(self.form.microstripPortFeedpointShiftUnits, currSetting.mslFeedShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortMeasureShiftUnits, currSetting.mslMeasPlaneShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortMaterialComboBox, currSetting.mslMaterial)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update microstrip current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "coaxial"):
 			self.form.coaxialPortRadioButton.click()
 			try:
+				self.form.coaxialPortActive.setChecked(currSetting.isActive)
+				self.form.coaxialPortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortResistanceUnits, currSetting.RUnits)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortDirection, currSetting.direction)
+
 				self.form.coaxialPortInnerRadiusValue.setValue(currSetting.coaxialInnerRadiusValue)
 				self.form.coaxialPortShellThicknessValue.setValue(currSetting.coaxialShellThicknessValue)
 				self.form.coaxialPortFeedpointShiftValue.setValue(currSetting.coaxialFeedpointShiftValue)
 				self.form.coaxialPortMeasureShiftValue.setValue(currSetting.coaxialMeasPlaneShiftValue)
 				self.form.portCoaxialExcitationAmplitude.setValue(currSetting.coaxialExcitationAmplitude)
 
-				#coaxial port measure plane shift units
-				index = self.form.coaxialPortMeasureShiftUnits.findText(currSetting.coaxialMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortMeasureShiftUnits.setCurrentIndex(index)
-
-				#coaxial port feed shift units
-				index = self.form.coaxialPortFeedpointShiftUnits.findText(currSetting.coaxialFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortFeedpointShiftUnits.setCurrentIndex(index)
-
-				#coaxial port shell thickness units
-				index = self.form.coaxialPortShellThicknessUnits.findText(currSetting.coaxialShellThicknessUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortShellThicknessUnits.setCurrentIndex(index)
-
-				#coaxial port inner radius units
-				index = self.form.coaxialPortInnerRadiusUnits.findText(currSetting.coaxialInnerRadiusUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortInnerRadiusUnits.setCurrentIndex(index)
-
-				#coaxial port wave propagation
-				index = self.form.coaxialPortPropagationComboBox.findText(currSetting.coaxialPropagation, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortPropagationComboBox.setCurrentIndex(index)
-
-				# set combobox coaxial material
-				index = self.form.coaxialPortMaterialComboBox.findText(currSetting.coaxialMaterial, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coaxialPortMaterialComboBox.setCurrentIndex(index)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortMeasureShiftUnits, currSetting.coaxialMeasPlaneShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortFeedpointShiftUnits, currSetting.coaxialFeedpointShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortShellThicknessUnits, currSetting.coaxialShellThicknessUnits)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortInnerRadiusUnits, currSetting.coaxialInnerRadiusUnits)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortPropagationComboBox, currSetting.coaxialPropagation)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortMaterialComboBox, currSetting.coaxialMaterial)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coaxial current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "coplanar"):
 			self.form.coplanarPortRadioButton.click()
 			try:
+				self.form.coplanarPortActive.setChecked(currSetting.isActive)
+				self.form.coplanarPortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortResistanceUnits, currSetting.RUnits)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction)
+
 				self.form.coplanarPortGapValue.setValue(currSetting.coplanarGapValue)
 				self.form.coplanarPortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
 				self.form.coplanarPortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
 
-				# coplanar port units update
-				index = self.form.coplanarPortGapUnits.findText(currSetting.coplanarGapUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coplanarPortGapUnits.setCurrentIndex(index)
-
-				# coplanar feedpoint shift units update
-				index = self.form.coplanarPortFeedpointShiftUnits.findText(currSetting.coplanarFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coplanarPortFeedpointShiftUnits.setCurrentIndex(index)
-
-				# coplanar meas plane units update
-				index = self.form.coplanarPortMeasureShiftUnits.findText(currSetting.coplanarMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coplanarPortMeasureShiftUnits.setCurrentIndex(index)
-
-				# coplanar port wave propagation
-				index = self.form.coplanarPortPropagationComboBox.findText(currSetting.coplanarPropagation, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coplanarPortPropagationComboBox.setCurrentIndex(index)
-
-				# set combobox coaxial material
-				index = self.form.coplanarPortMaterialComboBox.findText(currSetting.coplanarMaterial, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.coplanarPortMaterialComboBox.setCurrentIndex(index)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortGapUnits, currSetting.coplanarGapUnits)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortFeedpointShiftUnits, currSetting.coplanarFeedpointShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortMeasureShiftUnits, currSetting.coplanarMeasPlaneShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortPropagationComboBox, currSetting.coplanarPropagation)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortMaterialComboBox, currSetting.coplanarMaterial)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coplanar current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "stripline"):
 			self.form.striplinePortRadioButton.click()
 			try:
+				self.form.striplinePortActive.setChecked(currSetting.isActive)
+				self.form.striplinePortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.striplinePortResistanceUnits, currSetting.RUnits)
+				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction)
+
 				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
 				self.form.striplinePortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
 
-				# stripline feedpoint shift units
-				index = self.form.striplinePortFeedpointShiftUnits.findText(currSetting.striplineFeedpointShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.striplinePortFeedpointShiftUnits.setCurrentIndex(index)
-
-				# stripline meas plane shift units
-				index = self.form.striplinePortMeasureShiftUnits.findText(currSetting.striplineMeasPlaneShiftUnits, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.striplinePortMeasureShiftUnits.setCurrentIndex(index)
-
-				# propagation
-				index = self.form.striplinePortPropagationComboBox.findText(currSetting.striplinePropagation, QtCore.Qt.MatchFixedString)
-				if index >= 0:
-					self.form.striplinePortPropagationComboBox.setCurrentIndex(index)
-
+				self.guiHelpers.setComboboxItem(self.form.striplinePortFeedpointShiftUnits, currSetting.striplineFeedpointShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.striplinePortMeasureShiftUnits, currSetting.striplineMeasPlaneShiftUnits)
+				self.guiHelpers.setComboboxItem(self.form.striplinePortPropagationComboBox, currSetting.striplinePropagation)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update stripline current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "circular waveguide"):
 			self.form.circularWaveguidePortRadioButton.click()
 
-			#set mode, e.g. TE11, TM21, ...
-			index = self.form.portCircWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.portCircWaveguideModeName.setCurrentIndex(index)
+			self.form.portCircWaveguideActive.setChecked(currSetting.isActive)
 
-			#set polarization angle
-			index = self.form.portCircWaveguidePolarizationAngle.findText(currSetting.polarizationAngle, QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.portCircWaveguidePolarizationAngle.setCurrentIndex(index)
-
-			#set circular waveguide direction
-			index = self.form.portCircWaveguideDirection.findText(currSetting.waveguideCircDir, QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.portCircWaveguideDirection.setCurrentIndex(index)
+			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
+			self.guiHelpers.setComboboxItem(self.form.portCircWaveguidePolarizationAngle, currSetting.polarizationAngle)
+			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideDirection, currSetting.waveguideCircDir)
 
 			self.form.portCircWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
-			#set mode, e.g. TE11, TM21, ...
-			index = self.form.portRectWaveguideModeName.findText(currSetting.modeName, QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.portRectWaveguideModeName.setCurrentIndex(index)
 
-			#set rectangular waveguide direction
-			index = self.form.portRectWaveguideDirection.findText(currSetting.waveguideRectDir, QtCore.Qt.MatchFixedString)
-			if index >= 0:
-				self.form.portRectWaveguideDirection.setCurrentIndex(index)
+			self.form.portRectWaveguidePortActive.setChecked(currSetting.isActive)
+
+			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
+			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir)
 
 			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
+
 		elif (currSetting.type.lower() == "et dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.etDumpPortRadioButton.click()
+
 		elif (currSetting.type.lower() == "ht dump"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.htDumpPortRadioButton.click()
+
 		elif (currSetting.type.lower() == "nf2ff box"):
 			self.form.portResistanceInput.setEnabled(False)
 			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.nf2ffBoxPortRadioButton.click()
+
+		elif (currSetting.type.lower() == "curve"):
+			self.form.curvePortActive.setChecked(currSetting.isActive)
+			self.form.curvePortResistanceValue.setValue(float(currSetting.R))
+			self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
+			self.form.curvePortDirection.setChecked(currSetting.direction in [True, "true", "True"])										#set checkbox for reverse direction for curve port
+
 		else:
 			pass #no gui update
-
-		self.form.portActive.setChecked(currSetting.isActive)	#convert value from INI file to bool
 
 		return
 

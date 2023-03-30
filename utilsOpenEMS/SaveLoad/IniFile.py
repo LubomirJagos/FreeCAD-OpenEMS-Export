@@ -145,22 +145,32 @@ class IniFile:
 
             settings.beginGroup("PORT-" + portList[k].getName())
             settings.setValue("type", portList[k].type)
-            settings.setValue("R", portList[k].R)
-            settings.setValue("RUnits", portList[k].RUnits)
-            settings.setValue("isActive", portList[k].isActive)
-            settings.setValue("direction", portList[k].direction)
 
-            if (portList[k].type == "circular waveguide"):
+            if (portList[k].type == "lumped"):
+                settings.setValue("R", portList[k].R)
+                settings.setValue("RUnits", portList[k].RUnits)
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
+            elif (portList[k].type == "circular waveguide"):
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideCircDir)
-            if (portList[k].type == "rectangular waveguide"):
+            elif (portList[k].type == "rectangular waveguide"):
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
             elif (portList[k].type == "microstrip"):
                 try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
                     settings.setValue("material", portList[k].mslMaterial)
                     settings.setValue("feedShiftValue", portList[k].mslFeedShiftValue)
                     settings.setValue("feedShiftUnits", portList[k].mslFeedShiftUnits)
@@ -171,6 +181,11 @@ class IniFile:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
             elif (portList[k].type == "coaxial"):
                 try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
                     settings.setValue("material", portList[k].coaxialMaterial)
                     settings.setValue("propagation", portList[k].coaxialPropagation)
                     settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
@@ -187,6 +202,11 @@ class IniFile:
 
             elif (portList[k].type == "coplanar"):
                 try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
                     settings.setValue('material', portList[k].coplanarMaterial)
                     settings.setValue('propagation', portList[k].coplanarPropagation)
                     settings.setValue('coplanarGapValue', portList[k].coplanarGapValue)
@@ -200,6 +220,11 @@ class IniFile:
 
             elif (portList[k].type == "stripline"):
                 try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
                     settings.setValue('propagation', portList[k].striplinePropagation)
                     settings.setValue('feedpointShiftValue', portList[k].striplineFeedpointShiftValue)
                     settings.setValue('feedpointShiftUnits', portList[k].striplineFeedpointShiftUnits)
@@ -207,6 +232,15 @@ class IniFile:
                     settings.setValue('measPlaneShiftUnits', portList[k].striplineMeasPlaneShiftUnits)
                 except Exception as e:
                     print(f"{__file__} > write() coplanar ERROR: {e}")
+
+            elif (portList[k].type == "curve"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                except Exception as e:
+                    print(f"{__file__} > write() curve ERROR: {e}")
 
             settings.endGroup()
 
@@ -411,23 +445,32 @@ class IniFile:
                 categorySettings = PortSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
-                categorySettings.R = settings.value('R')
-                categorySettings.RUnits = settings.value('RUnits')
-                categorySettings.isActive = _bool(settings.value('isActive'))
-                categorySettings.direction = settings.value('direction')
 
-                if (categorySettings.type == "circular waveguide"):
+                if (categorySettings.type == "lumped"):
+                    categorySettings.R = settings.value('R')
+                    categorySettings.RUnits = settings.value('RUnits')
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
+                elif (categorySettings.type == "circular waveguide"):
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideCircDir = settings.value('waveguideDirection')
-                if (categorySettings.type == "rectangular waveguide"):
+                elif (categorySettings.type == "rectangular waveguide"):
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideRectDir = settings.value('waveguideDirection')
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
                         categorySettings.mslMaterial = settings.value('material')
                         categorySettings.mslFeedShiftValue = float(settings.value('feedShiftValue'))
                         categorySettings.mslFeedShiftUnits = settings.value('feedShiftUnits')
@@ -438,6 +481,10 @@ class IniFile:
                         print(f"There was error during reading microstrip port settings: {e}")
                 elif (categorySettings.type == "coaxial"):
                     try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
                         categorySettings.coaxialMaterial = settings.value('material')
                         categorySettings.coaxialPropagation = settings.value('propagation')
                         categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
@@ -454,6 +501,10 @@ class IniFile:
 
                 elif (categorySettings.type == "coplanar"):
                     try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
                         categorySettings.coplanarMaterial = settings.value('material')
                         categorySettings.coplanarPropagation = settings.value('propagation')
                         categorySettings.coplanarGapValue = float(settings.value('coplanarGapValue'))
@@ -467,6 +518,10 @@ class IniFile:
 
                 elif (categorySettings.type == "stripline"):
                     try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
                         categorySettings.striplinePropagation = settings.value('propagation')
                         categorySettings.striplineFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
                         categorySettings.striplineFeedpointShiftUnits = settings.value('feedpointShiftUnits')
@@ -474,6 +529,15 @@ class IniFile:
                         categorySettings.striplineMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
                     except Exception as e:
                         print(f"There was error during reading coplanar port settings: {e}")
+
+                elif (categorySettings.type == "curve"):
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                    except Exception as e:
+                        print(f"There was error during reading curve port settings: {e}")
 
                 elif (categorySettings.type == "nf2ff box"):
                     #

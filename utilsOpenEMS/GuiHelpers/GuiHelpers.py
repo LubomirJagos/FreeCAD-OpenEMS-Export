@@ -218,3 +218,8 @@ class GuiHelpers:
         for index in range(self.form.portSpecificSettingsTab.count()):
             if tabName == self.form.portSpecificSettingsTab.tabText(index):
                 self.form.portSpecificSettingsTab.setCurrentIndex(index)
+
+    def setComboboxItem(self, controlRef, text):
+        index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            controlRef.setCurrentIndex(index)
