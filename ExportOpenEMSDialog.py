@@ -1689,7 +1689,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.direction = self.form.coaxialPortDirection.currentText()
 
 			portItem.coaxialMaterial = self.form.coaxialPortMaterialComboBox.currentText()
-			portItem.coaxialPropagation = self.form.coaxialPortPropagationComboBox.currentText()
 			portItem.coaxialInnerRadiusValue = self.form.coaxialPortInnerRadiusValue.value()
 			portItem.coaxialInnerRadiusUnits = self.form.coaxialPortInnerRadiusUnits.currentText()
 			portItem.coaxialShellThicknessValue = self.form.coaxialPortShellThicknessValue.value()
@@ -2176,7 +2175,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortFeedpointShiftUnits, currSetting.coaxialFeedpointShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortShellThicknessUnits, currSetting.coaxialShellThicknessUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortInnerRadiusUnits, currSetting.coaxialInnerRadiusUnits)
-				self.guiHelpers.setComboboxItem(self.form.coaxialPortPropagationComboBox, currSetting.coaxialPropagation)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortMaterialComboBox, currSetting.coaxialMaterial)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coaxial current settings: {e}", forceModal=False)

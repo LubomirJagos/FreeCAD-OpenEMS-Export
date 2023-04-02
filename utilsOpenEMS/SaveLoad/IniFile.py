@@ -187,7 +187,6 @@ class IniFile:
                     settings.setValue("direction", portList[k].direction)
 
                     settings.setValue("material", portList[k].coaxialMaterial)
-                    settings.setValue("propagation", portList[k].coaxialPropagation)
                     settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
                     settings.setValue("coaxialInnerRadiusUnits", portList[k].coaxialInnerRadiusUnits)
                     settings.setValue("coaxialShellThicknessValue", portList[k].coaxialShellThicknessValue)
@@ -486,7 +485,6 @@ class IniFile:
                         categorySettings.isActive = _bool(settings.value('isActive'))
                         categorySettings.direction = settings.value('direction')
                         categorySettings.coaxialMaterial = settings.value('material')
-                        categorySettings.coaxialPropagation = settings.value('propagation')
                         categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
                         categorySettings.coaxialInnerRadiusUnits = settings.value('coaxialInnerRadiusUnits')
                         categorySettings.coaxialShellThicknessValue = float(settings.value('coaxialShellThicknessValue'))

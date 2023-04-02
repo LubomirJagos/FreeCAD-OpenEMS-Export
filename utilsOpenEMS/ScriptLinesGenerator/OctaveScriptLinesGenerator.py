@@ -629,13 +629,21 @@ class OctaveScriptLinesGenerator:
                         portStopY = _r(sf * bbCoords.YMax)
                         portStopZ = _r(sf * bbCoords.ZMax)
 
+                        if (currSetting.direction[1] == "-"):
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                            portStopY = _r(sf * bbCoords.YMin)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+
                         #calculate coaxial port radius, it's smaller dimension from width, height
                         coaxialRadius = 0.0
-                        if (currSetting.coaxialPropagation[0] == "z"):
+                        if (currSetting.direction[0] == "z"):
                             coaxialRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-                        elif (currSetting.coaxialPropagation[0] == "x"):
+                        elif (currSetting.direction[0] == "x"):
                             coaxialRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-                        elif (currSetting.coaxialPropagation[0] == "y"):
+                        elif (currSetting.direction[0] == "y"):
                             coaxialRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
 
                         #
@@ -655,22 +663,26 @@ class OctaveScriptLinesGenerator:
                         #
                         #   Port start and end need to be shifted into middle of feed plane
                         #
-                        if (currSetting.coaxialPropagation[0] == "z"):
+                        if (currSetting.direction[0] == "z"):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStartZ)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStopZ)
-                        elif (currSetting.coaxialPropagation[0] == "x"):
+                        elif (currSetting.direction[0] == "x"):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
-                        elif (currSetting.coaxialPropagation[0] == "y"):
+                        elif (currSetting.direction[0] == "y"):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStartY, (portStartZ+portStopZ)/2)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStopY, (portStartZ+portStopZ)/2)
 
-                        genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.coaxialPropagation[0], '?'))  # use just first letter of propagation direction
+                        genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.direction))
+
                         genScript += 'r_i = ' + str(coaxialInnerRadius) + ';\n'
                         genScript += 'r_o = ' + str(coaxialRadius - coaxialShellThickness) + ';\n'
                         genScript += 'r_os = ' + str(coaxialRadius) + ';\n'
 
-                        isActiveCoaxialStr = {False: "", True: ", 'ExcitePort', true"}
+                        isActiveCoaxialStr = {
+                            False:  "",
+                            True:   ", 'ExcitePort', true, 'ExciteAmp', " + str(currSetting.coaxialExcitationAmplitude)
+                        }
 
                         #
                         #   LuboJ ERROR: FeedShift and MeasPlaneShift doesn't seem to be working properly, it's not moving anything, error is somewhere here in code
