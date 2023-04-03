@@ -186,7 +186,6 @@ class IniFile:
                     settings.setValue("isActive", portList[k].isActive)
                     settings.setValue("direction", portList[k].direction)
 
-                    settings.setValue("material", portList[k].coaxialMaterial)
                     settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
                     settings.setValue("coaxialInnerRadiusUnits", portList[k].coaxialInnerRadiusUnits)
                     settings.setValue("coaxialShellThicknessValue", portList[k].coaxialShellThicknessValue)
@@ -196,6 +195,9 @@ class IniFile:
                     settings.setValue("measPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
                     settings.setValue("measPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
                     settings.setValue("excitationAmplitude", portList[k].coaxialExcitationAmplitude)
+
+                    settings.setValue("material", portList[k].coaxialMaterial)
+                    settings.setValue("conductorMaterial", portList[k].coaxialConductorMaterial)
                 except Exception as e:
                     print(f"{__file__} > write() coaxial material ERROR: {e}")
 
@@ -484,7 +486,6 @@ class IniFile:
                         categorySettings.RUnits = settings.value('RUnits')
                         categorySettings.isActive = _bool(settings.value('isActive'))
                         categorySettings.direction = settings.value('direction')
-                        categorySettings.coaxialMaterial = settings.value('material')
                         categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
                         categorySettings.coaxialInnerRadiusUnits = settings.value('coaxialInnerRadiusUnits')
                         categorySettings.coaxialShellThicknessValue = float(settings.value('coaxialShellThicknessValue'))
@@ -494,6 +495,10 @@ class IniFile:
                         categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
                         categorySettings.coaxialMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
                         categorySettings.coaxialExcitationAmplitude = float(settings.value('excitationAmplitude'))
+
+                        #now this is at the end of try block to ensure all properites are read, due conductor material was added so old files doesn't have it
+                        categorySettings.coaxialMaterial = settings.value('material')
+                        categorySettings.coaxialConductorMaterial = settings.value('conductorMaterial')
                     except Exception as e:
                         print(f"There was error during reading coaxial port settings: {e}")
 

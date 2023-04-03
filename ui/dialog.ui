@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1463</width>
-    <height>731</height>
+    <width>1467</width>
+    <height>741</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2080,7 +2080,11 @@ pi/2 = vertical polarization</string>
                      </widget>
                     </item>
                     <item row="6" column="1">
-                     <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude"/>
+                     <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude">
+                      <property name="maximum">
+                       <double>1000000.000000000000000</double>
+                      </property>
+                     </widget>
                     </item>
                     <item row="1" column="1">
                      <widget class="QComboBox" name="portCircWaveguideModeName">
@@ -2330,7 +2334,11 @@ no TM modes.</string>
                      </widget>
                     </item>
                     <item row="4" column="1">
-                     <widget class="QDoubleSpinBox" name="portRectWaveguideExcitationAmplitude"/>
+                     <widget class="QDoubleSpinBox" name="portRectWaveguideExcitationAmplitude">
+                      <property name="maximum">
+                       <double>1000000.000000000000000</double>
+                      </property>
+                     </widget>
                     </item>
                     <item row="4" column="0">
                      <widget class="QLabel" name="label_60">
@@ -2418,40 +2426,6 @@ no TM modes.</string>
                     <string>Microstrip - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_4">
-                    <item row="6" column="1">
-                     <widget class="QComboBox" name="microstripPortPropagationComboBox">
-                      <item>
-                       <property name="text">
-                        <string>x+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z-</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
                     <item row="2" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_35">
                       <property name="leftMargin">
@@ -2535,6 +2509,9 @@ no TM modes.</string>
                           <height>0</height>
                          </size>
                         </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
                        </widget>
                       </item>
                       <item>
@@ -2589,9 +2566,6 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QComboBox" name="microstripPortMaterialComboBox"/>
-                    </item>
                     <item row="8" column="0">
                      <widget class="QLabel" name="label_55">
                       <property name="text">
@@ -2608,6 +2582,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -2673,7 +2650,7 @@ no TM modes.</string>
                     <item row="4" column="0">
                      <widget class="QLabel" name="label_81">
                       <property name="text">
-                       <string>Port Excitation Direction</string>
+                       <string>Port layer</string>
                       </property>
                      </widget>
                     </item>
@@ -2688,36 +2665,36 @@ no TM modes.</string>
                          </size>
                         </property>
                         <property name="currentText">
-                         <string>z+</string>
+                         <string>XY plane, top layer</string>
                         </property>
                         <item>
                          <property name="text">
-                          <string>z+</string>
+                          <string>XY plane, top layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>z-</string>
+                          <string>XY plane, bottom layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>x+</string>
+                          <string>XZ plane, front layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>x-</string>
+                          <string>XZ plane, back layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>y+</string>
+                          <string>YZ plane, right layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>y-</string>
+                          <string>YZ plane, left layer</string>
                          </property>
                         </item>
                        </widget>
@@ -2726,6 +2703,9 @@ no TM modes.</string>
                        <spacer name="horizontalSpacer_18">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
                         </property>
                         <property name="sizeHint" stdset="0">
                          <size>
@@ -2765,6 +2745,90 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
+                    <item row="6" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_40">
+                      <item>
+                       <widget class="QComboBox" name="microstripPortPropagationComboBox">
+                        <item>
+                         <property name="text">
+                          <string>x+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z-</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_30">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_48">
+                      <item>
+                       <widget class="QComboBox" name="microstripPortMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_40">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -2797,123 +2861,19 @@ no TM modes.</string>
                     <string>Coaxial - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_18">
-                    <item row="5" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_30">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coaxialPortShellThicknessValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortShellThicknessUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_24">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                    <item row="6" column="0">
+                     <widget class="QLabel" name="label_73">
+                      <property name="text">
+                       <string>Shell thickness</string>
+                      </property>
+                     </widget>
                     </item>
-                    <item row="3" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_42">
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortDirection">
-                        <property name="currentText">
-                         <string>z+</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>z+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>z-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>x+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>x-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y-</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_34">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_71">
+                      <property name="text">
+                       <string>Insulator material</string>
+                      </property>
+                     </widget>
                     </item>
                     <item row="0" column="0">
                      <widget class="QCheckBox" name="coaxialPortActive">
@@ -2922,178 +2882,28 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="4" column="0">
+                    <item row="5" column="0">
                      <widget class="QLabel" name="label_74">
                       <property name="text">
                        <string>Inner radius</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="6" column="0">
-                     <widget class="QLabel" name="label_75">
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_72">
                       <property name="text">
-                       <string>Feedpoint shift</string>
+                       <string>Conductor material</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="7" column="0">
-                     <widget class="QLabel" name="label_76">
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_86">
                       <property name="text">
-                       <string>Measure probe plane shift</string>
+                       <string>Port Resistance</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_41">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coaxialPortResistanceValue">
-                        <property name="maximum">
-                         <double>10000000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortResistanceUnits">
-                        <property name="currentText">
-                         <string>Ohm</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>Ohm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>uOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>kOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>MOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>GOhm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_31">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_87">
-                      <property name="text">
-                       <string>Port direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="4" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_31">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coaxialPortInnerRadiusValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortInnerRadiusUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_25">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="8" column="1">
-                     <widget class="QDoubleSpinBox" name="portCoaxialExcitationAmplitude"/>
-                    </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="coaxialPortMaterialComboBox"/>
-                    </item>
-                    <item row="6" column="1">
+                    <item row="7" column="2">
                      <layout class="QHBoxLayout" name="horizontalLayout_32">
                       <item>
                        <widget class="QDoubleSpinBox" name="coaxialPortFeedpointShiftValue">
@@ -3102,6 +2912,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3157,35 +2970,182 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_71">
+                    <item row="8" column="0">
+                     <widget class="QLabel" name="label_76">
                       <property name="text">
-                       <string>Material</string>
+                       <string>Measure probe plane shift</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="8" column="0">
+                    <item row="9" column="2">
+                     <widget class="QDoubleSpinBox" name="portCoaxialExcitationAmplitude">
+                      <property name="maximum">
+                       <double>1000000.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="9" column="0">
                      <widget class="QLabel" name="label_80">
                       <property name="text">
                        <string>Excitation amplitude</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="5" column="0">
-                     <widget class="QLabel" name="label_73">
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_75">
                       <property name="text">
-                       <string>Shell thickness</string>
+                       <string>Feedpoint shift</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_86">
+                    <item row="1" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_41">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coaxialPortResistanceValue">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="maximum">
+                         <double>10000000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortResistanceUnits">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="currentText">
+                         <string>Ohm</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>Ohm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>uOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>kOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>MOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>GOhm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_84">
+                        <property name="text">
+                         <string>(this functionality not yet implemented in openEMS)</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_31">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="4" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_42">
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortDirection">
+                        <property name="currentText">
+                         <string>z+</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>z+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y-</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_34">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_87">
                       <property name="text">
-                       <string>Port Resistance</string>
+                       <string>Port direction</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="7" column="1">
+                    <item row="8" column="2">
                      <layout class="QHBoxLayout" name="horizontalLayout_33">
                       <item>
                        <widget class="QDoubleSpinBox" name="coaxialPortMeasureShiftValue">
@@ -3194,6 +3154,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3249,6 +3212,200 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
+                    <item row="5" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_31">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coaxialPortInnerRadiusValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortInnerRadiusUnits">
+                        <property name="currentIndex">
+                         <number>3</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_25">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="6" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_30">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coaxialPortShellThicknessValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortShellThicknessUnits">
+                        <property name="currentIndex">
+                         <number>3</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_24">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="3" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_49">
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_41">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="2" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_50">
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortConductorMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_42">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -3290,6 +3447,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3352,9 +3512,6 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="coplanarPortMaterialComboBox"/>
-                    </item>
                     <item row="5" column="0">
                      <widget class="QLabel" name="label_79">
                       <property name="text">
@@ -3372,7 +3529,7 @@ no TM modes.</string>
                     <item row="3" column="0">
                      <widget class="QLabel" name="label_89">
                       <property name="text">
-                       <string>Port Excitation Direction</string>
+                       <string>Port layer</string>
                       </property>
                      </widget>
                     </item>
@@ -3452,7 +3609,7 @@ no TM modes.</string>
                     <item row="6" column="0">
                      <widget class="QLabel" name="label_82">
                       <property name="text">
-                       <string>Feedpooint shift</string>
+                       <string>Feedpoint shift</string>
                       </property>
                      </widget>
                     </item>
@@ -3467,51 +3624,36 @@ no TM modes.</string>
                          </size>
                         </property>
                         <property name="currentText">
-                         <string>z+</string>
+                         <string>XY plane, top layer</string>
                         </property>
                         <item>
                          <property name="text">
-                          <string>z+</string>
+                          <string>XY plane, top layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>z-</string>
+                          <string>XY plane, bottom layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>x+</string>
+                          <string>XZ plane, front layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>x-</string>
+                          <string>XZ plane, back layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>y+</string>
+                          <string>YZ plane, right layer</string>
                          </property>
                         </item>
                         <item>
                          <property name="text">
-                          <string>y-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XY plane</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane</string>
+                          <string>YZ plane, left layer</string>
                          </property>
                         </item>
                        </widget>
@@ -3520,6 +3662,9 @@ no TM modes.</string>
                        <spacer name="horizontalSpacer_36">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
                         </property>
                         <property name="sizeHint" stdset="0">
                          <size>
@@ -3554,6 +3699,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3609,50 +3757,6 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="4" column="1">
-                     <widget class="QComboBox" name="coplanarPortPropagationComboBox">
-                      <item>
-                       <property name="text">
-                        <string>x+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>positive</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>negative</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
                     <item row="7" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_38">
                       <item>
@@ -3662,6 +3766,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3724,6 +3831,93 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
+                    <item row="2" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_51">
+                      <item>
+                       <widget class="QComboBox" name="coplanarPortMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_43">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="4" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_52">
+                      <item>
+                       <widget class="QComboBox" name="coplanarPortPropagationComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>x+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z-</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_44">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -3772,6 +3966,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -3932,39 +4129,15 @@ no TM modes.</string>
                      <layout class="QHBoxLayout" name="horizontalLayout_46">
                       <item>
                        <widget class="QComboBox" name="striplinePortDirection">
-                        <property name="currentText">
-                         <string>z+</string>
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
                         </property>
-                        <item>
-                         <property name="text">
-                          <string>z+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>z-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>x+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>x-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y-</string>
-                         </property>
-                        </item>
+                        <property name="currentText">
+                         <string>XY plane</string>
+                        </property>
                         <item>
                          <property name="text">
                           <string>XY plane</string>
@@ -3987,6 +4160,9 @@ no TM modes.</string>
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -4006,6 +4182,9 @@ no TM modes.</string>
                           <width>100</width>
                           <height>0</height>
                          </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -4061,46 +4240,72 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QComboBox" name="striplinePortPropagationComboBox">
-                      <item>
-                       <property name="text">
-                        <string>x+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z-</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
                     <item row="0" column="0">
                      <widget class="QCheckBox" name="striplinePortActive">
                       <property name="text">
                        <string>port is active</string>
                       </property>
                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_37">
+                      <item>
+                       <widget class="QComboBox" name="striplinePortPropagationComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>x+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z-</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_29">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </widget>

@@ -10,7 +10,7 @@ class PortSettingsItem(SettingsItem):
     def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
                  mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
                  waveguideRectDir = "", waveguideCircDir="",
-                 coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
+                 coaxialConductorMaterial = "", coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
                  coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
                  striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = ""
                  ):
@@ -32,6 +32,7 @@ class PortSettingsItem(SettingsItem):
         self.waveguideRectDir = waveguideRectDir
         self.waveguideCircDir = waveguideCircDir
 
+        self.coaxialConductorMaterial = coaxialConductorMaterial
         self.coaxialMaterial = coaxialMaterial
         self.coaxialPropagation = coaxialPropagation
         self.coaxialInnerRadiusValue = coaxialInnerRadiusValue
@@ -53,6 +54,7 @@ class PortSettingsItem(SettingsItem):
         self.coplanarMeasPlaneShiftValue = coplanarMeasPlaneShiftValue
         self.coplanarMeasPlaneShiftUnits = coplanarMeasPlaneShiftUnits
 
+        self.striplineMaterial = striplineMaterial
         self.striplinePropagation = striplinePropagation
         self.striplineHeightValue = striplineHeightValue
         self.striplineHeightUnits = striplineHeightUnits
@@ -61,12 +63,6 @@ class PortSettingsItem(SettingsItem):
         self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
         self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
 
-        self.striplineMaterial = striplineMaterial
-        self.striplinePropagation = striplinePropagation
-        self.striplineFeedpointShiftValue = striplineFeedpointShiftValue
-        self.striplineFeedpointShiftUnits = striplineFeedpointShiftUnits
-        self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
-        self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
         return
 
     def serializeToString(self):

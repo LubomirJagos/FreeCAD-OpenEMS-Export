@@ -367,7 +367,7 @@ class OctaveScriptLinesGenerator:
         #       Options for select field x,y,z were removed from GUI, but left here due there could be saved files from previous versions
         #       with these options so to keep backward compatibility they are treated as positive direction in that directions.
         #
-        baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z+': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z-': '[0 0 -1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', }
+        baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z+': '[0 0 1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', 'XY plane, top layer': '[0 0 -1]', 'XY plane, bottom layer': '[0 0 1]', 'XZ plane, front layer': '[0 -1 0]', 'XZ plane, back layer': '[0 1 0]', 'YZ plane, right layer': '[-1 0 0]', 'YZ plane, left layer': '[1 0 0]',}
         mslDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coaxialDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coplanarDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
@@ -450,13 +450,13 @@ class OctaveScriptLinesGenerator:
                         portStopY = _r(sf * bbCoords.YMax)
                         portStopZ = _r(sf * bbCoords.ZMax)
 
-                        if (currSetting.direction == "z-"):
+                        if (currSetting.direction == "XY plane, top layer"):
                             portStartZ = _r(sf * bbCoords.ZMax)
                             portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.direction == "x-"):
+                        elif (currSetting.direction == "YZ plane, right layer"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.direction == "y-"):
+                        elif (currSetting.direction == "XZ plane, front layer"):
                             portStartY = _r(sf * bbCoords.YMax)
                             portStopY = _r(sf * bbCoords.YMin)
 
@@ -477,6 +477,9 @@ class OctaveScriptLinesGenerator:
                         genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation[0], '?')) #use just first letter of propagation direction
                         genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
+                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.mslFeedShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslFeedShiftUnits)))}
+                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.mslMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslMeasPlaneShiftUnits)))}
+
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
                         genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
@@ -485,8 +488,10 @@ class OctaveScriptLinesGenerator:
                                      str(priorityIndex) + "," + \
                                      str(genScriptPortCount) + "," + \
                                      "'" + currSetting.mslMaterial + "'," + \
-                                     "portStart,portStop,mslDir, mslEVec" + \
+                                     "portStart, portStop, mslDir, mslEVec" + \
                                      isActiveMSLStr.get(currSetting.isActive) + \
+                                     feedShiftStr.get(currSetting.mslFeedShiftValue > 0) + \
+                                     measPlaneStr.get(currSetting.mslMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
                         genScriptPortCount += 1
@@ -655,10 +660,16 @@ class OctaveScriptLinesGenerator:
                         #
                         #   LuboJ ERROR: not sure if scaling done right
                         #
-                        coaxialInnerRadius = currSetting.coaxialInnerRadiusValue * currSetting.getUnitsAsNumber(currSetting.coaxialInnerRadiusUnits) / self.getUnitLengthFromUI_m()
-                        coaxialShellThickness = currSetting.coaxialShellThicknessValue * currSetting.getUnitsAsNumber(currSetting.coaxialShellThicknessUnits) / self.getUnitLengthFromUI_m()
-                        coaxialFeedShift = currSetting.coaxialFeedpointShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialFeedpointShiftUnits) / self.getUnitLengthFromUI_m()
-                        coaxialMeasPlaneShift = currSetting.coaxialMeasPlaneShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialMeasPlaneShiftUnits) / self.getUnitLengthFromUI_m()
+                        coaxialInnerRadius = _r(currSetting.coaxialInnerRadiusValue * currSetting.getUnitsAsNumber(currSetting.coaxialInnerRadiusUnits) / self.getUnitLengthFromUI_m())
+                        coaxialShellThickness = _r(currSetting.coaxialShellThicknessValue * currSetting.getUnitsAsNumber(currSetting.coaxialShellThicknessUnits) / self.getUnitLengthFromUI_m())
+                        coaxialFeedShift = _r(currSetting.coaxialFeedpointShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialFeedpointShiftUnits) / self.getUnitLengthFromUI_m())
+                        coaxialMeasPlaneShift = _r(currSetting.coaxialMeasPlaneShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialMeasPlaneShiftUnits) / self.getUnitLengthFromUI_m())
+
+                        #
+                        #   LuboJ ERROR: FeedShift and MeasPlaneShift doesn't seem to be working properly, it's not moving anything, error is somewhere here in code
+                        #
+                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(coaxialFeedShift)}
+                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(coaxialMeasPlaneShift)}
 
                         #
                         #   Port start and end need to be shifted into middle of feed plane
@@ -684,19 +695,13 @@ class OctaveScriptLinesGenerator:
                             True:   ", 'ExcitePort', true, 'ExciteAmp', " + str(currSetting.coaxialExcitationAmplitude)
                         }
 
-                        #
-                        #   LuboJ ERROR: FeedShift and MeasPlaneShift doesn't seem to be working properly, it's not moving anything, error is somewhere here in code
-                        #
-                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(coaxialFeedShift)}
-                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(coaxialMeasPlaneShift)}
-
                         #feed resistance is NOT IMPLEMENTED IN openEMS AddCoaxialPort()
                         #genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCoaxialPort(CSX," + \
                                      str(priorityIndex) + "," + \
                                      str(genScriptPortCount) + "," + \
-                                     "'PEC'," + \
+                                     "'" + currSetting.coaxialConductorMaterial + "'," + \
                                      "'" + currSetting.coaxialMaterial + "'," + \
                                      "portStart,portStop,coaxialDir, r_i, r_o, r_os" + \
                                      isActiveCoaxialStr.get(currSetting.isActive) + \
@@ -708,36 +713,39 @@ class OctaveScriptLinesGenerator:
                     elif (currSetting.getType() == 'coplanar'):
 
                         gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
+                        gapWidth_freeCAD_units = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getFreeCADUnitLength_m()
+                        genScript += 'gap_width = ' + str(gapWidth) + ';\n'
 
                         #
                         #   1. set all coords to max or min, this means where coplanar waveguide is placed if on top or bottom of object but we don't know orientation now
                         #
-                        if (currSetting.direction[1] == "+"):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopX = _r(sf * bbCoords.XMin)
-                            portStopY = _r(sf * bbCoords.YMin)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        else:
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopX = _r(sf * bbCoords.XMax)
-                            portStopY = _r(sf * bbCoords.YMax)
-                            portStopZ = _r(sf * bbCoords.ZMax)
+                        portStartX = _r(sf * bbCoords.XMin)
+                        portStartY = _r(sf * bbCoords.YMin)
+                        portStartZ = _r(sf * bbCoords.ZMin)
+                        portStopX = _r(sf * bbCoords.XMax)
+                        portStopY = _r(sf * bbCoords.YMax)
+                        portStopZ = _r(sf * bbCoords.ZMax)
 
                         #
-                        #   2. set coordinates of coplanar in direction of field
+                        #   2. set coordinates of coplanar based on plane, height must be same
                         #
-                        if (currSetting.direction[0] == "z"):
+                        if (currSetting.direction == "XY plane, top layer"):
                             portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+                        elif (currSetting.direction == "XY plane, bottom layer"):
+                            portStartZ = _r(sf * bbCoords.ZMin)
                             portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.direction[0] == "x"):
+                        elif (currSetting.direction == "YZ plane, right layer"):
                             portStartX = _r(sf * bbCoords.XMax)
+                            portStopX = _r(sf * bbCoords.XMax)
+                        elif (currSetting.direction == "YZ plane, left layer"):
+                            portStartX = _r(sf * bbCoords.XMin)
                             portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.direction[0] == "y"):
+                        elif (currSetting.direction == "XZ plane, front layer"):
                             portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMax)
+                        elif (currSetting.direction == "XZ plane, back layer"):
+                            portStartY = _r(sf * bbCoords.YMin)
                             portStopY = _r(sf * bbCoords.YMin)
 
                         #
@@ -762,15 +770,43 @@ class OctaveScriptLinesGenerator:
                             portStartY = _r(sf * bbCoords.YMin)
                             portStopY = _r(sf * bbCoords.YMax)
 
+
+                        genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
+
+                        if (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "x"):
+                            genScript += 'coplanarEVec = [0 1 0];\n'
+                            portStartY += gapWidth_freeCAD_units
+                            portStopY -= gapWidth_freeCAD_units
+                        elif (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "y"):
+                            genScript += 'coplanarEVec = [1 0 0];\n'
+                            portStartX += gapWidth_freeCAD_units
+                            portStopX -= gapWidth_freeCAD_units
+                        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "x"):
+                            genScript += 'coplanarEVec = [0 0 1];\n'
+                            portStartZ += gapWidth_freeCAD_units
+                            portStopZ -= gapWidth_freeCAD_units
+                        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "z"):
+                            genScript += 'coplanarEVec = [1 0 0];\n'
+                            portStartX += gapWidth_freeCAD_units
+                            portStopX -= gapWidth_freeCAD_units
+                        elif (currSetting.direction[0:2] == "YZ" and currSetting.coplanarPropagation[0] == "y"):
+                            genScript += 'coplanarEVec = [0 0 1];\n'
+                            portStartZ += gapWidth_freeCAD_units
+                            portStopZ -= gapWidth_freeCAD_units
+                        elif (currSetting.direction[0:2] == "T=YZ" and currSetting.coplanarPropagation[0] == "z"):
+                            genScript += 'coplanarEVec = [0 1 0];\n'
+                            portStartY += gapWidth_freeCAD_units
+                            portStopY -= gapWidth_freeCAD_units
+                        else:
+                            genScript += 'display("ERROR cannot evaluate right direction check your simulation settings for coplanar port");\n'
+                            genScript += 'coplanarEVec = %ERROR cannot evaluate right direction check your simulation settings ;\n'
+
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
-                        genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
-                        genScript += 'coplanarEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
-                        genScript += 'gap_width = ' + str(gapWidth) + ';\n'
-
                         isActiveStr = {False: "", True: ", 'ExcitePort', true"}
-
+                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.coplanarFeedpointShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.coplanarFeedpointShiftUnits)))}
+                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.coplanarMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.coplanarMeasPlaneShiftUnits)))}
                         genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCPWPort(CSX," + \
@@ -779,6 +815,8 @@ class OctaveScriptLinesGenerator:
                                      "'" + currSetting.coplanarMaterial + "'," + \
                                      "portStart,portStop,gap_width,coplanarDir, coplanarEVec" + \
                                      isActiveStr.get(currSetting.isActive) + \
+                                     feedShiftStr.get(currSetting.coplanarFeedpointShiftValue > 0) + \
+                                     measPlaneStr.get(currSetting.coplanarMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
                         genScriptPortCount += 1
@@ -790,54 +828,57 @@ class OctaveScriptLinesGenerator:
                         portStopY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
                         portStopZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax)/2)
 
-                        if (currSetting.striplinePropagation in ["x+", "y+"] and currSetting.direction[0] in ["z"]):
+                        if (currSetting.striplinePropagation in ["x+", "y+"] and currSetting.direction == "XY plane"):
                             portStartX = _r(sf * bbCoords.XMin)
                             portStopX = _r(sf * bbCoords.XMax)
                             portStartY = _r(sf * bbCoords.YMin)
                             portStopY = _r(sf * bbCoords.YMax)
-                        elif (currSetting.striplinePropagation in ["x+", "z+"] and currSetting.direction[0] in ["y"]):
+                        elif (currSetting.striplinePropagation in ["x+", "z+"] and currSetting.direction == "XZ plane"):
                             portStartX = _r(sf * bbCoords.XMin)
                             portStopX = _r(sf * bbCoords.XMax)
                             portStartZ = _r(sf * bbCoords.ZMin)
                             portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.striplinePropagation in ["y+", "z+"] and currSetting.direction[0] in ["x"]):
+                        elif (currSetting.striplinePropagation in ["y+", "z+"] and currSetting.direction == "YZ plane"):
                             portStartY = _r(sf * bbCoords.YMin)
                             portStopY = _r(sf * bbCoords.YMax)
                             portStartZ = _r(sf * bbCoords.ZMin)
                             portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.striplinePropagation in ["x-", "y-"] and currSetting.direction[0] in ["z"]):
+                        elif (currSetting.striplinePropagation in ["x-", "y-"] and currSetting.direction == "XY plane"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStopX = _r(sf * bbCoords.XMin)
                             portStartY = _r(sf * bbCoords.YMax)
                             portStopY = _r(sf * bbCoords.YMin)
-                        elif (currSetting.striplinePropagation in ["x-", "z-"] and currSetting.direction[0] in ["y"]):
+                        elif (currSetting.striplinePropagation in ["x-", "z-"] and currSetting.direction == "XZ plane"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStopX = _r(sf * bbCoords.XMin)
                             portStartZ = _r(sf * bbCoords.ZMax)
                             portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.striplinePropagation in ["y-", "z-"] and currSetting.direction[0] in ["x"]):
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStopY = _r(sf * bbCoords.YMax)
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopZ = _r(sf * bbCoords.ZMax)
+                        elif (currSetting.striplinePropagation in ["y-", "z-"] and currSetting.direction == "YZ plane"):
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStopY = _r(sf * bbCoords.YMin)
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopZ = _r(sf * bbCoords.ZMin)
 
                         striplineHeight =  0
-                        if (currSetting.direction[0] == "x"):
+                        if (currSetting.direction == "YZ plane"):
                             striplineHeight = _r(sf * (bbCoords.XMax - bbCoords.XMin)/2)
-                        elif (currSetting.direction[0] == "y"):
+                            genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('x'))
+                        elif (currSetting.direction == "XZ plane"):
                             striplineHeight = _r(sf * (bbCoords.YMax - bbCoords.YMin)/2)
-                        elif (currSetting.direction[0] == "z"):
+                            genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('y'))
+                        elif (currSetting.direction == "XY plane"):
                             striplineHeight = _r(sf * (bbCoords.ZMax - bbCoords.ZMin)/2)
+                            genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('z'))
 
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
                         genScript += 'striplineDir = {};\n'.format(striplineDirStr.get(currSetting.striplinePropagation[0], '?'))  # use just first letter of propagation direction
-                        genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
                         genScript += 'striplineHeight = ' + str(striplineHeight) + ';\n'
 
                         isActiveStr = {False: "", True: ", 'ExcitePort', true"}
-
+                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.striplineFeedpointShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.striplineFeedpointShiftUnits)))}
+                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.striplineMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.striplineMeasPlaneShiftUnits)))}
                         genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddStripLinePort(CSX," + \
@@ -846,7 +887,39 @@ class OctaveScriptLinesGenerator:
                                      "'PEC'," + \
                                      "portStart,portStop,striplineHeight,striplineDir, striplineEVec" + \
                                      isActiveStr.get(currSetting.isActive) + \
+                                     feedShiftStr.get(currSetting.striplineFeedpointShiftValue > 0) + \
+                                     measPlaneStr.get(currSetting.striplineMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
+
+                        genScriptPortCount += 1
+                    elif (currSetting.getType() == 'curve'):
+                        if (_bool(currSetting.direction) == False):
+                            portStartX = _r(sf * bbCoords.XMin)
+                            portStartY = _r(sf * bbCoords.YMin)
+                            portStartZ = _r(sf * bbCoords.ZMin)
+                            portStopX = _r(sf * bbCoords.XMax)
+                            portStopY = _r(sf * bbCoords.YMax)
+                            portStopZ = _r(sf * bbCoords.ZMax)
+                        else:
+                            portStartX = _r(sf * bbCoords.XMax)
+                            portStartY = _r(sf * bbCoords.YMax)
+                            portStartZ = _r(sf * bbCoords.ZMax)
+                            portStopX = _r(sf * bbCoords.XMin)
+                            portStopY = _r(sf * bbCoords.YMin)
+                            portStopZ = _r(sf * bbCoords.ZMin)
+
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        isActiveStr = {False: "", True: ", true"}
+                        genScript_R = str(currSetting.R) + "*" + str(currSetting.getRUnits())
+
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCurvePort(CSX," + \
+                                     str(priorityIndex) + ", " + \
+                                     str(genScriptPortCount) + ", " + \
+                                     genScript_R + ", " + \
+                                     "portStart, portStop" + \
+                                     isActiveStr.get(currSetting.isActive) + ");\n"
 
                         genScriptPortCount += 1
                     else:

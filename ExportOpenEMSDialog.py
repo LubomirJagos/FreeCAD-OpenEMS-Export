@@ -236,8 +236,18 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.striplinePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.curvePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 
-		self.form.microstripPortPropagationComboBox.currentTextChanged.connect(self.portCheckMicrostripPortPropagationComboBox)
+		self.form.microstripPortDirection.activated.connect(self.microstripPortDirectionOnChange)
+		self.form.striplinePortDirection.activated.connect(self.striplinePortDirectionOnChange)
+		self.form.coplanarPortDirection.activated.connect(self.coplanarPortDirectionOnChange)
 
+		self.form.microstripPortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
+															# and combobox with propagation direction left with all possibilities
+
+		self.form.coplanarPortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
+															# and combobox with propagation direction left with all possibilities
+
+		self.form.striplinePortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
+															# and combobox with propagation direction left with all possibilities
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
 		self.form.BCxmax.currentIndexChanged.connect(self.BCxmaxCurrentIndexChanged)
@@ -1512,9 +1522,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)		# update microstrip port material combobox
-			self.updateMaterialComboBoxJustMetals(self.form.coplanarPortMaterialComboBox)		# update coplanar port material combobox
-			self.updateMaterialComboBoxJustUserdefined(self.form.coaxialPortMaterialComboBox)	# update coaxial port material combobox
+			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)				# update microstrip port material combobox
+			self.updateMaterialComboBoxJustMetals(self.form.coplanarPortMaterialComboBox)				# update coplanar port material combobox
+			self.updateMaterialComboBoxJustUserdefined(self.form.coaxialPortMaterialComboBox)			# update coaxial port material combobox
+			self.updateMaterialComboBoxAllMaterials(self.form.coaxialPortConductorMaterialComboBox)		# update coaxial port material combobox
 
 	def materialAddPEC(self):
 		"""
@@ -1689,6 +1700,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.direction = self.form.coaxialPortDirection.currentText()
 
 			portItem.coaxialMaterial = self.form.coaxialPortMaterialComboBox.currentText()
+			portItem.coaxialConductorMaterial = self.form.coaxialPortConductorMaterialComboBox.currentText()
 			portItem.coaxialInnerRadiusValue = self.form.coaxialPortInnerRadiusValue.value()
 			portItem.coaxialInnerRadiusUnits = self.form.coaxialPortInnerRadiusUnits.currentText()
 			portItem.coaxialShellThicknessValue = self.form.coaxialPortShellThicknessValue.value()
@@ -1733,7 +1745,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.R = self.form.curvePortResistanceValue.value()
 			portItem.RUnits = self.form.curvePortResistanceUnits.currentText()
 			portItem.isActive = self.form.curvePortActive.isChecked()
-			portItem.direction = self.form.curvePortDirection.currentText()
+			portItem.direction = self.form.curvePortDirection.isChecked()
 
 		return portItem
 
@@ -1846,10 +1858,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.portDirectionInput.setEnabled(False)
 
+	def updateMaterialComboBoxAllMaterials(self, comboboxRef):
+		"""
+		Update items in combobox for provided combobox control, this add all materials available. It clears all items and fill them agains with actual values.
+		"""
+		comboboxRef.clear()
+
+		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
+		objectAssignemntRightPortParent = self.form.objectAssignmentRightTreeWidget.findItems(
+			"Material",
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)[0]
+
+		# here user defined are added into coaxial possible material combobox
+		for k in range(objectAssignemntRightPortParent.childCount()):
+			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
+			comboboxRef.addItem(materialData.name)
 
 	def updateMaterialComboBoxJustUserdefined(self, comboboxRef):
 		"""
-		Update items in combobox for coaxial port, this add just user defined material types. It clears all items and fill them agains with actual values.
+		Update items in combobox for provided combobox control, this add just user defined material types. It clears all items and fill them agains with actual values.
 		"""
 		comboboxRef.clear()
 
@@ -1867,7 +1895,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def updateMaterialComboBoxJustMetals(self, comboboxRef):
 		"""
-		Update items in combobox for coaxial port, this add just metallic material types (metal, conductive sheet). It clears all items and fill them agains with actual values.
+		Update items in combobox for provided combobox control, this add just metallic material types (metal, conductive sheet). It clears all items and fill them agains with actual values.
 		"""
 		comboboxRef.clear()
 
@@ -1883,15 +1911,62 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if (materialData.type in ["metal", "conducting sheet"]):
 				comboboxRef.addItem(materialData.name)
 
-	def portCheckMicrostripPortPropagationComboBox(self):
+	@Slot(int)
+	def microstripPortDirectionOnChange(self, activatedItemIndex):
 		"""
-		Check if microstrip propagation direction is set right. If port field direction is Z then propagation must be in others axis X or Y.
-		Also when port field direction is X then propagation should be Y or Z.
-		If port field is Y then propagation should be X or Z.
+		Update microstrip port propagation direction on port tab in microstrip settings according coplanar port direction, based on its plane:
+			- for XY plane there are just possible directions x+, x-, y+, y-
+			- for XZ plane there are just possible directions x+, x-, z+, z-
+			- for YZ plane there are just possible directions y+, y-, y+, y-
+		This is advanced GUI function to provide user just allowed direction for microstrip port in settings and to remove not allowed direction, script maybe will run but results would be strange like no port...
 		:return: None
 		"""
-		if (self.form.microstripPortRadioButton.isChecked() and self.form.microstripPortPropagationComboBox.currentText()[0] == self.form.microstripPortDirection.currentText()[0]):
-			self.guiHelpers.displayMessage("Microstrip field propagation is set to same axis as port excitation, should be different to be generated properly.")
+		previousPropagationValue = self.form.microstripPortPropagationComboBox.currentText()
+
+		self.form.microstripPortPropagationComboBox.clear()
+		for directionAxis in list(self.form.microstripPortDirection.currentText().lower()[0:2]):
+			self.form.microstripPortPropagationComboBox.addItem(directionAxis + "+")
+			self.form.microstripPortPropagationComboBox.addItem(directionAxis + "-")
+
+		self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, previousPropagationValue)
+
+	@Slot(int)
+	def coplanarPortDirectionOnChange(self, activatedItemIndex):
+		"""
+		Update coplanar port propagation direction on port tab in coplanar settings according coplanar port direction, based on its plane:
+			- for XY plane there are just possible directions x+, x-, y+, y-
+			- for XZ plane there are just possible directions x+, x-, z+, z-
+			- for YZ plane there are just possible directions y+, y-, y+, y-
+		This is advanced GUI function to provide user just allowed direction for coplanar port in settings and to remove not allowed direction, script maybe will run but results would be strange like no port...
+		:return: None
+		"""
+		previousPropagationValue = self.form.coplanarPortPropagationComboBox.currentText()
+
+		self.form.coplanarPortPropagationComboBox.clear()
+		for directionAxis in list(self.form.coplanarPortDirection.currentText().lower()[0:2]):
+			self.form.coplanarPortPropagationComboBox.addItem(directionAxis + "+")
+			self.form.coplanarPortPropagationComboBox.addItem(directionAxis + "-")
+
+		self.guiHelpers.setComboboxItem(self.form.coplanarPortPropagationComboBox, previousPropagationValue)
+
+	@Slot(int)
+	def striplinePortDirectionOnChange(self, activatedItemIndex):
+		"""
+		Update stripline port propagation direction on port tab in stripline settings according coplanar port direction, based on its plane:
+			- for XY plane there are just possible directions x+, x-, y+, y-
+			- for XZ plane there are just possible directions x+, x-, z+, z-
+			- for YZ plane there are just possible directions y+, y-, y+, y-
+		This is advanced GUI function to provide user just allowed direction for stripline port in settings and to remove not allowed direction, script maybe will run but results would be strange like no port...
+		:return: None
+		"""
+		previousPropagationValue = self.form.striplinePortPropagationComboBox.currentText()
+
+		self.form.striplinePortPropagationComboBox.clear()
+		for directionAxis in list(self.form.striplinePortDirection.currentText().lower()[0:2]):
+			self.form.striplinePortPropagationComboBox.addItem(directionAxis + "+")
+			self.form.striplinePortPropagationComboBox.addItem(directionAxis + "-")
+
+		self.guiHelpers.setComboboxItem(self.form.striplinePortPropagationComboBox, previousPropagationValue)
 
 	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _
 	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
@@ -2147,6 +2222,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.microstripPortResistanceUnits, currSetting.RUnits)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortDirection, currSetting.direction)
 
+				self.form.microstripPortDirection.activated.emit(self.form.microstripPortDirection.currentIndex())
+
 				self.form.microstripPortFeedpointShiftValue.setValue(currSetting.mslFeedShiftValue)
 				self.form.microstripPortMeasureShiftValue.setValue(currSetting.mslMeasPlaneShiftValue)
 
@@ -2176,6 +2253,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortShellThicknessUnits, currSetting.coaxialShellThicknessUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortInnerRadiusUnits, currSetting.coaxialInnerRadiusUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortMaterialComboBox, currSetting.coaxialMaterial)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortConductorMaterialComboBox, currSetting.coaxialConductorMaterial)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coaxial current settings: {e}", forceModal=False)
 
@@ -2186,6 +2264,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortResistanceUnits, currSetting.RUnits)
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction)
+
+				#	emit signal to update direction combobox, must be here to have right reaction when change direction combobox,
+				#	then click on radiobutton stripline and
+				#	then then on some coplanar port in port treewidget item
+				self.form.coplanarPortDirection.activated.emit(self.form.coplanarPortDirection.currentIndex())
 
 				self.form.coplanarPortGapValue.setValue(currSetting.coplanarGapValue)
 				self.form.coplanarPortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
@@ -2206,6 +2289,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.striplinePortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.striplinePortResistanceUnits, currSetting.RUnits)
 				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction)
+
+				self.form.striplinePortDirection.activated.emit(self.form.striplinePortDirection.currentIndex())
 
 				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
 				self.form.striplinePortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
