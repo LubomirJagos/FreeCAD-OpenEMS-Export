@@ -11,6 +11,7 @@ import math
 
 #import needed local classes
 import sys
+import traceback
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -286,7 +287,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	add default PEC material
 		#
 		self.materialAddPEC()
-	
+
+		#
+		#	Simulation items (grid, material, excitation, port, lumped part) renamed signal connect
+		#
+		self.guiSignals.gridRenamed.connect(self.gridRenamed)
+		self.guiSignals.materialRenamed.connect(self.materialRenamed)
+		self.guiSignals.excitationRenamed.connect(self.excitationRenamed)
+		self.guiSignals.portRenamed.connect(self.portRenamed)
+		self.guiSignals.lumpedPartRenamed.connect(self.lumpedPartRenamed)
+
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
 		# A new object has been created. Only the list of available objects needs to be updated.
@@ -402,6 +412,57 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if item.parent().text(0) == groupName:
 				item.setData(0, QtCore.Qt.UserRole, data)
 
+	def renameObjectAssignmentRightTreeWidgetItem(self, groupName, itemOldName, itemNewName):
+		updatedItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			itemOldName,
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)
+
+		#there can be more items in right column which has same name, like air under MAterials and Grid, so always is needed to compare if parent
+		#is same as parent from update function when this was called to update new settings
+		for item in updatedItems:
+			if item.parent().text(0) == groupName:
+				item.setText(0, itemNewName)
+
+	def renameObjectAssignmentPriorityTreeViewItem(self, groupName, itemOldName, itemNewName):
+		searchStr = groupName + ", " + itemOldName
+		updatedItems = self.form.objectAssignmentPriorityTreeView.findItems(
+			searchStr,
+			QtCore.Qt.MatchStartsWith
+			)
+
+		for item in updatedItems:
+			newName = groupName + ", " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
+			FreeCAD.Console.PrintWarning(f"Updating {item.text(0)} -> {newName}")
+			item.setText(0, newName)
+
+	def renameMeshPriorityTreeViewItem(self, itemOldName, itemNewName):
+		searchStr = "Grid, " + itemOldName
+		updatedItems = self.form.meshPriorityTreeView.findItems(
+			searchStr,
+			QtCore.Qt.MatchStartsWith
+			)
+
+		for item in updatedItems:
+			newName = "Grid, " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
+			FreeCAD.Console.PrintWarning(f"Updating {item.text(0)} -> {newName}")
+			item.setText(0, newName)
+
+	def renameTreeViewItem(self, treeViewRef, itemOldName, itemNewName):
+		"""
+		Renames item in tree view to new name. String search must match exactly.
+		:param treeViewRef: Reference to tree view widget
+		:param itemOldName: Old item name.
+		:param itemNewName: New item name.
+		:return:
+		"""
+		updatedItems = treeViewRef.findItems(
+			itemOldName,
+			QtCore.Qt.MatchExactly
+			)
+
+		for item in updatedItems:
+			item.setText(0, itemNewName)
 
 	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
 		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
@@ -1088,15 +1149,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
 			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
 
-	def checkTreeWidgetForDuplicityName(self,refTreeWidget, itemName):
+	def checkTreeWidgetForDuplicityName(self, refTreeWidget, itemName, ignoreSelectedItem=True):
 		isDuplicityName = False
 		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
 		while iterator.value():
 			item = iterator.value()
-			if item.text(0) == itemName:
+			if (ignoreSelectedItem == True and item.text(0) == itemName) or (ignoreSelectedItem == False and refTreeWidget.selectedItems()[0] != item and item.text(0) == itemName):
 				isDuplicityName = True
 				self.guiHelpers.displayMessage("Please change name, item with this name already exists.", True)
-			iterator +=1
+			iterator += 1
 		return isDuplicityName
 
 	#
@@ -1321,14 +1382,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		selectedItems = self.form.gridSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
 			return
-		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
-		### update other UI elements to propagate changes
-		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Grid", selectedItems[0].text(0), settingsInst)		
-		# update grid priority table at object assignment panel
-		self.guiHelpers.updateMeshPriorityDisableItems()
-		
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.gridSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("Grid", selectedItems[0].text(0), settingsInst)
+
+			# update grid priority table at object assignment panel
+			self.guiHelpers.updateMeshPriorityDisableItems()
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.gridRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			self.guiHelpers.displayMessage(f"Grid {settingsInst.name} was updated", forceModal=False)
 
 	def gridCoordsTypeChoosed(self):
 		"""	
@@ -1463,15 +1533,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			"Port",
 			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
 		)[0]
-		microstripPortsWithMaterialToDelete = []	#there can be more microstrip ports with same material assignment but different parameters
+		portsWithMaterialToDelete = []	#there can be more microstrip ports with same material assignment but different parameters
 		for k in range(portGroupWidgetItems.childCount()):
 			item = portGroupWidgetItems.child(k)
 			if (item.data(0, QtCore.Qt.UserRole).type == "microstrip" and item.data(0, QtCore.Qt.UserRole).mslMaterial == selectedItem.text(0)):
-				microstripPortsWithMaterialToDelete.append(item)
-		for portToRemove in microstripPortsWithMaterialToDelete:
-			message = f"This port is removed because material '{materialGroupItem.text(0)}' is removed: {portToRemove.text(0)}"
+				portsWithMaterialToDelete.append(item)
+			if (item.data(0, QtCore.Qt.UserRole).type == "coaxial" and (item.data(0, QtCore.Qt.UserRole).coaxialMaterial == selectedItem.text(0) or item.data(0, QtCore.Qt.UserRole).coaxialConductorMaterial == selectedItem.text(0))):
+				portsWithMaterialToDelete.append(item)
+			if (item.data(0, QtCore.Qt.UserRole).type == "coplanar" and item.data(0, QtCore.Qt.UserRole).coplanarMaterial == selectedItem.text(0)):
+				portsWithMaterialToDelete.append(item)
+
+		message = f"This port is removed because material '{materialGroupItem.text(0)}' is removed:\n"
+		for portToRemove in portsWithMaterialToDelete:
+			message += f"{portToRemove.text(0)}\n"
 			print("\t" + message)
-			self.guiHelpers.displayMessage(message)
+		message += "\n"
+		message += "Do you want to continue?"
+
+		if (not self.guiHelpers.displayYesNoMessage(message)):
+			return
+		for portToRemove in portsWithMaterialToDelete:
 			self.portSettingsRemoveButtonClicked(portToRemove.text(0))
 
 		#
@@ -1492,22 +1573,32 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### capture UI settings
 		settingsInst = self.getMaterialItemFromGui()
 
-		if (settingsInst.name.upper() == "PEC" and settingsInst.type != "metal"):
-			self.guiHelpers.displayMessage("Material PEC can be defined just as metal nothing else. This update will not perform.")
-			return
-
 		### replace old with new settingsInst
+		###	JUST ONE ITEM MUST BE SELECTED!
 		selectedItems = self.form.materialSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
 			return
-		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
-		
-		### update other UI elements to propagate changes
-		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Material", selectedItems[0].text(0), settingsInst)
-		self.guiHelpers.displayMessage(f"Material {settingsInst.name} was updated", forceModal=False)
 
-		self.guiSignals.materialsChanged.emit("update")
+		if (selectedItems[0].text(0).upper() == "PEC"):
+			self.guiHelpers.displayMessage("Material PEC can be defined just as metal nothing else. It's name also cannot be changed. This update will not perform.")
+			return
+
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.materialSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("Material", selectedItems[0].text(0), settingsInst)
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.materialRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			# emit signal to change all comboboxes which contains material
+			self.guiSignals.materialsChanged.emit("update")
+
+			self.guiHelpers.displayMessage(f"Material {settingsInst.name} was updated", forceModal=False)
 
 	@Slot(str)
 	def materialsChanged(self, operation):
@@ -1551,6 +1642,79 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.materialSettingsNameInput.setText("PEC")
 		self.form.materialMetalRadioButton.toggle()
 		self.form.materialSettingsAddButton.clicked.emit()
+
+	@Slot(str, str)
+	def gridRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("Grid", oldName, newName)
+			self.renameMeshPriorityTreeViewItem(oldName, newName)
+			self.renameTreeViewItem(self.form.gridSettingsTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("Grid " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
+
+	@Slot(str, str)
+	def materialRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("Material", oldName, newName)
+			self.renameObjectAssignmentPriorityTreeViewItem("Material", oldName, newName)
+			self.renameTreeViewItem(self.form.materialSettingsTreeView, oldName, newName)
+
+			#
+			# There are ports with material definition which must be also renamed
+			#
+			portGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+				"Port",
+				QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)[0]
+			for k in range(portGroupWidgetItems.childCount()):
+				item = portGroupWidgetItems.child(k)
+				if (item.data(0, QtCore.Qt.UserRole).type == "microstrip" and item.data(0, QtCore.Qt.UserRole).mslMaterial == oldName):
+					item.data(0, QtCore.Qt.UserRole).mslMaterial = newName
+				if (item.data(0, QtCore.Qt.UserRole).type == "coaxial" and item.data(0, QtCore.Qt.UserRole).coaxialMaterial == oldName):
+					item.data(0, QtCore.Qt.UserRole).coaxialMaterial = newName
+				if (item.data(0, QtCore.Qt.UserRole).type == "coaxial" and item.data(0, QtCore.Qt.UserRole).coaxialConductorMaterial == oldName):
+					item.data(0, QtCore.Qt.UserRole).coaxialConductorMaterial = newName
+				if (item.data(0, QtCore.Qt.UserRole).type == "coplanar" and item.data(0, QtCore.Qt.UserRole).coplanarMaterial == oldName):
+					item.data(0, QtCore.Qt.UserRole).coplanarMaterial = newName
+
+			self.guiHelpers.displayMessage("Material " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
+
+	@Slot(str, str)
+	def excitationRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("Excitation", oldName, newName)
+			self.renameTreeViewItem(self.form.excitationSettingsTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("Excitation " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
+
+	@Slot(str, str)
+	def portRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("Port", oldName, newName)
+			self.renameObjectAssignmentPriorityTreeViewItem("Port", oldName, newName)
+			self.renameTreeViewItem(self.form.portSettingsTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("Port " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
+
+	@Slot(str, str)
+	def lumpedPartRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("LumpedPart", oldName, newName)
+			self.renameObjectAssignmentPriorityTreeViewItem("LumpedPart", oldName, newName)
+			self.renameTreeViewItem(self.form.lumpedPartTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("LumpedPart " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
 
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1632,6 +1796,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### update other UI elements to propagate changes
 		# replace oudated copy of settingsInst 
 		self.updateObjectAssignmentRightTreeWidgetItemData("Excitation", selectedItems[0].text(0), settingsInst)
+
+		# emit rename signal
+		if (selectedItems[0].text(0) != settingsInst.name):
+			self.guiSignals.excitationRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
 		self.guiHelpers.displayMessage("Excitation updated.", forceModal=False)
 
 	# PORT SETTINGS
@@ -1801,13 +1970,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		selectedItems = self.form.portSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
 			return
-		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
-		
-		### update other UI elements to propagate changes
-		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("Port", selectedItems[0].text(0), settingsInst)	
 
-		self.guiHelpers.displayMessage(f"Port {settingsInst.name} was updated", forceModal=False)
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("Port", selectedItems[0].text(0), settingsInst)
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.portRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			self.guiHelpers.displayMessage(f"Port {settingsInst.name} was updated", forceModal=False)
 
 	def portSettingsTypeChoosed(self):
 		#first disable all additional settings for ports
@@ -2039,16 +2215,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		settingsInst = self.getLumpedPartItemFromGui()		
 	
 		### replace old with new settingsInst
-		selectedItems = self.form.portSettingsTreeView.selectedItems()
+		selectedItems = self.form.lumpedPartTreeView.selectedItems()
 		if len(selectedItems) != 1:
 			return
-		selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
-		
-		### update other UI elements to propagate changes
-		# replace oudated copy of settingsInst 
-		self.updateObjectAssignmentRightTreeWidgetItemData("LumpedPart", selectedItems[0].text(0), settingsInst)	
 
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.lumpedPartTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("LumpedPart", selectedItems[0].text(0), settingsInst)
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.lumpedPartRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			self.guiHelpers.displayMessage(f"LumpedPart {settingsInst.name} updated.", forceModal=False)
 
 	#   _____________   ____________  ___    __       _____ _______________________   _____________
 	#  / ____/ ____/ | / / ____/ __ \/   |  / /      / ___// ____/_  __/_  __/  _/ | / / ____/ ___/
@@ -2314,7 +2497,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (currSetting.type.lower() == "rectangular waveguide"):
 			self.form.rectangularWaveguidePortRadioButton.click()
 
-			self.form.portRectWaveguidePortActive.setChecked(currSetting.isActive)
+			self.form.portRectWaveguideActive.setChecked(currSetting.isActive)
 
 			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
 			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir)

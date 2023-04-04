@@ -2382,7 +2382,7 @@ no TM modes.</string>
                      </widget>
                     </item>
                     <item row="0" column="0">
-                     <widget class="QCheckBox" name="portRectWaveguidePortActive">
+                     <widget class="QCheckBox" name="portRectWaveguideActive">
                       <property name="text">
                        <string>port is active</string>
                       </property>
