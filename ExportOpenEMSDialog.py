@@ -164,6 +164,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.portSettingsAddButton.clicked.connect(self.portSettingsAddButtonClicked)
 		self.form.portSettingsRemoveButton.clicked.connect(self.portSettingsRemoveButtonClicked)
 		self.form.portSettingsUpdateButton.clicked.connect(self.portSettingsUpdateButtonClicked)
+		self.guiSignals.portsChanged.connect(self.portsChanged)
 
 		self.form.lumpedPartSettingsAddButton.clicked.connect(self.lumpedPartSettingsAddButtonClicked)
 		self.form.lumpedPartSettingsRemoveButton.clicked.connect(self.lumpedPartSettingsRemoveButtonClicked)
@@ -445,19 +446,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				print(currItem.text(0))
 				self.objectDrawGrid(currItem)
 
-	#
-	#	Update NF2FF list at POSTPROCESSING TAB
-	#
-	def updateNF2FFList(self):
-		#
-		#	If Postprocessing tab is actived then fill combobox with nf2ff possible objects
-		#
-		self.form.portNf2ffObjectList.clear()
+	def updatePortCombobox(self, comboboxRef, allowedPortTypes=[], isActive=None):
+		currentItemText = comboboxRef.currentText()
+		comboboxRef.clear()
+
+		currentIndex = 0
+		addedItemCounter = 0
 		for k in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItemCount()):
 			if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).text(0) == "Port"):
 				for l in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItem(k).childCount()):
-					if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
-						self.form.portNf2ffObjectList.addItem(self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0))
+					portSettings = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).data(0, QtCore.Qt.UserRole)
+					if ((len(allowedPortTypes) == 0 or portSettings.type in allowedPortTypes) and (isActive == None or portSettings.isActive == isActive)):
+						newItemText = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0)
+						comboboxRef.addItem(newItemText)
+
+						if (newItemText == currentItemText):
+							currentIndex = addedItemCounter
+
+						addedItemCounter += 1
+
+		comboboxRef.setCurrentIndex(currentIndex)
 
 	def updateObjectAssignmentRightTreeWidgetItemData(self, groupName, itemName, data):
 		updatedItems = self.form.objectAssignmentRightTreeWidget.findItems(
@@ -1251,6 +1259,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		self.materialAddPEC()
 
+		# Inform GUI that there are some ports updated
+		self.guiSignals.portsChanged.emit("update")
+
 	#
 	#	Change current scripts type generator based on radiobutton from UI
 	#		if no type by accident is choosed, octave script generator is used
@@ -1986,8 +1997,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (not isDuplicityName):
 			self.guiHelpers.addSettingsItemGui(settingsInst)
-			if (settingsInst.type == "nf2ff box"):
-				self.updateNF2FFList()
+			self.guiSignals.portsChanged.emit("add")
 
 	def portSettingsRemoveButtonClicked(self, name = None):
 		#if there is no name it's called from UI, if there is name it's called as function this is done to have one function removing port properly for both cases
@@ -2018,9 +2028,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
 
-		# If NF2FF box removed then update NF2FF list on POSTPROCESSING TAB
-		if (portGroupItem.data(0, QtCore.Qt.UserRole).type == "nf2ff box"):
-			self.updateNF2FFList()
+		# Emit signal about remove port to update comboboxes
+		self.guiSignals.portsChanged.emit("remove")
 
 	def portSettingsUpdateButtonClicked(self):
 		### capture UI settings
@@ -2043,6 +2052,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if (selectedItems[0].text(0) != settingsInst.name):
 				self.guiSignals.portRenamed.emit(selectedItems[0].text(0), settingsInst.name)
 
+			# Emit signal about remove port to update comboboxes
+			self.guiSignals.portsChanged.emit("update")
+
+			# Display message to user
 			self.guiHelpers.displayMessage(f"Port {settingsInst.name} was updated", forceModal=False)
 
 	def portSettingsTypeChoosed(self):
@@ -2093,6 +2106,24 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.portDirectionInput.setEnabled(False)
+
+	@Slot(str)
+	def portsChanged(self, operation):
+		"""
+		Triggers when there is change in ports tab and updates related settings (now mostly comboboxes for Sxx script generation) in gui accordingly:
+			- add new port
+			- remove port
+			- update port
+		:param operation: "add" | "remove" | "update"
+		:return: None
+		"""
+		print(f"@Slot materialsChanged: {operation}")
+
+		if (operation in ["add", "remove", "update"]):
+			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
+			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], True)
+			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], False)
+			self.updatePortCombobox(self.form.portNf2ffObjectList, ["nf2ff box"])
 
 	def updateMaterialComboBoxAllMaterials(self, comboboxRef):
 		"""
@@ -2565,18 +2596,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 
 		elif (currSetting.type.lower() == "et dump"):
-			self.form.portResistanceInput.setEnabled(False)
-			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.etDumpPortRadioButton.click()
 
 		elif (currSetting.type.lower() == "ht dump"):
-			self.form.portResistanceInput.setEnabled(False)
-			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.htDumpPortRadioButton.click()
 
 		elif (currSetting.type.lower() == "nf2ff box"):
-			self.form.portResistanceInput.setEnabled(False)
-			self.form.portResistanceUnitsInput.setEnabled(False)
 			self.form.nf2ffBoxPortRadioButton.click()
 
 		elif (currSetting.type.lower() == "curve"):
