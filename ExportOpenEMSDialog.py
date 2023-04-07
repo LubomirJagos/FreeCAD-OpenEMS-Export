@@ -126,7 +126,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	Left Column - FreeCAD objects list
 		#########################################################################################################
 
-		self.initLeftColumnTopLevelItems()	
+		self.internalObjectNameLabelList = {}
+
+		self.initLeftColumnTopLevelItems()
 		self.form.objectAssignmentLeftTreeWidget.itemDoubleClicked.connect(self.objectAssignmentLeftTreeWidgetItemDoubleClicked)	
 		
 		#########################################################################################################
@@ -281,7 +283,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.observer.objectCreated += self.freecadObjectCreated
 		self.observer.objectChanged += self.freecadObjectChanged
 		self.observer.objectDeleted += self.freecadBeforeObjectDeleted
-		self.observer.startObservation()	
+		self.observer.startObservation()
 
 		#
 		#	add default PEC material
@@ -306,13 +308,39 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	
 	def freecadObjectChanged(self, obj, prop):
 		print("freecadObjectChanged :{} ('{}') property changed: {}".format(obj.FullName, obj.Label, prop))
+
+		#property label was changes, object was renamed in freecad
 		if prop == 'Label':
 			# The label (displayed name) of an object has changed.
 			# (TODO) Update all mentions in the ObjectAssigments panel.
+
+			#
+			#	Rename items in right column where objects are assigned to categories
+			#
+			itemsWithOriginalLabel = self.form.objectAssignmentRightTreeWidget.findItems(self.internalObjectNameLabelList[obj.Name], QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive)
+			print(f"RIGHT ASSIGNMENT WIDGET found {len(itemsWithOriginalLabel)}")
+			for itemToRename in itemsWithOriginalLabel:
+				reResult = re.search("([A-Za-z]*)SettingsItem'", str(type(itemToRename.data(0, QtCore.Qt.UserRole))))
+				if (reResult.group(1).lower() == "freecad"):
+					itemToRename.setText(0, obj.Label)
+
+			#
+			#	Renames items in priority list and mesh priority list, names there are like:
+			#		Material, some name, objectName
+			#							 so this object name from end must be replace by new name
+			#
+			itemsWithOriginalLabel = []
+			itemsWithOriginalLabel += self.form.objectAssignmentPriorityTreeView.findItems(self.internalObjectNameLabelList[obj.Name], QtCore.Qt.MatchEndsWith | QtCore.Qt.MatchFlag.MatchRecursive)
+			itemsWithOriginalLabel += self.form.meshPriorityTreeView.findItems(self.internalObjectNameLabelList[obj.Name], QtCore.Qt.MatchEndsWith | QtCore.Qt.MatchFlag.MatchRecursive)
+			print(f"OBJECT PRIORITIES found {len(itemsWithOriginalLabel)}")
+			for itemToRename in itemsWithOriginalLabel:
+				newLabel = itemToRename.text(0)
+				newLabel = newLabel[:-len(self.internalObjectNameLabelList[obj.Name])] + obj.Label
+				itemToRename.setText(0, newLabel)
+
 			filterStr = self.form.objectAssignmentFilterLeft.text()
 			self.initLeftColumnTopLevelItems(filterStr)
-		
-		
+
 	def freecadBeforeObjectDeleted(self,obj):
 		# event is generated before object is being removed, so observing instances have to 
 		# (TODO) un-list the object without drawing upon the FreeCAD objects list, and
@@ -321,8 +349,39 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#    Advanced: remember and gray out deleted objects to allow settings to be restored when
 		#    the user brings the object back with Redo.
 		print("freecadObjectDeleted :{} ('{}')".format(obj.FullName, obj.Label))
-		
-		
+
+		#
+		#	Rename items in right column where objects are assigned to categories
+		#
+		itemsWithOriginalLabel = self.form.objectAssignmentRightTreeWidget.findItems(obj.Label, QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive)
+		for itemToRename in itemsWithOriginalLabel:
+			reResult = re.search("([A-Za-z]*)SettingsItem'", str(type(itemToRename.data(0, QtCore.Qt.UserRole))))
+			if (reResult.group(1).lower() == "freecad"):
+				itemToRename.parent().removeChild(itemToRename)
+
+		#
+		#	Renames items in priority list and mesh priority list, names there are like:
+		#		Material, some name, objectName
+		#							 so this object name from end must be replace by new name
+		#
+		itemsWithOriginalLabel = self.form.objectAssignmentPriorityTreeView.findItems(obj.Label, QtCore.Qt.MatchEndsWith | QtCore.Qt.MatchFlag.MatchRecursive)
+		for itemToRename in itemsWithOriginalLabel:
+			self.form.objectAssignmentPriorityTreeView.invisibleRootItem().removeChild(itemToRename)
+
+		itemsWithOriginalLabel = self.form.meshPriorityTreeView.findItems(obj.Label, QtCore.Qt.MatchEndsWith | QtCore.Qt.MatchFlag.MatchRecursive)
+		for itemToRename in itemsWithOriginalLabel:
+			self.form.meshPriorityTreeView.invisibleRootItem().removeChild(itemToRename)
+
+		#
+		#	Remove from left widget object because this is running before delete so if init function for left widget would be executed object will be still there
+		#
+		itemsWithOriginalLabel = self.form.objectAssignmentLeftTreeWidget.findItems(obj.Label, QtCore.Qt.MatchEndsWith | QtCore.Qt.MatchFlag.MatchRecursive)
+		for itemToRename in itemsWithOriginalLabel:
+			self.form.meshPriorityTreeView.invisibleRootItem().removeChild(itemToRename)
+
+		# remove object label from internal list
+		del self.internalObjectNameLabelList[obj.Name]
+
 	def simParamsMinDecrementValueChanged(self, newValue):
 		if newValue == 0:
 			s = '( -inf dB )'
@@ -870,9 +929,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		items = self.freeCADHelpers.getOpenEMSObjects(filterStr)
 		treeItems = []
 		for i in items:
-			print("openEMS object to export:" + i.Label)
+			#print("openEMS object to export:" + i.Label)
 
-			# ADDING ITEMS with UserData object which storethem in intelligent way
+			# ADDING ITEMS with UserData object which store them in intelligent way
 			#
 			topItem = QtGui.QTreeWidgetItem([i.Label])
 			itemData = FreeCADSettingsItem(name = i.Label, freeCadId = i.Name)
@@ -883,9 +942,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				topItem.setIcon(0, QtGui.QIcon("./img/curve.svg"))
 			else:
 				topItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
-			treeItems.append(topItem)
 
-		
+			treeItems.append(topItem)
+			self.internalObjectNameLabelList[i.Name] = i.Label		#add object label into internal list for case when label change to update all object labels in GUI
+
 		self.form.objectAssignmentLeftTreeWidget.insertTopLevelItems(0, treeItems)
 
 	#
