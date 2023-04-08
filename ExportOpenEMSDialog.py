@@ -1339,16 +1339,24 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def writeNf2ffButtonClicked(self):
 		nf2ffBoxName = self.form.portNf2ffObjectList.currentText()
+		nf2ffBoxInputPortName = self.form.portNf2ffInput.currentText()
+		freqCount = self.form.portNf2ffFreqCount.value()
 
 		if (len(nf2ffBoxName) == 0):
 			self.guiHelpers.displayMessage("NF2FF port not set, script will not be generated.")
+			return
+		if (len(nf2ffBoxInputPortName) == 0):
+			self.guiHelpers.displayMessage("NF2FF input port not set, script will not be generated.")
 			return
 
 		if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxName)):
 			self.guiHelpers.displayMessage(f"Port {nf2ffBoxName} has no objects assigned, script will not be generated.")
 			return
+		if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxInputPortName)):
+			self.guiHelpers.displayMessage(f"Port {nf2ffBoxInputPortName} has no objects assigned, script will not be generated.")
+			return
 
-		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName)
+		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName, nf2ffBoxInputPortName, freqCount)
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -2179,9 +2187,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (operation in ["add", "remove", "update"]):
 			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
-			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], True)
-			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], False)
+			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
+			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=False)
 			self.updatePortCombobox(self.form.portNf2ffObjectList, ["nf2ff box"])
+			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
 
 	def updateMaterialComboBoxAllMaterials(self, comboboxRef):
 		"""

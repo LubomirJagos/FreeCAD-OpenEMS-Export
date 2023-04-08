@@ -1434,7 +1434,7 @@ class OctaveScriptLinesGenerator:
     #
     #	Write NF2FF Button clicked, generate script to display far field pattern
     #
-    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName=""):
+    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName="", nf2ffBoxInputPortName="", freqCount=501):
         genScript = ""
         genScript += "% Plot far field for structure.\n"
         genScript += "%\n"
@@ -1471,6 +1471,7 @@ class OctaveScriptLinesGenerator:
         #   Current NF2FF box index
         #
         currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName]
+        currentNF2FFInputPortIndex = self.internalPortIndexNamesList[nf2ffBoxInputPortName]
 
         thetaStart = str(self.form.portNf2ffThetaStart.value())
         thetaStop = str(self.form.portNf2ffThetaStop.value())
@@ -1483,8 +1484,10 @@ class OctaveScriptLinesGenerator:
         #
         #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, f_res and frequencies count
         #
-        genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
+        genScript += "freq = linspace(max([0,f0-fc]), f0+fc, " + str(freqCount) + ");\n"
         genScript += "f_res = f0;\n"
+        genScript += "port{" + str(currentNF2FFInputPortIndex) + "} = calcPort(port{" + str(currentNF2FFInputPortIndex) + "}, Sim_Path, freq);\n"
+        genScript += "\n"
 
         genScript += """
 %% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1492,7 +1495,7 @@ class OctaveScriptLinesGenerator:
 %
 %	WARNING - hardwired 1st port
 %
-P_in_0 = interp1(freq, port{1}.P_acc, f0);
+P_in_0 = interp1(freq, port{""" + str(currentNF2FFInputPortIndex) + """}.P_acc, f0);
 
 % calculate the far field at phi=0 degrees and at phi=90 degrees
 
@@ -1545,6 +1548,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRang
 E_far_normalized = nf2ff.E_norm{1} / max(nf2ff.E_norm{1}(:)) * nf2ff.Dmax;
 DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3);
 """
+
         #
         # WRITE OpenEMS Script file into current dir
         #

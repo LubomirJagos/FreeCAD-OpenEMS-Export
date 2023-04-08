@@ -351,7 +351,7 @@ class IniFile:
 
         settings.beginGroup("POSTPROCESSING-DefaultName")
         settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
-        settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
+        settings.setValue("nf2ffFreqCount", self.form.portNf2ffFreqCount.value())
         settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
         settings.setValue("nf2ffThetaStop", self.form.portNf2ffThetaStop.value())
         settings.setValue("nf2ffThetaStep", self.form.portNf2ffThetaStep.value())
@@ -830,13 +830,13 @@ class IniFile:
                     if index >= 0:
                         self.form.portNf2ffObjectList.setCurrentIndex(index)
 
-                    self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreq"))
                     self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
                     self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
                     self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
                     self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
                     self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
                     self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
+                    self.form.portNf2ffFreqCount.setValue(settings.value("nf2ffFreqCount"))
                 except:
                     pass
 
