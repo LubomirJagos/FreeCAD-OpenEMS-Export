@@ -20,6 +20,9 @@ class OctaveScriptLinesGenerator:
         self.form = form
         self.statusBar = statusBar
 
+        self.internalPortIndexNamesList = {}
+        self.internalNF2FFIndexNamesList = {}
+
         #
         # GUI helpers function like display message box and so
         #
@@ -199,7 +202,7 @@ class OctaveScriptLinesGenerator:
 
         return genScript
 
-    def getMaterialDefinitionsScriptLines(self, items, outputDir=None):
+    def getMaterialDefinitionsScriptLines(self, items, outputDir=None, generateObjects=True):
         genScript = ""
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -259,90 +262,91 @@ class OctaveScriptLinesGenerator:
                 print("\t" + childName)
 
             # now export material children, if it's object export as STL, if it's curve export as curve
-            for k in range(item.childCount()):
-                childName = item.child(k).text(0)
+            if (generateObjects):
+                for k in range(item.childCount()):
+                    childName = item.child(k).text(0)
 
-                #
-                #	getting item priority
-                #
-                objModelPriorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
-                objModelPriority = self.getItemPriority(objModelPriorityItemName)
-
-                # getting reference to FreeCAD object
-                freeCadObj = [i for i in App.ActiveDocument.Objects if (i.Label) == childName][0]
-
-                if (freeCadObj.Name.find("Discretized_Edge") > -1):
                     #
-                    #	Adding discretized curve
+                    #	getting item priority
                     #
+                    objModelPriorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
+                    objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
-                    curvePoints = freeCadObj.Points
-                    genScript += "points = [];\n"
-                    for k in range(0, len(curvePoints)):
-                        genScript += "points(1," + str(k + 1) + ") = " + str(curvePoints[k].x) + ";"
-                        genScript += "points(2," + str(k + 1) + ") = " + str(curvePoints[k].y) + ";"
-                        genScript += "points(3," + str(k + 1) + ") = " + str(curvePoints[k].z) + ";"
-                        genScript += "\n"
+                    # getting reference to FreeCAD object
+                    freeCadObj = [i for i in App.ActiveDocument.Objects if (i.Label) == childName][0]
 
-                    genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                        objModelPriority) + ", points);\n"
-                    print("Curve added to generated script using its points.")
+                    if (freeCadObj.Name.find("Discretized_Edge") > -1):
+                        #
+                        #	Adding discretized curve
+                        #
 
-                elif (freeCadObj.Name.find("Sketch") > -1):
-                    #
-                    #	Adding JUST LINE SEGMENTS FROM SKETCH, THIS NEED TO BE IMPROVED TO PROPERLY GENERATE CURVE FROM SKETCH,
-                    #	there can be circle, circle arc and maybe something else in sketch geometry
-                    #
-
-                    for geometryObj in freeCadObj.Geometry:
-                        if (str(type(geometryObj)).find("LineSegment") > -1):
-                            genScript += "points = [];\n"
-                            genScript += "points(1,1) = " + str(geometryObj.StartPoint.x) + ";"
-                            genScript += "points(2,1) = " + str(geometryObj.StartPoint.y) + ";"
-                            genScript += "points(3,1) = " + str(geometryObj.StartPoint.z) + ";"
+                        curvePoints = freeCadObj.Points
+                        genScript += "points = [];\n"
+                        for k in range(0, len(curvePoints)):
+                            genScript += "points(1," + str(k + 1) + ") = " + str(curvePoints[k].x) + ";"
+                            genScript += "points(2," + str(k + 1) + ") = " + str(curvePoints[k].y) + ";"
+                            genScript += "points(3," + str(k + 1) + ") = " + str(curvePoints[k].z) + ";"
                             genScript += "\n"
-                            genScript += "points(1,2) = " + str(geometryObj.EndPoint.x) + ";"
-                            genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";"
-                            genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
-                            genScript += "\n"
-                            genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                                objModelPriority) + ", points);\n"
 
-                    print("Line segments from sketch added.")
+                        genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
+                            objModelPriority) + ", points);\n"
+                        print("Curve added to generated script using its points.")
 
-                else:
-                    #
-                    #	Adding part as STL model, first export it into file and that file load using octave openEMS function
-                    #
+                    elif (freeCadObj.Name.find("Sketch") > -1):
+                        #
+                        #	Adding JUST LINE SEGMENTS FROM SKETCH, THIS NEED TO BE IMPROVED TO PROPERLY GENERATE CURVE FROM SKETCH,
+                        #	there can be circle, circle arc and maybe something else in sketch geometry
+                        #
 
-                    currDir, baseName = self.getCurrDir()
-                    stlModelFileName = childName + "_gen_model.stl"
+                        for geometryObj in freeCadObj.Geometry:
+                            if (str(type(geometryObj)).find("LineSegment") > -1):
+                                genScript += "points = [];\n"
+                                genScript += "points(1,1) = " + str(geometryObj.StartPoint.x) + ";"
+                                genScript += "points(2,1) = " + str(geometryObj.StartPoint.y) + ";"
+                                genScript += "points(3,1) = " + str(geometryObj.StartPoint.z) + ";"
+                                genScript += "\n"
+                                genScript += "points(1,2) = " + str(geometryObj.EndPoint.x) + ";"
+                                genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";"
+                                genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
+                                genScript += "\n"
+                                genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
+                                    objModelPriority) + ", points);\n"
 
-                    genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "', " + str(
-                        objModelPriority) + ", [currDir '/" + stlModelFileName + "'], 'Transform', {'Scale', fc_unit/unit});\n"
+                        print("Line segments from sketch added.")
 
-                    #   _____ _______ _                                        _   _
-                    #  / ____|__   __| |                                      | | (_)
-                    # | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __
-                    #  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \
-                    #  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
-                    # |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
-                    #                           __/ |
-                    #                          |___/
-                    #
-                    # going through each concrete material items and generate their .stl files
-
-                    currDir = os.path.dirname(App.ActiveDocument.FileName)
-                    partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
-
-                    #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
-                    if (not outputDir is None):
-                        exportFileName = f"{outputDir}/{stlModelFileName}"
                     else:
-                        exportFileName = f"{currDir}/{stlModelFileName}"
+                        #
+                        #	Adding part as STL model, first export it into file and that file load using octave openEMS function
+                        #
 
-                    Mesh.export(partToExport, exportFileName)
-                    print("Material object exported as STL into: " + stlModelFileName)
+                        currDir, baseName = self.getCurrDir()
+                        stlModelFileName = childName + "_gen_model.stl"
+
+                        genScript += "CSX = ImportSTL(CSX, '" + currSetting.getName() + "', " + str(
+                            objModelPriority) + ", [currDir '/" + stlModelFileName + "'], 'Transform', {'Scale', fc_unit/unit});\n"
+
+                        #   _____ _______ _                                        _   _
+                        #  / ____|__   __| |                                      | | (_)
+                        # | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __
+                        #  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \
+                        #  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
+                        # |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
+                        #                           __/ |
+                        #                          |___/
+                        #
+                        # going through each concrete material items and generate their .stl files
+
+                        currDir = os.path.dirname(App.ActiveDocument.FileName)
+                        partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
+
+                        #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
+                        if (not outputDir is None):
+                            exportFileName = f"{outputDir}/{stlModelFileName}"
+                        else:
+                            exportFileName = f"{currDir}/{stlModelFileName}"
+
+                        Mesh.export(partToExport, exportFileName)
+                        print("Material object exported as STL into: " + stlModelFileName)
 
             genScript += "\n"
 
@@ -436,6 +440,7 @@ class OctaveScriptLinesGenerator:
                                      'portR*portUnits, portStart, portStop, portDirection' + \
                                      isActiveStr.get(currSetting.isActive) + ');\n'
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'microstrip'):
 
@@ -494,6 +499,7 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.mslMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'circular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
@@ -545,6 +551,7 @@ class OctaveScriptLinesGenerator:
                                      str(currSetting.polarizationAngle) + "',"  + \
                                      (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
@@ -594,6 +601,7 @@ class OctaveScriptLinesGenerator:
                                     "'" + currSetting.modeName+ "'," + \
                                     (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'et dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
@@ -625,7 +633,12 @@ class OctaveScriptLinesGenerator:
                             genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
                         # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
 
+                        #
+                        #   ATTENTION this is NF2FF box counter
+                        #
+                        self.internalNF2FFIndexNamesList[currSetting.name] = genNF2FFBoxCounter
                         genNF2FFBoxCounter += 1
+
                     elif (currSetting.getType() == 'coaxial'):
                         portStartX = _r(sf * bbCoords.XMin)
                         portStartY = _r(sf * bbCoords.YMin)
@@ -709,6 +722,7 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.coaxialMeasPlaneShiftValue > 0) + \
                                      ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'coplanar'):
 
@@ -819,6 +833,7 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.coplanarMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'stripline'):
                         portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
@@ -891,6 +906,7 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.striplineMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'curve'):
                         if (_bool(currSetting.direction) == False):
@@ -921,6 +937,7 @@ class OctaveScriptLinesGenerator:
                                      "portStart, portStop" + \
                                      isActiveStr.get(currSetting.isActive) + ");\n"
 
+                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
                         genScriptPortCount += 1
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
@@ -941,12 +958,11 @@ class OctaveScriptLinesGenerator:
         genScript += "% LUMPED PART\n"
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
-        for [item, currSetting] in items:
-            genScript += "% LUMPED PARTS " + currSetting.getName() + "\n"
+        for [item, currentSetting] in items:
+            genScript += "% LUMPED PARTS " + currentSetting.getName() + "\n"
 
             # traverse through all children item for this particular lumped part settings
             objs = App.ActiveDocument.Objects
-            objsExport = []
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
                 print("#")
@@ -989,8 +1005,7 @@ class OctaveScriptLinesGenerator:
 
                     # WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
                     genScript += "[CSX] = AddLumpedElement(CSX, '" + lumpedPartName + "', 2, 'Caps', 1, " + lumpedPartParams + ");\n"
-                    genScript += "[CSX] = AddBox(CSX, '" + lumpedPartName + "', " + str(
-                        priorityIndex) + ", lumpedPartStart, lumpedPartStop);\n"
+                    genScript += "[CSX] = AddBox(CSX, '" + lumpedPartName + "', " + str(priorityIndex) + ", lumpedPartStart, lumpedPartStop);\n"
 
             genScript += "\n"
 
@@ -1419,136 +1434,43 @@ class OctaveScriptLinesGenerator:
     #
     #	Write NF2FF Button clicked, generate script to display far field pattern
     #
-    def writeNf2ffButtonClicked(self, outputDir=None):
+    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName=""):
         genScript = ""
-        genScript += """close all
-clear
-clc
+        genScript += "% Plot far field for structure.\n"
+        genScript += "%\n"
 
-Sim_Path = "tmp";
-CSX = InitCSX();
+        genScript += self.getInitScriptLines()
 
-"""
+        genScript += "Sim_Path = 'tmp';\n"
+        genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
+        genScript += "display(currDir);\n"
+        genScript += "\n"
 
-        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
-        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+        # List categories and items.
+        itemsByClassName = self.getItemsByClassName()
 
-        excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
-                                                                                 QtCore.Qt.MatchFixedString)
-        if len(excitationCategory) >= 0:
-            # FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-            item = excitationCategory[0].child(0)
-            currSetting = item.data(0, QtCore.Qt.UserRole)  # at index 0 is Default Excitation
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
 
-            if (currSetting.getType() == 'sinusodial'):
-                genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
-                pass
-            elif (currSetting.getType() == 'gaussian'):
-                genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                pass
-            elif (currSetting.getType() == 'custom'):
-                genScript += "%custom\n"
-                pass
-            pass
+        # Write excitation definition.
+        genScript += self.getExcitationScriptLines(definitionsOnly=True)
 
-        genScript += """
-freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-f_res = f0;
-"""
-        genScriptPortCount = 1
-        genNF2FFBoxCounter = 1
-        currentNF2FFBoxIndex = 1
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir, generateObjects=False)
 
-        allItems = []
-        childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-        for k in range(childCount):
-            allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 
-        for m in range(len(allItems)):
-            currItem = allItems[m]
+        # Write NF2FF probe grid definitions.
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
-            for k in range(currItem.childCount()):
-                item = currItem.child(k)
-                itemData = item.data(0, QtCore.Qt.UserRole)
-                if (itemData):
-                    if (itemData.__class__.__name__ == "PortSettingsItem"):
-                        print("Port Settings detected")
-                        currSetting = item.data(0, QtCore.Qt.UserRole)
-                        print("#")
-                        print("#PORT")
-                        print("#name: " + currSetting.getName())
-                        print("#type: " + currSetting.getType())
+        # Write port definitions.
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
-                        objs = App.ActiveDocument.Objects
-                        for k in range(item.childCount()):
-                            childName = item.child(k).text(0)
-
-                            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                            genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
-                            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-
-                            print("##Children:")
-                            print("\t" + childName)
-                            freecadObjects = [i for i in objs if (i.Label) == childName]
-
-                            # print(freecadObjects)
-                            for obj in freecadObjects:
-                                # BOUNDING BOX
-                                bbCoords = obj.Shape.BoundBox
-
-                                #
-                                #	getting item priority
-                                #
-                                priorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
-                                priorityIndex = self.getItemPriority(priorityItemName)
-
-                                #
-                                # PORT openEMS GENERATION INTO VARIABLE
-                                #
-                                if (currSetting.getType() == 'lumped' and currSetting.isActive):
-                                    genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(
-                                        bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-                                    genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(
-                                        bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-                                    genScript += 'portR = ' + str(currSetting.R) + ';\n'
-                                    genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-
-                                    if (currSetting.direction == 'x'):
-                                        genScript += 'portDirection = [1 0 0];\n'
-                                    elif (currSetting.direction == 'y'):
-                                        genScript += 'portDirection = [0 1 0];\n'
-                                    elif (currSetting.direction == 'z'):
-                                        genScript += 'portDirection = [0 0 1];\n'
-
-                                    genScript_isActive = ""
-                                    if (currSetting.isActive):
-                                        genScript_isActive = " , true"
-
-                                    genScript += '[CSX port{' + str(
-                                        genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(
-                                        priorityIndex) + ', ' + str(
-                                        genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
-                                    genScript += 'port{' + str(genScriptPortCount) + '} = calcPort( port{' + str(
-                                        genScriptPortCount) + '}, Sim_Path, freq);\n'
-
-                                    genScriptPortCount += 1
-                                elif (currSetting.getType() == 'nf2ff box'):
-                                    genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(
-                                        bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-                                    genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(
-                                        bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-                                    genScript += "[CSX nf2ffBox{" + str(
-                                        genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
-
-                                    # update nf2ffBox index for which far field diagram will be calculated in octave script
-                                    if self.form.portNf2ffObjectList.currentText() == currSetting.name:
-                                        currentNF2FFBoxIndex = genNF2FFBoxCounter
-
-                                    # increase nf2ff port counter
-                                    genNF2FFBoxCounter += 1
+        #
+        #   Current NF2FF box index
+        #
+        currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName]
 
         thetaStart = str(self.form.portNf2ffThetaStart.value())
         thetaStop = str(self.form.portNf2ffThetaStop.value())
@@ -1557,6 +1479,12 @@ f_res = f0;
         phiStart = str(self.form.portNf2ffPhiStart.value())
         phiStop = str(self.form.portNf2ffPhiStop.value())
         phiStep = str(self.form.portNf2ffPhiStep.value())
+
+        #
+        #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, f_res and frequencies count
+        #
+        genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
+        genScript += "f_res = f0;\n"
 
         genScript += """
 %% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1634,34 +1562,40 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
         print('Script to display far field written into: ' + fileName)
         self.guiHelpers.displayMessage('Script to display far field written into: ' + fileName, forceModal=False)
 
-    def drawS11ButtonClicked(self, outputDir=None):
+    def drawS11ButtonClicked(self, outputDir=None, portName=""):
         genScript = ""
+        genScript += "% Plot S11\n"
+        genScript += "%\n"
 
-        excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
-                                                                                 QtCore.Qt.MatchFixedString)
-        if len(excitationCategory) >= 0:
-            # FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-            item = excitationCategory[0].child(0)
-            currSetting = item.data(0, QtCore.Qt.UserRole)  # at index 0 is Default Excitation
+        genScript += self.getInitScriptLines()
 
-            if (currSetting.getType() == 'sinusodial'):
-                genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
-                pass
-            elif (currSetting.getType() == 'gaussian'):
-                genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                pass
-            elif (currSetting.getType() == 'custom'):
-                genScript += "%custom\n"
-                pass
-            pass
+        genScript += "Sim_Path = 'tmp';\n"
+        genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
+        genScript += "display(currDir);\n"
+        genScript += "\n"
+
+        # List categories and items.
+        itemsByClassName = self.getItemsByClassName()
+
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
+
+        # Write excitation definition.
+        genScript += self.getExcitationScriptLines(definitionsOnly=True)
+
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir, generateObjects=False)
+
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write port definitions.
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         genScript += """%% postprocessing & do the plots
 freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-U = ReadUI( {'port_ut1','et'}, 'tmp/', freq ); % time domain/freq domain voltage
-I = ReadUI( 'port_it1', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
+U = ReadUI( {'port_ut""" + str(self.internalPortIndexNamesList[portName]) + """','et'}, 'tmp/', freq ); % time domain/freq domain voltage
+I = ReadUI( 'port_it""" + str(self.internalPortIndexNamesList[portName]) + """', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
 
 % plot time domain voltage
 figure
@@ -1736,13 +1670,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         print('Draw result from simulation file written into: ' + fileName)
         self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName, forceModal=False)
 
-        # run octave script using command shell
-        cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
-        print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        #print(result)
-
-    def drawS21ButtonClicked(self, outputDir=None):
+    def drawS21ButtonClicked(self, outputDir=None, sourcePortName="", targetPortName=""):
         genScript = ""
         genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
         genScript += "%\n"
@@ -1750,23 +1678,29 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         genScript += self.getInitScriptLines()
 
         genScript += "Sim_Path = 'tmp';\n"
-        genScript += "CSX = InitCSX('CoordSystem',0);\n"
+        genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
+        genScript += "display(currDir);\n"
         genScript += "\n"
 
         # List categories and items.
-
         itemsByClassName = self.getItemsByClassName()
 
-        # Write excitation definition.
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
 
+        # Write excitation definition.
         genScript += self.getExcitationScriptLines(definitionsOnly=True)
 
-        # Write port definitions.
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir, generateObjects=False)
 
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write port definitions.
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         # Post-processing and plot generation.
-
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% POST-PROCESSING AND PLOT GENERATION\n"
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -1774,8 +1708,8 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
         genScript += "port = calcPort( port, Sim_Path, freq);\n"
         genScript += "\n"
-        genScript += "s11 = port{1}.uf.ref./ port{1}.uf.inc;\n"
-        genScript += "s21 = port{2}.uf.ref./ port{1}.uf.inc;\n"
+        genScript += "s11 = port{" + str(self.internalPortIndexNamesList[sourcePortName]) + "}.uf.ref./ port{" + str(self.internalPortIndexNamesList[sourcePortName]) + "}.uf.inc;\n"
+        genScript += "s21 = port{" + str(self.internalPortIndexNamesList[targetPortName]) + "}.uf.ref./ port{" + str(self.internalPortIndexNamesList[sourcePortName]) + "}.uf.inc;\n"
         genScript += "\n"
         genScript += "s11_dB = 20*log10(abs(s11));\n"
         genScript += "s21_dB = 20*log10(abs(s21));\n"
@@ -1827,10 +1761,3 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         f.close()
         print('Draw result from simulation file written to: ' + fileName)
         self.guiHelpers.displayMessage('Draw result from simulation file written to: ' + fileName, forceModal=False)
-
-        # Run octave script using command shell.
-
-        cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
-        print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        print(result)

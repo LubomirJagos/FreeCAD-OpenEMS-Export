@@ -203,9 +203,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		self.form.eraseAuxGridButton.clicked.connect(self.eraseAuxGridButtonClicked)														# Clicked on "Erase aux Grid"
 		self.form.abortSimulationButton.clicked.connect(lambda: self.abortSimulationButtonClicked(self.simulationOutputDir))													# Clicked on "Write ABORT Simulation File"
-		self.form.drawS11Button.clicked.connect(lambda: self.scriptGenerator.drawS11ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S11 Script"
-		self.form.drawS21Button.clicked.connect(lambda: self.scriptGenerator.drawS21ButtonClicked(self.simulationOutputDir))			# Clicked on "Write Draw S21 Script"
-		self.form.writeNf2ffButton.clicked.connect(lambda: self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir))	# Clicked on "Write NF2FF"
+		self.form.drawS11Button.clicked.connect(self.drawS11ButtonClicked)			# Clicked on "Write Draw S11 Script"
+		self.form.drawS21Button.clicked.connect(self.drawS21ButtonClicked)			# Clicked on "Write Draw S21 Script"
+		self.form.writeNf2ffButton.clicked.connect(self.writeNf2ffButtonClicked)	# Clicked on "Write NF2FF"
 
 		#
 		# GRID
@@ -1117,6 +1117,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			else:
 				print("Item " + leftItem.text(0) + " added into " + rightItem.text(0))
 	
+			# CHECK FOR DUPLICATES OF object in category where object is added
+			isObjAlreadyInCategory = False
+			itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
+			for item in itemWithSameName:
+				print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
+				if (item.parent() == rightItem):
+					isObjAlreadyInCategory = True
+			if (isObjAlreadyInCategory):
+				self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
+				return
+
 			#
 			# ADD ITEM INTO RIGHT LIST, first clone is inserted
 			#
@@ -1291,6 +1302,53 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"----> start saving file into {self.simulationOutputDir}")
 
 		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
+
+	def drawS11ButtonClicked(self):
+		portName = self.form.drawS11Port.currentText()
+
+		if (len(portName) == 0):
+			self.guiHelpers.displayMessage("Port not set, script will not be generated.")
+			return
+		if (not self.guiHelpers.hasPortSomeObjects(portName)):
+			self.guiHelpers.displayMessage(f"Port {portName} has no objects assigned, script will not be generated.")
+			return
+
+		self.scriptGenerator.drawS11ButtonClicked(self.simulationOutputDir, portName)
+		self.guiHelpers.displayMessage("S11 script generated.")
+
+	def drawS21ButtonClicked(self):
+		sourcePortName = self.form.drawS21Source.currentText()
+		targetPortName = self.form.drawS21Target.currentText()
+
+		if (len(sourcePortName) == 0):
+			self.guiHelpers.displayMessage("Source port not set, script will not be generated.")
+			return
+		if (len(targetPortName) == 0):
+			self.guiHelpers.displayMessage("Target port not set, script will not be generated.")
+			return
+
+		if (not self.guiHelpers.hasPortSomeObjects(sourcePortName)):
+			self.guiHelpers.displayMessage(f"Port {sourcePortName} has no objects assigned, script will not be generated.")
+			return
+		if (not self.guiHelpers.hasPortSomeObjects(targetPortName)):
+			self.guiHelpers.displayMessage(f"Port {targetPortName} has no objects assigned, script will not be generated.")
+			return
+
+		self.scriptGenerator.drawS21ButtonClicked(self.simulationOutputDir, sourcePortName, targetPortName)
+		self.guiHelpers.displayMessage("S21 script generated.")
+
+	def writeNf2ffButtonClicked(self):
+		nf2ffBoxName = self.form.portNf2ffObjectList.currentText()
+
+		if (len(nf2ffBoxName) == 0):
+			self.guiHelpers.displayMessage("NF2FF port not set, script will not be generated.")
+			return
+
+		if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxName)):
+			self.guiHelpers.displayMessage(f"Port {nf2ffBoxName} has no objects assigned, script will not be generated.")
+			return
+
+		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName)
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 

@@ -5637,7 +5637,7 @@ no TM modes.</string>
                        </size>
                       </property>
                       <property name="text">
-                       <string>source</string>
+                       <string>source (active port)</string>
                       </property>
                      </widget>
                     </item>
@@ -5660,7 +5660,7 @@ no TM modes.</string>
                        </size>
                       </property>
                       <property name="text">
-                       <string>target</string>
+                       <string>target (passive port)</string>
                       </property>
                      </widget>
                     </item>

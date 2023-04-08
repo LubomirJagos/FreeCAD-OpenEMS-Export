@@ -223,3 +223,15 @@ class GuiHelpers:
         index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
         if index >= 0:
             controlRef.setCurrentIndex(index)
+
+    def hasPortSomeObjects(self, portName):
+        hasPortSomeObjects = False
+
+        itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(portName, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchRecursive)
+        for item in itemWithSameName:
+            #test if it's under Port category, so look if parent().parent() is None as it's top level item and then if parent is Port item category
+            if (item.parent().parent() == None and item.parent().text(0) == "Port"):
+                if (item.childCount() > 0):
+                    hasPortSomeObjects = True
+
+        return hasPortSomeObjects
