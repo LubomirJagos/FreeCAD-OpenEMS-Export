@@ -1664,7 +1664,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print("Currently removing material item: " + materialGroupItem.text(0))
 
 		#
-		# 1. There are microstrip ports with material definition which must be removed first
+		# 1. There are microstrip, coaxial and other ports with material definition which must be removed first
 		#
 		portGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
 			"Port",
@@ -1687,19 +1687,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		message += "\n"
 		message += "Do you want to continue?"
 
-		if (not self.guiHelpers.displayYesNoMessage(message)):
+		#
+		#	2. If there are ports using materials which is going to be removed asked for confirmation to remove material and ports will be also removed
+		#
+		if (len(portsWithMaterialToDelete) > 0 and not self.guiHelpers.displayYesNoMessage(message)):
 			return
 		for portToRemove in portsWithMaterialToDelete:
 			self.portSettingsRemoveButtonClicked(portToRemove.text(0))
 
 		#
-		# 2. Remove from Priority list (Object and Grid priority list)
+		# 3. Remove from Priority list (Object and Grid priority list)
 		#
 		priorityName = materialGroupItem.parent().text(0) + ", " + materialGroupItem.text(0);
 		self.guiHelpers.removePriorityName(priorityName)
 
 		#
-		# 3. Remove from Materials list
+		# 4. Remove from Materials list
 		#
 		self.form.materialSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		materialGroupItem.parent().removeChild(materialGroupItem)
