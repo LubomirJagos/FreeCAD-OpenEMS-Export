@@ -827,7 +827,7 @@
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>shift gridlines inward by λmin/20</string>
+                   <string>shift gridlines inward by λmin/20/1000</string>
                   </property>
                  </widget>
                 </item>

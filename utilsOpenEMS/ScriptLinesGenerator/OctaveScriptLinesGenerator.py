@@ -1111,27 +1111,17 @@ class OctaveScriptLinesGenerator:
 
             # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
             if gridSettingsInst.generateLinesInside:
-                delta = self.maxGridResolution_m / refUnit
-                print("GRID generateLinesInside object detected, setting correction constant to " + str(
-                    delta) + " " + refUnitStr)
+                delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
+                print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
             else:
                 delta = 0
 
-            #
-            #	THIS IS HARD WIRED HERE, NEED TO BE CHANGED, LuboJ, September 2022
-            #
-            # DEBUG - DISABLED - generate grid inside using 1/20 of maximum lambda, it's not that equation,
-            #	ie. for 3.4GHz simulation 1/20th is 4mm what is wrong for delta to generate
-            #	gridlines inside object, must be much much lower like 10times
-            delta = 0
-            debugHardLimit = 0.1e-3  # debug hard limit to get gridlines inside STL objects
-
-            xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta - debugHardLimit
-            ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta - debugHardLimit
-            zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta - debugHardLimit
-            xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta + debugHardLimit
-            ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta + debugHardLimit
-            zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta + debugHardLimit
+            xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+            ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+            zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+            xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+            ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+            zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
 
             # Write grid definition.
 
@@ -1598,6 +1588,78 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
 
         genScript += """%% postprocessing & do the plots
 freq = linspace( max([0,f0-fc]), f0+fc, 501 );
+
+port = calcPort( port, Sim_Path, freq);
+s11 = port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.ref./ port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.inc;
+s11_dB = 20*log10(abs(s11));
+
+plot( freq/1e6, 20*log10(abs(s11)), 'k-', 'Linewidth', 2 );
+grid on
+title( 'reflection coefficient S_{11}' );
+xlabel( 'frequency f / MHz' );
+ylabel( 'reflection coefficient |S_{11}|' );
+
+%
+%   Write S11, real and imag Z_in into CSV file separated by ';'
+%
+filename = 'openEMS_simulation_s11_dB.csv';
+fid = fopen(filename, 'w');
+fprintf(fid, 'freq (MHz);s11 (dB);\\n');
+fclose(fid)
+s11_dB = horzcat((freq/1e6)', s11_dB');
+dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
+"""
+
+        #
+        # WRITE OpenEMS Script file into current dir
+        #
+        currDir, nameBase = self.getCurrDir()
+
+        self.createOuputDir(outputDir)
+        if (not outputDir is None):
+            fileName = f"{outputDir}/{nameBase}_draw_S11.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_draw_S11.m"
+
+        f = open(fileName, "w", encoding='utf-8')
+        f.write(genScript)
+        f.close()
+        print('Draw result from simulation file written into: ' + fileName)
+        self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName, forceModal=False)
+
+    def drawS11ButtonClicked_2(self, outputDir=None, portName=""):
+        genScript = ""
+        genScript += "% Plot S11\n"
+        genScript += "%\n"
+
+        genScript += self.getInitScriptLines()
+
+        genScript += "Sim_Path = 'tmp';\n"
+        genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
+        genScript += "display(currDir);\n"
+        genScript += "\n"
+
+        # List categories and items.
+        itemsByClassName = self.getItemsByClassName()
+
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
+
+        # Write excitation definition.
+        genScript += self.getExcitationScriptLines(definitionsOnly=True)
+
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None),
+                                                            outputDir, generateObjects=False)
+
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write port definitions.
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+
+        genScript += """%% postprocessing & do the plots
+freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 U = ReadUI( {'port_ut""" + str(self.internalPortIndexNamesList[portName]) + """','et'}, 'tmp/', freq ); % time domain/freq domain voltage
 I = ReadUI( 'port_it""" + str(self.internalPortIndexNamesList[portName]) + """', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
 
@@ -1672,7 +1734,8 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         f.write(genScript)
         f.close()
         print('Draw result from simulation file written into: ' + fileName)
-        self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName, forceModal=False)
+        self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName,
+                                       forceModal=False)
 
     def drawS21ButtonClicked(self, outputDir=None, sourcePortName="", targetPortName=""):
         genScript = ""
