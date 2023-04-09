@@ -2636,8 +2636,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 				self.form.striplinePortDirection.activated.emit(self.form.striplinePortDirection.currentIndex())
 
-				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.coplanarFeedpointShiftValue)
-				self.form.striplinePortMeasureShiftValue.setValue(currSetting.coplanarMeasPlaneShiftValue)
+				self.form.striplinePortFeedpointShiftValue.setValue(currSetting.striplineFeedpointShiftValue)
+				self.form.striplinePortMeasureShiftValue.setValue(currSetting.striplineMeasPlaneShiftValue)
 
 				self.guiHelpers.setComboboxItem(self.form.striplinePortFeedpointShiftUnits, currSetting.striplineFeedpointShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.striplinePortMeasureShiftUnits, currSetting.striplineMeasPlaneShiftUnits)
