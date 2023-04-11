@@ -456,14 +456,28 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).text(0) == "Port"):
 				for l in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItem(k).childCount()):
 					portSettings = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).data(0, QtCore.Qt.UserRole)
+
+					#Check if port is applicable
 					if ((len(allowedPortTypes) == 0 or portSettings.type in allowedPortTypes) and (isActive == None or portSettings.isActive == isActive)):
-						newItemText = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0)
-						comboboxRef.addItem(newItemText)
+						if (self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).childCount() > 0):
 
-						if (newItemText == currentItemText):
-							currentIndex = addedItemCounter
-
-						addedItemCounter += 1
+							#iterate through each added object into port category and generate name for it in format "[category name] - [assigned object label]"
+							for m in range(0, self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).childCount()):
+								subNewItemText = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0)
+								subNewItemText += " - "
+								subNewItemText += self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).child(m).text(0)
+								comboboxRef.addItem(subNewItemText)
+								if (subNewItemText == currentItemText):
+									currentIndex = addedItemCounter
+								addedItemCounter += 1
+						"""
+						else:
+							newItemText = self.form.objectAssignmentRightTreeWidget.topLevelItem(k).child(l).text(0)
+							comboboxRef.addItem(newItemText)
+							if (newItemText == currentItemText):
+								currentIndex = addedItemCounter
+							addedItemCounter += 1
+						"""
 
 		comboboxRef.setCurrentIndex(currentIndex)
 
@@ -1084,10 +1098,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				print("Removing item " + prioritySettingsItemName + " from priority mesh list.")
 				break	#this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
 
+		#if removing from Port category emit signal to update comboboxes with ports
+		portObjectIsRemoved = False
+		if (rightItem.parent().parent().text(0) == "Port"):
+			portObjectIsRemoved = True
+			self.guiSignals.portsChanged.emit("remove")
+
 		#
 		#	REMOVE ITEM FROM OpenEMS Simulation assignments tree view
 		#
 		rightItem.parent().removeChild(rightItem)
+
+		#if port object was removed emit signal here when it's really removed from right column
+		if (portObjectIsRemoved):
+			self.guiSignals.portsChanged.emit("remove")
 
 		return
 
@@ -1181,6 +1205,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#
 				print("Object " + leftItem2.text(0)+ " in category " + rightItem.parent().text(0) + " already in priority list")
 
+			#when add object to Port category emit signal to update comboboxes with ports
+			if (reResult.group(1).lower() == 'port'):
+				self.guiSignals.portsChanged.emit("add")
 
 		else:
 				self.guiHelpers.displayMessage("Item must be added into some settings inside category.")
@@ -1309,9 +1336,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (len(portName) == 0):
 			self.guiHelpers.displayMessage("Port not set, script will not be generated.")
 			return
-		if (not self.guiHelpers.hasPortSomeObjects(portName)):
-			self.guiHelpers.displayMessage(f"Port {portName} has no objects assigned, script will not be generated.")
-			return
+		#if (not self.guiHelpers.hasPortSomeObjects(portName)):
+		#	self.guiHelpers.displayMessage(f"Port {portName} has no objects assigned, script will not be generated.")
+		#	return
 
 		self.scriptGenerator.drawS11ButtonClicked(self.simulationOutputDir, portName)
 		self.guiHelpers.displayMessage("S11 script generated.")
@@ -1327,12 +1354,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Target port not set, script will not be generated.")
 			return
 
-		if (not self.guiHelpers.hasPortSomeObjects(sourcePortName)):
-			self.guiHelpers.displayMessage(f"Port {sourcePortName} has no objects assigned, script will not be generated.")
-			return
-		if (not self.guiHelpers.hasPortSomeObjects(targetPortName)):
-			self.guiHelpers.displayMessage(f"Port {targetPortName} has no objects assigned, script will not be generated.")
-			return
+		#if (not self.guiHelpers.hasPortSomeObjects(sourcePortName)):
+		#	self.guiHelpers.displayMessage(f"Port {sourcePortName} has no objects assigned, script will not be generated.")
+		#	return
+		#if (not self.guiHelpers.hasPortSomeObjects(targetPortName)):
+		#	self.guiHelpers.displayMessage(f"Port {targetPortName} has no objects assigned, script will not be generated.")
+		#	return
 
 		self.scriptGenerator.drawS21ButtonClicked(self.simulationOutputDir, sourcePortName, targetPortName)
 		self.guiHelpers.displayMessage("S21 script generated.")
@@ -1965,6 +1992,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.isActive = self.form.lumpedPortActive.isChecked()
 			portItem.direction = self.form.lumpedPortDirection.currentText()
 
+		if (self.form.uiprobePortRadioButton.isChecked()):
+			portItem.type = "uiprobe"
+			portItem.direction = self.form.uiprobePortDirection.currentText()
+			portItem.isActive = self.form.uiprobePortActive.isChecked()
+
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
 			portItem.R = self.form.microstripPortResistanceValue.value()
@@ -2137,6 +2169,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortSettingsGroup.setEnabled(False)
 		self.form.striplinePortSettingsGroup.setEnabled(False)
 		self.form.curvePortSettingsGroup.setEnabled(False)
+		self.form.uiprobePortSettingsGroup.setEnabled(False)
 
 		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
 
@@ -2173,8 +2206,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.curvePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Curve")
 
-		elif (self.form.curvePortRadioButton.isChecked()):
-			self.form.portDirectionInput.setEnabled(False)
+		elif (self.form.uiprobePortRadioButton.isChecked()):
+			self.form.uiprobePortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("UIProbe")
 
 	@Slot(str)
 	def portsChanged(self, operation):
@@ -2189,11 +2223,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
-			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
-			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=False)
+			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"])
+			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=True)
+			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=False)
 			self.updatePortCombobox(self.form.portNf2ffObjectList, ["nf2ff box"])
-			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
+			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=True)
 
 	def updateMaterialComboBoxAllMaterials(self, comboboxRef):
 		"""
@@ -2556,6 +2590,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
 			self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
 			self.form.lumpedPortActive.setChecked(currSetting.isActive)
+
+		elif (currSetting.type.lower() == "uiprobe"):
+			self.form.uiprobePortRadioButton.click()
+			self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
+			self.form.uiprobePortActive.setChecked(currSetting.isActive)
 
 		elif (currSetting.type.lower() == "microstrip"):
 			self.form.microstripPortRadioButton.click()

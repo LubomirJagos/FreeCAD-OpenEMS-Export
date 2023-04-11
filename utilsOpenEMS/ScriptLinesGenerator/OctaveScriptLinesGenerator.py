@@ -440,7 +440,35 @@ class OctaveScriptLinesGenerator:
                                      'portR*portUnits, portStart, portStop, portDirection' + \
                                      isActiveStr.get(currSetting.isActive) + ');\n'
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScriptPortCount += 1
+                    if (currSetting.getType() == 'uiprobe'):
+                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                                                                                     _r(sf * bbCoords.YMin),
+                                                                                     _r(sf * bbCoords.ZMin))
+                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                                                                                     _r(sf * bbCoords.YMax),
+                                                                                     _r(sf * bbCoords.ZMax))
+                        genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+
+                        print(
+                            '\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
+                                                                              _r(bbCoords.ZMin)))
+                        print(
+                            '\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
+                                                                              _r(bbCoords.ZMax)))
+
+                        isActiveStr = {False: '', True: ', true'}
+
+                        genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + \
+                                     str(priorityIndex) + ', ' + \
+                                     str(genScriptPortCount) + ', ' + \
+                                     'inf, portStart, portStop, portDirection' + \
+                                     isActiveStr.get(currSetting.isActive) + ');\n'
+
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'microstrip'):
 
@@ -499,7 +527,8 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.mslMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'circular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
@@ -551,7 +580,8 @@ class OctaveScriptLinesGenerator:
                                      str(currSetting.polarizationAngle) + "',"  + \
                                      (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
@@ -601,7 +631,8 @@ class OctaveScriptLinesGenerator:
                                     "'" + currSetting.modeName+ "'," + \
                                     (str(currSetting.excitationAmplitude) if currSetting.isActive else "0") + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'et dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
@@ -722,7 +753,8 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.coaxialMeasPlaneShiftValue > 0) + \
                                      ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'coplanar'):
 
@@ -784,7 +816,6 @@ class OctaveScriptLinesGenerator:
                             portStartY = _r(sf * bbCoords.YMin)
                             portStopY = _r(sf * bbCoords.YMax)
 
-
                         genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
 
                         if (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "x"):
@@ -833,7 +864,8 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.coplanarMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'stripline'):
                         portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
@@ -906,7 +938,8 @@ class OctaveScriptLinesGenerator:
                                      measPlaneStr.get(currSetting.striplineMeasPlaneShiftValue > 0) + \
                                      genScript_R + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'curve'):
                         if (_bool(currSetting.direction) == False):
@@ -937,7 +970,8 @@ class OctaveScriptLinesGenerator:
                                      "portStart, portStop" + \
                                      isActiveStr.get(currSetting.isActive) + ");\n"
 
-                        self.internalPortIndexNamesList[currSetting.name] = genScriptPortCount
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'

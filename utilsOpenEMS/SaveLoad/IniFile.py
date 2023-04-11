@@ -151,6 +151,9 @@ class IniFile:
                 settings.setValue("RUnits", portList[k].RUnits)
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
+            elif (portList[k].type == "uiprobe"):
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
             elif (portList[k].type == "circular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
@@ -450,6 +453,9 @@ class IniFile:
                 if (categorySettings.type == "lumped"):
                     categorySettings.R = settings.value('R')
                     categorySettings.RUnits = settings.value('RUnits')
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
+                elif (categorySettings.type == "uiprobe"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
                 elif (categorySettings.type == "circular waveguide"):

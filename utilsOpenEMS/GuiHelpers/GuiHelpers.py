@@ -225,6 +225,11 @@ class GuiHelpers:
             controlRef.setCurrentIndex(index)
 
     def hasPortSomeObjects(self, portName):
+        """
+        Check if port category contains some assigned freecad objects
+        :param port category name:
+        :return: true if category contains some assigned objects
+        """
         hasPortSomeObjects = False
 
         itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(portName, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchRecursive)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1467</width>
-    <height>741</height>
+    <width>1509</width>
+    <height>712</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1895,6 +1895,16 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
+                <item row="3" column="2">
+                 <widget class="QRadioButton" name="uiprobePortRadioButton">
+                  <property name="text">
+                   <string>UI Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </widget>
              </item>
@@ -1906,7 +1916,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                <property name="currentIndex">
                 <number>0</number>
                </property>
-               <widget class="QWidget" name="tab">
+               <widget class="QWidget" name="Lumped">
                 <attribute name="title">
                  <string>Lumped</string>
                 </attribute>
@@ -1927,7 +1937,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <item row="2" column="0">
                      <widget class="QLabel" name="label_29">
                       <property name="text">
-                       <string>Port Excitation Direction</string>
+                       <string>Port Amplitude/Excitation Direction</string>
                       </property>
                      </widget>
                     </item>
@@ -1948,36 +1958,21 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <item row="2" column="1">
                      <widget class="QComboBox" name="lumpedPortDirection">
                       <property name="currentText">
-                       <string>z+</string>
+                       <string>z</string>
                       </property>
                       <item>
                        <property name="text">
-                        <string>z+</string>
+                        <string>z</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>z-</string>
+                        <string>x</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>x+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x-</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y+</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y-</string>
+                        <string>y</string>
                        </property>
                       </item>
                      </widget>
@@ -4438,6 +4433,84 @@ no TM modes.</string>
                  </item>
                  <item>
                   <spacer name="verticalSpacer_20">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="UIProbe">
+                <attribute name="title">
+                 <string>UIProbe</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_33">
+                 <item>
+                  <widget class="QGroupBox" name="uiprobePortSettingsGroup">
+                   <property name="title">
+                    <string>UI Probe - specific Settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_23">
+                    <item row="1" column="2">
+                     <spacer name="horizontalSpacer_45">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_97">
+                      <property name="text">
+                       <string>Probe Direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="uiprobePortDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="uiprobePortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_22">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
                    </property>
