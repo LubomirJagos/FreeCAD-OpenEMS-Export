@@ -112,15 +112,25 @@ class IniFile:
             settings.beginGroup("GRID-" + gridList[k].getName())
             settings.setValue("coordsType", gridList[k].coordsType)
             settings.setValue("type", gridList[k].type)
-            settings.setValue("units", gridList[k].units)
-            settings.setValue("xenabled", gridList[k].xenabled)
-            settings.setValue("yenabled", gridList[k].yenabled)
-            settings.setValue("zenabled", gridList[k].zenabled)
-            settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
-            settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
-            settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
             settings.setValue("generateLinesInside", gridList[k].generateLinesInside)
             settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
+            settings.setValue("units", gridList[k].units)
+
+            if (gridList[k].type == "Fixed Distance"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
+                settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
+            elif (gridList[k].type == "Fixed Count"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
+                settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
+            elif (gridList[k].type == "Smooth Mesh"):
+                settings.setValue("smoothMesh", json.dumps(gridList[k].smoothMesh))
+            elif (gridList[k].type == "User Defined"):
+                settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
+
             settings.endGroup()
 
         # SAVE EXCITATION
@@ -431,16 +441,31 @@ class IniFile:
                 categorySettings = GridSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.coordsType = settings.value('coordsType')
-                categorySettings.type = settings.value('type')
-                categorySettings.xenabled = _bool(settings.value('xenabled'))
-                categorySettings.yenabled = _bool(settings.value('yenabled'))
-                categorySettings.zenabled = _bool(settings.value('zenabled'))
                 categorySettings.units = settings.value('units')
-                categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
-                categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
-                categorySettings.userDefined = json.loads(settings.value('userDefined'))
                 categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
                 categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
+
+                categorySettings.type = settings.value('type')
+                if (categorySettings.type == "Fixed Distance"):
+                    categorySettings.xenabled = _bool(settings.value('xenabled'))
+                    categorySettings.yenabled = _bool(settings.value('yenabled'))
+                    categorySettings.zenabled = _bool(settings.value('zenabled'))
+                    categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
+                elif (categorySettings.type == "Fixed Count"):
+                    categorySettings.xenabled = _bool(settings.value('xenabled'))
+                    categorySettings.yenabled = _bool(settings.value('yenabled'))
+                    categorySettings.zenabled = _bool(settings.value('zenabled'))
+                    categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
+                elif (categorySettings.type == "User Defined"):
+                    categorySettings.userDefined = json.loads(settings.value('userDefined'))
+                elif (categorySettings.type == "Smooth Mesh"):
+                    smoothMesh = json.loads(settings.value('smoothMesh'))
+                    categorySettings.smoothMesh['x'] = _bool(smoothMesh['x'])
+                    categorySettings.smoothMesh['y'] = _bool(smoothMesh['y'])
+                    categorySettings.smoothMesh['z'] = _bool(smoothMesh['z'])
+                else:
+                    print(f"Grid reading {categorySettings.type} cannot find aditional infor needed for settings, default values left set.")
+
                 settings.endGroup()
 
             elif (re.compile("PORT").search(settingsGroup)):

@@ -7,7 +7,8 @@ from .SettingsItem import SettingsItem
 #
 class GridSettingsItem(SettingsItem):
     def __init__(self, name="", type="", fixedCount={'x': 0, 'y': 0, 'z': 0}, fixedDistance={'x': 0, 'y': 0, 'z': 0},
-                 userDefined={'data': ""}, units="", xenabled=True, yenabled=True, zenabled=True,
+                 userDefined={'data': ""}, units="", xenabled=False, yenabled=False, zenabled=False,
+                 smoothMesh={'x': False, 'y': False, 'z': False},
                  coordsType='rectangular'):
         self.name = name
         self.type = type
@@ -18,9 +19,11 @@ class GridSettingsItem(SettingsItem):
         self.zenabled = zenabled
         self.fixedCount = fixedCount
         self.fixedDistance = fixedDistance
+        self.smoothMesh = smoothMesh
         self.userDefined = userDefined
         self.generateLinesInside = False
         self.topPriorityLines = True
+
 
     # Return xyz distances, count or user defined array based what user asked for.
     def getXYZ(self, referenceUnit=1):
@@ -31,6 +34,8 @@ class GridSettingsItem(SettingsItem):
             return dict_mult(self.fixedDistance, self.getUnitsAsNumber(self.units) / referenceUnit)
         if (self.type == "User Defined"):
             return self.userDefined['data']
+        if (self.type == "Smooth Mesh"):
+            return self.smoothMesh
 
     def getUnitAsScriptLine(self):
         return str(self.getUnitsAsNumber(self.units))

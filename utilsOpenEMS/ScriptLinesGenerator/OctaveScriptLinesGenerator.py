@@ -1213,6 +1213,9 @@ class OctaveScriptLinesGenerator:
                 genScript += "mesh = " + gridSettingsInst.getXYZ() + ";\n"
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
+            elif (gridSettingsInst.getType() == 'Smooth Mesh'):
+                genScript += "%%SmoothMesh gridline octave script generate not yet implemented.\n"
+
             genScript += "\n"
 
         return genScript
@@ -1276,13 +1279,12 @@ class OctaveScriptLinesGenerator:
                 # EXCITATION FREQUENCY AND CELL MAXIMUM RESOLUTION CALCULATION (1/20th of minimal lambda - calculated based on maximum simulation frequency)
                 # maximum grid resolution is generated into script but NOT USED IN OCTAVE SCRIPT, instead is also calculated here into python variable and used in bounding box correction
                 if (currSetting.getType() == 'sinusodial'):
-                    genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(
-                        currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                    genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                    genScript += "fc = 0;\n"
                     if not definitionsOnly:
-                        genScript += "FDTD = SetSinusExcite( FDTD, fc );\n"
+                        genScript += "FDTD = SetSinusExcite( FDTD, f0 );\n"
                     genScript += "max_res = c0 / f0 / 20;\n"
-                    self.maxGridResolution_m = 3e8 / (
-                                currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
+                    self.maxGridResolution_m = 3e8 / (currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
                     pass
                 elif (currSetting.getType() == 'gaussian'):
                     genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(

@@ -1120,12 +1120,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#
 	def onMoveRight(self):
 		print("Button >> clicked.")
-
-		# here are created 2 clones of item in left column to be putted into right column into some category
-		# as material, port or something and there is also priority list where another clone is inserted
-		leftItem = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
-		leftItem2 = self.form.objectAssignmentLeftTreeWidget.selectedItems()[0].clone()
-
 		rightItem = self.form.objectAssignmentRightTreeWidget.selectedItems()[0]
 
 		#check if item is type of SettingsItem based on its class name and if yes then add subitems into it
@@ -1138,76 +1132,85 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if (reResult.group(1).lower() == 'freecad'):
 				self.guiHelpers.displayMessage("FreeCAD object cannot have child item.")
 				return
-			else:
-				print("Item " + leftItem.text(0) + " added into " + rightItem.text(0))
-	
-			# CHECK FOR DUPLICATES OF object in category where object is added
-			isObjAlreadyInCategory = False
-			itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
-			for item in itemWithSameName:
-				print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
-				if (item.parent() == rightItem):
-					isObjAlreadyInCategory = True
-			if (isObjAlreadyInCategory):
-				self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
-				return
 
-			#
-			# ADD ITEM INTO RIGHT LIST, first clone is inserted
-			#
-			rightItem.addChild(leftItem)
-			rightItem.setExpanded(True)
+			for itemToAdd in self.form.objectAssignmentLeftTreeWidget.selectedItems():
+				# here are created 2 clones of item in left column to be putted into right column into some category
+				# as material, port or something and there is also priority list where another clone is inserted
+				leftItem = itemToAdd.clone()
+				leftItem2 = itemToAdd.clone()
 
-			#
-			# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
-			#
-			addItemToPriorityList = True
+				# CHECK FOR DUPLICATES OF object in category where object is added
+				isObjAlreadyInCategory = False
+				itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
+				for item in itemWithSameName:
+					print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
+					if (item.parent() == rightItem):
+						isObjAlreadyInCategory = True
+				if (isObjAlreadyInCategory):
+					self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
+					continue
 
-			newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
-			leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.data(0, QtCore.Qt.UserRole))
-	
-			#
-			#	Check if item is already in priority list, must be in same category as material, port or so to be not added due it will be duplicate
-			#	There are 2 priority lists:
-			#		1. objects priority for 3D objects - materials, ports
-			#		2. mesh priority objects
-			#
-			isGridObjectToBeAdded = reResult.group(1).lower() == 'grid'
+				#
+				# ADD ITEM INTO RIGHT LIST, first clone is inserted
+				#
+				rightItem.addChild(leftItem)
+				rightItem.setExpanded(True)
 
-			if (isGridObjectToBeAdded):
-				priorityListItems = self.form.meshPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
-				addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
-			else:
-				priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
-				addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
-			
-			if addItemToPriorityList:
-				#	Item is gonna be added into list:
-				#		1. copy icon of object category in right list to know what is added (PORT, MATERIAL, Excitation, ...)
-				#		2. add item into priority list with according icon and category				
-				leftItem2.setText(0, newAddedItemName)
+				#
+				# ADD ITEM INTO PRIORITY LIST, must be 2nd copy that's reason why there is used leftItem2 to have different clone of left item
+				#
+				addItemToPriorityList = True
+
+				newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
+				leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.data(0, QtCore.Qt.UserRole))
+
+				#
+				#	Check if item is already in priority list, must be in same category as material, port or so to be not added due it will be duplicate
+				#	There are 2 priority lists:
+				#		1. objects priority for 3D objects - materials, ports
+				#		2. mesh priority objects
+				#
+				isGridObjectToBeAdded = reResult.group(1).lower() == 'grid'
 
 				if (isGridObjectToBeAdded):
-					self.form.meshPriorityTreeView.insertTopLevelItem(0, leftItem2)						
+					priorityListItems = self.form.meshPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
+					addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
 				else:
-					self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
+					priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
+					addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
+
+				if addItemToPriorityList:
+					#	Item is gonna be added into list:
+					#		1. copy icon of object category in right list to know what is added (PORT, MATERIAL, Excitation, ...)
+					#		2. add item into priority list with according icon and category
+					leftItem2.setText(0, newAddedItemName)
+
+					if (isGridObjectToBeAdded):
+						self.form.meshPriorityTreeView.insertTopLevelItem(0, leftItem2)
+					else:
+						self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
+
+					#
+					# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+					#
+					#self.guiHelpers.updateMeshPriorityDisableItems()
+
+					leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
+					print("Object " + leftItem2.text(0)+ " added into priority list")
+				else:
+					#
+					#	NO ITEM WOULD BE ADDED BECAUSE ALREADY IS IN LIST
+					#
+					print("Object " + leftItem2.text(0)+ " in category " + rightItem.parent().text(0) + " already in priority list")
 
 				#
-				# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+				#	SUCCESS
 				#
-				self.guiHelpers.updateMeshPriorityDisableItems()
-				
-				leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
-				print("Object " + leftItem2.text(0)+ " added into priority list")
-			else:
-				#
-				#	NO ITEM WOULD BE ADDED BECAUSE ALREADY IS IN LIST
-				#
-				print("Object " + leftItem2.text(0)+ " in category " + rightItem.parent().text(0) + " already in priority list")
+				print("Item " + leftItem.text(0) + " added into " + rightItem.text(0))
 
-			#when add object to Port category emit signal to update comboboxes with ports
-			if (reResult.group(1).lower() == 'port'):
-				self.guiSignals.portsChanged.emit("add")
+				#when add object to Port category emit signal to update comboboxes with ports
+				if (reResult.group(1).lower() == 'port'):
+					self.guiSignals.portsChanged.emit("add")
 
 		else:
 				self.guiHelpers.displayMessage("Item must be added into some settings inside category.")
@@ -1470,6 +1473,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			gridItem.fixedDistance['x'] = gridX
 			gridItem.fixedDistance['y'] = gridY
 			gridItem.fixedDistance['z'] = gridZ
+
+		if (self.form.smoothMeshRadioButton.isChecked()):
+			gridItem.type = "Smooth Mesh"
+			gridItem.smoothMesh['x'] = self.form.gridXSmoothEnable.isChecked()
+			gridItem.smoothMesh['y'] = self.form.gridYSmoothEnable.isChecked()
+			gridItem.smoothMesh['z'] = self.form.gridZSmoothEnable.isChecked()
 
 		if (self.form.userDefinedRadioButton.isChecked()):
 			gridItem.type = "User Defined"
@@ -2514,25 +2523,35 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (currSetting.type == "Fixed Distance"):
 			self.form.fixedDistanceRadioButton.click()
+
+			self.form.gridXEnable.setChecked(currSetting.xenabled)
+			self.form.gridYEnable.setChecked(currSetting.yenabled)
+			self.form.gridZEnable.setChecked(currSetting.zenabled)
+
 			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
 			self.form.fixedDistanceYNumberInput.setValue(currSetting.fixedDistance['y'])
 			self.form.fixedDistanceZNumberInput.setValue(currSetting.fixedDistance['z'])
 		elif (currSetting.type == "Fixed Count"):
 			self.form.fixedCountRadioButton.click()
+
+			self.form.gridXEnable.setChecked(currSetting.xenabled)
+			self.form.gridYEnable.setChecked(currSetting.yenabled)
+			self.form.gridZEnable.setChecked(currSetting.zenabled)
+
 			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
 			self.form.fixedCountYNumberInput.setValue(currSetting.fixedCount['y'])
 			self.form.fixedCountZNumberInput.setValue(currSetting.fixedCount['z'])
-			pass
+		elif (currSetting.type == "Smooth Mesh"):
+			self.form.smoothMeshRadioButton.click()
+
+			self.form.gridXSmoothEnable.setChecked(currSetting.smoothMesh['x'])
+			self.form.gridYSmoothEnable.setChecked(currSetting.smoothMesh['y'])
+			self.form.gridZSmoothEnable.setChecked(currSetting.smoothMesh['z'])
 		elif (currSetting.type == "User Defined"):
 			self.form.userDefinedRadioButton.click()
 			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
-			pass
 		else:
 			pass
-			
-		self.form.gridXEnable.setChecked(currSetting.xenabled)
-		self.form.gridYEnable.setChecked(currSetting.yenabled)
-		self.form.gridZEnable.setChecked(currSetting.zenabled)
 
 		self.form.gridGenerateLinesInsideCheckbox.setChecked(currSetting.generateLinesInside)
 		self.form.gridTopPriorityLinesCheckbox.setChecked(currSetting.topPriorityLines)
