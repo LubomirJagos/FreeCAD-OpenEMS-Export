@@ -1129,38 +1129,97 @@ class OctaveScriptLinesGenerator:
                 print("Failed to resolve '{}'.".format(gridName))
                 continue
             itemListIdx = gridSettingsNodeNames.index(gridName)
+
+            #GridSettingsItem object from GUI
             gridSettingsInst = items[itemListIdx][1]
 
-            fcObject = fcObjects.get(FreeCADObjectName, None)
-            if (not fcObject):
-                print("Failed to resolve '{}'.".format(FreeCADObjectName))
-                continue
+            #Grid category object from GUI
+            gridCategoryObj = items[itemListIdx][0]
 
-            ### Produce script output.
+            #
+            #   Fixed Distance, Fixed Count mesh boundaries coords obtain
+            #
+            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count']):
+                fcObject = fcObjects.get(FreeCADObjectName, None)
+                if (not fcObject):
+                    print("Failed to resolve '{}'.".format(FreeCADObjectName))
+                    continue
 
-            if (not "Shape" in dir(fcObject)):
-                continue
+                ### Produce script output.
 
-            bbCoords = fcObject.Shape.BoundBox
+                if (not "Shape" in dir(fcObject)):
+                    continue
 
-            # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
-            if gridSettingsInst.generateLinesInside:
-                delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
-                print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
-            else:
-                delta = 0
+                bbCoords = fcObject.Shape.BoundBox
 
-            xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-            ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-            zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
-            xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-            ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-            zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+                # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                if gridSettingsInst.generateLinesInside:
+                    delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
+                    print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
+                else:
+                    delta = 0
 
-            # Write grid definition.
+                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
 
-            genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
+                # Write grid definition.
+                genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
 
+            #
+            #   Smooth Mesh boundaries coords obtain
+            #
+            elif (gridSettingsInst.getType() == "Smooth Mesh"):
+
+                xList = []
+                yList = []
+                zList = []
+
+                #iterate over grid smooth mesh category freecad children
+                for k in range(gridCategoryObj.childCount()):
+                    FreeCADObjectName = gridCategoryObj.child(k).text(0)
+
+                    fcObject = fcObjects.get(FreeCADObjectName, None)
+                    if (not fcObject):
+                        print("Smooth Mesh - Failed to resolve '{}'.".format(FreeCADObjectName))
+                        continue
+
+                    ### Produce script output.
+
+                    if (not "Shape" in dir(fcObject)):
+                        continue
+
+                    bbCoords = fcObject.Shape.BoundBox
+
+                    # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                    if gridSettingsInst.generateLinesInside:
+                        delta = self.maxGridResolution_m * sf * 0.001  # LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
+                        print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
+                    else:
+                        delta = 0
+
+                    #append boundary coordinates into list
+                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
+                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
+                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
+                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
+                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+
+                    # Write grid definition.
+                    genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
+
+                #order from min -> max coordinates in each list
+                xList.sort()
+                yList.sort()
+                zList.sort()
+
+            #
+            #   Real octave mesh lines code generate starts here
+            #
             if (gridSettingsInst.getType() == 'Fixed Distance'):
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
@@ -1214,7 +1273,21 @@ class OctaveScriptLinesGenerator:
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             elif (gridSettingsInst.getType() == 'Smooth Mesh'):
-                genScript += "%%SmoothMesh gridline octave script generate not yet implemented.\n"
+                genScript += "smoothMesh = {};\n"
+                if gridSettingsInst.smoothMesh['x']:
+                    genScript += f"smoothMesh.x = {str(xList)};\n"
+                    genScript += "smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, max_res/unit); %max_res calculated in excitation part\n"
+                    genScript += "mesh.x = [mesh.x smoothMesh.x];\n"
+                if gridSettingsInst.smoothMesh['y']:
+                    genScript += f"smoothMesh.y = {str(yList)};\n"
+                    genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
+                    genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
+                if gridSettingsInst.smoothMesh['z']:
+                    genScript += f"smoothMesh.z = {str(zList)};\n"
+                    genScript += "smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, max_res/unit); %max_res calculated in excitation part\n"
+                    genScript += "mesh.z = [mesh.z smoothMesh.z];\n"
+
+                genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             genScript += "\n"
 

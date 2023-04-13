@@ -1161,7 +1161,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#
 				addItemToPriorityList = True
 
-				newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
+				#
+				#	CREATE NEW OBJECT PRIORITY NAME
+				#		- for LumpedPart, Material, ... name is "[category], [category name], [object name]"
+				#		- for Grid child other than Smooth Mesh name is "[category], [category name], [object name]"
+				#		- for Grid Smooth Mesh name is "[category], [category name]" there is no object name as Smooth Mesh group is taken whole as it is
+				#
+				if (rightItem.data(0, QtCore.Qt.UserRole).type == "Smooth Mesh"):
+					newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", SMOOTH MESH GROUP"
+				else:
+					newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
 				leftItem2.setData(0, QtCore.Qt.UserRole, rightItem.data(0, QtCore.Qt.UserRole))
 
 				#
