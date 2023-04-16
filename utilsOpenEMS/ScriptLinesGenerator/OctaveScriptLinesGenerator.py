@@ -445,7 +445,7 @@ class OctaveScriptLinesGenerator:
                         #
                         #   Set port excitation amplitude if different from 1.0, this is done using SetExcitationWeight() in port direction
                         #
-                        if currSetting.lumpedExcitationAmplitude != 1.0:
+                        if (currSetting.isActive and currSetting.lumpedExcitationAmplitude != 1.0):
                             if currSetting.direction in ['x', 'x+', 'x-']:
                                 genScript += "weight{1} = " + str (currSetting.lumpedExcitationAmplitude) + ";\n"
                             else:
