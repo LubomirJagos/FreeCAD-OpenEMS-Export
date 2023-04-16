@@ -2146,13 +2146,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		return portItem
 
+	def portCheckCurrentSettings(self, currentSettings):
+		checkResult = True
+
+		if (currentSettings.type == "dumpbox" and currentSettings.dumpboxDomain == "frequency" and len(currentSettings.dumpboxFrequencyList) == 0):
+			checkResult = False
+			self.guiHelpers.displayMessage("Port settings ERROR, current settings set dumpox in frequency domain, but list of frequencies is empty.")
+
+		return checkResult
+
 	def portSettingsAddButtonClicked(self):
 		settingsInst = self.getPortItemFromGui()
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name)
 
-		if (not isDuplicityName):
+		if (not isDuplicityName and self.portCheckCurrentSettings(settingsInst)):
 			self.guiHelpers.addSettingsItemGui(settingsInst)
 			self.guiSignals.portsChanged.emit("add")
 
@@ -2198,7 +2207,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			return
 
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
-		if (not isDuplicityName):
+		if (not isDuplicityName and  self.portCheckCurrentSettings(settingsInst)):
 			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
 			### update other UI elements to propagate changes

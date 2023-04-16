@@ -15,7 +15,7 @@ class PortSettingsItem(SettingsItem):
                  coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
                  striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = "",
                  probeType="", probeDomain="", probeFrequencyVal=0, probeFrequencyUnits="",
-                 dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencies=[]
+                 dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencyList=[]
                  ):
         self.name = name
         self.type = type
@@ -76,7 +76,7 @@ class PortSettingsItem(SettingsItem):
         self.dumpboxType = dumpboxType
         self.dumpboxDomain = dumpboxDomain
         self.dumpboxFileType = dumpboxFileType
-        self.dumpboxFrequencies = dumpboxFrequencies
+        self.dumpboxFrequencyList = dumpboxFrequencyList
 
         return
 
