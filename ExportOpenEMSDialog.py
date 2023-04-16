@@ -259,6 +259,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.dumpboxPortFrequencyAddButton.clicked.connect(self.dumpboxPortFrequencyAddButtonClicked)
 		self.form.dumpboxPortFrequencyRemoveButton.clicked.connect(self.dumpboxPortFrequencyRemoveButtonClicked)
 
+		#enable/disable frequency settings for dumpobx based on domain
+		self.form.dumpboxPortDomain.currentIndexChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.dumpboxPortDomain.currentText() == "frequency" else
+			element.setEnabled(False)
+			for element in [self.form.dumpboxPortFrequencyInput, self.form.dumpboxPortFrequencyUnits, self.form.dumpboxPortFrequencyList, self.form.dumpboxPortFrequencyAddButton, self.form.dumpboxPortFrequencyRemoveButton]
+		])
+
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
 		self.form.BCxmax.currentIndexChanged.connect(self.BCxmaxCurrentIndexChanged)
