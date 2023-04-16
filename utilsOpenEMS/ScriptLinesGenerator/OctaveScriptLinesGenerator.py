@@ -6,6 +6,7 @@ from PySide import QtGui, QtCore
 import FreeCAD as App
 import Mesh
 import numpy as np
+import re
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
@@ -558,9 +559,31 @@ class OctaveScriptLinesGenerator:
                         if (currSetting.dumpboxFileType == "hdf5"):
                             argStr += f", 'FileType', 1"
 
-                        argStr += f", 'Frequency', 1e9"
+                        emptyFrequencyListError = False
+                        if (currSetting.dumpboxDomain == "frequency"):
+                            argStr += ", 'Frequency', ["
 
-                        genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + ");\n"
+                            if (len(currSetting.dumpboxFrequencyList) > 0):
+                                for freqStr in currSetting.dumpboxFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                emptyFrequencyListError = True
+                                argStr += "f0]"
+                                App.Console.PrintWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
+
+                        #if error put note about it into script
+                        if emptyFrequencyListError:
+                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + "); % ERROR script generation no frequencies for dumpbox, therefore using f0\n"
+                        else:
+                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + ");\n"
+
                         genScript += 'dumpboxStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
                         genScript += 'dumpboxStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
                         genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpboxStart, dumpboxStop );\n"
@@ -1402,6 +1425,47 @@ class OctaveScriptLinesGenerator:
 
         return genScript
 
+    def getMinimalGridlineSpacingScriptLines(self):
+        genScript = ""
+
+        if (self.form.genParamMinGridSpacingEnable.isChecked()):
+            minSpacingX = self.form.genParamMinGridSpacingX.value() / 1000 / self.getUnitLengthFromUI_m()
+            minSpacingY = self.form.genParamMinGridSpacingY.value() / 1000 / self.getUnitLengthFromUI_m()
+            minSpacingZ = self.form.genParamMinGridSpacingZ.value() / 1000 / self.getUnitLengthFromUI_m()
+
+            genScript += 'mesh.x = sort(mesh.x);\n'
+            genScript += 'mesh.y = sort(mesh.y);\n'
+            genScript += 'mesh.z = sort(mesh.z);\n'
+            genScript += '\n'
+            genScript += 'for k = 1:length(mesh.x)-1\n'
+            genScript += '  if (mesh.x(k) ~= inf && abs(mesh.x(k+1)-mesh.x(k)) <= ' + str(minSpacingX) + ')\n'
+            genScript += '    display(["Removnig line at x: " num2str(mesh.x(k+1))]);\n'
+            genScript += '    mesh.x(k+1) = inf;\n'
+            genScript += '   end\n'
+            genScript += 'end\n'
+            genScript += '\n'
+            genScript += 'for k = 1:length(mesh.y)-1\n'
+            genScript += '  if (mesh.y(k) ~= inf && abs(mesh.y(k+1)-mesh.y(k)) <= ' + str(minSpacingY) + ')\n'
+            genScript += '    display(["Removnig line at y: " num2str(mesh.y(k+1))]);\n'
+            genScript += '    mesh.y(k+1) = inf;\n'
+            genScript += '   end\n'
+            genScript += 'end\n'
+            genScript += '\n'
+            genScript += 'for k = 1:length(mesh.z)-1\n'
+            genScript += '  if (mesh.z(k) ~= inf && abs(mesh.z(k+1)-mesh.z(k)) <= ' + str(minSpacingZ) + ')\n'
+            genScript += '    display(["Removnig line at z: " num2str(mesh.z(k+1))]);\n'
+            genScript += '    mesh.z(k+1) = inf;\n'
+            genScript += '   end\n'
+            genScript += 'end\n'
+            genScript += '\n'
+            genScript += 'mesh.x(isinf(mesh.x)) = [];\n'
+            genScript += 'mesh.y(isinf(mesh.y)) = [];\n'
+            genScript += 'mesh.z(isinf(mesh.z)) = [];\n'
+            genScript += '\n'
+            genScript += 'CSX = DefineRectGrid(CSX, unit, mesh);\n'
+            genScript += '\n'
+
+        return genScript
 
     def getInitScriptLines(self):
         genScript = ""
@@ -1604,6 +1668,9 @@ class OctaveScriptLinesGenerator:
         # Write NF2FF probe grid definitions.
         genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
+
         print("======================== REPORT END ========================\n")
 
         # Finalize script.
@@ -1676,6 +1743,9 @@ class OctaveScriptLinesGenerator:
 
         # Write NF2FF probe grid definitions.
         genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
 
         #
         #   Current NF2FF box index
@@ -1804,6 +1874,9 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
         # Write grid definitions.
         genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
+
         # Write port definitions.
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
@@ -1849,6 +1922,13 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName, forceModal=False)
 
     def drawS11ButtonClicked_2(self, outputDir=None, portName=""):
+        """
+        This was previous function calculate S11 for port{1} hardwired using data from files from time domain.
+        It was obsolete as there are after calcPort() values in P_ref and P_inc which are used to calculate S11
+        :param outputDir:
+        :param portName:
+        :return: Octave scriptlines for openEMS to calculate S11 for port{1}
+        """
         genScript = ""
         genScript += "% Plot S11\n"
         genScript += "%\n"
@@ -1984,6 +2064,9 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 
         # Write grid definitions.
         genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
 
         # Write port definitions.
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))

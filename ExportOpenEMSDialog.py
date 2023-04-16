@@ -255,6 +255,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.form.striplinePortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
 															# and combobox with propagation direction left with all possibilities
+
+		self.form.dumpboxPortFrequencyAddButton.clicked.connect(self.dumpboxPortFrequencyAddButtonClicked)
+		self.form.dumpboxPortFrequencyRemoveButton.clicked.connect(self.dumpboxPortFrequencyRemoveButtonClicked)
+
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
 		self.form.BCxmax.currentIndexChanged.connect(self.BCxmaxCurrentIndexChanged)
@@ -262,6 +266,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.BCymax.currentIndexChanged.connect(self.BCymaxCurrentIndexChanged)
 		self.form.BCzmin.currentIndexChanged.connect(self.BCzminCurrentIndexChanged)
 		self.form.BCzmax.currentIndexChanged.connect(self.BCzmaxCurrentIndexChanged)
+
+		self.form.genParamMinGridSpacingEnable.stateChanged.connect(lambda:
+			[element.setEnabled(True) for element in [self.form.genParamMinGridSpacingX, self.form.genParamMinGridSpacingY, self.form.genParamMinGridSpacingZ]]
+			if self.form.genParamMinGridSpacingEnable.isChecked() else
+			[element.setEnabled(False) for element in [self.form.genParamMinGridSpacingX, self.form.genParamMinGridSpacingY, self.form.genParamMinGridSpacingZ]]
+		)
 
 		####################################################################################################
 		# GUI SAVE/LOAD from file
@@ -2033,6 +2043,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.dumpboxType = self.form.dumpboxPortType.currentText()
 			portItem.dumpboxDomain = self.form.dumpboxPortDomain.currentText()
 			portItem.dumpboxFileType = self.form.dumpboxPortFileType.currentText()
+			portItem.dumpboxFrequencyList = [str(self.form.dumpboxPortFrequencyList.item(i).text()) for i in range(self.form.dumpboxPortFrequencyList.count())]
 
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
@@ -2256,6 +2267,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.dumpboxPortRadioButton.isChecked()):
 			self.form.dumpboxPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("DumpBox")
+
+	def dumpboxPortFrequencyAddButtonClicked(self):
+		newItem = str(self.form.dumpboxPortFrequencyInput.value()) + str(self.form.dumpboxPortFrequencyUnits.currentText())
+		self.form.dumpboxPortFrequencyList.addItem(newItem)
+
+	def dumpboxPortFrequencyRemoveButtonClicked(self):
+		for item in self.form.dumpboxPortFrequencyList.selectedItems():
+			self.form.dumpboxPortFrequencyList.takeItem(self.form.dumpboxPortFrequencyList.row(item))
 
 	@Slot(str)
 	def portsChanged(self, operation):
@@ -2796,7 +2815,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.setComboboxItem(self.form.dumpboxPortType, currSetting.dumpboxType)
 			self.guiHelpers.setComboboxItem(self.form.dumpboxPortDomain, currSetting.dumpboxDomain)
 			self.guiHelpers.setComboboxItem(self.form.dumpboxPortFileType, currSetting.dumpboxFileType)
-			self.form.uiprobePortActive.setChecked(currSetting.isActive)
+
+			try:
+				self.form.dumpboxPortFrequencyList.clear()
+				for freqItemStr in currSetting.dumpboxFrequencyList:
+					self.form.dumpboxPortFrequencyList.addItem(freqItemStr)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update dumpbox current settings: {e}", forceModal=False)
 
 		else:
 			pass #no gui update

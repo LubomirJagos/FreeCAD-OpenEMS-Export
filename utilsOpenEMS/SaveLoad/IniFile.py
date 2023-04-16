@@ -179,10 +179,13 @@ class IniFile:
                 settings.setValue("probeFrequencyUnits", portList[k].probeFrequencyUnits)
 
             elif (portList[k].type == "dumpbox"):
-                settings.setValue("dumpboxType", portList[k].dumpboxType)
-                settings.setValue("dumpboxDomain", portList[k].dumpboxDomain)
-                settings.setValue("dumpboxFileType", portList[k].dumpboxFileType)
-
+                try:
+                    settings.setValue("dumpboxType", portList[k].dumpboxType)
+                    settings.setValue("dumpboxDomain", portList[k].dumpboxDomain)
+                    settings.setValue("dumpboxFileType", portList[k].dumpboxFileType)
+                    settings.setValue("dumpboxFrequencyList", portList[k].dumpboxFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() dumpbox ERROR: {e}")
 
             elif (portList[k].type == "circular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
@@ -305,6 +308,7 @@ class IniFile:
         simulationSettings.params['PMLymaxcells'] = self.form.PMLymaxcells.value()
         simulationSettings.params['PMLzmincells'] = self.form.PMLzmincells.value()
         simulationSettings.params['PMLzmaxcells'] = self.form.PMLzmaxcells.value()
+        simulationSettings.params['min_gridspacing_enable'] = self.form.genParamMinGridSpacingEnable.isChecked()
         simulationSettings.params['min_gridspacing_x'] = self.form.genParamMinGridSpacingX.value()
         simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
         simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
@@ -524,6 +528,7 @@ class IniFile:
                         categorySettings.dumpboxType = settings.value('dumpboxType')
                         categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
                         categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
+                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
                     except Exception as e:
                         print(f"There was error during reading dumpbox port settings: {e}")
 
@@ -663,9 +668,7 @@ class IniFile:
 
                 self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
                 self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
-                self.form.generateJustPreviewCheckbox.setCheckState(
-                    QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview',
-                                                                       False) else QtCore.Qt.Unchecked)
+                self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview',False) else QtCore.Qt.Unchecked)
                 self.form.generateDebugPECCheckbox.setCheckState(
                     QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC', False) else QtCore.Qt.Unchecked)
                 self.form.octaveExecCommandList.setCurrentText(
@@ -691,6 +694,7 @@ class IniFile:
                 #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
                 #
                 try:
+                    self.form.genParamMinGridSpacingEnable.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('min_gridspacing_enable',False) else QtCore.Qt.Unchecked)
                     self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
                     self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
                     self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
