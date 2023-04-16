@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1509</width>
-    <height>712</height>
+    <width>1899</width>
+    <height>722</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1853,54 +1853,27 @@ Custom option using fparser lib, possible using user-defined equitaion:
                 <string>Port Type</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_11">
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
+                <item row="0" column="2">
+                 <widget class="QRadioButton" name="etDumpPortRadioButton">
                   <property name="text">
-                   <string>Rectangular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QRadioButton" name="lumpedPortRadioButton">
-                  <property name="text">
-                   <string>Lumped</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Circular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QRadioButton" name="coaxialPortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Coaxial (experimental)</string>
+                   <string>Et Dump</string>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="0">
                  <widget class="QRadioButton" name="microstripPortRadioButton">
                   <property name="text">
-                   <string>Microstrip (experimental)</string>
+                   <string>Microstrip</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2">
-                 <widget class="QRadioButton" name="etDumpPortRadioButton">
+                <item row="3" column="2">
+                 <widget class="QRadioButton" name="uiprobePortRadioButton">
                   <property name="text">
-                   <string>Et Dump</string>
+                   <string>UI Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1917,6 +1890,56 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="coplanarPortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Coplanar</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QRadioButton" name="coaxialPortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Coaxial</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Circular Waveguide</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QRadioButton" name="curvePortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Curve</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="lumpedPortRadioButton">
+                  <property name="text">
+                   <string>Lumped</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
                 <item row="2" column="2">
                  <widget class="QRadioButton" name="nf2ffBoxPortRadioButton">
                   <property name="sizePolicy">
@@ -1930,13 +1953,10 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QRadioButton" name="coplanarPortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
                   <property name="text">
-                   <string>Coplanar (experimental)</string>
+                   <string>Rectangular Waveguide</string>
                   </property>
                  </widget>
                 </item>
@@ -1946,24 +1966,24 @@ Custom option using fparser lib, possible using user-defined equitaion:
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>Stripline (experimental)</string>
+                   <string>Stripline</string>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="1">
-                 <widget class="QRadioButton" name="curvePortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
+                <item row="0" column="3">
+                 <widget class="QRadioButton" name="probePortRadioButton">
                   <property name="text">
-                   <string>Curve (experimental)</string>
+                   <string>Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="2">
-                 <widget class="QRadioButton" name="uiprobePortRadioButton">
+                <item row="1" column="3">
+                 <widget class="QRadioButton" name="dumpboxPortRadioButton">
                   <property name="text">
-                   <string>UI Probe</string>
+                   <string>DumpBox</string>
                   </property>
                   <property name="checked">
                    <bool>false</bool>
@@ -1992,24 +2012,10 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <string>Lumped - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_21">
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_27">
-                      <property name="text">
-                       <string>Port Resistance</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="2" column="0">
                      <widget class="QLabel" name="label_29">
                       <property name="text">
                        <string>Port Amplitude/Excitation Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="lumpedPortActive">
-                      <property name="text">
-                       <string>port is active</string>
                       </property>
                      </widget>
                     </item>
@@ -2018,28 +2024,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       <property name="maximum">
                        <double>10000000000.000000000000000</double>
                       </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="lumpedPortDirection">
-                      <property name="currentText">
-                       <string>z</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>x</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
                      </widget>
                     </item>
                     <item row="1" column="2">
@@ -2077,6 +2061,68 @@ Custom option using fparser lib, possible using user-defined equitaion:
                         <string>GOhm</string>
                        </property>
                       </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="lumpedPortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_27">
+                      <property name="text">
+                       <string>Port Resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="lumpedPortDirection">
+                      <property name="currentText">
+                       <string>z</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_102">
+                      <property name="text">
+                       <string>Excitation Amplitude (V)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <widget class="QDoubleSpinBox" name="lumpedPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
                      </widget>
                     </item>
                    </layout>
@@ -2141,6 +2187,12 @@ pi/2 = vertical polarization</string>
                     </item>
                     <item row="6" column="1">
                      <widget class="QDoubleSpinBox" name="portCircWaveguideExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-1000000.000000000000000</double>
+                      </property>
                       <property name="maximum">
                        <double>1000000.000000000000000</double>
                       </property>
@@ -2239,7 +2291,7 @@ pi/2 = vertical polarization</string>
                     <item row="6" column="0">
                      <widget class="QLabel" name="label_4">
                       <property name="text">
-                       <string>Excitation amplitude</string>
+                       <string>Excitation amplitude (V)</string>
                       </property>
                      </widget>
                     </item>
@@ -2395,15 +2447,24 @@ no TM modes.</string>
                     </item>
                     <item row="4" column="1">
                      <widget class="QDoubleSpinBox" name="portRectWaveguideExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-1000000.000000000000000</double>
+                      </property>
                       <property name="maximum">
                        <double>1000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
                       </property>
                      </widget>
                     </item>
                     <item row="4" column="0">
                      <widget class="QLabel" name="label_60">
                       <property name="text">
-                       <string>Excitation amplitude</string>
+                       <string>Excitation amplitude (V)</string>
                       </property>
                      </widget>
                     </item>
@@ -3039,15 +3100,24 @@ no TM modes.</string>
                     </item>
                     <item row="9" column="2">
                      <widget class="QDoubleSpinBox" name="portCoaxialExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-1000000.000000000000000</double>
+                      </property>
                       <property name="maximum">
                        <double>1000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
                       </property>
                      </widget>
                     </item>
                     <item row="9" column="0">
                      <widget class="QLabel" name="label_80">
                       <property name="text">
-                       <string>Excitation amplitude</string>
+                       <string>Excitation amplitude (V)</string>
                       </property>
                      </widget>
                     </item>
@@ -4589,6 +4659,421 @@ no TM modes.</string>
                  </item>
                 </layout>
                </widget>
+               <widget class="QWidget" name="Probe">
+                <attribute name="title">
+                 <string>Probe</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_34">
+                 <item>
+                  <widget class="QGroupBox" name="probePortSettingsGroup">
+                   <property name="title">
+                    <string>Probe - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_8">
+                    <item row="3" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_55">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="probePortFrequencyVal">
+                        <property name="decimals">
+                         <number>5</number>
+                        </property>
+                        <property name="maximum">
+                         <double>10000000.000000000000000</double>
+                        </property>
+                        <property name="singleStep">
+                         <double>0.100000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="probePortFrequencyUnits">
+                        <property name="currentIndex">
+                         <number>2</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>Hz</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>kHz</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>MHz</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>GHz</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_46">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Preferred</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_94">
+                      <property name="text">
+                       <string>Probe direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_98">
+                      <property name="text">
+                       <string>Frequency</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_95">
+                      <property name="text">
+                       <string>Probe type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="probePortDomain">
+                      <property name="currentText">
+                       <string>time</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_96">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="probePortType">
+                      <property name="currentText">
+                       <string>current</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>current</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>voltage</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="probePortDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_23">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="DumpBox">
+                <attribute name="title">
+                 <string>DumpBox</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_35">
+                 <item>
+                  <widget class="QGroupBox" name="dumpboxPortSettingsGroup">
+                   <property name="title">
+                    <string>DumpBox - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_22">
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="dumpboxPortDomain">
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_99">
+                      <property name="text">
+                       <string>Dump type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="dumpboxPortType">
+                      <item>
+                       <property name="text">
+                        <string>E field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>H field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>J field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>D field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>B field</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_101">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_100">
+                      <property name="text">
+                       <string>File type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="dumpboxPortFileType">
+                      <item>
+                       <property name="text">
+                        <string>vtk</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>hdf5</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_103">
+                      <property name="text">
+                       <string>Frequencies</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_36">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_56">
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="dumpboxPortFrequencyInput">
+                          <property name="decimals">
+                           <number>3</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.000000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>100000000000.000000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>0.000000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="dumpboxPortFrequencyUnits">
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_47">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>20</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxPortFrequencyAddButton">
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxPortFrequencyRemoveButton">
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="listWidget">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_24">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="probePortFrequencyVal_2">
+               <property name="decimals">
+                <number>5</number>
+               </property>
+               <property name="maximum">
+                <double>10000000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.100000000000000</double>
+               </property>
               </widget>
              </item>
              <item>
@@ -5860,17 +6345,33 @@ no TM modes.</string>
                 <string>Post-Processing: NF2FF Display Script</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_9">
-                <item row="5" column="1">
-                 <widget class="QLabel" name="label_50">
-                  <property name="text">
-                   <string>Hints:
-360deg display settings:
-    theta: start: 0deg stop:180deg
-    phi: start: 0deg stop: 360deg</string>
+                <item row="2" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_54">
+                  <property name="leftMargin">
+                   <number>0</number>
                   </property>
-                 </widget>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_93">
+                    <property name="text">
+                     <string>Active port for drawing far field</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="portNf2ffInput"/>
+                  </item>
+                 </layout>
                 </item>
-                <item row="3" column="1">
+                <item row="4" column="1">
                  <layout class="QHBoxLayout" name="horizontalLayout_24">
                   <property name="leftMargin">
                    <number>0</number>
@@ -5906,14 +6407,7 @@ no TM modes.</string>
                   </item>
                  </layout>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="writeNf2ffButton">
-                  <property name="text">
-                   <string>Write NF2FF </string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
+                <item row="5" column="1">
                  <layout class="QGridLayout" name="gridLayout_10">
                   <property name="leftMargin">
                    <number>0</number>
@@ -6074,8 +6568,25 @@ no TM modes.</string>
                   </item>
                  </layout>
                 </item>
-                <item row="2" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_54">
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="writeNf2ffButton">
+                  <property name="text">
+                   <string>Write NF2FF </string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1">
+                 <widget class="QLabel" name="label_50">
+                  <property name="text">
+                   <string>Hints:
+360deg display settings:
+    theta: start: 0deg stop:180deg
+    phi: start: 0deg stop: 360deg</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_57">
                   <property name="leftMargin">
                    <number>0</number>
                   </property>
@@ -6089,14 +6600,21 @@ no TM modes.</string>
                    <number>0</number>
                   </property>
                   <item>
-                   <widget class="QLabel" name="label_93">
+                   <widget class="QLabel" name="label_104">
                     <property name="text">
-                     <string>Active port for drawing far field</string>
+                     <string>Frequency to plot far field (MHz)</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QComboBox" name="portNf2ffInput"/>
+                   <widget class="QDoubleSpinBox" name="portNf2ffFreq">
+                    <property name="decimals">
+                     <number>8</number>
+                    </property>
+                    <property name="maximum">
+                     <double>10000000000.000000000000000</double>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </item>

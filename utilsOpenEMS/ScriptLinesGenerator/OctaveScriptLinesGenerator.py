@@ -363,7 +363,7 @@ class OctaveScriptLinesGenerator:
         # port index counter, they are generated into port{} cell variable for octave, cells index starts at 1
         genScriptPortCount = 1
 
-        # nf2ff box counter, they are stored inside octave cell variable {} so this is to index them properly, in octave cells index starts at 1
+        # nf2ff box counter, they are stored inside octave cell variable nf2ff{} so this is to index them properly, in octave cells index starts at 1
         genNF2FFBoxCounter = 1
 
         #
@@ -376,6 +376,7 @@ class OctaveScriptLinesGenerator:
         coaxialDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         coplanarDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
         striplineDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+        probeDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
 
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
@@ -440,10 +441,31 @@ class OctaveScriptLinesGenerator:
                                      'portR*portUnits, portStart, portStop, portDirection' + \
                                      isActiveStr.get(currSetting.isActive) + ');\n'
 
+                        #
+                        #   Set port excitation amplitude if different from 1.0, this is done using SetExcitationWeight() in port direction
+                        #
+                        if currSetting.lumpedExcitationAmplitude != 1.0:
+                            if currSetting.direction in ['x', 'x+', 'x-']:
+                                genScript += "weight{1} = " + str (currSetting.lumpedExcitationAmplitude) + ";\n"
+                            else:
+                                genScript += "weight{1} = 0;\n"
+
+                            if currSetting.direction in ['y', 'y+', 'y-']:
+                                genScript += "weight{2} = " + str (currSetting.lumpedExcitationAmplitude) + ";\n"
+                            else:
+                                genScript += "weight{2} = 0;\n"
+
+                            if currSetting.direction in ['z', 'z+', 'z-']:
+                                genScript += "weight{3} = " + str(currSetting.lumpedExcitationAmplitude) + ";\n"
+                            else:
+                                genScript += "weight{3} = 0;\n"
+
+                            genScript += "CSX = SetExcitationWeight(CSX,'port_excite_" + str(genScriptPortCount) + "',weight);\n"
+
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
-                    if (currSetting.getType() == 'uiprobe'):
+                    elif (currSetting.getType() == 'uiprobe'):
                         genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
@@ -470,6 +492,80 @@ class OctaveScriptLinesGenerator:
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScriptPortCount += 1
+
+                    elif (currSetting.getType() == "probe"):
+                        probeName = f"{currSetting.name}_{childName}"
+                        genScript += 'probeDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+
+                        if currSetting.probeType == "voltage":
+                            genScript += 'probeType = 0;\n'
+                        elif currSetting.probeType == "current":
+                            genScript += 'probeType = 1;\n'
+                        else:
+                            genScript += 'probeType = ?;    #ERROR probe code generate don\'t know type\n'
+
+                        argStr = ""
+                        if not (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
+                            argStr += ", 'NormDir', probeDirection"
+                        if (currSetting.probeDomain == "frequency"):
+                            probeFrequency = currSetting.probeFrequencyVal * currSetting.getUnitsAsNumber(currSetting.probeFrequencyUnits)
+                            argStr += f", 'frequency', {str(probeFrequency)}"
+
+                        genScript += "CSX = AddProbe(CSX, '" + probeName + "', probeType" + argStr + ");\n"
+                        genScript += 'probeStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'probeStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + probeName + "', 0, probeStart, probeStop );\n"
+                        genScript += "\n"
+
+                    elif (currSetting.getType() == "dumpbox"):
+                        dumpboxName = f"{currSetting.name}_{childName}"
+
+                        if currSetting.dumpboxDomain == "time":
+                            if currSetting.dumpboxType == "E field":
+                                genScript += 'dumpboxType = 0;\n'
+                            elif currSetting.dumpboxType == "H field":
+                                genScript += 'dumpboxType = 1;\n'
+                            elif currSetting.dumpboxType == "J field":
+                                genScript += 'dumpboxType = 3;\n'
+                            elif currSetting.dumpboxType == "D field":
+                                genScript += 'dumpboxType = 4;\n'
+                            elif currSetting.dumpboxType == "B field":
+                                genScript += 'dumpboxType = 5;\n'
+                            else:
+                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
+                        elif currSetting.dumpboxDomain == "frequency":
+                            if currSetting.dumpboxType == "E field":
+                                genScript += 'dumpboxType = 10;\n'
+                            elif currSetting.dumpboxType == "H field":
+                                genScript += 'dumpboxType = 11;\n'
+                            elif currSetting.dumpboxType == "J field":
+                                genScript += 'dumpboxType = 13;\n'
+                            elif currSetting.dumpboxType == "D field":
+                                genScript += 'dumpboxType = 14;\n'
+                            elif currSetting.dumpboxType == "B field":
+                                genScript += 'dumpboxType = 15;\n'
+                            else:
+                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
+                        else:
+                            genScript += "dumboxType = ?;   #code generator cannot find domain (time/frequency)\n"
+
+                        argStr = ""
+                        #
+                        #   dump file type:
+                        #       0 = vtk (default)
+                        #       1 = hdf5
+                        #
+                        if (currSetting.dumpboxFileType == "hdf5"):
+                            argStr += f", 'FileType', 1"
+
+                        argStr += f", 'Frequency', 1e9"
+
+                        genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + ");\n"
+                        genScript += 'dumpboxStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpboxStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpboxStart, dumpboxStop );\n"
+                        genScript += "\n"
+
                     elif (currSetting.getType() == 'microstrip'):
 
                         #
@@ -667,7 +763,8 @@ class OctaveScriptLinesGenerator:
                         #
                         #   ATTENTION this is NF2FF box counter
                         #
-                        self.internalNF2FFIndexNamesList[currSetting.name] = genNF2FFBoxCounter
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalNF2FFIndexNamesList[internalPortName] = genNF2FFBoxCounter
                         genNF2FFBoxCounter += 1
 
                     elif (currSetting.getType() == 'coaxial'):
@@ -1224,18 +1321,15 @@ class OctaveScriptLinesGenerator:
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
-                    genScript += "mesh.x = [ mesh.x ({0:g}:{1:g}:{2:g}) ];\n".format(_r(xmin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['x']), _r(xmax))
+                    genScript += "mesh.x = [ mesh.x ({0:g}:{1:g}:{2:g}) ];\n".format(_r(xmin), _r(gridSettingsInst.getXYZ(refUnit)['x']), _r(xmax))
                 if gridSettingsInst.yenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
-                    genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['y']), _r(ymax))
+                    genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(gridSettingsInst.getXYZ(refUnit)['y']), _r(ymax))
                 if gridSettingsInst.zenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
-                    genScript += "mesh.z = [ mesh.z ({0:g}:{1:g}:{2:g}) ];\n".format(_r(zmin), _r(
-                        gridSettingsInst.getXYZ(refUnit)['z']), _r(zmax))
+                    genScript += "mesh.z = [ mesh.z ({0:g}:{1:g}:{2:g}) ];\n".format(_r(zmin), _r(gridSettingsInst.getXYZ(refUnit)['z']), _r(zmax))
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             elif (gridSettingsInst.getType() == 'Fixed Count'):
@@ -1275,14 +1369,29 @@ class OctaveScriptLinesGenerator:
             elif (gridSettingsInst.getType() == 'Smooth Mesh'):
                 genScript += "smoothMesh = {};\n"
                 if gridSettingsInst.smoothMesh['x']:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xList[0]), _r(xList[-1]))
+
                     genScript += f"smoothMesh.x = {str(xList)};\n"
                     genScript += "smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, max_res/unit); %max_res calculated in excitation part\n"
                     genScript += "mesh.x = [mesh.x smoothMesh.x];\n"
                 if gridSettingsInst.smoothMesh['y']:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(yList[0]), _r(yList[-1]))
+
                     genScript += f"smoothMesh.y = {str(yList)};\n"
                     genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
                     genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
                 if gridSettingsInst.smoothMesh['z']:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zList[0]), _r(zList[-1]))
+
                     genScript += f"smoothMesh.z = {str(zList)};\n"
                     genScript += "smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, max_res/unit); %max_res calculated in excitation part\n"
                     genScript += "mesh.z = [mesh.z smoothMesh.z];\n"
@@ -1533,7 +1642,7 @@ class OctaveScriptLinesGenerator:
     #
     #	Write NF2FF Button clicked, generate script to display far field pattern
     #
-    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName="", nf2ffBoxInputPortName="", freqCount=501):
+    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName="", nf2ffBoxInputPortName="", plotFrequency=0, freqCount=501):
         genScript = ""
         genScript += "% Plot far field for structure.\n"
         genScript += "%\n"
@@ -1560,15 +1669,18 @@ class OctaveScriptLinesGenerator:
         # Write grid definitions.
         genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 
+        # Write port definitions:
+        #    - must be after gridlines definitions
+        #    - must be before nf2ff
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+
         # Write NF2FF probe grid definitions.
         genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
-
-        # Write port definitions.
-        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         #
         #   Current NF2FF box index
         #
+        print(f"writeNf2ffButtonClicked() > geerate script, getting nf2ff box index for '{nf2ffBoxName}'")
         currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName]
         currentNF2FFInputPortIndex = self.internalPortIndexNamesList[nf2ffBoxInputPortName]
 
@@ -1581,10 +1693,10 @@ class OctaveScriptLinesGenerator:
         phiStep = str(self.form.portNf2ffPhiStep.value())
 
         #
-        #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, f_res and frequencies count
+        #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, plotFrequency and frequencies count
         #
         genScript += "freq = linspace(max([0,f0-fc]), f0+fc, " + str(freqCount) + ");\n"
-        genScript += "f_res = f0;\n"
+        genScript += f"plotFrequency = [{plotFrequency}];\n"
         genScript += "port{" + str(currentNF2FFInputPortIndex) + "} = calcPort(port{" + str(currentNF2FFInputPortIndex) + "}, Sim_Path, freq);\n"
         genScript += "\n"
 
@@ -1612,7 +1724,7 @@ disp( 'calculating the 3D far field...' );
 %	'Mode',1 - always recalculate data
 %		url: https://github.com/thliebig/openEMS/blob/master/matlab/CalcNF2FF.m
 %
-nf2ff = CalcNF2FF(nf2ffBox{""" + str(currentNF2FFBoxIndex) + """}, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180, 'Mode', 1, 'Outfile', '3D_Pattern.h5', 'Verbose', 1);
+nf2ff = CalcNF2FF(nf2ffBox{""" + str(currentNF2FFBoxIndex) + """}, Sim_Path, plotFrequency, thetaRange*pi/180, phiRange*pi/180, 'Mode', 1, 'Outfile', '3D_Pattern.h5', 'Verbose', 1);
 
 theta_HPBW = interp1(nf2ff.E_norm{1}(:,1)/max(nf2ff.E_norm{1}(:,1)),thetaRange,1/sqrt(2))*2;
 

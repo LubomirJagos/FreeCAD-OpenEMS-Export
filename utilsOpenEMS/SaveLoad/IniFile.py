@@ -157,13 +157,33 @@ class IniFile:
             settings.setValue("type", portList[k].type)
 
             if (portList[k].type == "lumped"):
-                settings.setValue("R", portList[k].R)
-                settings.setValue("RUnits", portList[k].RUnits)
-                settings.setValue("isActive", portList[k].isActive)
-                settings.setValue("direction", portList[k].direction)
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                    settings.setValue("excitationAmplitude", portList[k].lumpedExcitationAmplitude)
+                except Exception as e:
+                    print(f"{__file__} > write() lumped ERROR: {e}")
+
             elif (portList[k].type == "uiprobe"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
+
+            elif (portList[k].type == "probe"):
+                settings.setValue("direction", portList[k].direction)
+                settings.setValue("probeType", portList[k].probeType)
+
+                settings.setValue("probeDomain", portList[k].probeDomain)
+                settings.setValue("probeFrequencyVal", portList[k].probeFrequencyVal)
+                settings.setValue("probeFrequencyUnits", portList[k].probeFrequencyUnits)
+
+            elif (portList[k].type == "dumpbox"):
+                settings.setValue("dumpboxType", portList[k].dumpboxType)
+                settings.setValue("dumpboxDomain", portList[k].dumpboxDomain)
+                settings.setValue("dumpboxFileType", portList[k].dumpboxFileType)
+
+
             elif (portList[k].type == "circular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
@@ -171,12 +191,14 @@ class IniFile:
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideCircDir)
+
             elif (portList[k].type == "rectangular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
+
             elif (portList[k].type == "microstrip"):
                 try:
                     settings.setValue("R", portList[k].R)
@@ -192,6 +214,7 @@ class IniFile:
                     settings.setValue("propagation", portList[k].mslPropagation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
+
             elif (portList[k].type == "coaxial"):
                 try:
                     settings.setValue("R", portList[k].R)
@@ -480,9 +503,30 @@ class IniFile:
                     categorySettings.RUnits = settings.value('RUnits')
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
+                    categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
+
                 elif (categorySettings.type == "uiprobe"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
+
+                elif (categorySettings.type == "probe"):
+                    try:
+                        categorySettings.probeType = settings.value('probeType')
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.probeDomain = settings.value('probeDomain')
+                        categorySettings.probeFrequencyVal = float(settings.value('probeFrequencyVal'))
+                        categorySettings.probeFrequencyUnits = settings.value('probeFrequencyUnits')
+                    except Exception as e:
+                        print(f"There was error during reading probe port settings: {e}")
+
+                elif (categorySettings.type == "dumpbox"):
+                    try:
+                        categorySettings.dumpboxType = settings.value('dumpboxType')
+                        categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
+                        categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
+                    except Exception as e:
+                        print(f"There was error during reading dumpbox port settings: {e}")
+
                 elif (categorySettings.type == "circular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
@@ -490,12 +534,14 @@ class IniFile:
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideCircDir = settings.value('waveguideDirection')
+
                 elif (categorySettings.type == "rectangular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideRectDir = settings.value('waveguideDirection')
+
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:
@@ -511,6 +557,7 @@ class IniFile:
                         categorySettings.mslPropagation = settings.value('propagation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
+
                 elif (categorySettings.type == "coaxial"):
                     try:
                         categorySettings.R = settings.value('R')

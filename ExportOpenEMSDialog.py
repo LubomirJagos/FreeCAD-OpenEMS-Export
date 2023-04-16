@@ -224,7 +224,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.materialSettingsTreeView.currentItemChanged.connect(self.materialTreeWidgetItemChanged)	
 		self.form.excitationSettingsTreeView.currentItemChanged.connect(self.excitationTreeWidgetItemChanged)	
 		self.form.gridSettingsTreeView.currentItemChanged.connect(self.gridTreeWidgetItemChanged)	
-		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)	
+		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 
 		#PORT tab settings events handlers
@@ -239,6 +239,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.striplinePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.curvePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.uiprobePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.probePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.dumpboxPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 
 		self.form.microstripPortDirection.activated.connect(self.microstripPortDirectionOnChange)
 		self.form.striplinePortDirection.activated.connect(self.striplinePortDirectionOnChange)
@@ -1379,6 +1382,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	def writeNf2ffButtonClicked(self):
 		nf2ffBoxName = self.form.portNf2ffObjectList.currentText()
 		nf2ffBoxInputPortName = self.form.portNf2ffInput.currentText()
+		freq = self.form.portNf2ffFreq.value()*1e6						#freq for nf2ff is in MHz in GUI
 		freqCount = self.form.portNf2ffFreqCount.value()
 
 		if (len(nf2ffBoxName) == 0):
@@ -1388,14 +1392,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("NF2FF input port not set, script will not be generated.")
 			return
 
-		if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxName)):
-			self.guiHelpers.displayMessage(f"Port {nf2ffBoxName} has no objects assigned, script will not be generated.")
-			return
-		if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxInputPortName)):
-			self.guiHelpers.displayMessage(f"Port {nf2ffBoxInputPortName} has no objects assigned, script will not be generated.")
-			return
+		#if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxName)):
+		#	self.guiHelpers.displayMessage(f"NF2FF port category {nf2ffBoxName} has no objects assigned, script will not be generated.")
+		#	return
+		#if (not self.guiHelpers.hasPortSomeObjects(nf2ffBoxInputPortName)):
+		#	self.guiHelpers.displayMessage(f"NF2FF input port {nf2ffBoxInputPortName} has no objects assigned in Port category, script will not be generated.")
+		#	return
 
-		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName, nf2ffBoxInputPortName, freqCount)
+		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName, nf2ffBoxInputPortName, freq, freqCount)
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1544,7 +1548,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		for item in gridGroupWidgetItems:
 			if (item.parent().text(0) == "Grid"):
 				gridGroupItem = item
-		print("Currently removing port item: " + gridGroupItem.text(0))
+		print("Currently removing grid item: " + gridGroupItem.text(0))
 
 		#	Remove from Priority List
 		priorityName = gridGroupItem.parent().text(0) + ", " + gridGroupItem.text(0);
@@ -2009,11 +2013,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.RUnits = self.form.lumpedPortResistanceUnits.currentText()
 			portItem.isActive = self.form.lumpedPortActive.isChecked()
 			portItem.direction = self.form.lumpedPortDirection.currentText()
+			portItem.lumpedExcitationAmplitude = self.form.lumpedPortExcitationAmplitude.value()
 
 		if (self.form.uiprobePortRadioButton.isChecked()):
 			portItem.type = "uiprobe"
 			portItem.direction = self.form.uiprobePortDirection.currentText()
 			portItem.isActive = self.form.uiprobePortActive.isChecked()
+
+		if (self.form.probePortRadioButton.isChecked()):
+			portItem.type = "probe"
+			portItem.probeType = self.form.probePortType.currentText()
+			portItem.direction = self.form.probePortDirection.currentText()
+			portItem.probeDomain = self.form.probePortDomain.currentText()
+			portItem.probeFrequencyVal = self.form.probePortFrequencyVal.value()
+			portItem.probeFrequencyUnits = self.form.probePortFrequencyUnits.currentText()
+
+		if (self.form.dumpboxPortRadioButton.isChecked()):
+			portItem.type = "dumpbox"
+			portItem.dumpboxType = self.form.dumpboxPortType.currentText()
+			portItem.dumpboxDomain = self.form.dumpboxPortDomain.currentText()
+			portItem.dumpboxFileType = self.form.dumpboxPortFileType.currentText()
 
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
@@ -2188,6 +2207,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.striplinePortSettingsGroup.setEnabled(False)
 		self.form.curvePortSettingsGroup.setEnabled(False)
 		self.form.uiprobePortSettingsGroup.setEnabled(False)
+		self.form.probePortSettingsGroup.setEnabled(False)
+		self.form.dumpboxPortSettingsGroup.setEnabled(False)
 
 		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
 
@@ -2227,6 +2248,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.uiprobePortRadioButton.isChecked()):
 			self.form.uiprobePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("UIProbe")
+
+		elif (self.form.probePortRadioButton.isChecked()):
+			self.form.probePortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Probe")
+
+		elif (self.form.dumpboxPortRadioButton.isChecked()):
+			self.form.dumpboxPortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("DumpBox")
 
 	@Slot(str)
 	def portsChanged(self, operation):
@@ -2514,6 +2543,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.gridXEnable.setChecked(False)
 		self.form.gridYEnable.setChecked(False)
 		self.form.gridZEnable.setChecked(False)
+		self.form.gridXSmoothEnable.setChecked(False)
+		self.form.gridYSmoothEnable.setChecked(False)
+		self.form.gridZSmoothEnable.setChecked(False)
 		self.form.gridGenerateLinesInsideCheckbox.setChecked(False)
 		self.form.gridTopPriorityLinesCheckbox.setChecked(False)
 
@@ -2613,16 +2645,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.portSettingsNameInput.setText(currSetting.name)
 
 		if (currSetting.type.lower() == "lumped"):
-			self.form.lumpedPortRadioButton.click()
-			self.form.lumpedPortResistanceValue.setValue(float(currSetting.R))
-			self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
-			self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
-			self.form.lumpedPortActive.setChecked(currSetting.isActive)
-
-		elif (currSetting.type.lower() == "uiprobe"):
-			self.form.uiprobePortRadioButton.click()
-			self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
-			self.form.uiprobePortActive.setChecked(currSetting.isActive)
+			try:
+				self.form.lumpedPortRadioButton.click()
+				self.form.lumpedPortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
+				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
+				self.form.lumpedPortActive.setChecked(currSetting.isActive)
+				self.form.lumpedPortExcitationAmplitude.setValue(currSetting.lumpedExcitationAmplitude)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update lumped current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "microstrip"):
 			self.form.microstripPortRadioButton.click()
@@ -2746,6 +2777,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.curvePortResistanceValue.setValue(float(currSetting.R))
 			self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
 			self.form.curvePortDirection.setChecked(currSetting.direction in [True, "true", "True"])										#set checkbox for reverse direction for curve port
+
+		elif (currSetting.type.lower() == "uiprobe"):
+			self.form.uiprobePortRadioButton.click()
+			self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
+			self.form.uiprobePortActive.setChecked(currSetting.isActive)
+
+		elif (currSetting.type.lower() == "probe"):
+			self.form.probePortRadioButton.click()
+			self.guiHelpers.setComboboxItem(self.form.probePortDirection, currSetting.direction)
+			self.guiHelpers.setComboboxItem(self.form.probePortType, currSetting.probeType)
+			self.guiHelpers.setComboboxItem(self.form.probePortDomain, currSetting.probeDomain)
+			self.guiHelpers.setComboboxItem(self.form.probePortFrequencyUnits, currSetting.probeFrequencyUnits)
+			self.form.probePortFrequencyVal.setValue(currSetting.probeFrequencyVal)
+
+		elif (currSetting.type.lower() == "dumpbox"):
+			self.form.dumpboxPortRadioButton.click()
+			self.guiHelpers.setComboboxItem(self.form.dumpboxPortType, currSetting.dumpboxType)
+			self.guiHelpers.setComboboxItem(self.form.dumpboxPortDomain, currSetting.dumpboxDomain)
+			self.guiHelpers.setComboboxItem(self.form.dumpboxPortFileType, currSetting.dumpboxFileType)
+			self.form.uiprobePortActive.setChecked(currSetting.isActive)
 
 		else:
 			pass #no gui update
