@@ -14,7 +14,7 @@ class PortSettingsItem(SettingsItem):
                  coaxialConductorMaterial = "", coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
                  coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
                  striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = "",
-                 probeType="", probeDomain="", probeFrequencyVal=0, probeFrequencyUnits="",
+                 probeType="", probeDomain="", probeFrequencyList=[],
                  dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencyList=[]
                  ):
         self.name = name
@@ -70,8 +70,7 @@ class PortSettingsItem(SettingsItem):
 
         self.probeType = probeType
         self.probeDomain = probeDomain
-        self.probeFrequencyVal = probeFrequencyVal
-        self.probeFrequencyUnits = probeFrequencyUnits
+        self.probeFrequencyList = probeFrequencyList
 
         self.dumpboxType = dumpboxType
         self.dumpboxDomain = dumpboxDomain

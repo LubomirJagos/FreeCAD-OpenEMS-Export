@@ -171,12 +171,13 @@ class IniFile:
                 settings.setValue("direction", portList[k].direction)
 
             elif (portList[k].type == "probe"):
-                settings.setValue("direction", portList[k].direction)
-                settings.setValue("probeType", portList[k].probeType)
-
-                settings.setValue("probeDomain", portList[k].probeDomain)
-                settings.setValue("probeFrequencyVal", portList[k].probeFrequencyVal)
-                settings.setValue("probeFrequencyUnits", portList[k].probeFrequencyUnits)
+                try:
+                    settings.setValue("direction", portList[k].direction)
+                    settings.setValue("probeType", portList[k].probeType)
+                    settings.setValue("probeDomain", portList[k].probeDomain)
+                    settings.setValue("probeFrequencyList", portList[k].probeFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() probe ERROR: {e}")
 
             elif (portList[k].type == "dumpbox"):
                 try:
@@ -518,8 +519,7 @@ class IniFile:
                         categorySettings.probeType = settings.value('probeType')
                         categorySettings.direction = settings.value('direction')
                         categorySettings.probeDomain = settings.value('probeDomain')
-                        categorySettings.probeFrequencyVal = float(settings.value('probeFrequencyVal'))
-                        categorySettings.probeFrequencyUnits = settings.value('probeFrequencyUnits')
+                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList').split(',')
                     except Exception as e:
                         print(f"There was error during reading probe port settings: {e}")
 
@@ -528,7 +528,7 @@ class IniFile:
                         categorySettings.dumpboxType = settings.value('dumpboxType')
                         categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
                         categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
-                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
+                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList').split(',')
                     except Exception as e:
                         print(f"There was error during reading dumpbox port settings: {e}")
 

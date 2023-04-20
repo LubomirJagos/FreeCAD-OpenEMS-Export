@@ -240,3 +240,15 @@ class GuiHelpers:
                     hasPortSomeObjects = True
 
         return hasPortSomeObjects
+
+    def getGridGroupObjectAssignmentTreeItem(self, groupName):
+        gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+            groupName,
+            QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+        )
+        gridGroupItem = None
+        for item in gridGroupWidgetItems:
+            if (item.parent().text(0) == "Grid"):
+                gridGroupItem = item
+
+        return gridGroupItem

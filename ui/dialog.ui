@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1899</width>
-    <height>722</height>
+    <width>1400</width>
+    <height>678</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2102,7 +2102,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <item row="3" column="0">
                      <widget class="QLabel" name="label_102">
                       <property name="text">
-                       <string>Excitation Amplitude (V)</string>
+                       <string>Excitation Field Amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
@@ -2122,6 +2122,19 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </property>
                       <property name="value">
                        <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="2">
+                     <widget class="QLabel" name="label_105">
+                      <property name="text">
+                       <string>ATTENTION! This is not voltage amplitude but
+electric field amplitude in V/m,
+voltage on borders of ports depends
+on its size, ie. if in axis length is 1mm then
+1V = 1000(V/m)*1mm
+0.1V = 100(V/m)*1mm
+...</string>
                       </property>
                      </widget>
                     </item>
@@ -4588,6 +4601,9 @@ no TM modes.</string>
                 <layout class="QVBoxLayout" name="verticalLayout_33">
                  <item>
                   <widget class="QGroupBox" name="uiprobePortSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="title">
                     <string>UI Probe - specific Settings</string>
                    </property>
@@ -4666,82 +4682,40 @@ no TM modes.</string>
                 <layout class="QVBoxLayout" name="verticalLayout_34">
                  <item>
                   <widget class="QGroupBox" name="probePortSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="title">
                     <string>Probe - specific settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_8">
-                    <item row="3" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_55">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="probePortFrequencyVal">
-                        <property name="decimals">
-                         <number>5</number>
-                        </property>
-                        <property name="maximum">
-                         <double>10000000.000000000000000</double>
-                        </property>
-                        <property name="singleStep">
-                         <double>0.100000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="probePortFrequencyUnits">
-                        <property name="currentIndex">
-                         <number>2</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>Hz</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>kHz</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>MHz</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>GHz</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_46">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Preferred</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_94">
-                      <property name="text">
-                       <string>Probe direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="0">
+                    <item row="4" column="0">
                      <widget class="QLabel" name="label_98">
                       <property name="text">
                        <string>Frequency</string>
                       </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="probePortDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
                      </widget>
                     </item>
                     <item row="0" column="0">
@@ -4749,23 +4723,6 @@ no TM modes.</string>
                       <property name="text">
                        <string>Probe type</string>
                       </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="probePortDomain">
-                      <property name="currentText">
-                       <string>time</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>time</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>frequency</string>
-                       </property>
-                      </item>
                      </widget>
                     </item>
                     <item row="2" column="0">
@@ -4792,27 +4749,144 @@ no TM modes.</string>
                       </item>
                      </widget>
                     </item>
-                    <item row="1" column="1">
-                     <widget class="QComboBox" name="probePortDirection">
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="probePortDomain">
                       <property name="currentText">
-                       <string>x</string>
+                       <string>time</string>
                       </property>
                       <item>
                        <property name="text">
-                        <string>x</string>
+                        <string>time</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
+                        <string>frequency</string>
                        </property>
                       </item>
                      </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_94">
+                      <property name="text">
+                       <string>Probe direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_37">
+                      <property name="leftMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>5</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_55">
+                        <item>
+                         <widget class="QDoubleSpinBox" name="probePortFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="decimals">
+                           <number>5</number>
+                          </property>
+                          <property name="maximum">
+                           <double>10000000.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="probePortFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_46">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probePortFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probePortFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="probePortFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </widget>
@@ -4927,7 +5001,7 @@ no TM modes.</string>
                     <item row="3" column="0">
                      <widget class="QLabel" name="label_103">
                       <property name="text">
-                       <string>Frequencies</string>
+                       <string>Frequency list</string>
                       </property>
                      </widget>
                     </item>
@@ -4961,6 +5035,9 @@ no TM modes.</string>
                         </property>
                         <item>
                          <widget class="QDoubleSpinBox" name="dumpboxPortFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
                           <property name="decimals">
                            <number>3</number>
                           </property>
@@ -4977,6 +5054,9 @@ no TM modes.</string>
                         </item>
                         <item>
                          <widget class="QComboBox" name="dumpboxPortFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
                           <property name="currentIndex">
                            <number>2</number>
                           </property>
@@ -5020,6 +5100,9 @@ no TM modes.</string>
                         </item>
                         <item>
                          <widget class="QPushButton" name="dumpboxPortFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
                           <property name="text">
                            <string>+</string>
                           </property>
@@ -5027,6 +5110,9 @@ no TM modes.</string>
                         </item>
                         <item>
                          <widget class="QPushButton" name="dumpboxPortFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
                           <property name="text">
                            <string>-</string>
                           </property>
@@ -5036,6 +5122,9 @@ no TM modes.</string>
                       </item>
                       <item>
                        <widget class="QListWidget" name="dumpboxPortFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                           <horstretch>0</horstretch>
@@ -5064,19 +5153,6 @@ no TM modes.</string>
                  </item>
                 </layout>
                </widget>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="probePortFrequencyVal_2">
-               <property name="decimals">
-                <number>5</number>
-               </property>
-               <property name="maximum">
-                <double>10000000.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.100000000000000</double>
-               </property>
               </widget>
              </item>
              <item>

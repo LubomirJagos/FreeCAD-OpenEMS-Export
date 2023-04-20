@@ -256,11 +256,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.striplinePortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
 															# and combobox with propagation direction left with all possibilities
 
+		self.form.probePortFrequencyAddButton.clicked.connect(self.probePortFrequencyAddButtonClicked)
+		self.form.probePortFrequencyRemoveButton.clicked.connect(self.probePortFrequencyRemoveButtonClicked)
+
+		#enable/disable frequency settings for dumpobx based on domain
+		self.form.probePortDomain.currentIndexChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.probePortDomain.currentText() == "frequency" else
+			element.setEnabled(False)
+			for element in [self.form.probePortFrequencyInput, self.form.probePortFrequencyUnits, self.form.probePortFrequencyList, self.form.probePortFrequencyAddButton, self.form.probePortFrequencyRemoveButton]
+		])
+
 		self.form.dumpboxPortFrequencyAddButton.clicked.connect(self.dumpboxPortFrequencyAddButtonClicked)
 		self.form.dumpboxPortFrequencyRemoveButton.clicked.connect(self.dumpboxPortFrequencyRemoveButtonClicked)
 
-		#enable/disable frequency settings for dumpobx based on domain
-		self.form.dumpboxPortDomain.currentIndexChanged.connect(lambda:[
+		#enable/disable frequency settings for probe based on domain
+		self.form.probePortDomain.currentIndexChanged.connect(lambda:[
 			element.setEnabled(True)
 			if self.form.dumpboxPortDomain.currentText() == "frequency" else
 			element.setEnabled(False)
@@ -316,6 +327,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	Simulation items (grid, material, excitation, port, lumped part) renamed signal connect
 		#
 		self.guiSignals.gridRenamed.connect(self.gridRenamed)
+		self.guiSignals.gridTypeChangedToSmoothMesh.connect(self.gridTypeChangedToSmoothMesh)
+		self.guiSignals.gridTypeChangedFromSmoothMesh.connect(self.gridTypeChangedFromSmoothMesh)
+
 		self.guiSignals.materialRenamed.connect(self.materialRenamed)
 		self.guiSignals.excitationRenamed.connect(self.excitationRenamed)
 		self.guiSignals.portRenamed.connect(self.portRenamed)
@@ -1558,14 +1572,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		selectedItem = self.form.gridSettingsTreeView.selectedItems()[0]
 		print("Selected port name: " + selectedItem.text(0))
 
-		gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
-			selectedItem.text(0),
-			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
-			)
-		gridGroupItem = None
-		for item in gridGroupWidgetItems:
-			if (item.parent().text(0) == "Grid"):
-				gridGroupItem = item
+		gridGroupItem = self.guiHelpers.getGridGroupObjectAssignmentTreeItem(selectedItem.text(0))
 		print("Currently removing grid item: " + gridGroupItem.text(0))
 
 		#	Remove from Priority List
@@ -1589,10 +1596,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.gridSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
 		if (not isDuplicityName):
+			oldSettingsInst = selectedItems[0].data(0, QtCore.Qt.UserRole)
 			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
 			### update other UI elements to propagate changes
-			# replace oudated copy of settingsInst
+			# replace outdated copy of settingsInst
 			self.updateObjectAssignmentRightTreeWidgetItemData("Grid", selectedItems[0].text(0), settingsInst)
 
 			# update grid priority table at object assignment panel
@@ -1601,6 +1609,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			# emit rename signal
 			if (selectedItems[0].text(0) != settingsInst.name):
 				self.guiSignals.gridRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			# SPECIAL CASE when grid type changed to Smooth Mesh
+			if (oldSettingsInst.type != "Smooth Mesh" and settingsInst.type == "Smooth Mesh"):
+				self.guiSignals.gridTypeChangedToSmoothMesh.emit(settingsInst.name)
+
+			# SPECIAL CASE when grid type changed to Smooth Mesh
+			if (oldSettingsInst.type == "Smooth Mesh" and settingsInst.type != "Smooth Mesh"):
+				self.guiSignals.gridTypeChangedFromSmoothMesh.emit(settingsInst.name)
 
 			self.guiHelpers.displayMessage(f"Grid {settingsInst.name} was updated", forceModal=False)
 
@@ -1861,6 +1877,29 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
 			FreeCAD.Console.PrintError(traceback.format_exc())
 
+	@Slot(str)
+	def gridTypeChangedToSmoothMesh(self, groupName):
+		searchStr = "Grid, " + groupName
+		newName = "Grid, " + groupName + ", SMOOTH MESH GROUP"
+		[item.setText(0, newName) for item in self.form.meshPriorityTreeView.findItems(searchStr, QtCore.Qt.MatchStartsWith)]
+		[self.form.meshPriorityTreeView.invisibleRootItem().removeChild(item) for item in self.form.meshPriorityTreeView.findItems(newName, QtCore.Qt.MatchStartsWith)[1:]]
+		FreeCAD.Console.PrintWarning(f"Updated {groupName} in mesh priority list")
+
+	@Slot(str)
+	def gridTypeChangedFromSmoothMesh(self, groupName):
+		gridItem = self.guiHelpers.getGridGroupObjectAssignmentTreeItem(groupName)
+		assignedObjectNames = [gridItem.child(k).text(0) for k in range(gridItem.childCount())]
+
+		meshPrioritySmoothMeshItem = self.form.meshPriorityTreeView.findItems("Grid, " + groupName + ", SMOOTH MESH GROUP", QtCore.Qt.MatchExactly)[0]
+		meshPrioritySmoothMeshItemIndex = self.form.meshPriorityTreeView.invisibleRootItem().indexOfChild(meshPrioritySmoothMeshItem)
+		self.form.meshPriorityTreeView.invisibleRootItem().removeChild(meshPrioritySmoothMeshItem)
+
+		newMeshPriorityItems = [QtGui.QTreeWidgetItem([f"Grid, {groupName}, {objName}"]) for objName in assignedObjectNames]
+		[item.setIcon(0, gridItem.icon(0)) for item in newMeshPriorityItems]
+		self.form.meshPriorityTreeView.invisibleRootItem().insertChildren(meshPrioritySmoothMeshItemIndex, newMeshPriorityItems)
+
+		FreeCAD.Console.PrintWarning(f"Updated {groupName} in mesh priority list, adding objects: {assignedObjectNames}")
+
 	@Slot(str, str)
 	def materialRenamed(self, oldName, newName):
 		try:
@@ -2043,8 +2082,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.probeType = self.form.probePortType.currentText()
 			portItem.direction = self.form.probePortDirection.currentText()
 			portItem.probeDomain = self.form.probePortDomain.currentText()
-			portItem.probeFrequencyVal = self.form.probePortFrequencyVal.value()
-			portItem.probeFrequencyUnits = self.form.probePortFrequencyUnits.currentText()
+			portItem.probeFrequencyList = [str(self.form.probePortFrequencyList.item(i).text()) for i in range(self.form.probePortFrequencyList.count())]
 
 		if (self.form.dumpboxPortRadioButton.isChecked()):
 			portItem.type = "dumpbox"
@@ -2153,6 +2191,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			checkResult = False
 			self.guiHelpers.displayMessage("Port settings ERROR, current settings set dumpox in frequency domain, but list of frequencies is empty.")
 
+		if (currentSettings.type == "probe" and currentSettings.probeDomain == "frequency" and len(currentSettings.probeFrequencyList) == 0):
+			checkResult = False
+			self.guiHelpers.displayMessage("Port settings ERROR, current settings set probe in frequency domain, but list of frequencies is empty.")
+
 		return checkResult
 
 	def portSettingsAddButtonClicked(self):
@@ -2167,8 +2209,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def portSettingsRemoveButtonClicked(self, name = None):
 		#if there is no name it's called from UI, if there is name it's called as function this is done to have one function removing port properly for both cases
-		print("kokot")
-		print("----> " + str(type(name)) + " -----> " + str(name))
 		if (type(name) != "str"):
 			selectedItem = self.form.portSettingsTreeView.selectedItems()[0]
 			print("Selected port name: " + selectedItem.text(0))
@@ -2284,6 +2324,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.dumpboxPortRadioButton.isChecked()):
 			self.form.dumpboxPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("DumpBox")
+
+	def probePortFrequencyAddButtonClicked(self):
+		newItem = str(self.form.probePortFrequencyInput.value()) + str(self.form.probePortFrequencyUnits.currentText())
+		self.form.probePortFrequencyList.addItem(newItem)
+
+	def probePortFrequencyRemoveButtonClicked(self):
+		for item in self.form.probePortFrequencyList.selectedItems():
+			self.form.probePortFrequencyList.takeItem(self.form.probePortFrequencyList.row(item))
 
 	def dumpboxPortFrequencyAddButtonClicked(self):
 		newItem = str(self.form.dumpboxPortFrequencyInput.value()) + str(self.form.dumpboxPortFrequencyUnits.currentText())
@@ -2820,20 +2868,25 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.uiprobePortActive.setChecked(currSetting.isActive)
 
 		elif (currSetting.type.lower() == "probe"):
-			self.form.probePortRadioButton.click()
-			self.guiHelpers.setComboboxItem(self.form.probePortDirection, currSetting.direction)
-			self.guiHelpers.setComboboxItem(self.form.probePortType, currSetting.probeType)
-			self.guiHelpers.setComboboxItem(self.form.probePortDomain, currSetting.probeDomain)
-			self.guiHelpers.setComboboxItem(self.form.probePortFrequencyUnits, currSetting.probeFrequencyUnits)
-			self.form.probePortFrequencyVal.setValue(currSetting.probeFrequencyVal)
+			try:
+				self.form.probePortRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.probePortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.probePortType, currSetting.probeType)
+				self.guiHelpers.setComboboxItem(self.form.probePortDomain, currSetting.probeDomain)
+
+				self.form.probePortFrequencyList.clear()
+				for freqItemStr in currSetting.probeFrequencyList:
+					self.form.probePortFrequencyList.addItem(freqItemStr)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update probe current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "dumpbox"):
-			self.form.dumpboxPortRadioButton.click()
-			self.guiHelpers.setComboboxItem(self.form.dumpboxPortType, currSetting.dumpboxType)
-			self.guiHelpers.setComboboxItem(self.form.dumpboxPortDomain, currSetting.dumpboxDomain)
-			self.guiHelpers.setComboboxItem(self.form.dumpboxPortFileType, currSetting.dumpboxFileType)
-
 			try:
+				self.form.dumpboxPortRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.dumpboxPortType, currSetting.dumpboxType)
+				self.guiHelpers.setComboboxItem(self.form.dumpboxPortDomain, currSetting.dumpboxDomain)
+				self.guiHelpers.setComboboxItem(self.form.dumpboxPortFileType, currSetting.dumpboxFileType)
+
 				self.form.dumpboxPortFrequencyList.clear()
 				for freqItemStr in currSetting.dumpboxFrequencyList:
 					self.form.dumpboxPortFrequencyList.addItem(freqItemStr)

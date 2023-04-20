@@ -508,9 +508,23 @@ class OctaveScriptLinesGenerator:
                         argStr = ""
                         if not (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
                             argStr += ", 'NormDir', probeDirection"
+
                         if (currSetting.probeDomain == "frequency"):
-                            probeFrequency = currSetting.probeFrequencyVal * currSetting.getUnitsAsNumber(currSetting.probeFrequencyUnits)
-                            argStr += f", 'frequency', {str(probeFrequency)}"
+                            argStr += ", 'frequency', ["
+
+                            if (len(currSetting.probeFrequencyList) > 0):
+                                for freqStr in currSetting.probeFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                argStr += "f0]#{ERROR NO FREQUENCIES FOR PROBE FOUND, SO INSTEAD USED f0#}"
+                                App.Console.PrintWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
 
                         genScript += "CSX = AddProbe(CSX, '" + probeName + "', probeType" + argStr + ");\n"
                         genScript += 'probeStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
