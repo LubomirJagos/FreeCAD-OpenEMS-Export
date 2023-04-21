@@ -1405,7 +1405,7 @@ class OctaveScriptLinesGenerator:
 
             elif (gridSettingsInst.getType() == 'Smooth Mesh'):
                 genScript += "smoothMesh = {};\n"
-                if gridSettingsInst.smoothMesh['x']:
+                if gridSettingsInst.xenabled:
 
                     #when top priority lines setting set, remove lines between min and max in ax direction
                     if gridSettingsInst.topPriorityLines:
@@ -1417,7 +1417,7 @@ class OctaveScriptLinesGenerator:
                     else:
                         genScript += f"smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, {gridSettingsInst.smoothMesh['xValues']});\n"
                     genScript += "mesh.x = [mesh.x smoothMesh.x];\n"
-                if gridSettingsInst.smoothMesh['y']:
+                if gridSettingsInst.yenabled:
 
                     #when top priority lines setting set, remove lines between min and max in ax direction
                     if gridSettingsInst.topPriorityLines:
@@ -1429,7 +1429,7 @@ class OctaveScriptLinesGenerator:
                     else:
                         genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {gridSettingsInst.smoothMesh['yValues']});\n"
                     genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
-                if gridSettingsInst.smoothMesh['z']:
+                if gridSettingsInst.zenabled:
 
                     #when top priority lines setting set, remove lines between min and max in ax direction
                     if gridSettingsInst.topPriorityLines:

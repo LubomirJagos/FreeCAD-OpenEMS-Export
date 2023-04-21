@@ -8,7 +8,7 @@ from .SettingsItem import SettingsItem
 class GridSettingsItem(SettingsItem):
     def __init__(self, name="", type="", fixedCount={'x': 0, 'y': 0, 'z': 0}, fixedDistance={'x': 0, 'y': 0, 'z': 0},
                  userDefined={'data': ""}, units="", xenabled=False, yenabled=False, zenabled=False,
-                 smoothMeshDefault={'x': False, 'y': False, 'z': False, 'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0},
+                 smoothMeshDefault={'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0},
                  coordsType='rectangular'):
         self.name = name
         self.type = type

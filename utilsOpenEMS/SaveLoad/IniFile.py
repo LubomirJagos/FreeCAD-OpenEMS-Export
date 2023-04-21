@@ -127,6 +127,9 @@ class IniFile:
                 settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
             elif (gridList[k].type == "Smooth Mesh"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("smoothMesh", json.dumps(gridList[k].smoothMesh))
             elif (gridList[k].type == "User Defined"):
                 settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
@@ -488,6 +491,9 @@ class IniFile:
                     categorySettings.userDefined = json.loads(settings.value('userDefined'))
                 elif (categorySettings.type == "Smooth Mesh"):
                     try:
+                        categorySettings.xenabled = _bool(settings.value('xenabled'))
+                        categorySettings.yenabled = _bool(settings.value('yenabled'))
+                        categorySettings.zenabled = _bool(settings.value('zenabled'))
                         categorySettings.smoothMesh = json.loads(settings.value('smoothMesh'))
                     except Exception as e:
                         print(f"Error during load reading smooth mesh: {e}")
