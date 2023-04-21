@@ -1412,7 +1412,10 @@ class OctaveScriptLinesGenerator:
                         genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xList[0]), _r(xList[-1]))
 
                     genScript += f"smoothMesh.x = {str(xList)};\n"
-                    genScript += "smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, max_res/unit); %max_res calculated in excitation part\n"
+                    if gridSettingsInst.smoothMesh['xMaxRes'] == 0:
+                        genScript += "smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, max_res/unit); %max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, {gridSettingsInst.smoothMesh['xValues']});\n"
                     genScript += "mesh.x = [mesh.x smoothMesh.x];\n"
                 if gridSettingsInst.smoothMesh['y']:
 
@@ -1421,7 +1424,10 @@ class OctaveScriptLinesGenerator:
                         genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(yList[0]), _r(yList[-1]))
 
                     genScript += f"smoothMesh.y = {str(yList)};\n"
-                    genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
+                    if gridSettingsInst.smoothMesh['yMaxRes'] == 0:
+                        genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {gridSettingsInst.smoothMesh['yValues']});\n"
                     genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
                 if gridSettingsInst.smoothMesh['z']:
 
@@ -1430,7 +1436,10 @@ class OctaveScriptLinesGenerator:
                         genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zList[0]), _r(zList[-1]))
 
                     genScript += f"smoothMesh.z = {str(zList)};\n"
-                    genScript += "smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, max_res/unit); %max_res calculated in excitation part\n"
+                    if gridSettingsInst.smoothMesh['zMaxRes'] == 0:
+                        genScript += "smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, max_res/unit); %max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, {gridSettingsInst.smoothMesh['zValues']});\n"
                     genScript += "mesh.z = [mesh.z smoothMesh.z];\n"
 
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"

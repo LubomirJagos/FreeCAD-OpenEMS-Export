@@ -487,10 +487,16 @@ class IniFile:
                 elif (categorySettings.type == "User Defined"):
                     categorySettings.userDefined = json.loads(settings.value('userDefined'))
                 elif (categorySettings.type == "Smooth Mesh"):
-                    smoothMesh = json.loads(settings.value('smoothMesh'))
-                    categorySettings.smoothMesh['x'] = _bool(smoothMesh['x'])
-                    categorySettings.smoothMesh['y'] = _bool(smoothMesh['y'])
-                    categorySettings.smoothMesh['z'] = _bool(smoothMesh['z'])
+                    try:
+                        smoothMesh = json.loads(settings.value('smoothMesh'))
+                        categorySettings.smoothMesh['x'] = _bool(smoothMesh['x'])
+                        categorySettings.smoothMesh['y'] = _bool(smoothMesh['y'])
+                        categorySettings.smoothMesh['z'] = _bool(smoothMesh['z'])
+                        categorySettings.smoothMesh['xMaxRes'] = smoothMesh['xMaxRes']
+                        categorySettings.smoothMesh['yMaxRes'] = smoothMesh['yMaxRes']
+                        categorySettings.smoothMesh['zMaxRes'] = smoothMesh['zMaxRes']
+                    except Exception as e:
+                        print(f"Error during load reading smooth mesh: {e}")
                 else:
                     print(f"Grid reading {categorySettings.type} cannot find aditional infor needed for settings, default values left set.")
 

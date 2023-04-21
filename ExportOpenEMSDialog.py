@@ -218,6 +218,27 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.gridRectangularRadio.toggled.connect(self.gridCoordsTypeChoosed)
 		self.form.gridCylindricalRadio.toggled.connect(self.gridCoordsTypeChoosed)
 
+		self.form.gridXSmoothEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridXSmoothEnable.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.smoothMeshXMaxRes]
+		])
+
+		self.form.gridYSmoothEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridYSmoothEnable.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.smoothMeshYMaxRes]
+		])
+
+		self.form.gridZSmoothEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridZSmoothEnable.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.smoothMeshZMaxRes]
+		])
+
 		#
 		# Material, Grid, Excitation, ... item changed handler functions.
 		#		
@@ -1525,6 +1546,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			gridItem.smoothMesh['y'] = self.form.gridYSmoothEnable.isChecked()
 			gridItem.smoothMesh['z'] = self.form.gridZSmoothEnable.isChecked()
 
+			gridItem.smoothMesh['xMaxRes'] = self.form.smoothMeshXMaxRes.value()
+			gridItem.smoothMesh['yMaxRes'] = self.form.smoothMeshYMaxRes.value()
+			gridItem.smoothMesh['zMaxRes'] = self.form.smoothMeshZMaxRes.value()
+
 		if (self.form.userDefinedRadioButton.isChecked()):
 			gridItem.type = "User Defined"
 			gridItem.userDefined['data'] = self.form.userDefinedGridLinesTextInput.toPlainText()
@@ -2630,6 +2655,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.gridXSmoothEnable.setChecked(False)
 		self.form.gridYSmoothEnable.setChecked(False)
 		self.form.gridZSmoothEnable.setChecked(False)
+		self.form.smoothMeshXMaxRes.setValue(0)
+		self.form.smoothMeshYMaxRes.setValue(0)
+		self.form.smoothMeshZMaxRes.setValue(0)
 		self.form.gridGenerateLinesInsideCheckbox.setChecked(False)
 		self.form.gridTopPriorityLinesCheckbox.setChecked(False)
 
@@ -2666,12 +2694,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
 			self.form.fixedCountYNumberInput.setValue(currSetting.fixedCount['y'])
 			self.form.fixedCountZNumberInput.setValue(currSetting.fixedCount['z'])
-		elif (currSetting.type == "Smooth Mesh"):
-			self.form.smoothMeshRadioButton.click()
 
-			self.form.gridXSmoothEnable.setChecked(currSetting.smoothMesh['x'])
-			self.form.gridYSmoothEnable.setChecked(currSetting.smoothMesh['y'])
-			self.form.gridZSmoothEnable.setChecked(currSetting.smoothMesh['z'])
+		elif (currSetting.type == "Smooth Mesh"):
+			try:
+				self.form.smoothMeshRadioButton.click()
+
+				#self.guiHelpers.displayMessage(str(currSetting.smoothMesh), forceModal=True)
+				print(currSetting.smoothMesh)
+
+				self.form.gridXSmoothEnable.setChecked(currSetting.smoothMesh['x'])
+				self.form.gridYSmoothEnable.setChecked(currSetting.smoothMesh['y'])
+				self.form.gridZSmoothEnable.setChecked(currSetting.smoothMesh['z'])
+				self.form.smoothMeshXMaxRes.setValue(currSetting.smoothMesh['xMaxRes'])
+				self.form.smoothMeshYMaxRes.setValue(currSetting.smoothMesh['yMaxRes'])
+				self.form.smoothMeshZMaxRes.setValue(currSetting.smoothMesh['zMaxRes'])
+			except:
+				pass
 		elif (currSetting.type == "User Defined"):
 			self.form.userDefinedRadioButton.click()
 			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
