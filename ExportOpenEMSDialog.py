@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
+from utilsOpenEMS.SettingsItem.ProbeSettingsItem import ProbeSettingsItem
 from utilsOpenEMS.SettingsItem.ExcitationSettingsItem import ExcitationSettingsItem
 from utilsOpenEMS.SettingsItem.LumpedPartSettingsItem import LumpedPartSettingsItem
 from utilsOpenEMS.SettingsItem.MaterialSettingsItem import MaterialSettingsItem
@@ -176,6 +177,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.lumpedPartSettingsRemoveButton.clicked.connect(self.lumpedPartSettingsRemoveButtonClicked)
 		self.form.lumpedPartSettingsUpdateButton.clicked.connect(self.lumpedPartSettingsUpdateButtonClicked)
 
+		self.form.probeSettingsAddButton.clicked.connect(self.probeSettingsAddButtonClicked)
+		self.form.probeSettingsRemoveButton.clicked.connect(self.probeSettingsRemoveButtonClicked)
+		self.form.probeSettingsUpdateButton.clicked.connect(self.probeSettingsUpdateButtonClicked)
+
 		#
 		# Handle function for grid radio buttons click
 		#
@@ -253,6 +258,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.gridSettingsTreeView.currentItemChanged.connect(self.gridTreeWidgetItemChanged)	
 		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
+		self.form.probeSettingsTreeView.currentItemChanged.connect(self.probeTreeWidgetItemChanged)
 
 		#PORT tab settings events handlers
 		self.form.lumpedPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
@@ -291,6 +297,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			for element in [self.form.probePortFrequencyInput, self.form.probePortFrequencyUnits, self.form.probePortFrequencyList, self.form.probePortFrequencyAddButton, self.form.probePortFrequencyRemoveButton]
 		])
 
+		#PROBE tab
+		self.form.uiprobeProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
+		self.form.probeProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
+		self.form.dumpboxProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
+
+		self.form.probeProbeDomain.currentIndexChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.probeProbeDomain.currentText() == "frequency" else
+			element.setEnabled(False)
+			for element in [self.form.probeProbeFrequencyInput, self.form.probeProbeFrequencyUnits, self.form.probeProbeFrequencyList, self.form.probeProbeFrequencyAddButton, self.form.probeProbeFrequencyRemoveButton]
+		])
+
+		self.form.dumpboxProbeDomain.currentIndexChanged.connect(self.dumpboxProbeDomainChanged)
+
 		################################################################################################################
 		#	PORT TAB -> DUMPBOX TAB UI EVENT HANDLERS
 		################################################################################################################
@@ -298,13 +318,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.dumpboxPortFrequencyAddButton.clicked.connect(self.dumpboxPortFrequencyAddButtonClicked)
 		self.form.dumpboxPortFrequencyRemoveButton.clicked.connect(self.dumpboxPortFrequencyRemoveButtonClicked)
 
-		#enable/disable frequency settings for probe based on domain
-		self.form.dumpboxPortDomain.currentIndexChanged.connect(lambda:[
-			element.setEnabled(True)
-			if self.form.dumpboxPortDomain.currentText() == "frequency" else
-			element.setEnabled(False)
-			for element in [self.form.dumpboxPortFrequencyInput, self.form.dumpboxPortFrequencyUnits, self.form.dumpboxPortFrequencyList, self.form.dumpboxPortFrequencyAddButton, self.form.dumpboxPortFrequencyRemoveButton]
-		])
+		#enable/disable frequency settings for probe based on domain, also change supported filetype for domains
+		self.form.dumpboxPortDomain.currentIndexChanged.connect(self.dumpboxPortDomainChanged)
 
 		#SIMULATION Boundary Conditions change event mapping
 		self.form.BCxmin.currentIndexChanged.connect(self.BCxminCurrentIndexChanged)
@@ -368,6 +383,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.excitationRenamed.connect(self.excitationRenamed)
 		self.guiSignals.portRenamed.connect(self.portRenamed)
 		self.guiSignals.lumpedPartRenamed.connect(self.lumpedPartRenamed)
+		self.guiSignals.probeRenamed.connect(self.probeRenamed)
 
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
@@ -1230,13 +1246,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#
 				addItemToPriorityList = True
 
+				# check if object is added to probes (probes string is from class name), if yes it's not added into priority list as probes
+				# are capturing data from FTDT and don't need to have set priority
+				addItemToPriorityList = addItemToPriorityList and not(reResult.group(1).lower() == 'probe')
+
 				#
 				#	CREATE NEW OBJECT PRIORITY NAME
 				#		- for LumpedPart, Material, ... name is "[category], [category name], [object name]"
 				#		- for Grid child other than Smooth Mesh name is "[category], [category name], [object name]"
 				#		- for Grid Smooth Mesh name is "[category], [category name]" there is no object name as Smooth Mesh group is taken whole as it is
 				#
-				if (rightItem.data(0, QtCore.Qt.UserRole).type == "Smooth Mesh"):
+				if (hasattr(rightItem.data(0, QtCore.Qt.UserRole), 'type') and rightItem.data(0, QtCore.Qt.UserRole).type == "Smooth Mesh"):
 					newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", SMOOTH MESH GROUP"
 				else:
 					newAddedItemName = rightItem.parent().text(0) + ", " + rightItem.text(0) + ", " + leftItem2.text(0)
@@ -1252,10 +1272,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 				if (isGridObjectToBeAdded):
 					priorityListItems = self.form.meshPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
-					addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
+					addItemToPriorityList = addItemToPriorityList and len(priorityListItems) == 0	#check for DUPLICATES
 				else:
 					priorityListItems = self.form.objectAssignmentPriorityTreeView.findItems(newAddedItemName, QtCore.Qt.MatchFixedString)
-					addItemToPriorityList = len(priorityListItems) == 0	#check for DUPLICATES
+					addItemToPriorityList = addItemToPriorityList and len(priorityListItems) == 0	#check for DUPLICATES
 
 				if addItemToPriorityList:
 					#	Item is gonna be added into list:
@@ -1993,6 +2013,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
 			FreeCAD.Console.PrintError(traceback.format_exc())
 
+	@Slot(str, str)
+	def probeRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("Probe", oldName, newName)
+			self.renameTreeViewItem(self.form.probeSettingsTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("Probe " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			FreeCAD.Console.PrintError(traceback.format_exc())
+
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
 	# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
@@ -2107,8 +2137,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "uiprobe"
 			portItem.direction = self.form.uiprobePortDirection.currentText()
 			portItem.isActive = self.form.uiprobePortActive.isChecked()
-			portItem.uiprobeDomain = self.form.uiprobePortDomain.currentText()
-			portItem.uiprobeFrequencyList = [str(self.form.uiprobePortFrequencyList.item(i).text()) for i in range(self.form.uiprobePortFrequencyList.count())]
 
 		if (self.form.probePortRadioButton.isChecked()):
 			portItem.type = "probe"
@@ -2378,6 +2406,36 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		for item in self.form.dumpboxPortFrequencyList.selectedItems():
 			self.form.dumpboxPortFrequencyList.takeItem(self.form.dumpboxPortFrequencyList.row(item))
 
+	def dumpboxPortDomainChanged(self):
+		"""
+		Updates file type setting for dump box, if port domain is frequency than just hdf5 file is only one option.
+		Tested in openEMS trying to save data in frequency domain into vtk file, but no file was produced,
+		hence this event handler must be defined.
+		:return: None
+		"""
+		self.form.dumpboxPortFileType.clear();
+		if self.form.dumpboxPortDomain.currentText() == "frequency":
+			self.form.dumpboxPortFileType.addItems(["hdf5"]);
+			[element.setEnabled(True) for element in [self.form.dumpboxPortFrequencyInput, self.form.dumpboxPortFrequencyUnits, self.form.dumpboxPortFrequencyList, self.form.dumpboxPortFrequencyAddButton, self.form.dumpboxPortFrequencyRemoveButton]]
+		else:
+			self.form.dumpboxPortFileType.addItems(["vtk", "hdf5"]);
+			[element.setEnabled(False) for element in [self.form.dumpboxPortFrequencyInput, self.form.dumpboxPortFrequencyUnits, self.form.dumpboxPortFrequencyList, self.form.dumpboxPortFrequencyAddButton, self.form.dumpboxPortFrequencyRemoveButton]]
+
+	def dumpboxProbeDomainChanged(self):
+		"""
+		Updates file type setting for dump box, if port domain is frequency than just hdf5 file is only one option.
+		Tested in openEMS trying to save data in frequency domain into vtk file, but no file was produced,
+		hence this event handler must be defined.
+		:return: None
+		"""
+		self.form.dumpboxProbeFileType.clear();
+		if self.form.dumpboxProbeDomain.currentText() == "frequency":
+			self.form.dumpboxProbeFileType.addItems(["hdf5"]);
+			[element.setEnabled(True) for element in [self.form.dumpboxProbeFrequencyInput, self.form.dumpboxProbeFrequencyUnits, self.form.dumpboxProbeFrequencyList, self.form.dumpboxProbeFrequencyAddButton, self.form.dumpboxProbeFrequencyRemoveButton]]
+		else:
+			self.form.dumpboxProbeFileType.addItems(["vtk", "hdf5"]);
+			[element.setEnabled(False) for element in [self.form.dumpboxProbeFrequencyInput, self.form.dumpboxProbeFrequencyUnits, self.form.dumpboxProbeFrequencyList, self.form.dumpboxProbeFrequencyAddButton, self.form.dumpboxProbeFrequencyRemoveButton]]
+
 	@Slot(str)
 	def portsChanged(self, operation):
 		"""
@@ -2396,6 +2454,193 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=False)
 			self.updatePortCombobox(self.form.portNf2ffObjectList, ["nf2ff box"])
 			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=True)
+
+	#########################################################################################################################################
+	#
+	#	PROBE TAB HANDLERS
+	#
+	#########################################################################################################################################
+
+	def getProbeItemFromGui(self):
+		name = self.form.probeSettingsNameInput.text()
+
+		probeItem = ProbeSettingsItem()
+		probeItem.name = name
+
+		if (self.form.uiprobeProbeRadioButton.isChecked()):
+			probeItem.type = "uiprobe"
+			probeItem.direction = self.form.uiprobeProbeDirection.currentText()
+
+		if (self.form.probeProbeRadioButton.isChecked()):
+			probeItem.type = "probe"
+			probeItem.probeType = self.form.probeProbeType.currentText()
+			probeItem.direction = self.form.probeProbeDirection.currentText()
+			probeItem.probeDomain = self.form.probeProbeDomain.currentText()
+			probeItem.probeFrequencyList = [str(self.form.probeProbeFrequencyList.item(i).text()) for i in range(self.form.probeProbeFrequencyList.count())]
+
+		if (self.form.dumpboxProbeRadioButton.isChecked()):
+			probeItem.type = "dumpbox"
+			probeItem.dumpboxType = self.form.dumpboxProbeType.currentText()
+			probeItem.dumpboxDomain = self.form.dumpboxProbeDomain.currentText()
+			probeItem.dumpboxFileType = self.form.dumpboxProbeFileType.currentText()
+			probeItem.dumpboxFrequencyList = [str(self.form.dumpboxProbeFrequencyList.item(i).text()) for i in range(self.form.dumpboxProbeFrequencyList.count())]
+
+		if (self.form.etDumpProbeRadioButton.isChecked()):
+			probeItem.type = "et dump"
+		if (self.form.htDumpProbeRadioButton.isChecked()):
+			probeItem.type = "ht dump"
+		if (self.form.nf2ffBoxProbeRadioButton.isChecked()):
+			probeItem.type = "nf2ff box"
+
+		return probeItem
+
+	def probeSettingsAddButtonClicked(self):
+		settingsInst = self.getProbeItemFromGui()
+
+		# check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.probeSettingsTreeView, settingsInst.name)
+
+		if (not isDuplicityName):
+			self.guiHelpers.addSettingsItemGui(settingsInst)
+
+	def probeSettingsRemoveButtonClicked(self, name=None):
+		# if there is no name it's called from UI, if there is name it's called as function this is done to have one function removing port properly for both cases
+		if (type(name) != "str"):
+			selectedItem = self.form.probeSettingsTreeView.selectedItems()[0]
+			print("Selected probe name: " + selectedItem.text(0))
+		else:
+			selectedItem = self.form.probeSettingsTreeView.findItems(name, QtCore.Qt.MatchExactly)[0]
+			print("Called by name to remove probe: " + selectedItem.text(0))
+
+		probeGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+		)
+		probeGroupItem = None
+		for item in probeGroupWidgetItems:
+			if (item.parent().text(0) == "Probe"):
+				probeGroupItem = item
+		print("Currently removing probe item: " + probeGroupItem.text(0))
+
+		# Removing from Object Assignment Tree
+		self.form.probeSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
+		probeGroupItem.parent().removeChild(probeGroupItem)
+
+		# Emit signal about remove port to update comboboxes
+		self.guiSignals.probesChanged.emit("remove")
+
+	def probeSettingsUpdateButtonClicked(self):
+		### capture UI settings
+		settingsInst = self.getProbeItemFromGui()
+
+		### replace old with new settingsInst
+		selectedItems = self.form.probeSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.probeSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("Probe", selectedItems[0].text(0), settingsInst)
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.probeRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			# Emit signal about remove port to update comboboxes
+			self.guiSignals.probesChanged.emit("update")
+
+			# Display message to user
+			self.guiHelpers.displayMessage(f"Probe {settingsInst.name} was updated", forceModal=False)
+
+	def probeSettingsTypeChoosed(self):
+		#first disable all additional settings for Probes
+		self.form.uiprobeProbeSettingsGroup.setEnabled(False)
+		self.form.probeProbeSettingsGroup.setEnabled(False)
+		self.form.dumpboxProbeSettingsGroup.setEnabled(False)
+
+		if (self.form.uiprobeProbeRadioButton.isChecked()):
+			self.form.uiprobeProbeSettingsGroup.setEnabled(True)
+			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("UIProbe")
+
+		elif (self.form.probeProbeRadioButton.isChecked()):
+			self.form.probeProbeSettingsGroup.setEnabled(True)
+			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("Probe")
+
+		elif (self.form.dumpboxProbeRadioButton.isChecked()):
+			self.form.dumpboxProbeSettingsGroup.setEnabled(True)
+			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("DumpBox")
+
+		else:
+			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("")
+
+	def probeTreeWidgetItemChanged(self, current, previous):
+		print("Probe item changed.")
+
+		#if last item was erased from port list do nothing
+		if not self.form.probeSettingsTreeView.currentItem():
+			return
+
+		currSetting = self.form.probeSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.probeSettingsNameInput.setText(currSetting.name)
+
+		if (currSetting.type.lower() == "et dump"):
+			self.form.etDumpProbeRadioButton.click()
+
+		elif (currSetting.type.lower() == "ht dump"):
+			self.form.htDumpProbeRadioButton.click()
+
+		elif (currSetting.type.lower() == "nf2ff box"):
+			self.form.nf2ffBoxProbeRadioButton.click()
+
+		elif (currSetting.type.lower() == "uiprobe"):
+			try:
+				self.form.uiprobeProbeRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.uiprobeProbeDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.uiprobeProbeDomain, currSetting.uiprobeDomain)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update uiprobe current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "probe"):
+			try:
+				self.form.probeProbeRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.probeProbeDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.probeProbeType, currSetting.probeType)
+				self.guiHelpers.setComboboxItem(self.form.probeProbeDomain, currSetting.probeDomain)
+
+				self.form.probeProbeFrequencyList.clear()
+				for freqItemStr in currSetting.probeFrequencyList:
+					self.form.probeProbeFrequencyList.addItem(freqItemStr)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update probe current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "dumpbox"):
+			try:
+				self.form.dumpboxProbeRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.dumpboxProbeType, currSetting.dumpboxType)
+				self.guiHelpers.setComboboxItem(self.form.dumpboxProbeDomain, currSetting.dumpboxDomain)
+				self.guiHelpers.setComboboxItem(self.form.dumpboxProbeFileType, currSetting.dumpboxFileType)
+
+				self.form.dumpboxProbeFrequencyList.clear()
+				for freqItemStr in currSetting.dumpboxFrequencyList:
+					self.form.dumpboxProbeFrequencyList.addItem(freqItemStr)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update dumpbox current settings: {e}", forceModal=False)
+
+		else:
+			pass #no gui update
+
+		return
+
+
+	#########################################################################################################################################
+	#
+	#	SOME GUI HANDLERS
+	#
+	#########################################################################################################################################
 
 	def updateMaterialComboBoxAllMaterials(self, comboboxRef):
 		"""
@@ -2913,9 +3158,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
 				self.form.uiprobePortActive.setChecked(currSetting.isActive)
 				self.guiHelpers.setComboboxItem(self.form.uiprobePortDomain, currSetting.uiprobeDomain)
-				self.form.uiprobePortFrequencyList.clear()
-				for freqItemStr in currSetting.uiprobeFrequencyList:
-					self.form.uiprobePortFrequencyList.addItem(freqItemStr)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update uiprobe current settings: {e}", forceModal=False)
 

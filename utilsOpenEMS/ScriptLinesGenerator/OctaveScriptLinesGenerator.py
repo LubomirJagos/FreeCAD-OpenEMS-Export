@@ -382,6 +382,7 @@ class OctaveScriptLinesGenerator:
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "portNamesAndNumbersList = containers.Map();\n"
 
         for [item, currSetting] in items:
 
@@ -445,6 +446,7 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'uiprobe'):
                         genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
@@ -492,6 +494,7 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == "probe"):
@@ -662,7 +665,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'circular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
                         portStartY = _r(sf * bbCoords.YMin)
@@ -715,7 +720,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX = _r(sf * bbCoords.XMin)
                         portStartY = _r(sf * bbCoords.YMin)
@@ -766,7 +773,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'et dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
@@ -776,6 +785,7 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+
                     elif (currSetting.getType() == 'ht dump'):
                         genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
@@ -785,6 +795,7 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+
                     elif (currSetting.getType() == 'nf2ff box'):
                         genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                       _r(sf * bbCoords.YMin),
@@ -889,7 +900,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'coplanar'):
 
                         gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
@@ -1000,7 +1013,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'stripline'):
                         portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
                         portStartY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
@@ -1074,7 +1089,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     elif (currSetting.getType() == 'curve'):
                         if (_bool(currSetting.direction) == False):
                             portStartX = _r(sf * bbCoords.XMin)
@@ -1106,7 +1123,9 @@ class OctaveScriptLinesGenerator:
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
 

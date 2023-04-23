@@ -5607,6 +5607,794 @@ no TM modes.</string>
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="probeSettingsTab">
+          <attribute name="title">
+           <string>Probe Settings</string>
+          </attribute>
+          <layout class="QHBoxLayout" name="horizontalLayout_59">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_39">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QTreeWidget" name="probeSettingsTreeView">
+               <property name="columnCount">
+                <number>1</number>
+               </property>
+               <column>
+                <property name="text">
+                 <string>Probe Settings List</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_60">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="probeSettingsAddButton">
+                 <property name="text">
+                  <string>+</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="probeSettingsRemoveButton">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_50">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="probeSettingsUpdateButton">
+                 <property name="text">
+                  <string>Update</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_38">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_110">
+               <property name="text">
+                <string>Probe Settings Name</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="probeSettingsNameInput"/>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_7">
+               <property name="title">
+                <string>Probe Type</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_25">
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="nf2ffBoxProbeRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>NF2FF Box</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QRadioButton" name="dumpboxProbeRadioButton">
+                  <property name="text">
+                   <string>DumpBox</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <spacer name="horizontalSpacer_49">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="etDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Et</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QRadioButton" name="htDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Ht</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="probeProbeRadioButton">
+                  <property name="text">
+                   <string>Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="uiprobeProbeRadioButton">
+                  <property name="text">
+                   <string>UI Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTabWidget" name="probeSpecificSettingsTab">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="UIProbe">
+                <attribute name="title">
+                 <string>UIProbe</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_47">
+                 <item>
+                  <widget class="QGroupBox" name="uiprobeProbeSettingsGroup">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="title">
+                    <string>UI Probe - specific Settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_34">
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="uiprobeProbeDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="2">
+                     <spacer name="horizontalSpacer_76">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_154">
+                      <property name="text">
+                       <string>Probe Direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_36">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="Probe">
+                <attribute name="title">
+                 <string>Probe</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_48">
+                 <item>
+                  <widget class="QGroupBox" name="probeProbeSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="title">
+                    <string>Probe - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_35">
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_155">
+                      <property name="text">
+                       <string>Frequency</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="probeProbeDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_156">
+                      <property name="text">
+                       <string>Probe type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_157">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="probeProbeType">
+                      <property name="currentText">
+                       <string>current</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>current</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>voltage</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="probeProbeDomain">
+                      <property name="currentText">
+                       <string>time</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_158">
+                      <property name="text">
+                       <string>Probe direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_49">
+                      <property name="leftMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>5</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_88">
+                        <item>
+                         <widget class="QDoubleSpinBox" name="probeProbeFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="decimals">
+                           <number>5</number>
+                          </property>
+                          <property name="maximum">
+                           <double>10000000.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="probeProbeFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_77">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probeProbeFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probeProbeFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="probeProbeFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_37">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="DumpBox">
+                <attribute name="title">
+                 <string>DumpBox</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_50">
+                 <item>
+                  <widget class="QGroupBox" name="dumpboxProbeSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="title">
+                    <string>DumpBox - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_36">
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeDomain">
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_159">
+                      <property name="text">
+                       <string>Dump type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeType">
+                      <item>
+                       <property name="text">
+                        <string>E field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>H field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>J field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>D field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>B field</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_160">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_161">
+                      <property name="text">
+                       <string>File type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeFileType">
+                      <item>
+                       <property name="text">
+                        <string>vtk</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>hdf5</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_162">
+                      <property name="text">
+                       <string>Frequency list</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_51">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_89">
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="dumpboxProbeFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="decimals">
+                           <number>3</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.000000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>100000000000.000000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>0.000000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="dumpboxProbeFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_78">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>20</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxProbeFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxProbeFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="dumpboxProbeFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_38">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="NoSettings_2">
+                <attribute name="title">
+                 <string/>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_90">
+                 <item>
+                  <widget class="QLabel" name="label_163">
+                   <property name="text">
+                    <string>This probe type has no settings.</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_27">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
          <widget class="QWidget" name="simulationParamsTab">
           <attribute name="title">
            <string>Simulation Params</string>

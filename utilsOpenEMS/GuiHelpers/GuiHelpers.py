@@ -26,54 +26,30 @@ class GuiHelpers:
         return msgBox.exec() == QtGui.QMessageBox.Save
 
     def initRightColumnTopLevelItems(self):
-        #
-        # Default items for each section
-        #
-        """ NO DEFAULT ITEMS!
-        topItem = self.form.objectAssignmentRightTreeWidget.itemAt(0,0)
-        defaultMaterialItem = QtGui.QTreeWidgetItem(["Material Default"])
-        defaultExcitationItem = QtGui.QTreeWidgetItem(["Excitation Default"])
-        defaultGridItem = QtGui.QTreeWidgetItem(["Grid Default"])
-        defaultPortItem = QtGui.QTreeWidgetItem(["Port Default"])
-        defaultLumpedPartItem = QtGui.QTreeWidgetItem(["LumpedPart Default"])
-        """
-
-        #
-        # Default items in each subsection have user data FreeCADSttingsItem classes to have just basic information like genereal freecad object
-        #
-        """ NO DEFAULT ITEMS!
-        defaultMaterialItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Material Default"))
-        defaultExcitationItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Excitation Default"))
-        defaultGridItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Grid Default"))
-        defaultPortItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("Port Default"))
-        defaultLumpedPartItem.setData(0, QtCore.Qt.UserRole, FreeCADSettingsItem("LumpedPart Default"))
-        """
-
         # MATERIALS
         topItem = QtGui.QTreeWidgetItem(["Material"])
         topItem.setIcon(0, QtGui.QIcon("./img/material.svg"))
-        # topItem.addChildren([defaultMaterialItem])	#NO DEFAULT ITEM
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
-
-        # LuboJ
-        self.MaterialsItem = topItem  # aux item materials item to have some reference here to be sure for future access it
 
         # EXCITATION
         topItem = QtGui.QTreeWidgetItem(["Excitation"])
         topItem.setIcon(0, QtGui.QIcon("./img/excitation.svg"))
-        # topItem.addChildren([defaultExcitationItem])	#NO DEFAULT ITEM
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # GRID
         topItem = QtGui.QTreeWidgetItem(["Grid"])
         topItem.setIcon(0, QtGui.QIcon("./img/grid.svg"))
-        # topItem.addChildren([defaultGridItem])	#NO DEFAULT ITEM
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # PORTS
         topItem = QtGui.QTreeWidgetItem(["Port"])
         topItem.setIcon(0, QtGui.QIcon("./img/port.svg"))
         # topItem.addChildren([defaultPortItem])	#NO DEFAULT ITEM
+        self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
+
+        # PROBES
+        topItem = QtGui.QTreeWidgetItem(["Probe"])
+        topItem.setIcon(0, QtGui.QIcon("./img/probe.svg"))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # LUMPED PART
@@ -172,6 +148,8 @@ class GuiHelpers:
             treeWidgetRef = self.form.materialSettingsTreeView
         elif (typeStr.lower() == "lumpedpart"):
             treeWidgetRef = self.form.lumpedPartTreeView
+        elif (typeStr.lower() == "probe"):
+            treeWidgetRef = self.form.probeSettingsTreeView
         else:
             print('cannot assign item ' + typeStr)
             return
@@ -219,6 +197,15 @@ class GuiHelpers:
         for index in range(self.form.portSpecificSettingsTab.count()):
             if tabName == self.form.portSpecificSettingsTab.tabText(index):
                 self.form.portSpecificSettingsTab.setCurrentIndex(index)
+
+    def probeSpecificSettingsTabSetActiveByName(self, tabName):
+        """
+        Set active tab in Probe Settings by providing its name, ie. UIProbe, Probe, DumpBox, ...
+        :return: None
+        """
+        for index in range(self.form.probeSpecificSettingsTab.count()):
+            if tabName == self.form.probeSpecificSettingsTab.tabText(index):
+                self.form.probeSpecificSettingsTab.setCurrentIndex(index)
 
     def setComboboxItem(self, controlRef, text):
         index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
