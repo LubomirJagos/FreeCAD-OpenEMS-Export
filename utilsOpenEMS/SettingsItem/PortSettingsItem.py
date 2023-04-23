@@ -14,6 +14,7 @@ class PortSettingsItem(SettingsItem):
                  coaxialConductorMaterial = "", coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
                  coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
                  striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = "",
+                 uiprobeDomain="", uiprobeFrequencyList=[],
                  probeType="", probeDomain="", probeFrequencyList=[],
                  dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencyList=[]
                  ):
@@ -67,6 +68,9 @@ class PortSettingsItem(SettingsItem):
         self.striplineFeedpointShiftUnits = striplineFeedpointShiftUnits
         self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
         self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
+
+        self.uiprobeDomain = uiprobeDomain
+        self.uiprobeFrequencyList = uiprobeFrequencyList
 
         self.probeType = probeType
         self.probeDomain = probeDomain

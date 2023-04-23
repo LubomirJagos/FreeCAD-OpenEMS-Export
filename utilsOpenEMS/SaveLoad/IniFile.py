@@ -170,8 +170,11 @@ class IniFile:
                     print(f"{__file__} > write() lumped ERROR: {e}")
 
             elif (portList[k].type == "uiprobe"):
-                settings.setValue("isActive", portList[k].isActive)
-                settings.setValue("direction", portList[k].direction)
+                try:
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                except Exception as e:
+                    print(f"{__file__} > write() uiprobe ERROR: {e}")
 
             elif (portList[k].type == "probe"):
                 try:
@@ -517,15 +520,22 @@ class IniFile:
                     categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
 
                 elif (categorySettings.type == "uiprobe"):
-                    categorySettings.isActive = _bool(settings.value('isActive'))
-                    categorySettings.direction = settings.value('direction')
+                    try:
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                    except Exception as e:
+                        print(f"There was error during reading uiprobe port settings: {e}")
 
                 elif (categorySettings.type == "probe"):
                     try:
                         categorySettings.probeType = settings.value('probeType')
                         categorySettings.direction = settings.value('direction')
                         categorySettings.probeDomain = settings.value('probeDomain')
-                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList').split(',')
+
+                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList')
+                        if len(categorySettings.probeFrequencyList) > 0 and len(categorySettings.probeFrequencyList[0]) == 1:
+                            categorySettings.probeFrequencyList = ["".join(categorySettings.probeFrequencyList)]
+
                     except Exception as e:
                         print(f"There was error during reading probe port settings: {e}")
 
@@ -534,7 +544,11 @@ class IniFile:
                         categorySettings.dumpboxType = settings.value('dumpboxType')
                         categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
                         categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
-                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList').split(',')
+
+                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
+                        if len(categorySettings.dumpboxFrequencyList) > 0 and len(categorySettings.dumpboxFrequencyList[0]) == 1:
+                            categorySettings.dumpboxFrequencyList = ["".join(categorySettings.dumpboxFrequencyList)]
+
                     except Exception as e:
                         print(f"There was error during reading dumpbox port settings: {e}")
 

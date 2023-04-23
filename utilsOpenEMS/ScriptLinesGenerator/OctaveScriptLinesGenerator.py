@@ -427,7 +427,8 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += 'portR = ' + str(currSetting.R) + ';\n'
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += "portExcitationAmplitude = " + str(currSetting.lumpedExcitationAmplitude) + ";\n"
+                        genScript += 'portDirection = {}*portExcitationAmplitude;\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
                                                                                 _r(bbCoords.ZMin)))
@@ -441,27 +442,6 @@ class OctaveScriptLinesGenerator:
                                      str(genScriptPortCount) + ', ' + \
                                      'portR*portUnits, portStart, portStop, portDirection' + \
                                      isActiveStr.get(currSetting.isActive) + ');\n'
-
-                        #
-                        #   Set port excitation amplitude if different from 1.0, this is done using SetExcitationWeight() in port direction
-                        #
-                        if (currSetting.isActive and currSetting.lumpedExcitationAmplitude != 1.0):
-                            if currSetting.direction in ['x', 'x+', 'x-']:
-                                genScript += "weight{1} = " + str (currSetting.lumpedExcitationAmplitude) + ";\n"
-                            else:
-                                genScript += "weight{1} = 0;\n"
-
-                            if currSetting.direction in ['y', 'y+', 'y-']:
-                                genScript += "weight{2} = " + str (currSetting.lumpedExcitationAmplitude) + ";\n"
-                            else:
-                                genScript += "weight{2} = 0;\n"
-
-                            if currSetting.direction in ['z', 'z+', 'z-']:
-                                genScript += "weight{3} = " + str(currSetting.lumpedExcitationAmplitude) + ";\n"
-                            else:
-                                genScript += "weight{3} = 0;\n"
-
-                            genScript += "CSX = SetExcitationWeight(CSX,'port_excite_" + str(genScriptPortCount) + "',weight);\n"
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
@@ -482,13 +462,33 @@ class OctaveScriptLinesGenerator:
                             '\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
                                                                               _r(bbCoords.ZMax)))
 
-                        isActiveStr = {False: '', True: ', true'}
+                        isActiveStr = {False: ', false', True: ', true'}
+
+                        if (currSetting.uiprobeDomain == "frequency"):
+                            argStr = ""
+                            argStr += ", 'Frequency', ["
+
+                            if (len(currSetting.uiprobeFrequencyList) > 0):
+                                for freqStr in currSetting.uiprobeFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                argStr += "f0]#{ERROR NO FREQUENCIES FOR UIPROBE FOUND, SO INSTEAD USED f0#}"
+                                App.Console.PrintWarning(f"UIprobe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
 
                         genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + \
                                      str(priorityIndex) + ', ' + \
                                      str(genScriptPortCount) + ', ' + \
                                      'inf, portStart, portStop, portDirection' + \
-                                     isActiveStr.get(currSetting.isActive) + ');\n'
+                                     isActiveStr.get(currSetting.isActive) + \
+                                     argStr + \
+                                     ');\n'
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
@@ -1415,7 +1415,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.smoothMesh['xMaxRes'] == 0:
                         genScript += "smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, max_res/unit); %max_res calculated in excitation part\n"
                     else:
-                        genScript += f"smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, {gridSettingsInst.smoothMesh['xValues']});\n"
+                        genScript += f"smoothMesh.x = AutoSmoothMeshLines(smoothMesh.x, {gridSettingsInst.smoothMesh['xMaxRes']});\n"
                     genScript += "mesh.x = [mesh.x smoothMesh.x];\n"
                 if gridSettingsInst.yenabled:
 
@@ -1427,7 +1427,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.smoothMesh['yMaxRes'] == 0:
                         genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
                     else:
-                        genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {gridSettingsInst.smoothMesh['yValues']});\n"
+                        genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {gridSettingsInst.smoothMesh['yMaxRes']});\n"
                     genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
                 if gridSettingsInst.zenabled:
 
@@ -1439,7 +1439,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.smoothMesh['zMaxRes'] == 0:
                         genScript += "smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, max_res/unit); %max_res calculated in excitation part\n"
                     else:
-                        genScript += f"smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, {gridSettingsInst.smoothMesh['zValues']});\n"
+                        genScript += f"smoothMesh.z = AutoSmoothMeshLines(smoothMesh.z, {gridSettingsInst.smoothMesh['zMaxRes']});\n"
                     genScript += "mesh.z = [mesh.z smoothMesh.z];\n"
 
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"

@@ -128,10 +128,11 @@ class GuiHelpers:
                 print("parent grid found")
                 print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
                 print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
-        #	if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
-        #		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
-        #	else:
-        #		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
+
+                if not _bool(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines):
+                    self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
+                else:
+                    self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
 
         """
         # If grid item is set to have priority lines it means it should be highlighted in mesh priority widget

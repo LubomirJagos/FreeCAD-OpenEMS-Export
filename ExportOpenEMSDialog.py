@@ -88,6 +88,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.dialogVertLayout.addWidget(self.statusBar)
 
 		#
+		#	FONT SIZE whoole GUI
+		#
+		#self.form.setStyleSheet(".QLabel{font-size: 25pt;}")
+
+		#
 		# instantiate script generators using this dialog form
 		#
 		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
@@ -278,9 +283,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.striplinePortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
 															# and combobox with propagation direction left with all possibilities
 
-		self.form.probePortFrequencyAddButton.clicked.connect(self.probePortFrequencyAddButtonClicked)
-		self.form.probePortFrequencyRemoveButton.clicked.connect(self.probePortFrequencyRemoveButtonClicked)
-
 		#enable/disable frequency settings for dumpobx based on domain
 		self.form.probePortDomain.currentIndexChanged.connect(lambda:[
 			element.setEnabled(True)
@@ -289,11 +291,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			for element in [self.form.probePortFrequencyInput, self.form.probePortFrequencyUnits, self.form.probePortFrequencyList, self.form.probePortFrequencyAddButton, self.form.probePortFrequencyRemoveButton]
 		])
 
+		################################################################################################################
+		#	PORT TAB -> DUMPBOX TAB UI EVENT HANDLERS
+		################################################################################################################
+
 		self.form.dumpboxPortFrequencyAddButton.clicked.connect(self.dumpboxPortFrequencyAddButtonClicked)
 		self.form.dumpboxPortFrequencyRemoveButton.clicked.connect(self.dumpboxPortFrequencyRemoveButtonClicked)
 
 		#enable/disable frequency settings for probe based on domain
-		self.form.probePortDomain.currentIndexChanged.connect(lambda:[
+		self.form.dumpboxPortDomain.currentIndexChanged.connect(lambda:[
 			element.setEnabled(True)
 			if self.form.dumpboxPortDomain.currentText() == "frequency" else
 			element.setEnabled(False)
@@ -339,6 +345,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.observer.objectChanged += self.freecadObjectChanged
 		self.observer.objectDeleted += self.freecadBeforeObjectDeleted
 		self.observer.startObservation()
+
+		#
+		#	GUI font size change
+		#
+		self.form.guiFontSizeCombobox.currentIndexChanged.connect(lambda: self.form.setStyleSheet(f"font: {self.form.guiFontSizeCombobox.currentText()} \"{self.form.guiFontFamilyCombobox.currentText()}\";"))
+		self.form.guiFontFamilyCombobox.currentIndexChanged.connect(lambda: self.form.setStyleSheet(f"font: {self.form.guiFontSizeCombobox.currentText()} \"{self.form.guiFontFamilyCombobox.currentText()}\";"))
 
 		#
 		#	add default PEC material
@@ -1256,11 +1268,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					else:
 						self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(0, leftItem2)
 
-					#
-					# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
-					#
-					#self.guiHelpers.updateMeshPriorityDisableItems()
-
 					leftItem2.setIcon(0, rightItem.parent().icon(0)) #set same icon as parent have means same as category
 					print("Object " + leftItem2.text(0)+ " added into priority list")
 				else:
@@ -1277,6 +1284,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#when add object to Port category emit signal to update comboboxes with ports
 				if (reResult.group(1).lower() == 'port'):
 					self.guiSignals.portsChanged.emit("add")
+
+			#
+			# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
+			#
+			if (reResult.group(1).lower() == 'grid'):
+				self.guiHelpers.updateMeshPriorityDisableItems()
 
 		else:
 				self.guiHelpers.displayMessage("Item must be added into some settings inside category.")
@@ -2094,6 +2107,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "uiprobe"
 			portItem.direction = self.form.uiprobePortDirection.currentText()
 			portItem.isActive = self.form.uiprobePortActive.isChecked()
+			portItem.uiprobeDomain = self.form.uiprobePortDomain.currentText()
+			portItem.uiprobeFrequencyList = [str(self.form.uiprobePortFrequencyList.item(i).text()) for i in range(self.form.uiprobePortFrequencyList.count())]
 
 		if (self.form.probePortRadioButton.isChecked()):
 			portItem.type = "probe"
@@ -2343,9 +2358,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.dumpboxPortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("DumpBox")
 
+		else:
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("")
+
+
 	def probePortFrequencyAddButtonClicked(self):
 		newItem = str(self.form.probePortFrequencyInput.value()) + str(self.form.probePortFrequencyUnits.currentText())
-		self.form.probePortFrequencyList.addItem(newItem)
+		self.form.probePortFrequencyList.insertItem(self.form.probePortFrequencyList.currentRow()+1, newItem)
 
 	def probePortFrequencyRemoveButtonClicked(self):
 		for item in self.form.probePortFrequencyList.selectedItems():
@@ -2353,7 +2372,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def dumpboxPortFrequencyAddButtonClicked(self):
 		newItem = str(self.form.dumpboxPortFrequencyInput.value()) + str(self.form.dumpboxPortFrequencyUnits.currentText())
-		self.form.dumpboxPortFrequencyList.addItem(newItem)
+		self.form.dumpboxPortFrequencyList.insertItem(self.form.dumpboxPortFrequencyList.currentRow()+1, newItem)
 
 	def dumpboxPortFrequencyRemoveButtonClicked(self):
 		for item in self.form.dumpboxPortFrequencyList.selectedItems():
@@ -2889,9 +2908,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.curvePortDirection.setChecked(currSetting.direction in [True, "true", "True"])										#set checkbox for reverse direction for curve port
 
 		elif (currSetting.type.lower() == "uiprobe"):
-			self.form.uiprobePortRadioButton.click()
-			self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
-			self.form.uiprobePortActive.setChecked(currSetting.isActive)
+			try:
+				self.form.uiprobePortRadioButton.click()
+				self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
+				self.form.uiprobePortActive.setChecked(currSetting.isActive)
+				self.guiHelpers.setComboboxItem(self.form.uiprobePortDomain, currSetting.uiprobeDomain)
+				self.form.uiprobePortFrequencyList.clear()
+				for freqItemStr in currSetting.uiprobeFrequencyList:
+					self.form.uiprobePortFrequencyList.addItem(freqItemStr)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update uiprobe current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "probe"):
 			try:

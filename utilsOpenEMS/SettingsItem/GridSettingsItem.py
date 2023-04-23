@@ -6,10 +6,11 @@ from .SettingsItem import SettingsItem
 #	User Defined   - user has to provide coordinates where lines should be
 #
 class GridSettingsItem(SettingsItem):
-    def __init__(self, name="", type="", fixedCount={'x': 0, 'y': 0, 'z': 0}, fixedDistance={'x': 0, 'y': 0, 'z': 0},
-                 userDefined={'data': ""}, units="", xenabled=False, yenabled=False, zenabled=False,
-                 smoothMeshDefault={'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0},
+    def __init__(self, name="", type="", fixedCount=None, fixedDistance=None,
+                 userDefined=None, units="", xenabled=False, yenabled=False, zenabled=False,
+                 smoothMeshDefault=None,
                  coordsType='rectangular'):
+
         self.name = name
         self.type = type
         self.coordsType = coordsType
@@ -17,13 +18,12 @@ class GridSettingsItem(SettingsItem):
         self.xenabled = xenabled
         self.yenabled = yenabled
         self.zenabled = zenabled
-        self.fixedCount = fixedCount
-        self.fixedDistance = fixedDistance
-        self.smoothMesh = smoothMeshDefault
-        self.userDefined = userDefined
+        self.fixedCount = {'x': 0, 'y': 0, 'z': 0} if fixedCount is None else fixedCount
+        self.fixedDistance = {'x': 0, 'y': 0, 'z': 0} if fixedDistance is None else fixedDistance
+        self.smoothMesh = {'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0} if smoothMeshDefault is None else smoothMeshDefault
+        self.userDefined = {'data': ""} if userDefined is None else userDefined
         self.generateLinesInside = False
         self.topPriorityLines = True
-
 
     # Return xyz distances, count or user defined array based what user asked for.
     def getXYZ(self, referenceUnit=1):
