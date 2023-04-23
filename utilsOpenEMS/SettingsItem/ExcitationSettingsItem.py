@@ -7,13 +7,13 @@ from .SettingsItem import SettingsItem
 #
 
 class ExcitationSettingsItem(SettingsItem):
-	def __init__(self, name = "", type = "", sinusodial = {'f0': 0}, gaussian = {'f0': 0, 'fc': 0}, custom = {'functionStr': '0', 'f0': 0}, units = "Hz"):
+	def __init__(self, name="", type="", sinusodial=None, gaussian=None, custom=None, units = "Hz"):
 		SettingsItem.__init__(self)
 		self.name = name
 		self.type = type
-		self.sinusodial = sinusodial
-		self.gaussian = gaussian
-		self.custom = custom
+		self.sinusodial = {'f0': 0} if sinusodial is None else sinusodial
+		self.gaussian = {'f0': 0, 'fc': 0} if gaussian is None else gaussian
+		self.custom = {'functionStr': '0', 'f0': 0} if custom is None else custom
 		self.units = units
 		return
 

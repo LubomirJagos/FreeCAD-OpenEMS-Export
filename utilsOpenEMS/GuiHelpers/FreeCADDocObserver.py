@@ -54,19 +54,19 @@ class FreeCADDocObserver():
         self.documentDeleted(doc)
 
     def slotRecomputedObject(self, obj):
-        # print("recomputation triggered")
+        #print("recomputation triggered")
         self.objectRecomputed(obj)
 
     def slotCreatedObject(self, obj):
-        # print("A new object was added")
+        #print("A new object was added")
         self.objectCreated(obj)
 
     def slotChangedObject(self, obj, prop):
-        # print("you have changed an object: " + repr(obj))
+        #print("you have changed an object: " + repr(obj))
         self.objectChanged(obj, prop)
 
     def slotDeletedObject(self, obj):
-        # print("you have queued an object for deletion: " + repr(obj))
+        #print("you have queued an object for deletion: " + repr(obj))
         self.objectDeleted(obj)
 
 
