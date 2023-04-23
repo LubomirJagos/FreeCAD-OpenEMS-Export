@@ -112,15 +112,28 @@ class IniFile:
             settings.beginGroup("GRID-" + gridList[k].getName())
             settings.setValue("coordsType", gridList[k].coordsType)
             settings.setValue("type", gridList[k].type)
-            settings.setValue("units", gridList[k].units)
-            settings.setValue("xenabled", gridList[k].xenabled)
-            settings.setValue("yenabled", gridList[k].yenabled)
-            settings.setValue("zenabled", gridList[k].zenabled)
-            settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
-            settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
-            settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
             settings.setValue("generateLinesInside", gridList[k].generateLinesInside)
             settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
+            settings.setValue("units", gridList[k].units)
+
+            if (gridList[k].type == "Fixed Distance"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
+                settings.setValue("fixedDistance", json.dumps(gridList[k].fixedDistance))
+            elif (gridList[k].type == "Fixed Count"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
+                settings.setValue("fixedCount", json.dumps(gridList[k].fixedCount))
+            elif (gridList[k].type == "Smooth Mesh"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
+                settings.setValue("smoothMesh", json.dumps(gridList[k].smoothMesh))
+            elif (gridList[k].type == "User Defined"):
+                settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
+
             settings.endGroup()
 
         # SAVE EXCITATION
@@ -145,25 +158,136 @@ class IniFile:
 
             settings.beginGroup("PORT-" + portList[k].getName())
             settings.setValue("type", portList[k].type)
-            settings.setValue("R", portList[k].R)
-            settings.setValue("RUnits", portList[k].RUnits)
-            settings.setValue("isActive", portList[k].isActive)
-            settings.setValue("direction", portList[k].direction)
 
-            if (portList[k].type == "circular waveguide"):
+            if (portList[k].type == "lumped"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                    settings.setValue("excitationAmplitude", portList[k].lumpedExcitationAmplitude)
+                except Exception as e:
+                    print(f"{__file__} > write() lumped ERROR: {e}")
+
+            elif (portList[k].type == "uiprobe"):
+                try:
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                except Exception as e:
+                    print(f"{__file__} > write() uiprobe ERROR: {e}")
+
+            elif (portList[k].type == "probe"):
+                try:
+                    settings.setValue("direction", portList[k].direction)
+                    settings.setValue("probeType", portList[k].probeType)
+                    settings.setValue("probeDomain", portList[k].probeDomain)
+                    settings.setValue("probeFrequencyList", portList[k].probeFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() probe ERROR: {e}")
+
+            elif (portList[k].type == "dumpbox"):
+                try:
+                    settings.setValue("dumpboxType", portList[k].dumpboxType)
+                    settings.setValue("dumpboxDomain", portList[k].dumpboxDomain)
+                    settings.setValue("dumpboxFileType", portList[k].dumpboxFileType)
+                    settings.setValue("dumpboxFrequencyList", portList[k].dumpboxFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() dumpbox ERROR: {e}")
+
+            elif (portList[k].type == "circular waveguide"):
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
                 settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+                settings.setValue("waveguideDirection", portList[k].waveguideCircDir)
+
+            elif (portList[k].type == "rectangular waveguide"):
+                settings.setValue("isActive", portList[k].isActive)
+                settings.setValue("direction", portList[k].direction)
+                settings.setValue("modeName", portList[k].modeName)
+                settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
+                settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
+
             elif (portList[k].type == "microstrip"):
                 try:
-                    settings.setValue("mslMaterial", portList[k].mslMaterial)
-                    settings.setValue("mslPropagation", portList[k].mslPropagation)
-                    settings.setValue("mslFeedShiftValue", portList[k].mslFeedShiftValue)
-                    settings.setValue("mslFeedShiftUnits", portList[k].mslFeedShiftUnits)
-                    settings.setValue("mslMeasPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
-                    settings.setValue("mslMeasPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
+                    settings.setValue("material", portList[k].mslMaterial)
+                    settings.setValue("feedShiftValue", portList[k].mslFeedShiftValue)
+                    settings.setValue("feedShiftUnits", portList[k].mslFeedShiftUnits)
+                    settings.setValue("measPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
+                    settings.setValue("measPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
+                    settings.setValue("propagation", portList[k].mslPropagation)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
+
+            elif (portList[k].type == "coaxial"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
+                    settings.setValue("coaxialInnerRadiusValue", portList[k].coaxialInnerRadiusValue)
+                    settings.setValue("coaxialInnerRadiusUnits", portList[k].coaxialInnerRadiusUnits)
+                    settings.setValue("coaxialShellThicknessValue", portList[k].coaxialShellThicknessValue)
+                    settings.setValue("coaxialShellThicknessUnits", portList[k].coaxialShellThicknessUnits)
+                    settings.setValue("feedpointShiftValue", portList[k].coaxialFeedpointShiftValue)
+                    settings.setValue("feedpointShiftUnits", portList[k].coaxialFeedpointShiftUnits)
+                    settings.setValue("measPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
+                    settings.setValue("measPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
+                    settings.setValue("excitationAmplitude", portList[k].coaxialExcitationAmplitude)
+
+                    settings.setValue("material", portList[k].coaxialMaterial)
+                    settings.setValue("conductorMaterial", portList[k].coaxialConductorMaterial)
+                except Exception as e:
+                    print(f"{__file__} > write() coaxial material ERROR: {e}")
+
+            elif (portList[k].type == "coplanar"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
+                    settings.setValue('material', portList[k].coplanarMaterial)
+                    settings.setValue('propagation', portList[k].coplanarPropagation)
+                    settings.setValue('coplanarGapValue', portList[k].coplanarGapValue)
+                    settings.setValue('coplanarGapUnits', portList[k].coplanarGapUnits)
+                    settings.setValue('feedpointShiftValue', portList[k].coplanarFeedpointShiftValue)
+                    settings.setValue('feedpointShiftUnits', portList[k].coplanarFeedpointShiftUnits)
+                    settings.setValue('measPlaneShiftValue', portList[k].coplanarMeasPlaneShiftValue)
+                    settings.setValue('measPlaneShiftUnits', portList[k].coplanarMeasPlaneShiftUnits)
+                except Exception as e:
+                    print(f"{__file__} > write() coplanar ERROR: {e}")
+
+            elif (portList[k].type == "stripline"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+
+                    settings.setValue('propagation', portList[k].striplinePropagation)
+                    settings.setValue('feedpointShiftValue', portList[k].striplineFeedpointShiftValue)
+                    settings.setValue('feedpointShiftUnits', portList[k].striplineFeedpointShiftUnits)
+                    settings.setValue('measPlaneShiftValue', portList[k].striplineMeasPlaneShiftValue)
+                    settings.setValue('measPlaneShiftUnits', portList[k].striplineMeasPlaneShiftUnits)
+                except Exception as e:
+                    print(f"{__file__} > write() coplanar ERROR: {e}")
+
+            elif (portList[k].type == "curve"):
+                try:
+                    settings.setValue("R", portList[k].R)
+                    settings.setValue("RUnits", portList[k].RUnits)
+                    settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("direction", portList[k].direction)
+                except Exception as e:
+                    print(f"{__file__} > write() curve ERROR: {e}")
 
             settings.endGroup()
 
@@ -191,6 +315,7 @@ class IniFile:
         simulationSettings.params['PMLymaxcells'] = self.form.PMLymaxcells.value()
         simulationSettings.params['PMLzmincells'] = self.form.PMLzmincells.value()
         simulationSettings.params['PMLzmaxcells'] = self.form.PMLzmaxcells.value()
+        simulationSettings.params['min_gridspacing_enable'] = self.form.genParamMinGridSpacingEnable.isChecked()
         simulationSettings.params['min_gridspacing_x'] = self.form.genParamMinGridSpacingX.value()
         simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
         simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
@@ -273,7 +398,7 @@ class IniFile:
 
         settings.beginGroup("POSTPROCESSING-DefaultName")
         settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
-        settings.setValue("nf2ffFreq", self.form.portNf2ffFreq.value())
+        settings.setValue("nf2ffFreqCount", self.form.portNf2ffFreqCount.value())
         settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
         settings.setValue("nf2ffThetaStop", self.form.portNf2ffThetaStop.value())
         settings.setValue("nf2ffThetaStep", self.form.portNf2ffThetaStep.value())
@@ -350,16 +475,34 @@ class IniFile:
                 categorySettings = GridSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.coordsType = settings.value('coordsType')
-                categorySettings.type = settings.value('type')
-                categorySettings.xenabled = _bool(settings.value('xenabled'))
-                categorySettings.yenabled = _bool(settings.value('yenabled'))
-                categorySettings.zenabled = _bool(settings.value('zenabled'))
                 categorySettings.units = settings.value('units')
-                categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
-                categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
-                categorySettings.userDefined = json.loads(settings.value('userDefined'))
                 categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
                 categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
+
+                categorySettings.type = settings.value('type')
+                if (categorySettings.type == "Fixed Distance"):
+                    categorySettings.xenabled = _bool(settings.value('xenabled'))
+                    categorySettings.yenabled = _bool(settings.value('yenabled'))
+                    categorySettings.zenabled = _bool(settings.value('zenabled'))
+                    categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
+                elif (categorySettings.type == "Fixed Count"):
+                    categorySettings.xenabled = _bool(settings.value('xenabled'))
+                    categorySettings.yenabled = _bool(settings.value('yenabled'))
+                    categorySettings.zenabled = _bool(settings.value('zenabled'))
+                    categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
+                elif (categorySettings.type == "User Defined"):
+                    categorySettings.userDefined = json.loads(settings.value('userDefined'))
+                elif (categorySettings.type == "Smooth Mesh"):
+                    try:
+                        categorySettings.xenabled = _bool(settings.value('xenabled'))
+                        categorySettings.yenabled = _bool(settings.value('yenabled'))
+                        categorySettings.zenabled = _bool(settings.value('zenabled'))
+                        categorySettings.smoothMesh = json.loads(settings.value('smoothMesh'))
+                    except Exception as e:
+                        print(f"Error during load reading smooth mesh: {e}")
+                else:
+                    print(f"Grid reading {categorySettings.type} cannot find aditional infor needed for settings, default values left set.")
+
                 settings.endGroup()
 
             elif (re.compile("PORT").search(settingsGroup)):
@@ -368,26 +511,139 @@ class IniFile:
                 categorySettings = PortSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
-                categorySettings.R = settings.value('R')
-                categorySettings.RUnits = settings.value('RUnits')
-                categorySettings.isActive = _bool(settings.value('isActive'))
-                categorySettings.direction = settings.value('direction')
 
-                if (categorySettings.type == "circular waveguide"):
+                if (categorySettings.type == "lumped"):
+                    categorySettings.R = settings.value('R')
+                    categorySettings.RUnits = settings.value('RUnits')
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
+                    categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
+
+                elif (categorySettings.type == "uiprobe"):
+                    try:
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                    except Exception as e:
+                        print(f"There was error during reading uiprobe port settings: {e}")
+
+                elif (categorySettings.type == "probe"):
+                    try:
+                        categorySettings.probeType = settings.value('probeType')
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.probeDomain = settings.value('probeDomain')
+
+                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList')
+                        if len(categorySettings.probeFrequencyList) > 0 and len(categorySettings.probeFrequencyList[0]) == 1:
+                            categorySettings.probeFrequencyList = ["".join(categorySettings.probeFrequencyList)]
+
+                    except Exception as e:
+                        print(f"There was error during reading probe port settings: {e}")
+
+                elif (categorySettings.type == "dumpbox"):
+                    try:
+                        categorySettings.dumpboxType = settings.value('dumpboxType')
+                        categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
+                        categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
+
+                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
+                        if len(categorySettings.dumpboxFrequencyList) > 0 and len(categorySettings.dumpboxFrequencyList[0]) == 1:
+                            categorySettings.dumpboxFrequencyList = ["".join(categorySettings.dumpboxFrequencyList)]
+
+                    except Exception as e:
+                        print(f"There was error during reading dumpbox port settings: {e}")
+
+                elif (categorySettings.type == "circular waveguide"):
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
                     categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.waveguideCircDir = settings.value('waveguideDirection')
+
+                elif (categorySettings.type == "rectangular waveguide"):
+                    categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.direction = settings.value('direction')
+                    categorySettings.modeName = settings.value('modeName')
+                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.waveguideRectDir = settings.value('waveguideDirection')
+
                 elif (categorySettings.type == "microstrip"):
                     #this is in try block to have backward compatibility
                     try:
-                        categorySettings.mslMaterial = settings.value('mslMaterial')
-                        categorySettings.mslPropagation = settings.value('mslPropagation')
-                        categorySettings.mslFeedShiftValue = float(settings.value('mslFeedShiftValue'))
-                        categorySettings.mslFeedShiftUnits = settings.value('mslFeedShiftUnits')
-                        categorySettings.mslMeasPlaneShiftValue = float(settings.value('mslMeasPlaneShiftValue'))
-                        categorySettings.mslMeasPlaneShiftUnits = settings.value('mslMeasPlaneShiftUnits')
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.mslMaterial = settings.value('material')
+                        categorySettings.mslFeedShiftValue = float(settings.value('feedShiftValue'))
+                        categorySettings.mslFeedShiftUnits = settings.value('feedShiftUnits')
+                        categorySettings.mslMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.mslMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                        categorySettings.mslPropagation = settings.value('propagation')
                     except Exception as e:
                         print(f"There was error during reading microstrip port settings: {e}")
+
+                elif (categorySettings.type == "coaxial"):
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.coaxialInnerRadiusValue = float(settings.value('coaxialInnerRadiusValue'))
+                        categorySettings.coaxialInnerRadiusUnits = settings.value('coaxialInnerRadiusUnits')
+                        categorySettings.coaxialShellThicknessValue = float(settings.value('coaxialShellThicknessValue'))
+                        categorySettings.coaxialShellThicknessUnits = settings.value('coaxialShellThicknessUnits')
+                        categorySettings.coaxialFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.coaxialFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.coaxialMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                        categorySettings.coaxialExcitationAmplitude = float(settings.value('excitationAmplitude'))
+
+                        #now this is at the end of try block to ensure all properites are read, due conductor material was added so old files doesn't have it
+                        categorySettings.coaxialMaterial = settings.value('material')
+                        categorySettings.coaxialConductorMaterial = settings.value('conductorMaterial')
+                    except Exception as e:
+                        print(f"There was error during reading coaxial port settings: {e}")
+
+                elif (categorySettings.type == "coplanar"):
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.coplanarMaterial = settings.value('material')
+                        categorySettings.coplanarPropagation = settings.value('propagation')
+                        categorySettings.coplanarGapValue = float(settings.value('coplanarGapValue'))
+                        categorySettings.coplanarGapUnits = settings.value('coplanarGapUnits')
+                        categorySettings.coplanarFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.coplanarFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.coplanarMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.coplanarMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                    except Exception as e:
+                        print(f"There was error during reading coplanar port settings: {e}")
+
+                elif (categorySettings.type == "stripline"):
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.striplinePropagation = settings.value('propagation')
+                        categorySettings.striplineFeedpointShiftValue = float(settings.value('feedpointShiftValue'))
+                        categorySettings.striplineFeedpointShiftUnits = settings.value('feedpointShiftUnits')
+                        categorySettings.striplineMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
+                        categorySettings.striplineMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
+                    except Exception as e:
+                        print(f"There was error during reading coplanar port settings: {e}")
+
+                elif (categorySettings.type == "curve"):
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                    except Exception as e:
+                        print(f"There was error during reading curve port settings: {e}")
 
                 elif (categorySettings.type == "nf2ff box"):
                     #
@@ -432,9 +688,7 @@ class IniFile:
 
                 self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
                 self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
-                self.form.generateJustPreviewCheckbox.setCheckState(
-                    QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview',
-                                                                       False) else QtCore.Qt.Unchecked)
+                self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview',False) else QtCore.Qt.Unchecked)
                 self.form.generateDebugPECCheckbox.setCheckState(
                     QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC', False) else QtCore.Qt.Unchecked)
                 self.form.octaveExecCommandList.setCurrentText(
@@ -460,6 +714,7 @@ class IniFile:
                 #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
                 #
                 try:
+                    self.form.genParamMinGridSpacingEnable.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('min_gridspacing_enable',False) else QtCore.Qt.Unchecked)
                     self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
                     self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
                     self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
@@ -677,13 +932,13 @@ class IniFile:
                     if index >= 0:
                         self.form.portNf2ffObjectList.setCurrentIndex(index)
 
-                    self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreq"))
                     self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
                     self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
                     self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
                     self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
                     self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
                     self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
+                    self.form.portNf2ffFreqCount.setValue(settings.value("nf2ffFreqCount"))
                 except:
                     pass
 

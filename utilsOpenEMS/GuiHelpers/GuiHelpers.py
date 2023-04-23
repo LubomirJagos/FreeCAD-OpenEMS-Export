@@ -128,10 +128,11 @@ class GuiHelpers:
                 print("parent grid found")
                 print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
                 print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
-        #	if not gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines or gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines == 'false':
-        #		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
-        #	else:
-        #		self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
+
+                if not _bool(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines):
+                    self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
+                else:
+                    self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(False)
 
         """
         # If grid item is set to have priority lines it means it should be highlighted in mesh priority widget
@@ -209,3 +210,46 @@ class GuiHelpers:
                         self.form.meshPriorityTreeView.takeTopLevelItem(k)
                         priorityItemRemoved = True
                         break
+
+    def portSpecificSettingsTabSetActiveByName(self, tabName):
+        """
+        Set active tab in Port Settings by providing its name, ie. Waveguide, Microstrip, ...
+        :return: None
+        """
+        for index in range(self.form.portSpecificSettingsTab.count()):
+            if tabName == self.form.portSpecificSettingsTab.tabText(index):
+                self.form.portSpecificSettingsTab.setCurrentIndex(index)
+
+    def setComboboxItem(self, controlRef, text):
+        index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            controlRef.setCurrentIndex(index)
+
+    def hasPortSomeObjects(self, portName):
+        """
+        Check if port category contains some assigned freecad objects
+        :param port category name:
+        :return: true if category contains some assigned objects
+        """
+        hasPortSomeObjects = False
+
+        itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(portName, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchRecursive)
+        for item in itemWithSameName:
+            #test if it's under Port category, so look if parent().parent() is None as it's top level item and then if parent is Port item category
+            if (item.parent().parent() == None and item.parent().text(0) == "Port"):
+                if (item.childCount() > 0):
+                    hasPortSomeObjects = True
+
+        return hasPortSomeObjects
+
+    def getGridGroupObjectAssignmentTreeItem(self, groupName):
+        gridGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+            groupName,
+            QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+        )
+        gridGroupItem = None
+        for item in gridGroupWidgetItems:
+            if (item.parent().text(0) == "Grid"):
+                gridGroupItem = item
+
+        return gridGroupItem
