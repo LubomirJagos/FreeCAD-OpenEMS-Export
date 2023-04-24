@@ -364,9 +364,6 @@ class OctaveScriptLinesGenerator:
         # port index counter, they are generated into port{} cell variable for octave, cells index starts at 1
         genScriptPortCount = 1
 
-        # nf2ff box counter, they are stored inside octave cell variable nf2ff{} so this is to index them properly, in octave cells index starts at 1
-        genNF2FFBoxCounter = 1
-
         #
         #   This here generates string for port excitation field, ie. for z+ generates [0 0 1], for y- generates [0 -1 0]
         #       Options for select field x,y,z were removed from GUI, but left here due there could be saved files from previous versions
@@ -752,25 +749,6 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-
-                    elif (currSetting.getType() == 'nf2ff box'):
-                        genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                      _r(sf * bbCoords.YMin),
-                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                      _r(sf * bbCoords.YMax),
-                                                                                      _r(sf * bbCoords.ZMax))
-                        # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
-                        genScript += "[CSX nf2ffBox{" + str(
-                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
-                        # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
-
-                        #
-                        #   ATTENTION this is NF2FF box counter
-                        #
-                        internalPortName = currSetting.name + " - " + obj.Label
-                        self.internalNF2FFIndexNamesList[internalPortName] = genNF2FFBoxCounter
-                        genNF2FFBoxCounter += 1
 
                     elif (currSetting.getType() == 'coaxial'):
                         portStartX = _r(sf * bbCoords.XMin)
@@ -1254,26 +1232,32 @@ class OctaveScriptLinesGenerator:
                         genScript += "\n"
 
                     elif (currSetting.getType() == 'et dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+                        dumpboxName = f"{currSetting.name}_{childName}"
+
+                        genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', 0, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
                         genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpStart, dumpStop );\n"
 
                     elif (currSetting.getType() == 'ht dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+                        dumpboxName = f"{currSetting.name}_{childName}"
+
+                        genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', 1, 'DumpMode', 2);\n"
                         genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                      _r(sf * bbCoords.YMin),
                                                                                      _r(sf * bbCoords.ZMin))
                         genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpStart, dumpStop );\n"
 
                     elif (currSetting.getType() == 'nf2ff box'):
+                        dumpboxName = f"{currSetting.name} - {childName}"
+
                         genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                       _r(sf * bbCoords.YMin),
                                                                                       _r(sf * bbCoords.ZMin))
@@ -1281,15 +1265,13 @@ class OctaveScriptLinesGenerator:
                                                                                       _r(sf * bbCoords.YMax),
                                                                                       _r(sf * bbCoords.ZMax))
                         # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
-                        genScript += "[CSX nf2ffBox{" + str(
-                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+                        genScript += "[CSX nf2ffBox{" + str(genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + dumpboxName + "', nf2ffStart, nf2ffStop);\n"
                         # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
 
                         #
                         #   ATTENTION this is NF2FF box counter
                         #
-                        internalPortName = currSetting.name + " - " + obj.Label
-                        self.internalNF2FFIndexNamesList[internalPortName] = genNF2FFBoxCounter
+                        self.internalNF2FFIndexNamesList[dumpboxName] = genNF2FFBoxCounter
                         genNF2FFBoxCounter += 1
 
                     else:
@@ -1880,7 +1862,7 @@ class OctaveScriptLinesGenerator:
         genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write NF2FF probe grid definitions.
-        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
         genScript += self.getMinimalGridlineSpacingScriptLines()
@@ -1955,8 +1937,11 @@ class OctaveScriptLinesGenerator:
         #    - must be before nf2ff
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
-        # Write NF2FF probe grid definitions.
-        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+        # Write probes definitions
+        genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
+
+        # Write NF2FF probe grid definitions. THIS NEEDS TO BE DONE TO FILL self.internalNF2FFIndexNamesList[] with keys and indexes, key = "[nf2ff probe category name] - [object label]"
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
         genScript += self.getMinimalGridlineSpacingScriptLines()

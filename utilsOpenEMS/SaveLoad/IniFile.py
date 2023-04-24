@@ -172,24 +172,6 @@ class IniFile:
                 except Exception as e:
                     print(f"{__file__} > write() lumped ERROR: {e}")
 
-            elif (portList[k].type == "probe"):
-                try:
-                    settings.setValue("direction", portList[k].direction)
-                    settings.setValue("probeType", portList[k].probeType)
-                    settings.setValue("probeDomain", portList[k].probeDomain)
-                    settings.setValue("probeFrequencyList", portList[k].probeFrequencyList)
-                except Exception as e:
-                    print(f"{__file__} > write() probe ERROR: {e}")
-
-            elif (portList[k].type == "dumpbox"):
-                try:
-                    settings.setValue("dumpboxType", portList[k].dumpboxType)
-                    settings.setValue("dumpboxDomain", portList[k].dumpboxDomain)
-                    settings.setValue("dumpboxFileType", portList[k].dumpboxFileType)
-                    settings.setValue("dumpboxFrequencyList", portList[k].dumpboxFrequencyList)
-                except Exception as e:
-                    print(f"{__file__} > write() dumpbox ERROR: {e}")
-
             elif (portList[k].type == "circular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
@@ -547,32 +529,6 @@ class IniFile:
                     categorySettings.direction = settings.value('direction')
                     categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
 
-                elif (categorySettings.type == "probe"):
-                    try:
-                        categorySettings.probeType = settings.value('probeType')
-                        categorySettings.direction = settings.value('direction')
-                        categorySettings.probeDomain = settings.value('probeDomain')
-
-                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList')
-                        if len(categorySettings.probeFrequencyList) > 0 and len(categorySettings.probeFrequencyList[0]) == 1:
-                            categorySettings.probeFrequencyList = ["".join(categorySettings.probeFrequencyList)]
-
-                    except Exception as e:
-                        print(f"There was error during reading probe port settings: {e}")
-
-                elif (categorySettings.type == "dumpbox"):
-                    try:
-                        categorySettings.dumpboxType = settings.value('dumpboxType')
-                        categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
-                        categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
-
-                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
-                        if len(categorySettings.dumpboxFrequencyList) > 0 and len(categorySettings.dumpboxFrequencyList[0]) == 1:
-                            categorySettings.dumpboxFrequencyList = ["".join(categorySettings.dumpboxFrequencyList)]
-
-                    except Exception as e:
-                        print(f"There was error during reading dumpbox port settings: {e}")
-
                 elif (categorySettings.type == "circular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
@@ -666,12 +622,6 @@ class IniFile:
                     except Exception as e:
                         print(f"There was error during reading curve port settings: {e}")
 
-                elif (categorySettings.type == "nf2ff box"):
-                    #
-                    #	Add nf2ff box item into list of possible object in postprocessing tab
-                    #
-                    self.form.portNf2ffObjectList.addItem(categorySettings.name)
-
                 settings.endGroup()
 
             elif (re.compile("PROBE").search(settingsGroup)):
@@ -706,12 +656,6 @@ class IniFile:
 
                     except Exception as e:
                         print(f"There was error during reading dumpbox probe settings: {e}")
-
-                elif (categorySettings.type == "nf2ff box"):
-                    #
-                    #	Add nf2ff box item into list of possible object in postprocessing tab
-                    #
-                    self.form.portNf2ffObjectList.addItem(categorySettings.name)
 
                 settings.endGroup()
 
