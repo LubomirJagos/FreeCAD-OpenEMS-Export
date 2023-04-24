@@ -200,7 +200,7 @@ class GuiHelpers:
 
     def probeSpecificSettingsTabSetActiveByName(self, tabName):
         """
-        Set active tab in Probe Settings by providing its name, ie. UIProbe, Probe, DumpBox, ...
+        Set active tab in Probe Settings by providing its name, ie. Probe, DumpBox, ...
         :return: None
         """
         for index in range(self.form.probeSpecificSettingsTab.count()):

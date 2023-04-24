@@ -272,13 +272,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.striplinePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.curvePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
-		self.form.uiprobePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.probePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.dumpboxPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 
 		self.form.microstripPortDirection.activated.connect(self.microstripPortDirectionOnChange)
 		self.form.striplinePortDirection.activated.connect(self.striplinePortDirectionOnChange)
 		self.form.coplanarPortDirection.activated.connect(self.coplanarPortDirectionOnChange)
+
+		self.form.lumpedPortInfinitResistance.stateChanged.connect(lambda: [
+			element.setEnabled(False) if self.form.lumpedPortInfinitResistance.isChecked() else element.setEnabled(True)
+			for element in [self.form.lumpedPortResistanceValue, self.form.lumpedPortResistanceUnits]
+		])
 
 		self.form.microstripPortDirection.activated.emit(0)	#emit signal to fill connected combobox or whatever with right values after startup, ie. when user start GUI there is no change
 															# and combobox with propagation direction left with all possibilities
@@ -298,7 +302,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		])
 
 		#PROBE tab
-		self.form.uiprobeProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
 		self.form.probeProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
 		self.form.dumpboxProbeRadioButton.toggled.connect(self.probeSettingsTypeChoosed)
 
@@ -2129,14 +2132,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "lumped"
 			portItem.R = self.form.lumpedPortResistanceValue.value()
 			portItem.RUnits = self.form.lumpedPortResistanceUnits.currentText()
+			portItem.lumpedInfiniteResistance = self.form.lumpedPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.lumpedPortActive.isChecked()
 			portItem.direction = self.form.lumpedPortDirection.currentText()
 			portItem.lumpedExcitationAmplitude = self.form.lumpedPortExcitationAmplitude.value()
-
-		if (self.form.uiprobePortRadioButton.isChecked()):
-			portItem.type = "uiprobe"
-			portItem.direction = self.form.uiprobePortDirection.currentText()
-			portItem.isActive = self.form.uiprobePortActive.isChecked()
 
 		if (self.form.probePortRadioButton.isChecked()):
 			portItem.type = "probe"
@@ -2335,7 +2334,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortSettingsGroup.setEnabled(False)
 		self.form.striplinePortSettingsGroup.setEnabled(False)
 		self.form.curvePortSettingsGroup.setEnabled(False)
-		self.form.uiprobePortSettingsGroup.setEnabled(False)
 		self.form.probePortSettingsGroup.setEnabled(False)
 		self.form.dumpboxPortSettingsGroup.setEnabled(False)
 
@@ -2373,10 +2371,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.curvePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Curve")
-
-		elif (self.form.uiprobePortRadioButton.isChecked()):
-			self.form.uiprobePortSettingsGroup.setEnabled(True)
-			self.guiHelpers.portSpecificSettingsTabSetActiveByName("UIProbe")
 
 		elif (self.form.probePortRadioButton.isChecked()):
 			self.form.probePortSettingsGroup.setEnabled(True)
@@ -2449,11 +2443,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"])
-			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=True)
-			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=False)
+			self.updatePortCombobox(self.form.drawS11Port, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
+			self.updatePortCombobox(self.form.drawS21Source, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
+			self.updatePortCombobox(self.form.drawS21Target, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=False)
 			self.updatePortCombobox(self.form.portNf2ffObjectList, ["nf2ff box"])
-			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "uiprobe"], isActive=True)
+			self.updatePortCombobox(self.form.portNf2ffInput, ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
 
 	#########################################################################################################################################
 	#
@@ -2466,10 +2460,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		probeItem = ProbeSettingsItem()
 		probeItem.name = name
-
-		if (self.form.uiprobeProbeRadioButton.isChecked()):
-			probeItem.type = "uiprobe"
-			probeItem.direction = self.form.uiprobeProbeDirection.currentText()
 
 		if (self.form.probeProbeRadioButton.isChecked()):
 			probeItem.type = "probe"
@@ -2558,15 +2548,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def probeSettingsTypeChoosed(self):
 		#first disable all additional settings for Probes
-		self.form.uiprobeProbeSettingsGroup.setEnabled(False)
 		self.form.probeProbeSettingsGroup.setEnabled(False)
 		self.form.dumpboxProbeSettingsGroup.setEnabled(False)
 
-		if (self.form.uiprobeProbeRadioButton.isChecked()):
-			self.form.uiprobeProbeSettingsGroup.setEnabled(True)
-			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("UIProbe")
-
-		elif (self.form.probeProbeRadioButton.isChecked()):
+		if (self.form.probeProbeRadioButton.isChecked()):
 			self.form.probeProbeSettingsGroup.setEnabled(True)
 			self.guiHelpers.probeSpecificSettingsTabSetActiveByName("Probe")
 
@@ -2595,14 +2580,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		elif (currSetting.type.lower() == "nf2ff box"):
 			self.form.nf2ffBoxProbeRadioButton.click()
-
-		elif (currSetting.type.lower() == "uiprobe"):
-			try:
-				self.form.uiprobeProbeRadioButton.click()
-				self.guiHelpers.setComboboxItem(self.form.uiprobeProbeDirection, currSetting.direction)
-				self.guiHelpers.setComboboxItem(self.form.uiprobeProbeDomain, currSetting.uiprobeDomain)
-			except Exception as e:
-				self.guiHelpers.displayMessage(f"ERROR update uiprobe current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "probe"):
 			try:
@@ -3025,6 +3002,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
 				self.form.lumpedPortActive.setChecked(currSetting.isActive)
+				self.form.lumpedPortInfinitResistance.setChecked(currSetting.lumpedInfiniteResistance)
 				self.form.lumpedPortExcitationAmplitude.setValue(currSetting.lumpedExcitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update lumped current settings: {e}", forceModal=False)
@@ -3151,15 +3129,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.curvePortResistanceValue.setValue(float(currSetting.R))
 			self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
 			self.form.curvePortDirection.setChecked(currSetting.direction in [True, "true", "True"])										#set checkbox for reverse direction for curve port
-
-		elif (currSetting.type.lower() == "uiprobe"):
-			try:
-				self.form.uiprobePortRadioButton.click()
-				self.guiHelpers.setComboboxItem(self.form.uiprobePortDirection, currSetting.direction)
-				self.form.uiprobePortActive.setChecked(currSetting.isActive)
-				self.guiHelpers.setComboboxItem(self.form.uiprobePortDomain, currSetting.uiprobeDomain)
-			except Exception as e:
-				self.guiHelpers.displayMessage(f"ERROR update uiprobe current settings: {e}", forceModal=False)
 
 		elif (currSetting.type.lower() == "probe"):
 			try:

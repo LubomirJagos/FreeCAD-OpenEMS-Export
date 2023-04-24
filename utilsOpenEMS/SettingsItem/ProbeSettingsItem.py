@@ -2,7 +2,6 @@ from .SettingsItem import SettingsItem
 
 class ProbeSettingsItem(SettingsItem):
     def __init__(self, name="", type="", direction="z",
-                 uiprobeDomain="", uiprobeFrequencyList=[],
                  probeType="", probeDomain="", probeFrequencyList=[],
                  dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencyList=[]
                  ):
@@ -10,9 +9,6 @@ class ProbeSettingsItem(SettingsItem):
         self.type = type
 
         self.direction = direction
-
-        self.uiprobeDomain = uiprobeDomain
-        self.uiprobeFrequencyList = uiprobeFrequencyList
 
         self.probeType = probeType
         self.probeDomain = probeDomain

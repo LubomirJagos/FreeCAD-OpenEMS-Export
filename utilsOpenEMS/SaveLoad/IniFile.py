@@ -12,6 +12,7 @@ from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
+from utilsOpenEMS.SettingsItem.ProbeSettingsItem import ProbeSettingsItem
 from utilsOpenEMS.SettingsItem.ExcitationSettingsItem import ExcitationSettingsItem
 from utilsOpenEMS.SettingsItem.LumpedPartSettingsItem import LumpedPartSettingsItem
 from utilsOpenEMS.SettingsItem.MaterialSettingsItem import MaterialSettingsItem
@@ -150,8 +151,9 @@ class IniFile:
             settings.setValue("units", excitationList[k].units)
             settings.endGroup()
 
+        #
         # SAVE PORT SETTINGS
-
+        #
         portList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.portSettingsTreeView)
         for k in range(len(portList)):
             print("Save new PORT constants into file: " + portList[k].getName())
@@ -164,17 +166,11 @@ class IniFile:
                     settings.setValue("R", portList[k].R)
                     settings.setValue("RUnits", portList[k].RUnits)
                     settings.setValue("isActive", portList[k].isActive)
+                    settings.setValue("infiniteResistance", portList[k].lumpedInfiniteResistance)
                     settings.setValue("direction", portList[k].direction)
                     settings.setValue("excitationAmplitude", portList[k].lumpedExcitationAmplitude)
                 except Exception as e:
                     print(f"{__file__} > write() lumped ERROR: {e}")
-
-            elif (portList[k].type == "uiprobe"):
-                try:
-                    settings.setValue("isActive", portList[k].isActive)
-                    settings.setValue("direction", portList[k].direction)
-                except Exception as e:
-                    print(f"{__file__} > write() uiprobe ERROR: {e}")
 
             elif (portList[k].type == "probe"):
                 try:
@@ -291,8 +287,39 @@ class IniFile:
 
             settings.endGroup()
 
-        # SAVE SIMULATION PARAMS
+        #
+        # SAVE PROBES SETTINGS
+        #
+        probeList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.probeSettingsTreeView)
+        for k in range(len(probeList)):
+            print("Save new PROBE constants into file: " + probeList[k].getName())
 
+            settings.beginGroup("PROBE-" + probeList[k].getName())
+            settings.setValue("type", probeList[k].type)
+
+            if (probeList[k].type == "probe"):
+                try:
+                    settings.setValue("direction", probeList[k].direction)
+                    settings.setValue("probeType", probeList[k].probeType)
+                    settings.setValue("probeDomain", probeList[k].probeDomain)
+                    settings.setValue("probeFrequencyList", probeList[k].probeFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() probe ERROR: {e}")
+
+            elif (probeList[k].type == "dumpbox"):
+                try:
+                    settings.setValue("dumpboxType", probeList[k].dumpboxType)
+                    settings.setValue("dumpboxDomain", probeList[k].dumpboxDomain)
+                    settings.setValue("dumpboxFileType", probeList[k].dumpboxFileType)
+                    settings.setValue("dumpboxFrequencyList", probeList[k].dumpboxFrequencyList)
+                except Exception as e:
+                    print(f"{__file__} > write() dumpbox ERROR: {e}")
+
+            settings.endGroup()
+
+        #
+        # SAVE SIMULATION PARAMS
+        #
         simulationSettings = SimulationSettingsItem("Hardwired Name 1")
 
         simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
@@ -516,15 +543,9 @@ class IniFile:
                     categorySettings.R = settings.value('R')
                     categorySettings.RUnits = settings.value('RUnits')
                     categorySettings.isActive = _bool(settings.value('isActive'))
+                    categorySettings.lumpedInfiniteResistance = _bool(settings.value('infiniteResistance'))
                     categorySettings.direction = settings.value('direction')
                     categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
-
-                elif (categorySettings.type == "uiprobe"):
-                    try:
-                        categorySettings.isActive = _bool(settings.value('isActive'))
-                        categorySettings.direction = settings.value('direction')
-                    except Exception as e:
-                        print(f"There was error during reading uiprobe port settings: {e}")
 
                 elif (categorySettings.type == "probe"):
                     try:
@@ -644,6 +665,47 @@ class IniFile:
                         categorySettings.direction = settings.value('direction')
                     except Exception as e:
                         print(f"There was error during reading curve port settings: {e}")
+
+                elif (categorySettings.type == "nf2ff box"):
+                    #
+                    #	Add nf2ff box item into list of possible object in postprocessing tab
+                    #
+                    self.form.portNf2ffObjectList.addItem(categorySettings.name)
+
+                settings.endGroup()
+
+            elif (re.compile("PROBE").search(settingsGroup)):
+                print("PROBE item settings found.")
+                settings.beginGroup(settingsGroup)
+                categorySettings = ProbeSettingsItem()
+                categorySettings.name = itemName
+                categorySettings.type = settings.value('type')
+
+                if (categorySettings.type == "probe"):
+                    try:
+                        categorySettings.probeType = settings.value('probeType')
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.probeDomain = settings.value('probeDomain')
+
+                        categorySettings.probeFrequencyList = settings.value('probeFrequencyList')
+                        if len(categorySettings.probeFrequencyList) > 0 and len(categorySettings.probeFrequencyList[0]) == 1:
+                            categorySettings.probeFrequencyList = ["".join(categorySettings.probeFrequencyList)]
+
+                    except Exception as e:
+                        print(f"There was error during reading probe probe settings: {e}")
+
+                elif (categorySettings.type == "dumpbox"):
+                    try:
+                        categorySettings.dumpboxType = settings.value('dumpboxType')
+                        categorySettings.dumpboxDomain = settings.value('dumpboxDomain')
+                        categorySettings.dumpboxFileType = settings.value('dumpboxFileType')
+
+                        categorySettings.dumpboxFrequencyList = settings.value('dumpboxFrequencyList')
+                        if len(categorySettings.dumpboxFrequencyList) > 0 and len(categorySettings.dumpboxFrequencyList[0]) == 1:
+                            categorySettings.dumpboxFrequencyList = ["".join(categorySettings.dumpboxFrequencyList)]
+
+                    except Exception as e:
+                        print(f"There was error during reading dumpbox probe settings: {e}")
 
                 elif (categorySettings.type == "nf2ff box"):
                     #

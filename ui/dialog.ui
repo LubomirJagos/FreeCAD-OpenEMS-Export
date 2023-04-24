@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1404</width>
-    <height>738</height>
+    <width>1400</width>
+    <height>728</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1923,16 +1923,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="2">
-                 <widget class="QRadioButton" name="uiprobePortRadioButton">
-                  <property name="text">
-                   <string>UI Probe</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="2">
                  <widget class="QRadioButton" name="htDumpPortRadioButton">
                   <property name="sizePolicy">
@@ -2068,20 +2058,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <string>Lumped - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_21">
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_29">
-                      <property name="text">
-                       <string>Port Amplitude/Excitation Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <widget class="QDoubleSpinBox" name="lumpedPortResistanceValue">
-                      <property name="maximum">
-                       <double>10000000000.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="1" column="2">
                      <widget class="QComboBox" name="lumpedPortResistanceUnits">
                       <property name="currentText">
@@ -2119,10 +2095,56 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
+                    <item row="5" column="1">
+                     <widget class="QDoubleSpinBox" name="lumpedPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="2">
+                     <widget class="QLabel" name="label_105">
+                      <property name="text">
+                       <string>ATTENTION! This is not voltage amplitude but
+electric field amplitude in V/m,
+voltage on borders of ports depends
+on its size, ie. if in axis length is 1mm then
+1V = 1000(V/m)*1mm
+0.1V = 100(V/m)*1mm
+...</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_29">
+                      <property name="text">
+                       <string>Port Amplitude/Excitation Direction</string>
+                      </property>
+                     </widget>
+                    </item>
                     <item row="0" column="0">
                      <widget class="QCheckBox" name="lumpedPortActive">
                       <property name="text">
                        <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QDoubleSpinBox" name="lumpedPortResistanceValue">
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -2133,7 +2155,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="1">
+                    <item row="3" column="1">
                      <widget class="QComboBox" name="lumpedPortDirection">
                       <property name="currentText">
                        <string>z</string>
@@ -2155,42 +2177,17 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
-                    <item row="3" column="0">
+                    <item row="5" column="0">
                      <widget class="QLabel" name="label_102">
                       <property name="text">
                        <string>Excitation Field Amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QDoubleSpinBox" name="lumpedPortExcitationAmplitude">
-                      <property name="decimals">
-                       <number>8</number>
-                      </property>
-                      <property name="minimum">
-                       <double>-10000000000.000000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>10000000000.000000000000000</double>
-                      </property>
-                      <property name="singleStep">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="value">
-                       <double>1.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="2">
-                     <widget class="QLabel" name="label_105">
+                    <item row="0" column="1">
+                     <widget class="QCheckBox" name="lumpedPortInfinitResistance">
                       <property name="text">
-                       <string>ATTENTION! This is not voltage amplitude but
-electric field amplitude in V/m,
-voltage on borders of ports depends
-on its size, ie. if in axis length is 1mm then
-1V = 1000(V/m)*1mm
-0.1V = 100(V/m)*1mm
-...</string>
+                       <string>infinite resistance</string>
                       </property>
                      </widget>
                     </item>
@@ -2360,7 +2357,7 @@ pi/2 = vertical polarization</string>
                     <item row="6" column="0">
                      <widget class="QLabel" name="label_4">
                       <property name="text">
-                       <string>Excitation amplitude (V)</string>
+                       <string>Excitation amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
@@ -2533,7 +2530,7 @@ no TM modes.</string>
                     <item row="4" column="0">
                      <widget class="QLabel" name="label_60">
                       <property name="text">
-                       <string>Excitation amplitude (V)</string>
+                       <string>Excitation amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
@@ -4650,87 +4647,6 @@ no TM modes.</string>
                  </item>
                 </layout>
                </widget>
-               <widget class="QWidget" name="UIProbe">
-                <attribute name="title">
-                 <string>UIProbe</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_33">
-                 <item>
-                  <widget class="QGroupBox" name="uiprobePortSettingsGroup">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="title">
-                    <string>UI Probe - specific Settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_23">
-                    <item row="1" column="1">
-                     <widget class="QComboBox" name="uiprobePortDirection">
-                      <property name="currentText">
-                       <string>x</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>x</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_97">
-                      <property name="text">
-                       <string>Probe Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="2">
-                     <spacer name="horizontalSpacer_45">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="uiprobePortActive">
-                      <property name="text">
-                       <string>port is active</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_22">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
                <widget class="QWidget" name="Probe">
                 <attribute name="title">
                  <string>Probe</string>
@@ -5720,19 +5636,6 @@ no TM modes.</string>
                 <string>Probe Type</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_25">
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="nf2ffBoxProbeRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>NF2FF Box</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="3" column="1">
                  <widget class="QRadioButton" name="dumpboxProbeRadioButton">
                   <property name="text">
@@ -5759,7 +5662,7 @@ no TM modes.</string>
                 <item row="1" column="1">
                  <widget class="QRadioButton" name="etDumpProbeRadioButton">
                   <property name="text">
-                   <string>Et</string>
+                   <string>Et Dump</string>
                   </property>
                   <property name="checked">
                    <bool>false</bool>
@@ -5769,14 +5672,14 @@ no TM modes.</string>
                 <item row="2" column="1">
                  <widget class="QRadioButton" name="htDumpProbeRadioButton">
                   <property name="text">
-                   <string>Ht</string>
+                   <string>Ht Dump</string>
                   </property>
                   <property name="checked">
                    <bool>false</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="0">
+                <item row="1" column="0">
                  <widget class="QRadioButton" name="probeProbeRadioButton">
                   <property name="text">
                    <string>Probe</string>
@@ -5786,13 +5689,16 @@ no TM modes.</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="uiprobeProbeRadioButton">
-                  <property name="text">
-                   <string>UI Probe</string>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="nf2ffBoxProbeRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
-                  <property name="checked">
-                   <bool>true</bool>
+                  <property name="text">
+                   <string>NF2FF Box</string>
                   </property>
                  </widget>
                 </item>
@@ -5807,80 +5713,6 @@ no TM modes.</string>
                <property name="currentIndex">
                 <number>0</number>
                </property>
-               <widget class="QWidget" name="UIProbe">
-                <attribute name="title">
-                 <string>UIProbe</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_47">
-                 <item>
-                  <widget class="QGroupBox" name="uiprobeProbeSettingsGroup">
-                   <property name="enabled">
-                    <bool>true</bool>
-                   </property>
-                   <property name="title">
-                    <string>UI Probe - specific Settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_34">
-                    <item row="0" column="1">
-                     <widget class="QComboBox" name="uiprobeProbeDirection">
-                      <property name="currentText">
-                       <string>x</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>x</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="0" column="2">
-                     <spacer name="horizontalSpacer_76">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_154">
-                      <property name="text">
-                       <string>Probe Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_36">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
                <widget class="QWidget" name="Probe">
                 <attribute name="title">
                  <string>Probe</string>
@@ -5889,7 +5721,7 @@ no TM modes.</string>
                  <item>
                   <widget class="QGroupBox" name="probeProbeSettingsGroup">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="title">
                     <string>Probe - specific settings</string>

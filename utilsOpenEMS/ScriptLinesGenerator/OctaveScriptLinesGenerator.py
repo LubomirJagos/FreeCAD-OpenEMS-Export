@@ -382,7 +382,7 @@ class OctaveScriptLinesGenerator:
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
         genScript += "% PORTS\n"
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "portNamesAndNumbersList = containers.Map();\n"
+        genScript += "portNamesAndNumbersList = containers.Map();\n\n"
 
         for [item, currSetting] in items:
 
@@ -426,7 +426,12 @@ class OctaveScriptLinesGenerator:
                         genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
-                        genScript += 'portR = ' + str(currSetting.R) + ';\n'
+
+                        if currSetting.lumpedInfiniteResistance:
+                            genScript += 'portR = inf;\n'
+                        else:
+                            genScript += 'portR = ' + str(currSetting.R) + ';\n'
+
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
                         genScript += "portExcitationAmplitude = " + str(currSetting.lumpedExcitationAmplitude) + ";\n"
                         genScript += 'portDirection = {}*portExcitationAmplitude;\n'.format(baseVectorStr.get(currSetting.direction, '?'))
@@ -443,54 +448,6 @@ class OctaveScriptLinesGenerator:
                                      str(genScriptPortCount) + ', ' + \
                                      'portR*portUnits, portStart, portStop, portDirection' + \
                                      isActiveStr.get(currSetting.isActive) + ');\n'
-
-                        internalPortName = currSetting.name + " - " + obj.Label
-                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
-                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
-                        genScriptPortCount += 1
-                    elif (currSetting.getType() == 'uiprobe'):
-                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += 'portDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
-
-                        print(
-                            '\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
-                                                                              _r(bbCoords.ZMin)))
-                        print(
-                            '\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
-                                                                              _r(bbCoords.ZMax)))
-
-                        isActiveStr = {False: ', false', True: ', true'}
-
-                        if (currSetting.uiprobeDomain == "frequency"):
-                            argStr = ""
-                            argStr += ", 'Frequency', ["
-
-                            if (len(currSetting.uiprobeFrequencyList) > 0):
-                                for freqStr in currSetting.uiprobeFrequencyList:
-                                    freqStr = freqStr.strip()
-                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
-                                    if result:
-                                        freqValue = float(result.group(1))
-                                        freqUnits = result.group(2)
-                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
-                                        argStr += str(freqValue) + ","
-                                argStr += "]"
-                            else:
-                                argStr += "f0]#{ERROR NO FREQUENCIES FOR UIPROBE FOUND, SO INSTEAD USED f0#}"
-                                App.Console.PrintWarning(f"UIprobe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
-
-                        genScript += '[CSX port{' + str(genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + \
-                                     str(priorityIndex) + ', ' + \
-                                     str(genScriptPortCount) + ', ' + \
-                                     'inf, portStart, portStop, portDirection' + \
-                                     isActiveStr.get(currSetting.isActive) + \
-                                     argStr + \
-                                     ');\n'
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
@@ -1129,6 +1086,215 @@ class OctaveScriptLinesGenerator:
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
 
+                    genScript += "\n"
+
+            genScript += "\n"
+
+        return genScript
+
+    def getProbeDefinitionsScriptLines(self, items):
+        genScript = ""
+        if not items:
+            return genScript
+
+        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
+        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+
+        # nf2ff box counter, they are stored inside octave cell variable nf2ff{} so this is to index them properly, in octave cells index starts at 1
+        genNF2FFBoxCounter = 1
+
+        #
+        #   This here generates string for port excitation field, ie. for z+ generates [0 0 1], for y- generates [0 -1 0]
+        #       Options for select field x,y,z were removed from GUI, but left here due there could be saved files from previous versions
+        #       with these options so to keep backward compatibility they are treated as positive direction in that directions.
+        #
+        baseVectorStr = {'x': '[1 0 0]', 'y': '[0 1 0]', 'z': '[0 0 1]', 'x+': '[1 0 0]', 'y+': '[0 1 0]', 'z+': '[0 0 1]', 'x-': '[-1 0 0]', 'y-': '[0 -1 0]', 'z-': '[0 0 -1]', 'XY plane, top layer': '[0 0 -1]', 'XY plane, bottom layer': '[0 0 1]', 'XZ plane, front layer': '[0 -1 0]', 'XZ plane, back layer': '[0 1 0]', 'YZ plane, right layer': '[-1 0 0]', 'YZ plane, left layer': '[1 0 0]',}
+        probeDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+
+        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "% PROBES\n"
+        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+
+        for [item, currSetting] in items:
+
+            print("#")
+            print("#PROBE")
+            print("#name: " + currSetting.getName())
+            print("#type: " + currSetting.getType())
+
+            objs = App.ActiveDocument.Objects
+            for k in range(item.childCount()):
+                childName = item.child(k).text(0)
+
+                genScript += "%% PROBE - " + currSetting.getName() + " - " + childName + "\n"
+
+                print("##Children:")
+                print("\t" + childName)
+                freecadObjects = [i for i in objs if (i.Label) == childName]
+
+                # print(freecadObjects)
+                for obj in freecadObjects:
+                    # BOUNDING BOX
+                    bbCoords = obj.Shape.BoundBox
+                    print('\tFreeCAD probe BoundBox: ' + str(bbCoords))
+                    print('\t\tXMin: ' + str(bbCoords.XMin))
+                    print('\t\tYMin: ' + str(bbCoords.YMin))
+                    print('\t\tZMin: ' + str(bbCoords.ZMin))
+
+                    #
+                    # PROBE openEMS GENERATION INTO VARIABLE
+                    #
+                    if (currSetting.getType() == "probe"):
+                        probeName = f"{currSetting.name}_{childName}"
+                        genScript += 'probeDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+
+                        if currSetting.probeType == "voltage":
+                            genScript += 'probeType = 0;\n'
+                        elif currSetting.probeType == "current":
+                            genScript += 'probeType = 1;\n'
+                        else:
+                            genScript += 'probeType = ?;    #ERROR probe code generate don\'t know type\n'
+
+                        argStr = ""
+                        if not (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
+                            argStr += ", 'NormDir', probeDirection"
+
+                        if (currSetting.probeDomain == "frequency"):
+                            argStr += ", 'frequency', ["
+
+                            if (len(currSetting.probeFrequencyList) > 0):
+                                for freqStr in currSetting.probeFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                argStr += "f0]#{ERROR NO FREQUENCIES FOR PROBE FOUND, SO INSTEAD USED f0#}"
+                                App.Console.PrintWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
+
+                        genScript += "CSX = AddProbe(CSX, '" + probeName + "', probeType" + argStr + ");\n"
+                        genScript += 'probeStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'probeStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + probeName + "', 0, probeStart, probeStop );\n"
+                        genScript += "\n"
+
+                    elif (currSetting.getType() == "dumpbox"):
+                        dumpboxName = f"{currSetting.name}_{childName}"
+
+                        if currSetting.dumpboxDomain == "time":
+                            if currSetting.dumpboxType == "E field":
+                                genScript += 'dumpboxType = 0;\n'
+                            elif currSetting.dumpboxType == "H field":
+                                genScript += 'dumpboxType = 1;\n'
+                            elif currSetting.dumpboxType == "J field":
+                                genScript += 'dumpboxType = 3;\n'
+                            elif currSetting.dumpboxType == "D field":
+                                genScript += 'dumpboxType = 4;\n'
+                            elif currSetting.dumpboxType == "B field":
+                                genScript += 'dumpboxType = 5;\n'
+                            else:
+                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
+                        elif currSetting.dumpboxDomain == "frequency":
+                            if currSetting.dumpboxType == "E field":
+                                genScript += 'dumpboxType = 10;\n'
+                            elif currSetting.dumpboxType == "H field":
+                                genScript += 'dumpboxType = 11;\n'
+                            elif currSetting.dumpboxType == "J field":
+                                genScript += 'dumpboxType = 13;\n'
+                            elif currSetting.dumpboxType == "D field":
+                                genScript += 'dumpboxType = 14;\n'
+                            elif currSetting.dumpboxType == "B field":
+                                genScript += 'dumpboxType = 15;\n'
+                            else:
+                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
+                        else:
+                            genScript += "dumboxType = ?;   #code generator cannot find domain (time/frequency)\n"
+
+                        argStr = ""
+                        #
+                        #   dump file type:
+                        #       0 = vtk (default)
+                        #       1 = hdf5
+                        #
+                        if (currSetting.dumpboxFileType == "hdf5"):
+                            argStr += f", 'FileType', 1"
+
+                        emptyFrequencyListError = False
+                        if (currSetting.dumpboxDomain == "frequency"):
+                            argStr += ", 'Frequency', ["
+
+                            if (len(currSetting.dumpboxFrequencyList) > 0):
+                                for freqStr in currSetting.dumpboxFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                emptyFrequencyListError = True
+                                argStr += "f0]"
+                                App.Console.PrintWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
+
+                        #if error put note about it into script
+                        if emptyFrequencyListError:
+                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + "); % ERROR script generation no frequencies for dumpbox, therefore using f0\n"
+                        else:
+                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + ");\n"
+
+                        genScript += 'dumpboxStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpboxStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpboxStart, dumpboxStop );\n"
+                        genScript += "\n"
+
+                    elif (currSetting.getType() == 'et dump'):
+                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
+                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                                                                                     _r(sf * bbCoords.YMin),
+                                                                                     _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                                                                                     _r(sf * bbCoords.YMax),
+                                                                                     _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+
+                    elif (currSetting.getType() == 'ht dump'):
+                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
+                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                                                                                     _r(sf * bbCoords.YMin),
+                                                                                     _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                                                                                     _r(sf * bbCoords.YMax),
+                                                                                     _r(sf * bbCoords.ZMax))
+                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
+
+                    elif (currSetting.getType() == 'nf2ff box'):
+                        genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                                                                                      _r(sf * bbCoords.YMin),
+                                                                                      _r(sf * bbCoords.ZMin))
+                        genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                                                                                      _r(sf * bbCoords.YMax),
+                                                                                      _r(sf * bbCoords.ZMax))
+                        # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
+                        genScript += "[CSX nf2ffBox{" + str(
+                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
+                        # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
+
+                        #
+                        #   ATTENTION this is NF2FF box counter
+                        #
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalNF2FFIndexNamesList[internalPortName] = genNF2FFBoxCounter
+                        genNF2FFBoxCounter += 1
+
+                    else:
+                        genScript += '% Unknown port type. Nothing was generated. \n'
+
             genScript += "\n"
 
         return genScript
@@ -1709,6 +1875,9 @@ class OctaveScriptLinesGenerator:
 
         # Write lumped part definitions.
         genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+
+        # Write probes definitions
+        genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write NF2FF probe grid definitions.
         genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
