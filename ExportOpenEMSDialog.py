@@ -2053,6 +2053,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			excitationItem.gaussian = {}
 			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
 			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
+		if (self.form.diracExcitationRadioButton.isChecked()):
+			excitationItem.type = 'dirac'
+		if (self.form.stepExcitationRadioButton.isChecked()):
+			excitationItem.type = 'step'
 		if (self.form.customExcitationRadioButton.isChecked()):
 			excitationItem.type = 'custom'
 			excitationItem.custom = {}
@@ -2134,17 +2138,19 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "lumped"
 			portItem.R = self.form.lumpedPortResistanceValue.value()
 			portItem.RUnits = self.form.lumpedPortResistanceUnits.currentText()
-			portItem.lumpedInfiniteResistance = self.form.lumpedPortInfinitResistance.isChecked()
+			portItem.infiniteResistance = self.form.lumpedPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.lumpedPortActive.isChecked()
 			portItem.direction = self.form.lumpedPortDirection.currentText()
-			portItem.lumpedExcitationAmplitude = self.form.lumpedPortExcitationAmplitude.value()
+			portItem.excitationAmplitude = self.form.lumpedPortExcitationAmplitude.value()
 
 		if (self.form.microstripPortRadioButton.isChecked()):
 			portItem.type = "microstrip"
 			portItem.R = self.form.microstripPortResistanceValue.value()
 			portItem.RUnits = self.form.microstripPortResistanceUnits.currentText()
+			portItem.infiniteResistance = self.form.microstripPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.microstripPortActive.isChecked()
 			portItem.direction = self.form.microstripPortDirection.currentText()
+			portItem.excitationAmplitude = self.form.microstripPortExcitationAmplitude.value()
 
 			portItem.mslMaterial = self.form.microstripPortMaterialComboBox.currentText()
 			portItem.mslFeedShiftValue = self.form.microstripPortFeedpointShiftValue.value()
@@ -2175,8 +2181,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			portItem.R = self.form.coaxialPortResistanceValue.value()
 			portItem.RUnits = self.form.coaxialPortResistanceUnits.currentText()
+			portItem.infiniteResistance = self.form.coaxialPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.coaxialPortActive.isChecked()
 			portItem.direction = self.form.coaxialPortDirection.currentText()
+			portItem.excitationAmplitude = self.form.coaxialPortExcitationAmplitude.value()
 
 			portItem.coaxialMaterial = self.form.coaxialPortMaterialComboBox.currentText()
 			portItem.coaxialConductorMaterial = self.form.coaxialPortConductorMaterialComboBox.currentText()
@@ -2188,15 +2196,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.coaxialFeedpointShiftUnits = self.form.coaxialPortFeedpointShiftUnits.currentText()
 			portItem.coaxialMeasPlaneShiftValue = self.form.coaxialPortMeasureShiftValue.value()
 			portItem.coaxialMeasPlaneShiftUnits = self.form.coaxialPortMeasureShiftUnits.currentText()
-			portItem.coaxialExcitationAmplitude = self.form.portCoaxialExcitationAmplitude.value()
 
 		if (self.form.coplanarPortRadioButton.isChecked()):
 			portItem.type = "coplanar"
 
 			portItem.R = self.form.coplanarPortResistanceValue.value()
 			portItem.RUnits = self.form.coplanarPortResistanceUnits.currentText()
+			portItem.infiniteResistance = self.form.coplanarPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.coplanarPortActive.isChecked()
 			portItem.direction = self.form.coplanarPortDirection.currentText()
+			portItem.excitationAmplitude = self.form.coplanarPortExcitationAmplitude.value()
 
 			portItem.coplanarMaterial = self.form.coplanarPortMaterialComboBox.currentText()
 			portItem.coplanarPropagation = self.form.coplanarPortPropagationComboBox.currentText()
@@ -2212,8 +2221,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			portItem.R = self.form.striplinePortResistanceValue.value()
 			portItem.RUnits = self.form.striplinePortResistanceUnits.currentText()
+			portItem.infiniteResistance = self.form.striplinePortInfinitResistance.isChecked()
 			portItem.isActive = self.form.striplinePortActive.isChecked()
 			portItem.direction = self.form.striplinePortDirection.currentText()
+			portItem.excitationAmplitude = self.form.striplinePortExcitationAmplitude.value()
 
 			portItem.striplinePropagation = self.form.striplinePortPropagationComboBox.currentText()
 			portItem.striplineFeedpointShiftValue = self.form.striplinePortFeedpointShiftValue.value()
@@ -2225,8 +2236,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.type = "curve"
 			portItem.R = self.form.curvePortResistanceValue.value()
 			portItem.RUnits = self.form.curvePortResistanceUnits.currentText()
+			portItem.infiniteResistance = self.form.curvePortInfinitResistance.isChecked()
 			portItem.isActive = self.form.curvePortActive.isChecked()
-			portItem.direction = self.form.curvePortDirection.isChecked()
+			portItem.excitationAmplitude = self.form.curvePortExcitationAmplitude.value()
 
 		return portItem
 
@@ -2243,13 +2255,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		return checkResult
 
+	def portCheckCurrentSettings(self, currentSettings):
+		checkResult = True
+
+		if (currentSettings.excitationAmplitude == 0 and currentSettings.type in ["microstrip", "coplanar", "stripline"]):
+			checkResult = False
+			self.guiHelpers.displayMessage("Port excitation amplitude cannot be 0.")
+
+		return checkResult
+
 	def portSettingsAddButtonClicked(self):
 		settingsInst = self.getPortItemFromGui()
 
 		#check for duplicity in names if there is some warning message displayed
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name)
 
-		if (not isDuplicityName):
+		if (not isDuplicityName and self.portCheckCurrentSettings(settingsInst)):
 			self.guiHelpers.addSettingsItemGui(settingsInst)
 			self.guiSignals.portsChanged.emit("add")
 
@@ -2293,7 +2314,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			return
 
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.portSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
-		if (not isDuplicityName):
+		if (not isDuplicityName and self.portCheckCurrentSettings(settingsInst)):
 			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
 
 			### update other UI elements to propagate changes
@@ -2941,6 +2962,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.gaussianExcitationF0NumberInput.setValue(currSetting.gaussian['f0'])
 			self.form.gaussianExcitationFcNumberInput.setValue(currSetting.gaussian['fc'])
 			pass
+		elif (currSetting.type == "dirac"):
+			self.form.diracExcitationRadioButton.click()
+		elif (currSetting.type == "step"):
+			self.form.stepExcitationRadioButton.click()
 		elif (currSetting.type == "custom"):
 			self.form.customExcitationRadioButton.click()
 			self.form.customExcitationTextInput.setText(currSetting.custom['functionStr'])
@@ -2976,8 +3001,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
 				self.form.lumpedPortActive.setChecked(currSetting.isActive)
-				self.form.lumpedPortInfinitResistance.setChecked(currSetting.lumpedInfiniteResistance)
-				self.form.lumpedPortExcitationAmplitude.setValue(currSetting.lumpedExcitationAmplitude)
+
+				self.form.lumpedPortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.lumpedPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update lumped current settings: {e}", forceModal=False)
 
@@ -2999,6 +3025,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMeasureShiftUnits, currSetting.mslMeasPlaneShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMaterialComboBox, currSetting.mslMaterial)
+
+				self.form.microstripPortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.microstripPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update microstrip current settings: {e}", forceModal=False)
 
@@ -3014,7 +3043,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coaxialPortShellThicknessValue.setValue(currSetting.coaxialShellThicknessValue)
 				self.form.coaxialPortFeedpointShiftValue.setValue(currSetting.coaxialFeedpointShiftValue)
 				self.form.coaxialPortMeasureShiftValue.setValue(currSetting.coaxialMeasPlaneShiftValue)
-				self.form.portCoaxialExcitationAmplitude.setValue(currSetting.coaxialExcitationAmplitude)
 
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortMeasureShiftUnits, currSetting.coaxialMeasPlaneShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortFeedpointShiftUnits, currSetting.coaxialFeedpointShiftUnits)
@@ -3022,6 +3050,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortInnerRadiusUnits, currSetting.coaxialInnerRadiusUnits)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortMaterialComboBox, currSetting.coaxialMaterial)
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortConductorMaterialComboBox, currSetting.coaxialConductorMaterial)
+
+				self.form.coaxialPortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.coaxialPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coaxial current settings: {e}", forceModal=False)
 
@@ -3047,6 +3078,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortMeasureShiftUnits, currSetting.coplanarMeasPlaneShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortPropagationComboBox, currSetting.coplanarPropagation)
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortMaterialComboBox, currSetting.coplanarMaterial)
+
+				self.form.coplanarPortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.coplanarPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update coplanar current settings: {e}", forceModal=False)
 
@@ -3066,6 +3100,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.setComboboxItem(self.form.striplinePortFeedpointShiftUnits, currSetting.striplineFeedpointShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.striplinePortMeasureShiftUnits, currSetting.striplineMeasPlaneShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.striplinePortPropagationComboBox, currSetting.striplinePropagation)
+
+				self.form.striplinePortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.striplinePortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update stripline current settings: {e}", forceModal=False)
 
@@ -3090,10 +3127,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 
 		elif (currSetting.type.lower() == "curve"):
-			self.form.curvePortActive.setChecked(currSetting.isActive)
-			self.form.curvePortResistanceValue.setValue(float(currSetting.R))
-			self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
-			self.form.curvePortDirection.setChecked(currSetting.direction in [True, "true", "True"])										#set checkbox for reverse direction for curve port
+			try:
+				self.form.curvePortActive.setChecked(currSetting.isActive)
+				self.form.curvePortResistanceValue.setValue(float(currSetting.R))
+				self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
+				self.form.curvePortInfinitResistance.setChecked(currSetting.infiniteResistance)
+				self.form.curvePortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update curve port current settings: {e}", forceModal=False)
 
 		else:
 			pass #no gui update

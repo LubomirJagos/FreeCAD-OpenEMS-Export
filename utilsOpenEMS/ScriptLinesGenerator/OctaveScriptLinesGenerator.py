@@ -424,13 +424,13 @@ class OctaveScriptLinesGenerator:
                                                                                      _r(sf * bbCoords.YMax),
                                                                                      _r(sf * bbCoords.ZMax))
 
-                        if currSetting.lumpedInfiniteResistance:
+                        if currSetting.infiniteResistance:
                             genScript += 'portR = inf;\n'
                         else:
                             genScript += 'portR = ' + str(currSetting.R) + ';\n'
 
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-                        genScript += "portExcitationAmplitude = " + str(currSetting.lumpedExcitationAmplitude) + ";\n"
+                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                         genScript += 'portDirection = {}*portExcitationAmplitude;\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
@@ -450,115 +450,6 @@ class OctaveScriptLinesGenerator:
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
-
-                    elif (currSetting.getType() == "probe"):
-                        probeName = f"{currSetting.name}_{childName}"
-                        genScript += 'probeDirection = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
-
-                        if currSetting.probeType == "voltage":
-                            genScript += 'probeType = 0;\n'
-                        elif currSetting.probeType == "current":
-                            genScript += 'probeType = 1;\n'
-                        else:
-                            genScript += 'probeType = ?;    #ERROR probe code generate don\'t know type\n'
-
-                        argStr = ""
-                        if not (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
-                            argStr += ", 'NormDir', probeDirection"
-
-                        if (currSetting.probeDomain == "frequency"):
-                            argStr += ", 'frequency', ["
-
-                            if (len(currSetting.probeFrequencyList) > 0):
-                                for freqStr in currSetting.probeFrequencyList:
-                                    freqStr = freqStr.strip()
-                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
-                                    if result:
-                                        freqValue = float(result.group(1))
-                                        freqUnits = result.group(2)
-                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
-                                        argStr += str(freqValue) + ","
-                                argStr += "]"
-                            else:
-                                argStr += "f0]#{ERROR NO FREQUENCIES FOR PROBE FOUND, SO INSTEAD USED f0#}"
-                                App.Console.PrintWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
-
-                        genScript += "CSX = AddProbe(CSX, '" + probeName + "', probeType" + argStr + ");\n"
-                        genScript += 'probeStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                        genScript += 'probeStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + probeName + "', 0, probeStart, probeStop );\n"
-                        genScript += "\n"
-
-                    elif (currSetting.getType() == "dumpbox"):
-                        dumpboxName = f"{currSetting.name}_{childName}"
-
-                        if currSetting.dumpboxDomain == "time":
-                            if currSetting.dumpboxType == "E field":
-                                genScript += 'dumpboxType = 0;\n'
-                            elif currSetting.dumpboxType == "H field":
-                                genScript += 'dumpboxType = 1;\n'
-                            elif currSetting.dumpboxType == "J field":
-                                genScript += 'dumpboxType = 3;\n'
-                            elif currSetting.dumpboxType == "D field":
-                                genScript += 'dumpboxType = 4;\n'
-                            elif currSetting.dumpboxType == "B field":
-                                genScript += 'dumpboxType = 5;\n'
-                            else:
-                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
-                        elif currSetting.dumpboxDomain == "frequency":
-                            if currSetting.dumpboxType == "E field":
-                                genScript += 'dumpboxType = 10;\n'
-                            elif currSetting.dumpboxType == "H field":
-                                genScript += 'dumpboxType = 11;\n'
-                            elif currSetting.dumpboxType == "J field":
-                                genScript += 'dumpboxType = 13;\n'
-                            elif currSetting.dumpboxType == "D field":
-                                genScript += 'dumpboxType = 14;\n'
-                            elif currSetting.dumpboxType == "B field":
-                                genScript += 'dumpboxType = 15;\n'
-                            else:
-                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
-                        else:
-                            genScript += "dumboxType = ?;   #code generator cannot find domain (time/frequency)\n"
-
-                        argStr = ""
-                        #
-                        #   dump file type:
-                        #       0 = vtk (default)
-                        #       1 = hdf5
-                        #
-                        if (currSetting.dumpboxFileType == "hdf5"):
-                            argStr += f", 'FileType', 1"
-
-                        emptyFrequencyListError = False
-                        if (currSetting.dumpboxDomain == "frequency"):
-                            argStr += ", 'Frequency', ["
-
-                            if (len(currSetting.dumpboxFrequencyList) > 0):
-                                for freqStr in currSetting.dumpboxFrequencyList:
-                                    freqStr = freqStr.strip()
-                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
-                                    if result:
-                                        freqValue = float(result.group(1))
-                                        freqUnits = result.group(2)
-                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
-                                        argStr += str(freqValue) + ","
-                                argStr += "]"
-                            else:
-                                emptyFrequencyListError = True
-                                argStr += "f0]"
-                                App.Console.PrintWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
-
-                        #if error put note about it into script
-                        if emptyFrequencyListError:
-                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + "); % ERROR script generation no frequencies for dumpbox, therefore using f0\n"
-                        else:
-                            genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', dumpboxType" + argStr + ");\n"
-
-                        genScript += 'dumpboxStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpboxStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpboxStart, dumpboxStop );\n"
-                        genScript += "\n"
 
                     elif (currSetting.getType() == 'microstrip'):
 
@@ -596,16 +487,23 @@ class OctaveScriptLinesGenerator:
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
+                        if currSetting.infiniteResistance:
+                            genScript += 'portR = inf;\n'
+                        else:
+                            genScript += 'portR = ' + str(currSetting.R) + ';\n'
+
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
+
                         genScript += 'mslDir = {};\n'.format(mslDirStr.get(currSetting.mslPropagation[0], '?')) #use just first letter of propagation direction
-                        genScript += 'mslEVec = {};\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+                        genScript += 'mslEVec = {}*portExcitationAmplitude;\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
                         feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.mslFeedShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslFeedShiftUnits)))}
                         measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.mslMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslMeasPlaneShiftUnits)))}
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
-                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+                        genScript_R = ", 'Feed_R', portR*portUnits"
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddMSLPort(CSX," + \
                                      str(priorityIndex) + "," + \
@@ -730,26 +628,6 @@ class OctaveScriptLinesGenerator:
                         genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
 
-                    elif (currSetting.getType() == 'et dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 0, 'DumpMode', 2);\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-
-                    elif (currSetting.getType() == 'ht dump'):
-                        genScript += "CSX = AddDump(CSX, '" + currSetting.name + "', 'DumpType', 1, 'DumpMode', 2);\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += "CSX = AddBox(CSX, '" + currSetting.name + "', 0, dumpStart, dumpStop );\n"
-
                     elif (currSetting.getType() == 'coaxial'):
                         portStartX = _r(sf * bbCoords.XMin)
                         portStartY = _r(sf * bbCoords.YMin)
@@ -814,13 +692,20 @@ class OctaveScriptLinesGenerator:
                         genScript += 'r_o = ' + str(coaxialRadius - coaxialShellThickness) + ';\n'
                         genScript += 'r_os = ' + str(coaxialRadius) + ';\n'
 
+                        genScript_R = ""
+                        if not _bool(currSetting.infiniteResistance):
+                            genScript += 'portR = ' + str(currSetting.R) + ';\n'
+                            genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+                            genScript_R = ", 'Feed_R', portR*portUnits"
+
+                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
+
                         isActiveCoaxialStr = {
                             False:  "",
-                            True:   ", 'ExcitePort', true, 'ExciteAmp', " + str(currSetting.coaxialExcitationAmplitude)
+                            True:   ", 'ExcitePort', true, 'ExciteAmp', portExcitationAmplitude"
                         }
 
                         #feed resistance is NOT IMPLEMENTED IN openEMS AddCoaxialPort()
-                        #genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCoaxialPort(CSX," + \
                                      str(priorityIndex) + "," + \
@@ -831,6 +716,7 @@ class OctaveScriptLinesGenerator:
                                      isActiveCoaxialStr.get(currSetting.isActive) + \
                                      feedShiftStr.get(currSetting.coaxialFeedpointShiftValue > 0) + \
                                      measPlaneStr.get(currSetting.coaxialMeasPlaneShiftValue > 0) + \
+                                     genScript_R + \
                                      ");\n"
 
                         internalPortName = currSetting.name + " - " + obj.Label
@@ -928,13 +814,23 @@ class OctaveScriptLinesGenerator:
                             genScript += 'display("ERROR cannot evaluate right direction check your simulation settings for coplanar port");\n'
                             genScript += 'coplanarEVec = %ERROR cannot evaluate right direction check your simulation settings ;\n'
 
+                        if currSetting.excitationAmplitude != 0:
+                            genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
+                            genScript += f"coplanarEVec = coplanarEVec * portExcitationAmplitude;\n"
+
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        if currSetting.infiniteResistance:
+                            genScript += 'portR = inf;\n'
+                        else:
+                            genScript += 'portR = ' + str(currSetting.R) + ';\n'
+                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
 
                         isActiveStr = {False: "", True: ", 'ExcitePort', true"}
                         feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.coplanarFeedpointShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.coplanarFeedpointShiftUnits)))}
                         measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.coplanarMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.coplanarMeasPlaneShiftUnits)))}
-                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+                        genScript_R = ", 'Feed_R', portR*portUnits"
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCPWPort(CSX," + \
                                      str(priorityIndex) + "," + \
@@ -1001,6 +897,10 @@ class OctaveScriptLinesGenerator:
                             striplineHeight = _r(sf * (bbCoords.ZMax - bbCoords.ZMin)/2)
                             genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('z'))
 
+                        if currSetting.excitationAmplitude != 0:
+                            genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
+                            genScript += 'striplineEVec = striplineEVec * portExcitationAmplitude;\n'
+
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
@@ -1010,7 +910,13 @@ class OctaveScriptLinesGenerator:
                         isActiveStr = {False: "", True: ", 'ExcitePort', true"}
                         feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.striplineFeedpointShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.striplineFeedpointShiftUnits)))}
                         measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.striplineMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.striplineMeasPlaneShiftUnits)))}
-                        genScript_R = ", 'Feed_R', " + str(currSetting.R) + "*" + str(currSetting.getRUnits())
+
+                        if currSetting.infiniteResistance:
+                            genScript += 'portR = inf;\n'
+                        else:
+                            genScript += 'portR = ' + str(currSetting.R) + ';\n'
+                        genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
+                        genScript_R = ", 'Feed_R', portR*portUnits"
 
                         genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddStripLinePort(CSX," + \
                                      str(priorityIndex) + "," + \
@@ -1747,6 +1653,14 @@ class OctaveScriptLinesGenerator:
                             'f0', str(f0)) + "' );\n"
                     genScript += "max_res = 0;\n"
                     self.maxGridResolution_m = 0
+                    pass
+                elif (currSetting.getType() == 'dirac'):
+                    if not definitionsOnly:
+                        genScript += "FDTD = SetDiracExcite(FDTD);\n"
+                    pass
+                elif (currSetting.getType() == 'step'):
+                    if not definitionsOnly:
+                        genScript += "FDTD = SetStepExcite(FDTD);\n"
                     pass
                 pass
 

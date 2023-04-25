@@ -160,15 +160,15 @@ class IniFile:
 
             settings.beginGroup("PORT-" + portList[k].getName())
             settings.setValue("type", portList[k].type)
+            settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
 
             if (portList[k].type == "lumped"):
                 try:
                     settings.setValue("R", portList[k].R)
                     settings.setValue("RUnits", portList[k].RUnits)
                     settings.setValue("isActive", portList[k].isActive)
-                    settings.setValue("infiniteResistance", portList[k].lumpedInfiniteResistance)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                     settings.setValue("direction", portList[k].direction)
-                    settings.setValue("excitationAmplitude", portList[k].lumpedExcitationAmplitude)
                 except Exception as e:
                     print(f"{__file__} > write() lumped ERROR: {e}")
 
@@ -177,14 +177,12 @@ class IniFile:
                 settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
                 settings.setValue("polarizationAngle", portList[k].polarizationAngle)
-                settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideCircDir)
 
             elif (portList[k].type == "rectangular waveguide"):
                 settings.setValue("isActive", portList[k].isActive)
                 settings.setValue("direction", portList[k].direction)
                 settings.setValue("modeName", portList[k].modeName)
-                settings.setValue("excitationAmplitude", portList[k].excitationAmplitude)
                 settings.setValue("waveguideDirection", portList[k].waveguideRectDir)
 
             elif (portList[k].type == "microstrip"):
@@ -200,6 +198,7 @@ class IniFile:
                     settings.setValue("measPlaneShiftValue", portList[k].mslMeasPlaneShiftValue)
                     settings.setValue("measPlaneShiftUnits", portList[k].mslMeasPlaneShiftUnits)
                     settings.setValue("propagation", portList[k].mslPropagation)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                 except Exception as e:
                     print(f"{__file__} > write() microstrip material ERROR: {e}")
 
@@ -218,10 +217,10 @@ class IniFile:
                     settings.setValue("feedpointShiftUnits", portList[k].coaxialFeedpointShiftUnits)
                     settings.setValue("measPlaneShiftValue", portList[k].coaxialMeasPlaneShiftValue)
                     settings.setValue("measPlaneShiftUnits", portList[k].coaxialMeasPlaneShiftUnits)
-                    settings.setValue("excitationAmplitude", portList[k].coaxialExcitationAmplitude)
 
                     settings.setValue("material", portList[k].coaxialMaterial)
                     settings.setValue("conductorMaterial", portList[k].coaxialConductorMaterial)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                 except Exception as e:
                     print(f"{__file__} > write() coaxial material ERROR: {e}")
 
@@ -240,6 +239,7 @@ class IniFile:
                     settings.setValue('feedpointShiftUnits', portList[k].coplanarFeedpointShiftUnits)
                     settings.setValue('measPlaneShiftValue', portList[k].coplanarMeasPlaneShiftValue)
                     settings.setValue('measPlaneShiftUnits', portList[k].coplanarMeasPlaneShiftUnits)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                 except Exception as e:
                     print(f"{__file__} > write() coplanar ERROR: {e}")
 
@@ -255,6 +255,7 @@ class IniFile:
                     settings.setValue('feedpointShiftUnits', portList[k].striplineFeedpointShiftUnits)
                     settings.setValue('measPlaneShiftValue', portList[k].striplineMeasPlaneShiftValue)
                     settings.setValue('measPlaneShiftUnits', portList[k].striplineMeasPlaneShiftUnits)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                 except Exception as e:
                     print(f"{__file__} > write() coplanar ERROR: {e}")
 
@@ -263,7 +264,7 @@ class IniFile:
                     settings.setValue("R", portList[k].R)
                     settings.setValue("RUnits", portList[k].RUnits)
                     settings.setValue("isActive", portList[k].isActive)
-                    settings.setValue("direction", portList[k].direction)
+                    settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                 except Exception as e:
                     print(f"{__file__} > write() curve ERROR: {e}")
 
@@ -520,28 +521,29 @@ class IniFile:
                 categorySettings = PortSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
+                try:
+                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.infiniteResistance = _bool(settings.value('infiniteResistance'))
+                except Exception as e:
+                    print(f"There was error during reading excitation or infiniteResistance port settings: {e}")
 
                 if (categorySettings.type == "lumped"):
                     categorySettings.R = settings.value('R')
                     categorySettings.RUnits = settings.value('RUnits')
                     categorySettings.isActive = _bool(settings.value('isActive'))
-                    categorySettings.lumpedInfiniteResistance = _bool(settings.value('infiniteResistance'))
                     categorySettings.direction = settings.value('direction')
-                    categorySettings.lumpedExcitationAmplitude = settings.value('excitationAmplitude')
 
                 elif (categorySettings.type == "circular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
                     categorySettings.polarizationAngle = settings.value('polarizationAngle')
-                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideCircDir = settings.value('waveguideDirection')
 
                 elif (categorySettings.type == "rectangular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
                     categorySettings.direction = settings.value('direction')
                     categorySettings.modeName = settings.value('modeName')
-                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
                     categorySettings.waveguideRectDir = settings.value('waveguideDirection')
 
                 elif (categorySettings.type == "microstrip"):
@@ -574,7 +576,6 @@ class IniFile:
                         categorySettings.coaxialFeedpointShiftUnits = settings.value('feedpointShiftUnits')
                         categorySettings.coaxialMeasPlaneShiftValue = float(settings.value('measPlaneShiftValue'))
                         categorySettings.coaxialMeasPlaneShiftUnits = settings.value('measPlaneShiftUnits')
-                        categorySettings.coaxialExcitationAmplitude = float(settings.value('excitationAmplitude'))
 
                         #now this is at the end of try block to ensure all properites are read, due conductor material was added so old files doesn't have it
                         categorySettings.coaxialMaterial = settings.value('material')
