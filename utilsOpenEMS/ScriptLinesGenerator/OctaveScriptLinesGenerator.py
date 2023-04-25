@@ -1257,6 +1257,7 @@ class OctaveScriptLinesGenerator:
 
                     elif (currSetting.getType() == 'nf2ff box'):
                         dumpboxName = f"{currSetting.name} - {childName}"
+                        dumpboxName = dumpboxName.replace(" ", "_")
 
                         genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                       _r(sf * bbCoords.YMin),
@@ -1368,13 +1369,14 @@ class OctaveScriptLinesGenerator:
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
 
+                    #THIS HERE MUST BE !!!EXACTLY SAME!!! AS GRIDLINES IN PROBES, otherwise near field is not captured
                     if (currSetting.getType() == 'nf2ff box'):
-                        nf2ff_gridlines['x'].append(sf * bbCoords.XMin)
-                        nf2ff_gridlines['x'].append(sf * bbCoords.XMax)
-                        nf2ff_gridlines['y'].append(sf * bbCoords.YMin)
-                        nf2ff_gridlines['y'].append(sf * bbCoords.YMax)
-                        nf2ff_gridlines['z'].append(sf * bbCoords.ZMin)
-                        nf2ff_gridlines['z'].append(sf * bbCoords.ZMax)
+                        nf2ff_gridlines['x'].append("{0:g}".format(_r(sf * bbCoords.XMin)))
+                        nf2ff_gridlines['x'].append("{0:g}".format(_r(sf * bbCoords.XMax)))
+                        nf2ff_gridlines['y'].append("{0:g}".format(_r(sf * bbCoords.YMin)))
+                        nf2ff_gridlines['y'].append("{0:g}".format(_r(sf * bbCoords.YMax)))
+                        nf2ff_gridlines['z'].append("{0:g}".format(_r(sf * bbCoords.ZMin)))
+                        nf2ff_gridlines['z'].append("{0:g}".format(_r(sf * bbCoords.ZMax)))
 
         writeNF2FFlines = (len(nf2ff_gridlines['x']) > 0) or (len(nf2ff_gridlines['y']) > 0) or (
                     len(nf2ff_gridlines['z']) > 0)
@@ -1886,6 +1888,7 @@ class OctaveScriptLinesGenerator:
         # Write _OpenEMS.m script file to current directory.
         currDir, nameBase = self.getCurrDir()
 
+        nameBase = nameBase.replace(" ", "_")               #IMPORTANT! openEMS function to run simulation cannot handle spaces in name of .m file
         if (not outputDir is None):
             fileName = f"{outputDir}/{nameBase}_openEMS.m"
         else:
@@ -1950,7 +1953,7 @@ class OctaveScriptLinesGenerator:
         #   Current NF2FF box index
         #
         print(f"writeNf2ffButtonClicked() > geerate script, getting nf2ff box index for '{nf2ffBoxName}'")
-        currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName]
+        currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName.replace(" ", "_")]
         currentNF2FFInputPortIndex = self.internalPortIndexNamesList[nf2ffBoxInputPortName]
 
         thetaStart = str(self.form.portNf2ffThetaStart.value())
