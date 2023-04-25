@@ -522,7 +522,7 @@ class IniFile:
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
                 try:
-                    categorySettings.excitationAmplitude = settings.value('excitationAmplitude')
+                    categorySettings.excitationAmplitude = float(settings.value('excitationAmplitude'))
                     categorySettings.infiniteResistance = _bool(settings.value('infiniteResistance'))
                 except Exception as e:
                     print(f"There was error during reading excitation or infiniteResistance port settings: {e}")
@@ -619,7 +619,6 @@ class IniFile:
                         categorySettings.R = settings.value('R')
                         categorySettings.RUnits = settings.value('RUnits')
                         categorySettings.isActive = _bool(settings.value('isActive'))
-                        categorySettings.direction = settings.value('direction')
                     except Exception as e:
                         print(f"There was error during reading curve port settings: {e}")
 

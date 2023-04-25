@@ -3128,6 +3128,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		elif (currSetting.type.lower() == "curve"):
 			try:
+				self.form.curvePortRadioButton.click()
+
 				self.form.curvePortActive.setChecked(currSetting.isActive)
 				self.form.curvePortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.curvePortResistanceUnits, currSetting.RUnits)
