@@ -1117,30 +1117,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				return gridObj[0].data(0, QtCore.Qt.UserRole).coordsType
 		return ""
 
-	def getSimParamsUnitsStr(self):
-		units = self.form.simParamsUnitsNumberInput.currentText()
-		if (units == 'Hz'):
-			units2 = ''
-			pass
-		elif(units == "kHz"):
-			units2 = 'e3'
-			pass
-		elif(units == "MHz"):
-			units2 = 'e6'
-			pass
-		elif(units == "GHz"):
-			units2 = 'e9'
-			pass
-		return units2
-
-	def getSimParamsFcStr(self):
-		units = self.getSimParamsUnitsStr()
-		return str(self.form.simParamFcNumberInput.value()) + units
-
-	def getSimParamsF0Str(self):
-		units = self.getSimParamsUnitsStr()
-		return str(self.form.simParamF0NumberInput.value()) + units
-
 	def show(self):
 		self.form.show()
 
@@ -1586,7 +1562,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			gridItem.userDefined['data'] = self.form.userDefinedGridLinesTextInput.toPlainText()
 
 		gridItem.units = self.form.gridUnitsInput.currentText()
-		gridItem.units2 = self.form.gridUnitsInput_2.currentText()
+		gridItem.unitsAngle = self.form.gridUnitsInput_2.currentText()
 		gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
 		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
 
@@ -1703,7 +1679,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		
 		if (self.form.gridCylindricalRadio.isChecked()):
 			self.form.gridXEnable.setText("r")
-			self.form.gridYEnable.setText("phi")
+			self.form.gridYEnable.setText("theta")
 			self.form.gridUnitsInput_2.setEnabled(True)
 		
 	#
@@ -2891,9 +2867,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.gridSettingsNameInput.setText(currSetting.name)
 
-		index = self.form.gridUnitsInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
-		if index >= 0:
-			self.form.gridUnitsInput.setCurrentIndex(index)
+		#set grid units ie. mm, deg
+		self.guiHelpers.setComboboxItem(self.form.gridUnitsInput, currSetting.units)
+		self.guiHelpers.setComboboxItem(self.form.gridUnitsInput_2, currSetting.unitsAngle)
 
 		if (currSetting.coordsType == "rectangular"):
 			self.form.gridRectangularRadio.click()

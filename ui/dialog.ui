@@ -702,16 +702,16 @@
                    </size>
                   </property>
                   <property name="currentText">
-                   <string>rad</string>
+                   <string>deg</string>
                   </property>
                   <item>
                    <property name="text">
-                    <string>rad</string>
+                    <string>deg</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>deg</string>
+                    <string>rad</string>
                    </property>
                   </item>
                  </widget>
@@ -774,6 +774,9 @@
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
@@ -803,6 +806,9 @@
                  <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
                   <property name="enabled">
                    <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -871,6 +877,9 @@
                  <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
                   <property name="enabled">
                    <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -3613,8 +3622,14 @@ no TM modes.</string>
                     </item>
                     <item row="0" column="2">
                      <widget class="QCheckBox" name="coaxialPortInfinitResistance">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
                       <property name="text">
                        <string>infinite resistance</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
@@ -5134,6 +5149,14 @@ no TM modes.</string>
                  </spacer>
                 </item>
                </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_94">
+               <property name="text">
+                <string>!!!ATTENTION!!! Now this generates just lumped part as bounding box of shape,
+so it's always just Box.</string>
+               </property>
               </widget>
              </item>
              <item>

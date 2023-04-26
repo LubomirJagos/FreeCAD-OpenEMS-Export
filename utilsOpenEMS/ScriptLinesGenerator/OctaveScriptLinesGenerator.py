@@ -7,6 +7,7 @@ import FreeCAD as App
 import Mesh
 import numpy as np
 import re
+import math
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
@@ -178,6 +179,17 @@ class OctaveScriptLinesGenerator:
 
         return genScript
 
+    def getModelCoordsType(self):
+        """
+        Returns current coordinate system, as there can be just rectangular or just cylindrical for all grid items it's enough to look at first grid item.
+        :return: string (rectangular, cylindrical)
+        """
+        if self.form.gridSettingsTreeView.topLevelItemCount() > 0:
+            coordsType = self.form.gridSettingsTreeView.topLevelItem(0).data(0, QtCore.Qt.UserRole).coordsType
+        else:
+            coordsType = "rectangular"
+        return coordsType
+
     def getCoordinateSystemScriptLines(self):
         genScript = ""
 
@@ -185,16 +197,14 @@ class OctaveScriptLinesGenerator:
         genScript += "% COORDINATE SYSTEM\n"
         genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 
-        """ # Till now not used, just using rectangular coordination type, cylindrical MUST BE IMPLEMENTED!
         gridCoordsType = self.getModelCoordsType()
         if (gridCoordsType == "rectangular"):
-            genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+            genScript += "CSX = InitCSX('CoordSystem', 0); % Cartesian coordinate system.\n"
         elif (gridCoordsType == "cylindrical"):
-            genScript += "CSX = InitCSX('CoordSystem',1); % Cylindrical coordinate system.\n"
+            genScript += "CSX = InitCSX('CoordSystem', 1); % Cylindrical coordinate system.\n"
         else:
             genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
-        """
-        genScript += "CSX = InitCSX('CoordSystem',0); % Cartesian coordinate system.\n"
+
         genScript += "mesh.x = []; % mesh variable initialization (Note: x y z implies type Cartesian).\n"
         genScript += "mesh.y = [];\n"
         genScript += "mesh.z = [];\n"
@@ -1429,6 +1439,37 @@ class OctaveScriptLinesGenerator:
             #
             #   Real octave mesh lines code generate starts here
             #
+
+            #in case of cylindrical coordinates convert xyz to theta,r,z
+            if (gridSettingsInst.coordsType == "cylindrical"):
+                #FROM GUI ARE GOING DEGREES
+
+                polarXMin = (xmin ** 2 + ymin ** 2) ** .5                  #r
+                polarXMax = (xmax ** 2 + ymax ** 2) ** .5                  #r
+                polarYMin = math.atan2(ymin, xmax)           #theta
+                polarYMax = math.atan2(ymax, xmin)           #theta
+
+                #just for safety to have it right
+                xmin = min(polarXMin, polarXMax)
+                xmax = max(polarXMin, polarXMax)
+                ymin = min(polarYMin, polarYMax)
+                ymax = max(polarYMin, polarYMax)
+
+                if (gridSettingsInst.getType() == 'Smooth Mesh' and gridSettingsInst.unitsAngle == "deg"):
+                    yParam = math.radians(gridSettingsInst.smoothMesh['yMaxRes'])
+                elif (gridSettingsInst.getType() == 'Fixed Distance' and gridSettingsInst.unitsAngle == "deg"):
+                    yParam = math.radians(gridSettingsInst.getXYZ(refUnit)['y'])
+                else:
+                    yParam = gridSettingsInst.getXYZ(refUnit)['y']
+
+                #z coordinate stays as was
+
+            else:
+                if (gridSettingsInst.getType() == 'Smooth Mesh'):
+                    yParam = gridSettingsInst.smoothMesh['yMaxRes']
+                else:
+                    yParam = gridSettingsInst.getXYZ(refUnit)['y']
+
             if (gridSettingsInst.getType() == 'Fixed Distance'):
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
@@ -1437,7 +1478,7 @@ class OctaveScriptLinesGenerator:
                 if gridSettingsInst.yenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
-                    genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(gridSettingsInst.getXYZ(refUnit)['y']), _r(ymax))
+                    genScript += "mesh.y = [ mesh.y ({0:g}:{1:g}:{2:g}) ];\n".format(_r(ymin), _r(yParam), _r(ymax))
                 if gridSettingsInst.zenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
@@ -1449,8 +1490,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
                     if (not gridSettingsInst.getXYZ()['x'] == 1):
-                        genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(xmin), _r(xmax), _r(
-                            gridSettingsInst.getXYZ(refUnit)['x']))
+                        genScript += "mesh.x = [ mesh.x linspace({0:g},{1:g},{2:g}) ];\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
                     else:
                         genScript += "mesh.x = [ mesh.x {0:g} ];\n".format(_r((xmin + xmax) / 2))
 
@@ -1458,8 +1498,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
                     if (not gridSettingsInst.getXYZ()['y'] == 1):
-                        genScript += "mesh.y = [ mesh.y linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(
-                            gridSettingsInst.getXYZ(refUnit)['y']))
+                        genScript += "mesh.y = [ mesh.y linspace({0:g},{1:g},{2:g}) ];\n".format(_r(ymin), _r(ymax), _r(yParam))
                     else:
                         genScript += "mesh.y = [ mesh.y {0:g} ];\n".format(_r((ymin + ymax) / 2))
 
@@ -1467,8 +1506,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
                     if (not gridSettingsInst.getXYZ()['z'] == 1):
-                        genScript += "mesh.z = [ mesh.z linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(
-                            gridSettingsInst.getXYZ(refUnit)['z']))
+                        genScript += "mesh.z = [ mesh.z linspace({0:g},{1:g},{2:g}) ];\n".format(_r(zmin), _r(zmax), _r(gridSettingsInst.getXYZ(refUnit)['z']))
                     else:
                         genScript += "mesh.z = [ mesh.z {0:g} ];\n".format(_r((zmin + zmax) / 2))
 
@@ -1502,7 +1540,7 @@ class OctaveScriptLinesGenerator:
                     if gridSettingsInst.smoothMesh['yMaxRes'] == 0:
                         genScript += "smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, max_res/unit); %max_res calculated in excitation part\n"
                     else:
-                        genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {gridSettingsInst.smoothMesh['yMaxRes']});\n"
+                        genScript += f"smoothMesh.y = AutoSmoothMeshLines(smoothMesh.y, {yParam});\n"
                     genScript += "mesh.y = [mesh.y smoothMesh.y];\n"
                 if gridSettingsInst.zenabled:
 
@@ -1690,6 +1728,14 @@ class OctaveScriptLinesGenerator:
         #   if outputStr is None then folder with name as FreeCAD file with suffix _openEMS_simulation is created
         outputDir = self.createOuputDir(outputDir)
 
+        # Write _OpenEMS.m script file to current directory.
+        currDir, nameBase = self.getCurrDir()
+        nameBase = nameBase.replace(" ", "_")               #IMPORTANT! openEMS function to run simulation cannot handle spaces in name of .m file
+        if (not outputDir is None):
+            fileName = f"{outputDir}/{nameBase}_openEMS.m"
+        else:
+            fileName = f"{currDir}/{nameBase}_openEMS.m"
+
         # Update status bar to inform user that exporting has begun.
         if self.statusBar is not None:
             self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
@@ -1737,7 +1783,10 @@ class OctaveScriptLinesGenerator:
 
         genScript += "%% prepare simulation folder\n"
         genScript += "Sim_Path = 'tmp';\n"
-        genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
+
+        #genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
+        genScript += "Sim_CSX = '" + nameBase + ".xml';\n"
+
         genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"
         genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
         genScript += "\n"
@@ -1798,15 +1847,6 @@ class OctaveScriptLinesGenerator:
         genScript += "    %% run openEMS\n"
         genScript += "    RunOpenEMS( Sim_Path, Sim_CSX, openEMS_opts );\n"
         genScript += "end\n"
-
-        # Write _OpenEMS.m script file to current directory.
-        currDir, nameBase = self.getCurrDir()
-
-        nameBase = nameBase.replace(" ", "_")               #IMPORTANT! openEMS function to run simulation cannot handle spaces in name of .m file
-        if (not outputDir is None):
-            fileName = f"{outputDir}/{nameBase}_openEMS.m"
-        else:
-            fileName = f"{currDir}/{nameBase}_openEMS.m"
 
         f = open(fileName, "w", encoding='utf-8')
         f.write(genScript)

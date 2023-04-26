@@ -116,6 +116,7 @@ class IniFile:
             settings.setValue("generateLinesInside", gridList[k].generateLinesInside)
             settings.setValue("topPriorityLines", gridList[k].topPriorityLines)
             settings.setValue("units", gridList[k].units)
+            settings.setValue("unitsAngle", gridList[k].unitsAngle)
 
             if (gridList[k].type == "Fixed Distance"):
                 settings.setValue("xenabled", gridList[k].xenabled)
@@ -486,6 +487,7 @@ class IniFile:
                 categorySettings.name = itemName
                 categorySettings.coordsType = settings.value('coordsType')
                 categorySettings.units = settings.value('units')
+                categorySettings.unitsAngle = settings.value('unitsAngle')
                 categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
                 categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
 
