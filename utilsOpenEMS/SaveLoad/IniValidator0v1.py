@@ -100,6 +100,7 @@ class IniValidator0v1:
                                 'allowedValues': "float"
                             },
                         }
+                    },
                     {
                         'name': 'smoothMesh',
                         'mandatory': "settings.value('type') == 'Smooth Mesh'",
@@ -122,7 +123,144 @@ class IniValidator0v1:
             },
             {
                 'name': r"PORT-(.+)",
-                'mandatory': False
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'type',
+                        'mandatory': True,
+                        'allowedValues': r"(lumped|microstrip|rectangular waveguide|circular waveguide|coplanar|stripline|coaxial|curve)"
+                    },
+                    {
+                        'name': 'excitationAmplitude',
+                        'mandatory': True,
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'R',
+                        'mandatory': "settings.value('type') in ['lumped', 'microstrip', 'coplanar', 'stripline', 'coaxial', 'curve']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'RUnits',
+                        'mandatory': "settings.value('type') in ['lumped', 'microstrip', 'coplanar', 'stripline', 'coaxial', 'curve']",
+                        'allowedValues': r"(uOhm|mOhm|Ohm|kOhm|MOhm|GOhm)"
+                    },
+                    {
+                        'name': 'isActive',
+                        'mandatory': True,
+                        'allowedValues': "bool"
+                    },
+                    {
+                        'name': 'infiniteResistance',
+                        'mandatory': "settings.value('type') in ['lumped', 'microstrip', 'coplanar', 'stripline', 'coaxial', 'curve']",
+                        'allowedValues': "bool"
+                    },
+                    {
+                        'name': 'direction',
+                        'mandatory': "settings.value('type') in ['lumped']",
+                        'allowedValues': r"(x|y|z)"
+                    },
+                    {
+                        'name': 'direction',
+                        'mandatory': "settings.value('type') in ['rectangular waveguide', 'circular waveguide', 'coaxial']",
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                    },
+                    {
+                        'name': 'direction',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coplanar']",
+                        'allowedValues': r"(XY plane, top layer|XY plane, bottom layer|XZ plane, front layer|XZ plane, back layer|YZ plane, right layer|YZ plane, left layer)"
+                    },
+                    {
+                        'name': 'direction',
+                        'mandatory': "settings.value('type') in ['stripline']",
+                        'allowedValues': r"(XY plane|XZ plane|YZ plane)"
+                    },
+                    {
+                        'name': 'polarizationAngle',
+                        'mandatory': "settings.value('type') in ['circular waveguide']",
+                        'allowedValues': r"(0|pi/2)"
+                    },
+                    {
+                        'name': 'modeName',
+                        'mandatory': "settings.value('type') in ['circular waveguide']",
+                        'allowedValues': r"(TE01|TE11|TE21|TE02|TE12|TE22|TE03|TE13|TE23|)"
+                    },
+                    {
+                        'name': 'modeName',
+                        'mandatory': "settings.value('type') in ['rectangular waveguide']",
+                        'allowedValues': r"(TE10|TE20|TE01|TE11|TE21|TE30|TE31|TE40|TE02|)"
+                    },
+                    {
+                        'name': 'waveguideDirection',
+                        'mandatory': "settings.value('type') in ['rectangulare waveguide', 'circular waveguide']",
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                    },
+                    {
+                        'name': 'material',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coaxial', 'coplanar']",
+                        'allowedValues': "string"
+                    },
+                    {
+                        'name': 'conductorMaterial',
+                        'mandatory': "settings.value('type') in ['coaxial']",
+                        'allowedValues': "string"
+                    },
+                    {
+                        'name': 'feedpointShiftValue',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coaxial', 'coplanar', 'stripline']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'feedpointShiftUnits',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coaxial', 'coplanar', 'stripline']",
+                        'allowedValues': r"(pm|nm|um|mm|cm|m)"
+                    },
+                    {
+                        'name': 'measPlaneShiftValue',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coaxial', 'coplanar', 'stripline']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'measPlaneShiftUnits',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coaxial', 'coplanar', 'stripline']",
+                        'allowedValues': r"(pm|nm|um|mm|cm|m)"
+                    },
+                    {
+                        'name': 'propagation',
+                        'mandatory': "settings.value('type') in ['microstrip', 'coplanar', 'stripline']",
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                    },
+                    {
+                        'name': 'coaxialInnerRadiusValue',
+                        'mandatory': "settings.value('type') in ['coaxial']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'coaxialInnerRadiusUnits',
+                        'mandatory': "settings.value('type') in ['coaxial']",
+                        'allowedValues': r"(pm|nm|um|mm|cm|m)"
+                    },
+                    {
+                        'name': 'coaxialShellThicknessValue',
+                        'mandatory': "settings.value('type') in ['coaxial']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'coaxialShellThicknessUnits',
+                        'mandatory': "settings.value('type') in ['coaxial']",
+                        'allowedValues': r"(pm|nm|um|mm|cm|m)"
+                    },
+                    {
+                        'name': 'coplanarGapValue',
+                        'mandatory': "settings.value('type') in ['coplanar']",
+                        'allowedValues': "float"
+                    },
+                    {
+                        'name': 'coplanarGapUnits',
+                        'mandatory': "settings.value('type') in ['coplanar']",
+                        'allowedValues': r"(pm|nm|um|mm|cm|m)"
+                    },
+                ]
             },
             {
                 'name': r"EXCITATION-(.+)",
@@ -408,7 +546,7 @@ class IniValidator0v1:
                             #
                             #   Check item value.
                             #
-                            if isPresent:
+                            if isPresent and isMandatory:
                                 currentGroupItemValue = settings.value(iniGroupItem['name'])
                                 errorType = False
                                 if iniGroupItem['allowedValues'] == "string":
@@ -423,13 +561,21 @@ class IniValidator0v1:
                                         float(currentGroupItemValue)
                                     except:
                                         errorType = True
-                                elif (iniGroupItem['allowedValues'] == "bool" and not re.match(r"(0|1|false|true)", currentGroupItemValue.lower())):
-                                    errorType = True
+                                elif (iniGroupItem['allowedValues'] == "bool"):
+                                    if not re.match(r"(0|1|false|true)", currentGroupItemValue.lower()):
+                                        errorType = True
                                 elif (type(iniGroupItem['allowedValues']) == dict):
                                     #
                                     #   check for JSON not implemented yet.
                                     #
                                     pass
+                                else:
+                                    try:
+                                        currentGroupItemValue = ",".join(currentGroupItemValue) if type(currentGroupItemValue) == list else currentGroupItemValue
+                                        if not re.match(iniGroupItem['allowedValues'], currentGroupItemValue):
+                                            errorType = True
+                                    except:
+                                        errorType = True
 
                                 if errorType:
                                     errorList.append(f"[{currentGroupName}] -> '{iniGroupItem['name']}' has invalid value '{currentGroupItemValue}', expected '{iniGroupItem['allowedValues']}'")
