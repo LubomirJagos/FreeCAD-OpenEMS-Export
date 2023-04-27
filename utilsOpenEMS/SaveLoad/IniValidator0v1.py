@@ -14,7 +14,49 @@ class IniValidator0v1:
         'topLevelGroups': [
             {
                 'name': r"MATERIAL-(.+)",
-                'mandatory': False
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'type',
+                        'mandatory': True,
+                        'allowedValues': r"(metal|userdefined|conducting sheet)"
+                    },
+                    {
+                        'name': 'material_epsilon',
+                        'mandatory': 'settings.value("type") == "userdefined"',
+                        'allowedValues': 'float'
+                    },
+                    {
+                        'name': 'material_mue',
+                        'mandatory': 'settings.value("type") == "userdefined"',
+                        'allowedValues': 'float'
+                    },
+                    {
+                        'name': 'material_kappa',
+                        'mandatory': 'settings.value("type") == "userdefined"',
+                        'allowedValues': 'float'
+                    },
+                    {
+                        'name': 'material_sigma',
+                        'mandatory': 'settings.value("type") == "userdefined"',
+                        'allowedValues': 'float'
+                    },
+                    {
+                        'name': 'conductingSheetThicknessValue',
+                        'mandatory': 'settings.value("type") == "conducting sheet"',
+                        'allowedValues': 'float'
+                    },
+                    {
+                        'name': 'conductingSheetThicknessUnits',
+                        'mandatory': 'settings.value("type") == "conducting sheet"',
+                        'allowedValues': r"(pm|nm|um|mm|cm|m|km)"
+                    },
+                    {
+                        'name': 'conductingSheetConductivity',
+                        'mandatory': 'settings.value("type") == "conducting sheet"',
+                        'allowedValues': 'float'
+                    },
+                ]
             },
             {
                 'name': r"GRID-(.+)",
@@ -47,7 +89,7 @@ class IniValidator0v1:
                     },
                     {
                         'name': 'unitsAngle',
-                        'mandatory': True,
+                        'mandatory': "settings.value('coordsType') == 'cylindrical'",
                         'allowedValues': r"(deg|rad)"
                     },
                     {
@@ -264,11 +306,105 @@ class IniValidator0v1:
             },
             {
                 'name': r"EXCITATION-(.+)",
-                'mandatory': False
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'type',
+                        'mandatory': True,
+                        'allowedValues': r'(sinusodial|gaussian|custom|dirac|step)'
+                    },
+                    {
+                        'name': 'units',
+                        'mandatory': True,
+                        'allowedValues': r'(Hz|kHz|MHz|GHz)'
+                    },
+                    {
+                        'name': 'sinusodial',
+                        'mandatory': 'settings.value("type") == "sinusodial"',
+                        'allowedValues': {
+                            'f0': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            }
+                        }
+                    },
+                    {
+                        'name': 'gaussian',
+                        'mandatory': 'settings.value("type") == "gaussian"',
+                        'allowedValues': {
+                            'f0': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            },
+                            'fc': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            }
+                        }
+                    },
+                    {
+                        'name': 'custom',
+                        'mandatory': 'settings.value("type") == "custom"',
+                        'allowedValues': {
+                            'functionStr': {
+                                'mandatory': True,
+                                'allowedValues': 'string'
+                            },
+                            'f0': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            }
+                        }
+                    },
+                ]
             },
             {
                 'name': r"LUMPEDPART-(.+)",
-                'mandatory': False
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'params',
+                        'mandatory': True,
+                        'allowedValues': {
+                            'R': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            },
+                            'RUnits': {
+                                'mandatory': True,
+                                'allowedValues': r"(uOhm|mOhm|Ohm|kOhm|MOhm|GOhm)"
+                            },
+                            'REnabled': {
+                                'mandatory': True,
+                                'allowedValues': 'bool'
+                            },
+                            'L': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            },
+                            'LUnits': {
+                                'mandatory': True,
+                                'allowedValues': r"(pH|uH|nH|mH|H|kH|MH|GH)"
+                            },
+                            'LEnabled': {
+                                'mandatory': True,
+                                'allowedValues': 'bool'
+                            },
+                            'C': {
+                                'mandatory': True,
+                                'allowedValues': 'float'
+                            },
+                            'CUnits': {
+                                'mandatory': True,
+                                'allowedValues': r"(pF|uF|nF|mF|F|kF|MF|GF)"
+                            },
+                            'CEnabled': {
+                                'mandatory': True,
+                                'allowedValues': 'bool'
+                            },
+                        }
+                    },
+                ]
             },
             {
                 'name': r"PROBE-(.+)",
@@ -516,8 +652,12 @@ class IniValidator0v1:
     def __init__(self):
         return
 
+    @classmethod
     def checkFile(self, filepath):
         settings = QtCore.QSettings(filepath, QtCore.QSettings.IniFormat)
+
+        print(f"####Formal file check using validator: {os.path.basename(__file__)}")
+        print("#### START report")
 
         errorList = []
         for currentGroupName in settings.childGroups():
@@ -545,8 +685,11 @@ class IniValidator0v1:
 
                             #
                             #   Check item value.
+                            #       Item must be present and also
+                            #       its mandatory must be True/False (bool datatype) then it's evaluated evenwhen not mandatory to check if has expected value
+                            #       or its mandatory is defined by string which is evaluated in eval(), if True then is evaluated
                             #
-                            if isPresent and isMandatory:
+                            if isPresent and (isMandatory or type(iniGroupItem['mandatory']) == bool):
                                 currentGroupItemValue = settings.value(iniGroupItem['name'])
                                 errorType = False
                                 if iniGroupItem['allowedValues'] == "string":
@@ -562,12 +705,50 @@ class IniValidator0v1:
                                     except:
                                         errorType = True
                                 elif (iniGroupItem['allowedValues'] == "bool"):
-                                    if not re.match(r"(0|1|false|true)", currentGroupItemValue.lower()):
+                                    if not re.match(r"(0|1|false|true)", str(currentGroupItemValue).lower()):
                                         errorType = True
                                 elif (type(iniGroupItem['allowedValues']) == dict):
                                     #
                                     #   check for JSON not implemented yet.
                                     #
+                                    jsonError = False
+                                    try:
+                                        currentGroupItemValue = json.loads(currentGroupItemValue)
+                                    except Exception as e:
+                                        print(f"[{currentGroupName}] -> '{iniGroupItem['name']}: ERROR json format: {e}")
+                                        continue
+
+                                    for elementKey, elementDefinition in iniGroupItem['allowedValues'].items():
+                                        isPresent = elementKey in currentGroupItemValue.keys()
+                                        if isPresent:
+                                            isMandatory = bool(eval(str(elementDefinition['mandatory'])))
+                                            if (isMandatory or type(elementDefinition['mandatory']) == bool):
+                                                if elementDefinition['allowedValues'] == "string":
+                                                    pass
+                                                elif (elementDefinition['allowedValues'] == "int"):
+                                                    try:
+                                                        int(currentGroupItemValue[elementKey])
+                                                    except:
+                                                        errorType = True
+                                                elif (elementDefinition['allowedValues'] == "float"):
+                                                    try:
+                                                        float(currentGroupItemValue[elementKey])
+                                                    except:
+                                                        errorType = True
+                                                elif (elementDefinition['allowedValues'] == "bool"):
+                                                    if not re.match(r"(0|1|false|true)", str(currentGroupItemValue[elementKey]).lower()):
+                                                        errorType = True
+                                                else:
+                                                    try:
+                                                        currentGroupItemValue[elementKey] = ",".join(currentGroupItemValue[elementKey]) if type(currentGroupItemValue[elementKey]) == list else currentGroupItemValue[elementKey]
+                                                        if not re.match(elementDefinition['allowedValues'], currentGroupItemValue[elementKey]):
+                                                            errorType = True
+                                                    except:
+                                                        errorType = True
+
+                                                if errorType:
+                                                    errorList.append(f"[{currentGroupName}] -> '{iniGroupItem['name']}' -> {elementKey} has invalid value '{currentGroupItemValue[elementKey]}', expected '{elementDefinition['allowedValues']}'")
+                                                    errorType = False   #null error flag to not write any other error
                                     pass
                                 else:
                                     try:
@@ -581,11 +762,6 @@ class IniValidator0v1:
                                     errorList.append(f"[{currentGroupName}] -> '{iniGroupItem['name']}' has invalid value '{currentGroupItemValue}', expected '{iniGroupItem['allowedValues']}'")
 
             settings.endGroup()
-
-        #
-        #   Result evaluation
-        #
-        print("#### START report")
 
         #
         #   Check if all mandatory top group are present from schema, checking mark 'isPresent'

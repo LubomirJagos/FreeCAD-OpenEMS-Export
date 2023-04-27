@@ -22,6 +22,8 @@ from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
+from utilsOpenEMS.SaveLoad.IniValidator0v1 import IniValidator0v1
+
 class IniFile:
 
     def __init__(self, form, statusBar = None, guiSignals = None):
@@ -44,6 +46,7 @@ class IniFile:
         freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
         filename, filter = QtGui.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
+            IniValidator0v1.checkFile(filename)
             self.read(filename)
             return filename
 
