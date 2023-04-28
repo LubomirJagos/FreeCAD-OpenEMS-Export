@@ -979,29 +979,15 @@ in grid units</string>
               </widget>
              </item>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_55">
-               <property name="leftMargin">
-                <number>0</number>
+              <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
+               <property name="enabled">
+                <bool>false</bool>
                </property>
-               <property name="topMargin">
-                <number>0</number>
+               <property name="tabChangesFocus">
+                <bool>false</bool>
                </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="tabChangesFocus">
-                  <bool>false</bool>
-                 </property>
-                 <property name="plainText">
-                  <string>#available caculated variables, these are calculated for boundaries of each assigned object:
+               <property name="plainText">
+                <string>#available caculated variables, these are calculated for boundaries of each assigned object:
 #    xmin,xmax
 #    ymin,ymax
 #    zmin,zmax
@@ -1009,29 +995,8 @@ in grid units</string>
 mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
 mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
 mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_95">
-                 <property name="text">
-                  <string>#available caculated variables,
-#these are calculated for boundaries
-#of each assigned object:
-#    xmin,xmax
-#    ymin,ymax
-#    zmin,zmax
-#
-mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
-mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
-mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
-
-#DON'T FORGET TO CONCATENATE PREVIOUS
-VALUES OF MESH.X,Y,Z WHEN USED</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1108,6 +1073,25 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_95">
+               <property name="text">
+                <string>#available caculated variables,
+#these are calculated for boundaries
+#of each assigned object:
+#    xmin,xmax
+#    ymin,ymax
+#    zmin,zmax
+#
+mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
+mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
+mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
+
+#DON'T FORGET TO CONCATENATE PREVIOUS
+VALUES OF MESH.X,Y,Z WHEN USED</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -5199,8 +5183,9 @@ no TM modes.</string>
              <item>
               <widget class="QLabel" name="label_94">
                <property name="text">
-                <string>!!!ATTENTION!!! Now this generates just lumped part as bounding box of shape,
-so it's always just Box.</string>
+                <string>!!!ATTENTION!!!
+Now this generates just lumped part as bounding box of shape, so it's always just Box.
+OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                </property>
               </widget>
              </item>
