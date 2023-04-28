@@ -137,6 +137,9 @@ class IniFile:
                 settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("smoothMesh", json.dumps(gridList[k].smoothMesh))
             elif (gridList[k].type == "User Defined"):
+                settings.setValue("xenabled", gridList[k].xenabled)
+                settings.setValue("yenabled", gridList[k].yenabled)
+                settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
 
             settings.endGroup()
@@ -495,26 +498,20 @@ class IniFile:
                 categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
                 categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
                 categorySettings.type = settings.value('type')
+                categorySettings.xenabled = _bool(settings.value('xenabled'))
+                categorySettings.yenabled = _bool(settings.value('yenabled'))
+                categorySettings.zenabled = _bool(settings.value('zenabled'))
 
                 print(f"loading GRID - {categorySettings.name} - {categorySettings.type}")
 
                 if (categorySettings.type == "Fixed Distance"):
-                    categorySettings.xenabled = _bool(settings.value('xenabled'))
-                    categorySettings.yenabled = _bool(settings.value('yenabled'))
-                    categorySettings.zenabled = _bool(settings.value('zenabled'))
                     categorySettings.fixedDistance = json.loads(settings.value('fixedDistance'))
                 elif (categorySettings.type == "Fixed Count"):
-                    categorySettings.xenabled = _bool(settings.value('xenabled'))
-                    categorySettings.yenabled = _bool(settings.value('yenabled'))
-                    categorySettings.zenabled = _bool(settings.value('zenabled'))
                     categorySettings.fixedCount = json.loads(settings.value('fixedCount'))
                 elif (categorySettings.type == "User Defined"):
                     categorySettings.userDefined = json.loads(settings.value('userDefined'))
                 elif (categorySettings.type == "Smooth Mesh"):
                     try:
-                        categorySettings.xenabled = _bool(settings.value('xenabled'))
-                        categorySettings.yenabled = _bool(settings.value('yenabled'))
-                        categorySettings.zenabled = _bool(settings.value('zenabled'))
                         categorySettings.smoothMesh = json.loads(settings.value('smoothMesh'))
                     except Exception as e:
                         print(f"Error during load reading smooth mesh: {e}")

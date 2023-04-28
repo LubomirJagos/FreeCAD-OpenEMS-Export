@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>728</height>
+    <width>1404</width>
+    <height>738</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -979,17 +979,59 @@ in grid units</string>
               </widget>
              </item>
              <item>
-              <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
-               <property name="enabled">
-                <bool>false</bool>
+              <layout class="QHBoxLayout" name="horizontalLayout_55">
+               <property name="leftMargin">
+                <number>0</number>
                </property>
-               <property name="tabChangesFocus">
-                <bool>false</bool>
+               <property name="topMargin">
+                <number>0</number>
                </property>
-               <property name="plainText">
-                <string>struct('x',[mesh.x ..], 'y', [mesh.y ..], 'z', [mesh.z ..])</string>
+               <property name="rightMargin">
+                <number>0</number>
                </property>
-              </widget>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPlainTextEdit" name="userDefinedGridLinesTextInput">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="tabChangesFocus">
+                  <bool>false</bool>
+                 </property>
+                 <property name="plainText">
+                  <string>#available caculated variables, these are calculated for boundaries of each assigned object:
+#    xmin,xmax
+#    ymin,ymax
+#    zmin,zmax
+#
+mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
+mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
+mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_95">
+                 <property name="text">
+                  <string>#available caculated variables,
+#these are calculated for boundaries
+#of each assigned object:
+#    xmin,xmax
+#    ymin,ymax
+#    zmin,zmax
+#
+mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
+mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
+mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
+
+#DON'T FORGET TO CONCATENATE PREVIOUS
+VALUES OF MESH.X,Y,Z WHEN USED</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </item>
@@ -7460,7 +7502,6 @@ than min spacing</string>
   <tabstop>userDefinedRadioButton</tabstop>
   <tabstop>gridGenerateLinesInsideCheckbox</tabstop>
   <tabstop>gridTopPriorityLinesCheckbox</tabstop>
-  <tabstop>userDefinedGridLinesTextInput</tabstop>
   <tabstop>createUserdefGridLinesFromCurrentButton</tabstop>
   <tabstop>displayXYGridLinesInModelButton</tabstop>
   <tabstop>displayXZGridLinesInModelButton</tabstop>

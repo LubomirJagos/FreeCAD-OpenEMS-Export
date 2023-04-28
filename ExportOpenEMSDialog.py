@@ -188,6 +188,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
 		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
+		self.form.smoothMeshRadioButton.clicked.connect(self.smoothMeshRadioButtonClicked)
 
 		# Handle function for MATERIAL RADIO BUTTONS
 		self.form.materialUserDefinedRadioButton.toggled.connect(self.materialUserDeinedRadioButtonToggled)	
@@ -1485,12 +1486,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.userDefinedGridLinesTextInput.setEnabled(False)
 		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
 
+	def smoothMeshRadioButtonClicked(self):
+		self.form.userDefinedGridLinesTextInput.setEnabled(False)
+		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
+
 	def userDefinedRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(True)
+		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
 
-		self.form.gridTopPriorityLinesCheckbox.setCheckState(QtCore.Qt.Unchecked)
-		self.form.gridTopPriorityLinesCheckbox.setEnabled(False)
-		
 	def getCurrentSimulationGridType(self):
 		isCoordTypeRectangular = True
 
@@ -2876,22 +2879,21 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (currSetting.coordsType == "cylindrical"):
 			self.form.gridCylindricalRadio.click()
 
-		if (currSetting.type == "Fixed Distance"):
-			self.form.fixedDistanceRadioButton.click()
-
+		try:
 			self.form.gridXEnable.setChecked(currSetting.xenabled)
 			self.form.gridYEnable.setChecked(currSetting.yenabled)
 			self.form.gridZEnable.setChecked(currSetting.zenabled)
+		except:
+			pass
+
+		if (currSetting.type == "Fixed Distance"):
+			self.form.fixedDistanceRadioButton.click()
 
 			self.form.fixedDistanceXNumberInput.setValue(currSetting.fixedDistance['x'])
 			self.form.fixedDistanceYNumberInput.setValue(currSetting.fixedDistance['y'])
 			self.form.fixedDistanceZNumberInput.setValue(currSetting.fixedDistance['z'])
 		elif (currSetting.type == "Fixed Count"):
 			self.form.fixedCountRadioButton.click()
-
-			self.form.gridXEnable.setChecked(currSetting.xenabled)
-			self.form.gridYEnable.setChecked(currSetting.yenabled)
-			self.form.gridZEnable.setChecked(currSetting.zenabled)
 
 			self.form.fixedCountXNumberInput.setValue(currSetting.fixedCount['x'])
 			self.form.fixedCountYNumberInput.setValue(currSetting.fixedCount['y'])
@@ -2901,18 +2903,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			try:
 				self.form.smoothMeshRadioButton.click()
 
-				self.form.gridXEnable.setChecked(currSetting.xenabled)
-				self.form.gridYEnable.setChecked(currSetting.yenabled)
-				self.form.gridZEnable.setChecked(currSetting.zenabled)
-
 				self.form.smoothMeshXMaxRes.setValue(currSetting.smoothMesh['xMaxRes'])
 				self.form.smoothMeshYMaxRes.setValue(currSetting.smoothMesh['yMaxRes'])
 				self.form.smoothMeshZMaxRes.setValue(currSetting.smoothMesh['zMaxRes'])
 			except:
 				pass
+
 		elif (currSetting.type == "User Defined"):
 			self.form.userDefinedRadioButton.click()
 			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
+
 		else:
 			pass
 

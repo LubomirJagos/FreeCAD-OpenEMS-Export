@@ -1422,6 +1422,8 @@ class OctaveScriptLinesGenerator:
                     yParam = math.radians(gridSettingsInst.smoothMesh['yMaxRes'])
                 elif (gridSettingsInst.getType() == 'Fixed Distance' and gridSettingsInst.unitsAngle == "deg"):
                     yParam = math.radians(gridSettingsInst.getXYZ(refUnit)['y'])
+                elif (gridSettingsInst.getType() == 'User Defined'):
+                    pass  # user defined is jaust text, doesn't have ['y']
                 else:
                     yParam = gridSettingsInst.getXYZ(refUnit)['y']
 
@@ -1430,6 +1432,8 @@ class OctaveScriptLinesGenerator:
             else:
                 if (gridSettingsInst.getType() == 'Smooth Mesh'):
                     yParam = gridSettingsInst.smoothMesh['yMaxRes']
+                elif (gridSettingsInst.getType() == 'User Defined'):
+                    pass                                                #user defined is jaust text, doesn't have ['y']
                 else:
                     yParam = gridSettingsInst.getXYZ(refUnit)['y']
 
@@ -1476,7 +1480,23 @@ class OctaveScriptLinesGenerator:
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             elif (gridSettingsInst.getType() == 'User Defined'):
-                genScript += "mesh = " + gridSettingsInst.getXYZ() + ";\n"
+                if gridSettingsInst.xenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x(mesh.x >= {0:g} & mesh.x <= {1:g}) = [];\n".format(_r(xmin), _r(xmax))
+                if gridSettingsInst.yenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y(mesh.y >= {0:g} & mesh.y <= {1:g}) = [];\n".format(_r(ymin), _r(ymax))
+                if gridSettingsInst.zenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z(mesh.z >= {0:g} & mesh.z <= {1:g}) = [];\n".format(_r(zmin), _r(zmax))
+
+                genScript += "xmin = {0:g};\n".format(_r(xmin))
+                genScript += "xmax = {0:g};\n".format(_r(xmax))
+                genScript += "ymin = {0:g};\n".format(_r(ymin))
+                genScript += "ymax = {0:g};\n".format(_r(ymax))
+                genScript += "zmin = {0:g};\n".format(_r(zmin))
+                genScript += "zmax = {0:g};\n".format(_r(zmax))
+                genScript += gridSettingsInst.getXYZ() + "\n"
                 genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
 
             elif (gridSettingsInst.getType() == 'Smooth Mesh'):
