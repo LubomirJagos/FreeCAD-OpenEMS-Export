@@ -1052,15 +1052,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	#
 	#	ABORT simulation button handler
-	#		write empty file ABORT into tmp/ folder what should abort simulation in next iteration
+	#		write empty file ABORT into simulation_output/ folder what should abort simulation in next iteration
 	#
 	def abortSimulationButtonClicked(self, outputDir=None):
 		programdir = os.path.dirname(App.ActiveDocument.FileName)
 
 		if not outputDir is None:
-			absoluteOutputDir = os.path.join(outputDir, "tmp")
+			absoluteOutputDir = os.path.join(outputDir, "simulation_output")
 		else:
-			absoluteOutputDir = os.path.join(programdir, "tmp")
+			absoluteOutputDir = os.path.join(programdir, "simulation_output")
 
 		outFile = os.path.join(absoluteOutputDir, "ABORT")
 		print("------------->" + outFile)
@@ -1072,8 +1072,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			print(f"ABORT file written into {absoluteOutputDir}")
 			self.guiHelpers.displayMessage(f"ABORT file written into {absoluteOutputDir}", forceModal=False)
 		else:
-			print(f"Simulation tmp/ folder not found at expected path: {absoluteOutputDir}")
-			self.guiHelpers.displayMessage(f"Simulation tmp/ folder not found at expected path: {absoluteOutputDir}", forceModal=False)
+			print(f"Simulation simulation_output/ folder not found at expected path: {absoluteOutputDir}")
+			self.guiHelpers.displayMessage(f"Simulation simulation_output/ folder not found at expected path: {absoluteOutputDir}", forceModal=False)
 
 	def materialUserDeinedRadioButtonToggled(self):
 		if (self.form.materialUserDefinedRadioButton.isChecked()):

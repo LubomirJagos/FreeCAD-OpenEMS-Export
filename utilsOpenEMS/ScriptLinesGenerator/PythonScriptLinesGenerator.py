@@ -831,7 +831,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
         # Write simulation settings.
 
         genScript += "## prepare simulation folder\n"
-        genScript += "Sim_Path = os.path.join(currDir, 'tmp')\n"
+        genScript += "Sim_Path = os.path.join(currDir, 'simulation_output')\n"
         genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml'\n"
 
         genScript += "if os.path.exists(Sim_Path):\n"
@@ -931,7 +931,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 clear
 clc
 
-Sim_Path = "tmp";
+Sim_Path = "simulation_output";
 CSX = InitCSX();
 
 """
@@ -1166,8 +1166,8 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
 
         genScript += """%% postprocessing & do the plots
 freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-U = ReadUI( {'port_ut1','et'}, 'tmp/', freq ); % time domain/freq domain voltage
-I = ReadUI( 'port_it1', 'tmp/', freq ); % time domain/freq domain current (half time step is corrected)
+U = ReadUI( {'port_ut1','et'}, 'simulation_output/', freq ); % time domain/freq domain voltage
+I = ReadUI( 'port_it1', 'simulation_output/', freq ); % time domain/freq domain current (half time step is corrected)
 
 % plot time domain voltage
 figure
@@ -1255,7 +1255,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 
         genScript += self.getInitScriptLines()
 
-        genScript += "Sim_Path = 'tmp';\n"
+        genScript += "Sim_Path = 'simulation_output';\n"
         genScript += "CSX = InitCSX('CoordSystem',0);\n"
         genScript += "\n"
 
