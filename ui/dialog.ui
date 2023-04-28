@@ -1088,6 +1088,11 @@ mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
 mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
 mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
 
+In case of cylindrical coords still use:
+    mesh.x is treated like r
+    mesh.y is treated like theta in radians
+    mesh.z is still z
+
 #DON'T FORGET TO CONCATENATE PREVIOUS
 VALUES OF MESH.X,Y,Z WHEN USED</string>
                </property>
