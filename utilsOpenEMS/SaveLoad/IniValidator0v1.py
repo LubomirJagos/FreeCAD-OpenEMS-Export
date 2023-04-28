@@ -418,7 +418,7 @@ class IniValidator0v1:
                     {
                         'name': 'dumpboxType',
                         'mandatory': "settings.value('type') == 'dumpbox'",
-                        'allowedValues': r"(E field|H field)"
+                        'allowedValues': r"(E field|H field|J field|D field|B field)"
                     },
                     {
                         'name': 'dumpboxDomain',
@@ -606,42 +606,52 @@ class IniValidator0v1:
                 'items':[
                     {
                         'name': r"nf2ffObject",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "string"
                     },
                     {
+                        'name': r"nf2ffInputPort",
+                        'mandatory': False,
+                        'allowedValues': "string"
+                    },
+                    {
+                        'name': r"nf2ffFreqValue",
+                        'mandatory': False,
+                        'allowedValues': "float"
+                    },
+                    {
                         'name': r"nf2ffFreqCount",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffThetaStart",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffThetaStop",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffThetaStep",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffPhiStart",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffPhiStop",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                     {
                         'name': r"nf2ffPhiStep",
-                        'mandatory': True,
+                        'mandatory': False,
                         'allowedValues': "float"
                     },
                 ]

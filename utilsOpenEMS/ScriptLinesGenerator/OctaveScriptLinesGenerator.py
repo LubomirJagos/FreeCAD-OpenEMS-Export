@@ -91,11 +91,7 @@ class OctaveScriptLinesGenerator:
     def getCurrDir(self):
         programname = os.path.basename(App.ActiveDocument.FileName)
         programDir = os.path.dirname(App.ActiveDocument.FileName)
-
         programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-
-        print('--->' + programbase)
-        print('--->' + programDir)
         return [programDir, programbase]
 
     #
@@ -231,19 +227,7 @@ class OctaveScriptLinesGenerator:
 
         for [item, currSetting] in items:
 
-            print(currSetting)
-            if (currSetting.getName() == 'Material Default'):
-                print("#Material Default")
-                print("---")
-                continue
-
-            print("#")
-            print("#MATERIAL")
-            print("#name: " + currSetting.getName())
-            print("#epsilon, mue, kappa, sigma")
-            print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(
-                currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
-
+            print(f"#MATERIAL generates {currSetting.getName()}, {str(currSetting.constants)}")
             genScript += "%% MATERIAL - " + currSetting.getName() + "\n"
 
             # when material metal use just AddMetal for simulator
@@ -267,10 +251,7 @@ class OctaveScriptLinesGenerator:
                 genScript += "CSX = AddConductingSheet(CSX, '" + currSetting.getName() + "', " + str(currSetting.constants["conductingSheetConductivity"]) + ", " + str(currSetting.constants["conductingSheetThicknessValue"]) + "*" + str(currSetting.getUnitsAsNumber(currSetting.constants["conductingSheetThicknessUnits"])) + ");\n"
 
             # first print all current material children names
-            for k in range(item.childCount()):
-                childName = item.child(k).text(0)
-                print("##Children:")
-                print("\t" + childName)
+            print(f"assigned objects: {[item.child(k).text(0) for k in range(item.childCount())]}")
 
             # now export material children, if it's object export as STL, if it's curve export as curve
             if (generateObjects):
@@ -393,10 +374,7 @@ class OctaveScriptLinesGenerator:
 
         for [item, currSetting] in items:
 
-            print("#")
-            print("#PORT")
-            print("#name: " + currSetting.getName())
-            print("#type: " + currSetting.getType())
+            print(f"#PORT - {currSetting.getName()} - {currSetting.getType()}")
 
             objs = App.ActiveDocument.Objects
             for k in range(item.childCount()):
@@ -404,18 +382,14 @@ class OctaveScriptLinesGenerator:
 
                 genScript += "%% PORT - " + currSetting.getName() + " - " + childName + "\n"
 
-                print("##Children:")
-                print("\t" + childName)
                 freecadObjects = [i for i in objs if (i.Label) == childName]
 
                 # print(freecadObjects)
                 for obj in freecadObjects:
+                    print(f"\t{obj.Label}")
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
-                    print('\tFreeCAD lumped port BoundBox: ' + str(bbCoords))
-                    print('\t\tXMin: ' + str(bbCoords.XMin))
-                    print('\t\tYMin: ' + str(bbCoords.YMin))
-                    print('\t\tZMin: ' + str(bbCoords.ZMin))
+                    print(f'\t\t{bbCoords}')
 
                     #
                     #	getting item priority
@@ -443,10 +417,8 @@ class OctaveScriptLinesGenerator:
                         genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                         genScript += 'portDirection = {}*portExcitationAmplitude;\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
-                        print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
-                                                                                _r(bbCoords.ZMin)))
-                        print('\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
-                                                                                _r(bbCoords.ZMax)))
+                        print('\t\tportStart = [ {0:g}, {1:g}, {2:g} ];'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),_r(bbCoords.ZMin)))
+                        print('\t\tportStop  = [ {0:g}, {1:g}, {2:g} ];'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),_r(bbCoords.ZMax)))
 
                         isActiveStr = {False: '', True: ', true'}
 
@@ -1011,10 +983,7 @@ class OctaveScriptLinesGenerator:
 
         for [item, currSetting] in items:
 
-            print("#")
-            print("#PROBE")
-            print("#name: " + currSetting.getName())
-            print("#type: " + currSetting.getType())
+            print(f"#PROBE - {currSetting.getName()} - {currSetting.getType()}")
 
             objs = App.ActiveDocument.Objects
             for k in range(item.childCount()):
@@ -1022,18 +991,14 @@ class OctaveScriptLinesGenerator:
 
                 genScript += "%% PROBE - " + currSetting.getName() + " - " + childName + "\n"
 
-                print("##Children:")
-                print("\t" + childName)
                 freecadObjects = [i for i in objs if (i.Label) == childName]
 
                 # print(freecadObjects)
                 for obj in freecadObjects:
+                    print(f"\t{obj.Label}")
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
-                    print('\tFreeCAD probe BoundBox: ' + str(bbCoords))
-                    print('\t\tXMin: ' + str(bbCoords.XMin))
-                    print('\t\tYMin: ' + str(bbCoords.YMin))
-                    print('\t\tZMin: ' + str(bbCoords.ZMin))
+                    print(f"\t\t{bbCoords}")
 
                     #
                     # PROBE openEMS GENERATION INTO VARIABLE
@@ -1217,20 +1182,18 @@ class OctaveScriptLinesGenerator:
             objs = App.ActiveDocument.Objects
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
-                print("#")
-                print("#LUMPED PART " + currentSetting.getType())
-                print("#name " + currentSetting.getName())
-                print("#")
+                print(f"#LUMPED PART {currentSetting.getType()} - {currentSetting.getName()}")
 
                 freecadObjects = [i for i in objs if (i.Label) == childName]
                 for obj in freecadObjects:
                     # obj = FreeCAD Object class
+                    print(f"\t{obj.Label}")
 
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
 
                     # PLACEMENT BOX
-                    print(obj.Placement)
+                    print(f"\t\t{bbCoords}")
 
                     genScript += 'lumpedPartStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
                                                                                        _r(sf * bbCoords.YMin),
@@ -1643,9 +1606,6 @@ class OctaveScriptLinesGenerator:
         excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
                                                                                  QtCore.Qt.MatchFixedString)
         if len(excitationCategory) >= 0:
-            print("Excitation Settings detected")
-            print("#")
-            print("#EXCITATION")
 
             # FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
             if (excitationCategory[0].childCount() > 0):
@@ -1654,8 +1614,7 @@ class OctaveScriptLinesGenerator:
                 # Currently only 1 excitation is allowed. Multiple excitations could be managed by setting one of them as "selected" or "active", while all others are deactivated.
                 # This would help the user to manage different analysis scenarios / excitation ranges.
 
-                print("#name: " + currSetting.getName())
-                print("#type: " + currSetting.getType())
+                print(f"#EXCITATION - {currSetting.getName()} - {currSetting.getType()}")
 
                 genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                 genScript += "% EXCITATION " + currSetting.getName() + "\n"

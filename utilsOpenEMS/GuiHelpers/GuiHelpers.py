@@ -97,14 +97,9 @@ class GuiHelpers:
         for k in range(itemsCount):
             priorityItem = self.form.meshPriorityTreeView.topLevelItem(k)
             itemNameFields = priorityItem.text(0).split(',')
-            print("Searching......" + itemNameFields[1])
             gridParent = self.form.objectAssignmentRightTreeWidget.findItems(itemNameFields[1].strip(),
                                                                              QtCore.Qt.MatchRecursive)
             if len(gridParent) > 0:
-                print("parent grid found")
-                print(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines)
-                print(type(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines))
-
                 if not _bool(gridParent[0].data(0, QtCore.Qt.UserRole).topPriorityLines):
                     self.form.meshPriorityTreeView.topLevelItem(k).setDisabled(True)
                 else:

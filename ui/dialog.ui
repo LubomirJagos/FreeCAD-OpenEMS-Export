@@ -251,7 +251,7 @@
                 <enum>QAbstractItemView::ContiguousSelection</enum>
                </property>
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
@@ -341,7 +341,7 @@
              <item>
               <widget class="QTreeWidget" name="objectAssignmentPriorityTreeView">
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
@@ -396,7 +396,7 @@
              <item>
               <widget class="QTreeWidget" name="meshPriorityTreeView">
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <attribute name="headerCascadingSectionResizes">
                 <bool>false</bool>
@@ -1612,7 +1612,10 @@ in grid units</string>
                <item>
                 <widget class="QComboBox" name="excitationUnitsNumberInput">
                  <property name="currentText">
-                  <string>Hz</string>
+                  <string>GHz</string>
+                 </property>
+                 <property name="currentIndex">
+                  <number>3</number>
                  </property>
                  <item>
                   <property name="text">

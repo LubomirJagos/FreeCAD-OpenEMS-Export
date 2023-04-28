@@ -412,6 +412,8 @@ class IniFile:
 
         settings.beginGroup("POSTPROCESSING-DefaultName")
         settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
+        settings.setValue("nf2ffInputPort", self.form.portNf2ffInput.currentText())
+        settings.setValue("nf2ffFreqValue", self.form.portNf2ffFreq.value())
         settings.setValue("nf2ffFreqCount", self.form.portNf2ffFreqCount.value())
         settings.setValue("nf2ffThetaStart", self.form.portNf2ffThetaStart.value())
         settings.setValue("nf2ffThetaStop", self.form.portNf2ffThetaStop.value())
@@ -472,7 +474,6 @@ class IniFile:
             itemName = itemNameReg.group(1)
 
             if (re.compile("EXCITATION").search(settingsGroup)):
-                print("Excitation item settings found.")
                 settings.beginGroup(settingsGroup)
                 categorySettings = ExcitationSettingsItem()
                 categorySettings.name = itemName
@@ -482,9 +483,9 @@ class IniFile:
                 categorySettings.custom = json.loads(settings.value('custom'))
                 categorySettings.units = settings.value('units')
                 settings.endGroup()
+                print(f"loading EXCITATION - {categorySettings.name} - {categorySettings.type}")
 
             elif (re.compile("GRID").search(settingsGroup)):
-                print("GRID item settings found.")
                 settings.beginGroup(settingsGroup)
                 categorySettings = GridSettingsItem()
                 categorySettings.name = itemName
@@ -493,8 +494,10 @@ class IniFile:
                 categorySettings.unitsAngle = settings.value('unitsAngle')
                 categorySettings.generateLinesInside = _bool(settings.value('generateLinesInside'))
                 categorySettings.topPriorityLines = _bool(settings.value('topPriorityLines'))
-
                 categorySettings.type = settings.value('type')
+
+                print(f"loading GRID - {categorySettings.name} - {categorySettings.type}")
+
                 if (categorySettings.type == "Fixed Distance"):
                     categorySettings.xenabled = _bool(settings.value('xenabled'))
                     categorySettings.yenabled = _bool(settings.value('yenabled'))
@@ -521,11 +524,12 @@ class IniFile:
                 settings.endGroup()
 
             elif (re.compile("PORT").search(settingsGroup)):
-                print("PORT item settings found.")
                 settings.beginGroup(settingsGroup)
                 categorySettings = PortSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
+                print(f"loading PORT - {categorySettings.name} - {categorySettings.type}")
+
                 try:
                     categorySettings.excitationAmplitude = float(settings.value('excitationAmplitude'))
                     categorySettings.infiniteResistance = _bool(settings.value('infiniteResistance'))
@@ -630,11 +634,11 @@ class IniFile:
                 settings.endGroup()
 
             elif (re.compile("PROBE").search(settingsGroup)):
-                print("PROBE item settings found.")
                 settings.beginGroup(settingsGroup)
                 categorySettings = ProbeSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
+                print(f"loading PROBE - {categorySettings.name} - {categorySettings.type}")
 
                 if (categorySettings.type == "probe"):
                     try:
@@ -665,7 +669,6 @@ class IniFile:
                 settings.endGroup()
 
             elif (re.compile("MATERIAL").search(settingsGroup)):
-                print("Material item settings found.")
                 settings.beginGroup(settingsGroup)
                 categorySettings = MaterialSettingsItem()
                 categorySettings.name = itemName
@@ -675,6 +678,7 @@ class IniFile:
                 categorySettings.constants['mue'] = settings.value('material_mue')
                 categorySettings.constants['kappa'] = settings.value('material_kappa')
                 categorySettings.constants['sigma'] = settings.value('material_sigma')
+                print(f"loading MATERIAL - {categorySettings.name} - {categorySettings.type} - {categorySettings.constants}")
 
                 try:
                     categorySettings.constants['conductingSheetThicknessValue'] = settings.value('conductingSheetThicknessValue')
@@ -687,15 +691,13 @@ class IniFile:
                 settings.endGroup()
 
             elif (re.compile("SIMULATION").search(settingsGroup)):
-                print("Simulation params item settings found.")
                 settings.beginGroup(settingsGroup)
                 simulationSettings = SimulationSettingsItem()
                 simulationSettings.name = itemName
                 simulationSettings.type = settings.value('type')
                 simulationSettings.params = json.loads(settings.value('params'))
-                print('SIMULATION PARAMS:')
-                print(simulationSettings.params)
                 settings.endGroup()
+                print(f'loading SIMULATION PARAMS: {(simulationSettings.params)}')
 
                 self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
                 self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
@@ -741,22 +743,17 @@ class IniFile:
                 continue  # there is no tree widget to add item to
 
             elif (re.compile("_OBJECT").search(settingsGroup)):
-                print("FreeCadObject item settings found.")
                 settings.beginGroup(settingsGroup)
                 objParent = settings.value('parent')
                 objCategory = settings.value('category')
                 objFreeCadId = settings.value('freeCadId')
-                print("\t" + objParent)
-                print("\t" + objCategory)
                 settings.endGroup()
+                print(f"loading FreeCadObject -> '{objCategory}' -> '{objParent}' -> '{settingsGroup[8:]}' id: '{objFreeCadId}'")
 
                 # adding excitation also into OBJECT ASSIGNMENT WINDOW
                 targetGroup = self.form.objectAssignmentRightTreeWidget.findItems(objCategory, QtCore.Qt.MatchExactly)
-                print("\t" + str(targetGroup))
                 for k in range(len(targetGroup)):
-                    print("\t" + targetGroup[k].text(0))
                     for m in range(targetGroup[k].childCount()):
-                        print("\t" + targetGroup[k].child(m).text(0))
                         if (targetGroup[k].child(m).text(0) == objParent):
                             settingsItem = FreeCADSettingsItem(itemName)
 
@@ -938,11 +935,7 @@ class IniFile:
                 #	In case of error just continue and do nothing to correct values
                 #
                 try:
-                    index = self.form.portNf2ffObjectList.findText(settings.value("nf2ffObject"),
-                                                                   QtCore.Qt.MatchFixedString)
-                    if index >= 0:
-                        self.form.portNf2ffObjectList.setCurrentIndex(index)
-
+                    self.guiHelpers.setComboboxItem(self.form.portNf2ffObjectList, settings.value("nf2ffObject"))
                     self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
                     self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
                     self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
@@ -950,6 +943,9 @@ class IniFile:
                     self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
                     self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
                     self.form.portNf2ffFreqCount.setValue(settings.value("nf2ffFreqCount"))
+
+                    self.guiHelpers.setComboboxItem(self.form.portNf2ffInput, settings.value("nf2ffInputPort"))
+                    self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreqValue"))
                 except:
                     pass
 
