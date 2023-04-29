@@ -251,7 +251,7 @@
                 <enum>QAbstractItemView::ContiguousSelection</enum>
                </property>
                <attribute name="headerVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
@@ -702,16 +702,16 @@
                    </size>
                   </property>
                   <property name="currentText">
-                   <string>rad</string>
+                   <string>deg</string>
                   </property>
                   <item>
                    <property name="text">
-                    <string>rad</string>
+                    <string>deg</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>deg</string>
+                    <string>rad</string>
                    </property>
                   </item>
                  </widget>
@@ -774,6 +774,9 @@
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
@@ -803,6 +806,9 @@
                  <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
                   <property name="enabled">
                    <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -871,6 +877,9 @@
                  <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
                   <property name="enabled">
                    <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -978,7 +987,14 @@ in grid units</string>
                 <bool>false</bool>
                </property>
                <property name="plainText">
-                <string>struct('x',[mesh.x ..], 'y', [mesh.y ..], 'z', [mesh.z ..])</string>
+                <string>#available caculated variables, these are calculated for boundaries of each assigned object:
+#    xmin,xmax
+#    ymin,ymax
+#    zmin,zmax
+#
+mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
+mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
+mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];</string>
                </property>
               </widget>
              </item>
@@ -1057,6 +1073,30 @@ in grid units</string>
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_95">
+               <property name="text">
+                <string>#available caculated variables,
+#these are calculated for boundaries
+#of each assigned object:
+#    xmin,xmax
+#    ymin,ymax
+#    zmin,zmax
+#
+mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
+mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
+mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
+
+In case of cylindrical coords still use:
+    mesh.x is treated like r
+    mesh.y is treated like theta in radians
+    mesh.z is still z
+
+#DON'T FORGET TO CONCATENATE PREVIOUS
+VALUES OF MESH.X,Y,Z WHEN USED</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1603,7 +1643,10 @@ in grid units</string>
                <item>
                 <widget class="QComboBox" name="excitationUnitsNumberInput">
                  <property name="currentText">
-                  <string>Hz</string>
+                  <string>GHz</string>
+                 </property>
+                 <property name="currentIndex">
+                  <number>3</number>
                  </property>
                  <item>
                   <property name="text">
@@ -1642,46 +1685,10 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="3">
-                 <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="0">
+                <item row="7" column="0">
                  <widget class="QRadioButton" name="customExcitationRadioButton">
                   <property name="text">
                    <string>Custom</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="2">
-                 <spacer name="horizontalSpacer_10">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Preferred</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item row="5" column="3">
-                 <widget class="QDoubleSpinBox" name="customExcitationF0NumberInput">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1692,17 +1699,10 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="1">
-                 <widget class="QLabel" name="label_12">
-                  <property name="text">
-                   <string>f0 - center frequency</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>User Defined Function e(t)</string>
+                <item row="3" column="3">
+                 <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1716,7 +1716,27 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="3">
+                <item row="2" column="1">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>f0 - center frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="3">
                  <widget class="QLabel" name="label_46">
                   <property name="text">
                    <string>f0 - Nyquist frequency</string>
@@ -1742,8 +1762,18 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="1">
-                 <widget class="QDoubleSpinBox" name="gaussianExcitationF0NumberInput">
+                <item row="8" column="0">
+                 <widget class="QRadioButton" name="diracExcitationRadioButton">
+                  <property name="text">
+                   <string>Dirac impulse</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="3">
+                 <widget class="QDoubleSpinBox" name="customExcitationF0NumberInput">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -1762,8 +1792,41 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
-                <item row="5" column="1">
+                <item row="7" column="1">
                  <widget class="QLineEdit" name="customExcitationTextInput"/>
+                </item>
+                <item row="6" column="1">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>User Defined Function e(t)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <spacer name="horizontalSpacer_10">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Preferred</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="9" column="0">
+                 <widget class="QRadioButton" name="stepExcitationRadioButton">
+                  <property name="text">
+                   <string>Step function</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </widget>
@@ -1909,40 +1972,13 @@ Custom option using fparser lib, possible using user-defined equitaion:
                 <string>Port Type</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_11">
-                <item row="0" column="2">
-                 <widget class="QRadioButton" name="etDumpPortRadioButton">
-                  <property name="text">
-                   <string>Et Dump</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="microstripPortRadioButton">
-                  <property name="text">
-                   <string>Microstrip</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="2">
-                 <widget class="QRadioButton" name="uiprobePortRadioButton">
-                  <property name="text">
-                   <string>UI Probe</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="2">
-                 <widget class="QRadioButton" name="htDumpPortRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>Ht Dump</string>
+                   <string>Circular Waveguide</string>
                   </property>
                  </widget>
                 </item>
@@ -1956,33 +1992,20 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QRadioButton" name="coaxialPortRadioButton">
+                <item row="2" column="1">
+                 <widget class="QRadioButton" name="striplinePortRadioButton">
                   <property name="enabled">
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>Coaxial</string>
+                   <string>Stripline</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="circularWaveguidePortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="microstripPortRadioButton">
                   <property name="text">
-                   <string>Circular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QRadioButton" name="curvePortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Curve</string>
+                   <string>Microstrip</string>
                   </property>
                  </widget>
                 </item>
@@ -1996,16 +2019,23 @@ Custom option using fparser lib, possible using user-defined equitaion:
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="2">
-                 <widget class="QRadioButton" name="nf2ffBoxPortRadioButton">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                <item row="0" column="1">
+                 <widget class="QRadioButton" name="coaxialPortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>NF2FF Box</string>
+                   <string>Coaxial</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QRadioButton" name="curvePortRadioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Curve</string>
                   </property>
                  </widget>
                 </item>
@@ -2013,36 +2043,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                  <widget class="QRadioButton" name="rectangularWaveguidePortRadioButton">
                   <property name="text">
                    <string>Rectangular Waveguide</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QRadioButton" name="striplinePortRadioButton">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Stripline</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3">
-                 <widget class="QRadioButton" name="probePortRadioButton">
-                  <property name="text">
-                   <string>Probe</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="3">
-                 <widget class="QRadioButton" name="dumpboxPortRadioButton">
-                  <property name="text">
-                   <string>DumpBox</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -2068,20 +2068,6 @@ Custom option using fparser lib, possible using user-defined equitaion:
                     <string>Lumped - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_21">
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_29">
-                      <property name="text">
-                       <string>Port Amplitude/Excitation Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <widget class="QDoubleSpinBox" name="lumpedPortResistanceValue">
-                      <property name="maximum">
-                       <double>10000000000.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="1" column="2">
                      <widget class="QComboBox" name="lumpedPortResistanceUnits">
                       <property name="currentText">
@@ -2119,10 +2105,56 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
+                    <item row="5" column="1">
+                     <widget class="QDoubleSpinBox" name="lumpedPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="2">
+                     <widget class="QLabel" name="label_105">
+                      <property name="text">
+                       <string>ATTENTION! This is not voltage amplitude but
+electric field amplitude in V/m,
+voltage on borders of ports depends
+on its size, ie. if in axis length is 1mm then
+1V = 1000(V/m)*1mm
+0.1V = 100(V/m)*1mm
+...</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_29">
+                      <property name="text">
+                       <string>Port Amplitude/Excitation Direction</string>
+                      </property>
+                     </widget>
+                    </item>
                     <item row="0" column="0">
                      <widget class="QCheckBox" name="lumpedPortActive">
                       <property name="text">
                        <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QDoubleSpinBox" name="lumpedPortResistanceValue">
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -2133,7 +2165,7 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="1">
+                    <item row="3" column="1">
                      <widget class="QComboBox" name="lumpedPortDirection">
                       <property name="currentText">
                        <string>z</string>
@@ -2155,42 +2187,17 @@ Custom option using fparser lib, possible using user-defined equitaion:
                       </item>
                      </widget>
                     </item>
-                    <item row="3" column="0">
+                    <item row="5" column="0">
                      <widget class="QLabel" name="label_102">
                       <property name="text">
                        <string>Excitation Field Amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QDoubleSpinBox" name="lumpedPortExcitationAmplitude">
-                      <property name="decimals">
-                       <number>8</number>
-                      </property>
-                      <property name="minimum">
-                       <double>-10000000000.000000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>10000000000.000000000000000</double>
-                      </property>
-                      <property name="singleStep">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="value">
-                       <double>1.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="2">
-                     <widget class="QLabel" name="label_105">
+                    <item row="0" column="1">
+                     <widget class="QCheckBox" name="lumpedPortInfinitResistance">
                       <property name="text">
-                       <string>ATTENTION! This is not voltage amplitude but
-electric field amplitude in V/m,
-voltage on borders of ports depends
-on its size, ie. if in axis length is 1mm then
-1V = 1000(V/m)*1mm
-0.1V = 100(V/m)*1mm
-...</string>
+                       <string>infinite resistance</string>
                       </property>
                      </widget>
                     </item>
@@ -2264,6 +2271,9 @@ pi/2 = vertical polarization</string>
                       </property>
                       <property name="maximum">
                        <double>1000000.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -2360,7 +2370,7 @@ pi/2 = vertical polarization</string>
                     <item row="6" column="0">
                      <widget class="QLabel" name="label_4">
                       <property name="text">
-                       <string>Excitation amplitude (V)</string>
+                       <string>Excitation amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
@@ -2528,12 +2538,15 @@ no TM modes.</string>
                       <property name="singleStep">
                        <double>0.100000000000000</double>
                       </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
                      </widget>
                     </item>
                     <item row="4" column="0">
                      <widget class="QLabel" name="label_60">
                       <property name="text">
-                       <string>Excitation amplitude (V)</string>
+                       <string>Excitation amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
@@ -2616,6 +2629,336 @@ no TM modes.</string>
                     <string>Microstrip - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_4">
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_81">
+                      <property name="text">
+                       <string>Port layer</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="6" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_40">
+                      <item>
+                       <widget class="QComboBox" name="microstripPortPropagationComboBox">
+                        <item>
+                         <property name="text">
+                          <string>x+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>x-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>y-</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z+</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>z-</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_30">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="4" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_36">
+                      <item>
+                       <widget class="QComboBox" name="microstripPortDirection">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="currentText">
+                         <string>XY plane, top layer</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>XY plane, top layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XY plane, bottom layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XZ plane, front layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XZ plane, back layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>YZ plane, right layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>YZ plane, left layer</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_18">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="8" column="0">
+                     <widget class="QLabel" name="label_55">
+                      <property name="text">
+                       <string>Measure probe plane shift</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_54">
+                      <property name="text">
+                       <string>Feedpoint shift</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QCheckBox" name="microstripPortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="7" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_2">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="microstripPortFeedpointShiftValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="microstripPortFeedpointShiftUnits">
+                        <property name="currentIndex">
+                         <number>3</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_19">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_67">
+                      <property name="text">
+                       <string>Port Resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="8" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_27">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="microstripPortMeasureShiftValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="microstripPortMeasureShiftUnits">
+                        <property name="currentIndex">
+                         <number>3</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_20">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QCheckBox" name="microstripPortInfinitResistance">
+                      <property name="text">
+                       <string>infinite resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_52">
+                      <property name="text">
+                       <string>Material</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_48">
+                      <item>
+                       <widget class="QComboBox" name="microstripPortMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_40">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
                     <item row="2" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_35">
                       <property name="leftMargin">
@@ -2689,231 +3032,6 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="8" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_27">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="microstripPortMeasureShiftValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximum">
-                         <double>1000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="microstripPortMeasureShiftUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_20">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="8" column="0">
-                     <widget class="QLabel" name="label_55">
-                      <property name="text">
-                       <string>Measure probe plane shift</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="7" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_2">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="microstripPortFeedpointShiftValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximum">
-                         <double>1000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="microstripPortFeedpointShiftUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_19">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_52">
-                      <property name="text">
-                       <string>Material</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="4" column="0">
-                     <widget class="QLabel" name="label_81">
-                      <property name="text">
-                       <string>Port layer</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="4" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_36">
-                      <item>
-                       <widget class="QComboBox" name="microstripPortDirection">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="currentText">
-                         <string>XY plane, top layer</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>XY plane, top layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XY plane, bottom layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane, front layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane, back layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane, right layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane, left layer</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_18">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="7" column="0">
-                     <widget class="QLabel" name="label_54">
-                      <property name="text">
-                       <string>Feedpoint shift</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="6" column="0">
                      <widget class="QLabel" name="label_53">
                       <property name="text">
@@ -2921,103 +3039,31 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_67">
-                      <property name="text">
-                       <string>Port Resistance</string>
+                    <item row="9" column="1">
+                     <widget class="QDoubleSpinBox" name="microstripPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="0">
-                     <widget class="QCheckBox" name="microstripPortActive">
+                    <item row="9" column="0">
+                     <widget class="QLabel" name="label_111">
                       <property name="text">
-                       <string>port is active</string>
+                       <string>Excitation Field Amplitude (V/m)</string>
                       </property>
                      </widget>
-                    </item>
-                    <item row="6" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_40">
-                      <item>
-                       <widget class="QComboBox" name="microstripPortPropagationComboBox">
-                        <item>
-                         <property name="text">
-                          <string>x+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>x-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>y-</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>z+</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>z-</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_30">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="3" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_48">
-                      <item>
-                       <widget class="QComboBox" name="microstripPortMaterialComboBox">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_40">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
                     </item>
                    </layout>
                   </widget>
@@ -3051,31 +3097,10 @@ no TM modes.</string>
                     <string>Coaxial - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_18">
-                    <item row="6" column="0">
-                     <widget class="QLabel" name="label_73">
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_75">
                       <property name="text">
-                       <string>Shell thickness</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_71">
-                      <property name="text">
-                       <string>Insulator material</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="coaxialPortActive">
-                      <property name="text">
-                       <string>port is active</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="5" column="0">
-                     <widget class="QLabel" name="label_74">
-                      <property name="text">
-                       <string>Inner radius</string>
+                       <string>Feedpoint shift</string>
                       </property>
                      </widget>
                     </item>
@@ -3086,114 +3111,24 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_86">
+                    <item row="6" column="0">
+                     <widget class="QLabel" name="label_73">
                       <property name="text">
-                       <string>Port Resistance</string>
+                       <string>Shell thickness</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="7" column="2">
-                     <layout class="QHBoxLayout" name="horizontalLayout_32">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coaxialPortFeedpointShiftValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximum">
-                         <double>1000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortFeedpointShiftUnits">
-                        <property name="currentIndex">
-                         <number>2</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_26">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="8" column="0">
-                     <widget class="QLabel" name="label_76">
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="coaxialPortActive">
                       <property name="text">
-                       <string>Measure probe plane shift</string>
+                       <string>port is active</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="9" column="2">
-                     <widget class="QDoubleSpinBox" name="portCoaxialExcitationAmplitude">
-                      <property name="decimals">
-                       <number>8</number>
-                      </property>
-                      <property name="minimum">
-                       <double>-1000000.000000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>1000000.000000000000000</double>
-                      </property>
-                      <property name="singleStep">
-                       <double>0.100000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="9" column="0">
-                     <widget class="QLabel" name="label_80">
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_71">
                       <property name="text">
-                       <string>Excitation amplitude (V)</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="7" column="0">
-                     <widget class="QLabel" name="label_75">
-                      <property name="text">
-                       <string>Feedpoint shift</string>
+                       <string>Insulator material</string>
                       </property>
                      </widget>
                     </item>
@@ -3283,6 +3218,166 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
+                    <item row="2" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_50">
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortConductorMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_42">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="7" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_32">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coaxialPortFeedpointShiftValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortFeedpointShiftUnits">
+                        <property name="currentIndex">
+                         <number>2</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_26">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="9" column="2">
+                     <widget class="QDoubleSpinBox" name="coaxialPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-1000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>1000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="5" column="0">
+                     <widget class="QLabel" name="label_74">
+                      <property name="text">
+                       <string>Inner radius</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_49">
+                      <item>
+                       <widget class="QComboBox" name="coaxialPortMaterialComboBox">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_41">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="8" column="0">
+                     <widget class="QLabel" name="label_76">
+                      <property name="text">
+                       <string>Measure probe plane shift</string>
+                      </property>
+                     </widget>
+                    </item>
                     <item row="4" column="2">
                      <layout class="QHBoxLayout" name="horizontalLayout_42">
                       <item>
@@ -3336,13 +3431,6 @@ no TM modes.</string>
                        </spacer>
                       </item>
                      </layout>
-                    </item>
-                    <item row="4" column="0">
-                     <widget class="QLabel" name="label_87">
-                      <property name="text">
-                       <string>Port direction</string>
-                      </property>
-                     </widget>
                     </item>
                     <item row="8" column="2">
                      <layout class="QHBoxLayout" name="horizontalLayout_33">
@@ -3398,73 +3486,6 @@ no TM modes.</string>
                       </item>
                       <item>
                        <spacer name="horizontalSpacer_27">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="5" column="2">
-                     <layout class="QHBoxLayout" name="horizontalLayout_31">
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coaxialPortInnerRadiusValue">
-                        <property name="minimumSize">
-                         <size>
-                          <width>100</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximum">
-                         <double>1000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortInnerRadiusUnits">
-                        <property name="currentIndex">
-                         <number>3</number>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>m</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>cm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>um</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>nm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>pm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_25">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
@@ -3545,102 +3566,24 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="3" column="2">
-                     <layout class="QHBoxLayout" name="horizontalLayout_49">
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortMaterialComboBox">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_41">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_87">
+                      <property name="text">
+                       <string>Port direction</string>
+                      </property>
+                     </widget>
                     </item>
-                    <item row="2" column="2">
-                     <layout class="QHBoxLayout" name="horizontalLayout_50">
-                      <item>
-                       <widget class="QComboBox" name="coaxialPortConductorMaterialComboBox">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_42">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_86">
+                      <property name="text">
+                       <string>Port Resistance</string>
+                      </property>
+                     </widget>
                     </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_17">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QWidget" name="Coplanar">
-                <attribute name="title">
-                 <string>Coplanar</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_30">
-                 <item>
-                  <widget class="QGroupBox" name="coplanarPortSettingsGroup">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="title">
-                    <string>Coplanar - specific Settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_19">
-                    <item row="6" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_39">
+                    <item row="5" column="2">
+                     <layout class="QHBoxLayout" name="horizontalLayout_31">
                       <item>
-                       <widget class="QDoubleSpinBox" name="coplanarPortFeedpointShiftValue">
+                       <widget class="QDoubleSpinBox" name="coaxialPortInnerRadiusValue">
                         <property name="minimumSize">
                          <size>
                           <width>100</width>
@@ -3653,7 +3596,7 @@ no TM modes.</string>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QComboBox" name="coplanarPortFeedpointShiftUnits">
+                       <widget class="QComboBox" name="coaxialPortInnerRadiusUnits">
                         <property name="currentIndex">
                          <number>3</number>
                         </property>
@@ -3690,7 +3633,7 @@ no TM modes.</string>
                        </widget>
                       </item>
                       <item>
-                       <spacer name="horizontalSpacer_33">
+                       <spacer name="horizontalSpacer_25">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
@@ -3704,184 +3647,58 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_88">
+                    <item row="9" column="0">
+                     <widget class="QLabel" name="label_80">
                       <property name="text">
-                       <string>Port Resistance</string>
+                       <string>Excitation amplitude (V/m)</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="5" column="0">
-                     <widget class="QLabel" name="label_79">
+                    <item row="0" column="2">
+                     <widget class="QCheckBox" name="coaxialPortInfinitResistance">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
                       <property name="text">
-                       <string>Gap</string>
+                       <string>infinite resistance</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
-                    <item row="4" column="0">
-                     <widget class="QLabel" name="label_78">
-                      <property name="text">
-                       <string>Propagation direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_89">
-                      <property name="text">
-                       <string>Port layer</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_43">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QDoubleSpinBox" name="coplanarPortResistanceValue">
-                        <property name="maximum">
-                         <double>10000000000.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QComboBox" name="coplanarPortResistanceUnits">
-                        <property name="currentText">
-                         <string>Ohm</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>Ohm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>uOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>mOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>kOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>MOhm</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>GOhm</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_35">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="6" column="0">
-                     <widget class="QLabel" name="label_82">
-                      <property name="text">
-                       <string>Feedpoint shift</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_44">
-                      <item>
-                       <widget class="QComboBox" name="coplanarPortDirection">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="currentText">
-                         <string>XY plane, top layer</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>XY plane, top layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XY plane, bottom layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane, front layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane, back layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane, right layer</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane, left layer</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_36">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </item>
-                    <item row="7" column="0">
-                     <widget class="QLabel" name="label_83">
-                      <property name="text">
-                       <string>Meas plane shift</string>
-                      </property>
-                     </widget>
-                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_17">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="Coplanar">
+                <attribute name="title">
+                 <string>Coplanar</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_30">
+                 <item>
+                  <widget class="QGroupBox" name="coplanarPortSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="title">
+                    <string>Coplanar - specific Settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_19">
                     <item row="2" column="0">
                      <widget class="QLabel" name="label_77">
                       <property name="text">
@@ -3943,6 +3760,87 @@ no TM modes.</string>
                       </item>
                       <item>
                        <spacer name="horizontalSpacer_28">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="5" column="0">
+                     <widget class="QLabel" name="label_79">
+                      <property name="text">
+                       <string>Gap</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="coplanarPortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="6" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_39">
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coplanarPortFeedpointShiftValue">
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximum">
+                         <double>1000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coplanarPortFeedpointShiftUnits">
+                        <property name="currentIndex">
+                         <number>3</number>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>m</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>cm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>um</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_33">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
@@ -4023,10 +3921,10 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="coplanarPortActive">
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_83">
                       <property name="text">
-                       <string>port is active</string>
+                       <string>Meas plane shift</string>
                       </property>
                      </widget>
                     </item>
@@ -4044,6 +3942,90 @@ no TM modes.</string>
                       </item>
                       <item>
                        <spacer name="horizontalSpacer_43">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_89">
+                      <property name="text">
+                       <string>Port layer</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="6" column="0">
+                     <widget class="QLabel" name="label_82">
+                      <property name="text">
+                       <string>Feedpoint shift</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_78">
+                      <property name="text">
+                       <string>Propagation direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_44">
+                      <item>
+                       <widget class="QComboBox" name="coplanarPortDirection">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="currentText">
+                         <string>XY plane, top layer</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>XY plane, top layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XY plane, bottom layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XZ plane, front layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XZ plane, back layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>YZ plane, right layer</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>YZ plane, left layer</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_36">
                         <property name="orientation">
                          <enum>Qt::Horizontal</enum>
                         </property>
@@ -4117,6 +4099,119 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
+                    <item row="1" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_43">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QDoubleSpinBox" name="coplanarPortResistanceValue">
+                        <property name="maximum">
+                         <double>10000000000.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QComboBox" name="coplanarPortResistanceUnits">
+                        <property name="currentText">
+                         <string>Ohm</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>Ohm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>uOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>mOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>kOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>MOhm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>GOhm</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_35">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_88">
+                      <property name="text">
+                       <string>Port Resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="8" column="0">
+                     <widget class="QLabel" name="label_112">
+                      <property name="text">
+                       <string>Excitation Field Amplitude (V/m)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QCheckBox" name="coplanarPortInfinitResistance">
+                      <property name="text">
+                       <string>infinite resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="8" column="1">
+                     <widget class="QDoubleSpinBox" name="coplanarPortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -4149,6 +4244,13 @@ no TM modes.</string>
                     <string>Stripline - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_17">
+                    <item row="5" column="0" rowspan="2">
+                     <widget class="QLabel" name="label_70">
+                      <property name="text">
+                       <string>Measure probe plane shift</string>
+                      </property>
+                     </widget>
+                    </item>
                     <item row="1" column="0">
                      <widget class="QLabel" name="label_90">
                       <property name="text">
@@ -4223,13 +4325,6 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="5" column="0" rowspan="2">
-                     <widget class="QLabel" name="label_70">
-                      <property name="text">
-                       <string>Measure probe plane shift</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="1" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_45">
                       <property name="leftMargin">
@@ -4303,13 +4398,6 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="4" column="0">
-                     <widget class="QLabel" name="label_69">
-                      <property name="text">
-                       <string>Feedpoint shift</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="3" column="0">
                      <widget class="QLabel" name="label_68">
                       <property name="text">
@@ -4324,53 +4412,12 @@ no TM modes.</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="1">
-                     <layout class="QHBoxLayout" name="horizontalLayout_46">
-                      <item>
-                       <widget class="QComboBox" name="striplinePortDirection">
-                        <property name="minimumSize">
-                         <size>
-                          <width>200</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="currentText">
-                         <string>XY plane</string>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>XY plane</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>XZ plane</string>
-                         </property>
-                        </item>
-                        <item>
-                         <property name="text">
-                          <string>YZ plane</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="horizontalSpacer_38">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeType">
-                         <enum>QSizePolicy::Expanding</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="striplinePortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
                     </item>
                     <item row="5" column="1">
                      <layout class="QHBoxLayout" name="horizontalLayout_29">
@@ -4439,10 +4486,58 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="striplinePortActive">
+                    <item row="2" column="1">
+                     <layout class="QHBoxLayout" name="horizontalLayout_46">
+                      <item>
+                       <widget class="QComboBox" name="striplinePortDirection">
+                        <property name="minimumSize">
+                         <size>
+                          <width>200</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="currentText">
+                         <string>XY plane</string>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>XY plane</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>XZ plane</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>YZ plane</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_38">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                         <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_69">
                       <property name="text">
-                       <string>port is active</string>
+                       <string>Feedpoint shift</string>
                       </property>
                      </widget>
                     </item>
@@ -4506,6 +4601,39 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
+                    <item row="7" column="0">
+                     <widget class="QLabel" name="label_113">
+                      <property name="text">
+                       <string>Excitation Field Amplitude (V/m)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QCheckBox" name="striplinePortInfinitResistance">
+                      <property name="text">
+                       <string>infinite resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="7" column="1">
+                     <widget class="QDoubleSpinBox" name="striplinePortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -4538,20 +4666,6 @@ no TM modes.</string>
                     <string>Curve - specific Settings</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_20">
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="curvePortActive">
-                      <property name="text">
-                       <string>port is active</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_92">
-                      <property name="text">
-                       <string>Port Resistance</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="2" column="2">
                      <layout class="QHBoxLayout" name="horizontalLayout_47">
                       <property name="leftMargin">
@@ -4625,10 +4739,50 @@ no TM modes.</string>
                       </item>
                      </layout>
                     </item>
-                    <item row="0" column="2">
-                     <widget class="QCheckBox" name="curvePortDirection">
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_103">
                       <property name="text">
-                       <string>Reverse excitation</string>
+                       <string>Excitation Field Amplitude (V/m)</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_92">
+                      <property name="text">
+                       <string>Port Resistance</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="curvePortActive">
+                      <property name="text">
+                       <string>port is active</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="2">
+                     <widget class="QDoubleSpinBox" name="curvePortExcitationAmplitude">
+                      <property name="decimals">
+                       <number>8</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-10000000000.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="2">
+                     <widget class="QCheckBox" name="curvePortInfinitResistance">
+                      <property name="text">
+                       <string>infinite resistance</string>
                       </property>
                      </widget>
                     </item>
@@ -4637,565 +4791,6 @@ no TM modes.</string>
                  </item>
                  <item>
                   <spacer name="verticalSpacer_20">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QWidget" name="UIProbe">
-                <attribute name="title">
-                 <string>UIProbe</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_33">
-                 <item>
-                  <widget class="QGroupBox" name="uiprobePortSettingsGroup">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="title">
-                    <string>UI Probe - specific Settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_23">
-                    <item row="1" column="1">
-                     <widget class="QComboBox" name="uiprobePortDirection">
-                      <property name="currentText">
-                       <string>x</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>x</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_97">
-                      <property name="text">
-                       <string>Probe Direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="2">
-                     <spacer name="horizontalSpacer_45">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QCheckBox" name="uiprobePortActive">
-                      <property name="text">
-                       <string>port is active</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_22">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QWidget" name="Probe">
-                <attribute name="title">
-                 <string>Probe</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_34">
-                 <item>
-                  <widget class="QGroupBox" name="probePortSettingsGroup">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="title">
-                    <string>Probe - specific settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_8">
-                    <item row="4" column="0">
-                     <widget class="QLabel" name="label_98">
-                      <property name="text">
-                       <string>Frequency</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <widget class="QComboBox" name="probePortDirection">
-                      <property name="currentText">
-                       <string>x</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>x</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>y</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>z</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_95">
-                      <property name="text">
-                       <string>Probe type</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_96">
-                      <property name="text">
-                       <string>Domain</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="1">
-                     <widget class="QComboBox" name="probePortType">
-                      <property name="currentText">
-                       <string>current</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>current</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>voltage</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="probePortDomain">
-                      <property name="currentText">
-                       <string>time</string>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>time</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>frequency</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_94">
-                      <property name="text">
-                       <string>Probe direction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="4" column="1">
-                     <layout class="QVBoxLayout" name="verticalLayout_37">
-                      <property name="leftMargin">
-                       <number>5</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>5</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>5</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>5</number>
-                      </property>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_55">
-                        <item>
-                         <widget class="QDoubleSpinBox" name="probePortFrequencyInput">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="decimals">
-                           <number>5</number>
-                          </property>
-                          <property name="maximum">
-                           <double>10000000.000000000000000</double>
-                          </property>
-                          <property name="singleStep">
-                           <double>0.100000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QComboBox" name="probePortFrequencyUnits">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="currentIndex">
-                           <number>2</number>
-                          </property>
-                          <item>
-                           <property name="text">
-                            <string>Hz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>kHz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>MHz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>GHz</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item>
-                         <spacer name="horizontalSpacer_46">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeType">
-                           <enum>QSizePolicy::Preferred</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>40</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                        <item>
-                         <widget class="QPushButton" name="probePortFrequencyAddButton">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="text">
-                           <string>+</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QPushButton" name="probePortFrequencyRemoveButton">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="text">
-                           <string>-</string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <widget class="QListWidget" name="probePortFrequencyList">
-                        <property name="enabled">
-                         <bool>false</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_23">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QWidget" name="DumpBox">
-                <attribute name="title">
-                 <string>DumpBox</string>
-                </attribute>
-                <layout class="QVBoxLayout" name="verticalLayout_35">
-                 <item>
-                  <widget class="QGroupBox" name="dumpboxPortSettingsGroup">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="title">
-                    <string>DumpBox - specific settings</string>
-                   </property>
-                   <layout class="QGridLayout" name="gridLayout_22">
-                    <item row="1" column="1">
-                     <widget class="QComboBox" name="dumpboxPortDomain">
-                      <item>
-                       <property name="text">
-                        <string>time</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>frequency</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="label_99">
-                      <property name="text">
-                       <string>Dump type</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="1">
-                     <widget class="QComboBox" name="dumpboxPortType">
-                      <item>
-                       <property name="text">
-                        <string>E field</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>H field</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>J field</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>D field</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>B field</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label_101">
-                      <property name="text">
-                       <string>Domain</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="0">
-                     <widget class="QLabel" name="label_100">
-                      <property name="text">
-                       <string>File type</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="1">
-                     <widget class="QComboBox" name="dumpboxPortFileType">
-                      <item>
-                       <property name="text">
-                        <string>vtk</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>hdf5</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item row="3" column="0">
-                     <widget class="QLabel" name="label_103">
-                      <property name="text">
-                       <string>Frequency list</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="3" column="1">
-                     <layout class="QVBoxLayout" name="verticalLayout_36">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <layout class="QHBoxLayout" name="horizontalLayout_56">
-                        <property name="leftMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="topMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="rightMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="bottomMargin">
-                         <number>0</number>
-                        </property>
-                        <item>
-                         <widget class="QDoubleSpinBox" name="dumpboxPortFrequencyInput">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="decimals">
-                           <number>3</number>
-                          </property>
-                          <property name="minimum">
-                           <double>0.000000000000000</double>
-                          </property>
-                          <property name="maximum">
-                           <double>100000000000.000000000000000</double>
-                          </property>
-                          <property name="value">
-                           <double>0.000000000000000</double>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QComboBox" name="dumpboxPortFrequencyUnits">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="currentIndex">
-                           <number>2</number>
-                          </property>
-                          <item>
-                           <property name="text">
-                            <string>Hz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>kHz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>MHz</string>
-                           </property>
-                          </item>
-                          <item>
-                           <property name="text">
-                            <string>GHz</string>
-                           </property>
-                          </item>
-                         </widget>
-                        </item>
-                        <item>
-                         <spacer name="horizontalSpacer_47">
-                          <property name="orientation">
-                           <enum>Qt::Horizontal</enum>
-                          </property>
-                          <property name="sizeType">
-                           <enum>QSizePolicy::Preferred</enum>
-                          </property>
-                          <property name="sizeHint" stdset="0">
-                           <size>
-                            <width>20</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                         </spacer>
-                        </item>
-                        <item>
-                         <widget class="QPushButton" name="dumpboxPortFrequencyAddButton">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="text">
-                           <string>+</string>
-                          </property>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QPushButton" name="dumpboxPortFrequencyRemoveButton">
-                          <property name="enabled">
-                           <bool>false</bool>
-                          </property>
-                          <property name="text">
-                           <string>-</string>
-                          </property>
-                         </widget>
-                        </item>
-                       </layout>
-                      </item>
-                      <item>
-                       <widget class="QListWidget" name="dumpboxPortFrequencyList">
-                        <property name="enabled">
-                         <bool>false</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_24">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
                    </property>
@@ -5591,7 +5186,720 @@ no TM modes.</string>
               </widget>
              </item>
              <item>
+              <widget class="QLabel" name="label_94">
+               <property name="text">
+                <string>!!!ATTENTION!!!
+Now this generates just lumped part as bounding box of shape, so it's always just Box.
+OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="verticalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="probeSettingsTab">
+          <attribute name="title">
+           <string>Probe Settings</string>
+          </attribute>
+          <layout class="QHBoxLayout" name="horizontalLayout_59">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_39">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QTreeWidget" name="probeSettingsTreeView">
+               <property name="columnCount">
+                <number>1</number>
+               </property>
+               <column>
+                <property name="text">
+                 <string>Probe Settings List</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_60">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="probeSettingsAddButton">
+                 <property name="text">
+                  <string>+</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="probeSettingsRemoveButton">
+                 <property name="text">
+                  <string>-</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_50">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="probeSettingsUpdateButton">
+                 <property name="text">
+                  <string>Update</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_38">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_110">
+               <property name="text">
+                <string>Probe Settings Name</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="probeSettingsNameInput"/>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_7">
+               <property name="title">
+                <string>Probe Type</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_25">
+                <item row="3" column="1">
+                 <widget class="QRadioButton" name="dumpboxProbeRadioButton">
+                  <property name="text">
+                   <string>DumpBox</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <spacer name="horizontalSpacer_49">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="etDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Et Dump</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QRadioButton" name="htDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Ht Dump</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="probeProbeRadioButton">
+                  <property name="text">
+                   <string>Probe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="nf2ffBoxProbeRadioButton">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>NF2FF Box</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTabWidget" name="probeSpecificSettingsTab">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="Probe">
+                <attribute name="title">
+                 <string>Probe</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_48">
+                 <item>
+                  <widget class="QGroupBox" name="probeProbeSettingsGroup">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="title">
+                    <string>Probe - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_35">
+                    <item row="4" column="0">
+                     <widget class="QLabel" name="label_155">
+                      <property name="text">
+                       <string>Frequency</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="probeProbeDirection">
+                      <property name="currentText">
+                       <string>x</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>x</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>y</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>z</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_156">
+                      <property name="text">
+                       <string>Probe type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_157">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="probeProbeType">
+                      <property name="currentText">
+                       <string>current</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>current</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>voltage</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="probeProbeDomain">
+                      <property name="currentText">
+                       <string>time</string>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_158">
+                      <property name="text">
+                       <string>Probe direction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="4" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_49">
+                      <property name="leftMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>5</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>5</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_88">
+                        <item>
+                         <widget class="QDoubleSpinBox" name="probeProbeFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="decimals">
+                           <number>5</number>
+                          </property>
+                          <property name="maximum">
+                           <double>10000000.000000000000000</double>
+                          </property>
+                          <property name="singleStep">
+                           <double>0.100000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="probeProbeFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_77">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>40</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probeProbeFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="probeProbeFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="probeProbeFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_37">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="DumpBox">
+                <attribute name="title">
+                 <string>DumpBox</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_50">
+                 <item>
+                  <widget class="QGroupBox" name="dumpboxProbeSettingsGroup">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="title">
+                    <string>DumpBox - specific settings</string>
+                   </property>
+                   <layout class="QGridLayout" name="gridLayout_36">
+                    <item row="1" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeDomain">
+                      <item>
+                       <property name="text">
+                        <string>time</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>frequency</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <widget class="QLabel" name="label_159">
+                      <property name="text">
+                       <string>Dump type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeType">
+                      <item>
+                       <property name="text">
+                        <string>E field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>H field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>J field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>D field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>B field</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label_160">
+                      <property name="text">
+                       <string>Domain</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QLabel" name="label_161">
+                      <property name="text">
+                       <string>File type</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="1">
+                     <widget class="QComboBox" name="dumpboxProbeFileType">
+                      <item>
+                       <property name="text">
+                        <string>vtk</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>hdf5</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item row="3" column="0">
+                     <widget class="QLabel" name="label_162">
+                      <property name="text">
+                       <string>Frequency list</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <layout class="QVBoxLayout" name="verticalLayout_51">
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <layout class="QHBoxLayout" name="horizontalLayout_89">
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QDoubleSpinBox" name="dumpboxProbeFrequencyInput">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="decimals">
+                           <number>3</number>
+                          </property>
+                          <property name="minimum">
+                           <double>0.000000000000000</double>
+                          </property>
+                          <property name="maximum">
+                           <double>100000000000.000000000000000</double>
+                          </property>
+                          <property name="value">
+                           <double>0.000000000000000</double>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QComboBox" name="dumpboxProbeFrequencyUnits">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="currentIndex">
+                           <number>2</number>
+                          </property>
+                          <item>
+                           <property name="text">
+                            <string>Hz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>kHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>MHz</string>
+                           </property>
+                          </item>
+                          <item>
+                           <property name="text">
+                            <string>GHz</string>
+                           </property>
+                          </item>
+                         </widget>
+                        </item>
+                        <item>
+                         <spacer name="horizontalSpacer_78">
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                          <property name="sizeType">
+                           <enum>QSizePolicy::Preferred</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                           <size>
+                            <width>20</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                         </spacer>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxProbeFrequencyAddButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>+</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QPushButton" name="dumpboxProbeFrequencyRemoveButton">
+                          <property name="enabled">
+                           <bool>false</bool>
+                          </property>
+                          <property name="text">
+                           <string>-</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </item>
+                      <item>
+                       <widget class="QListWidget" name="dumpboxProbeFrequencyList">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_38">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="NoSettings_2">
+                <attribute name="title">
+                 <string/>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_90">
+                 <item>
+                  <widget class="QLabel" name="label_163">
+                   <property name="text">
+                    <string>This probe type has no settings.</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_27">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
                </property>
@@ -6744,7 +7052,7 @@ than min spacing</string>
                   <item>
                    <widget class="QLabel" name="label_85">
                     <property name="text">
-                     <string>NF2FF port</string>
+                     <string>NF2FF probe</string>
                     </property>
                    </widget>
                   </item>
@@ -7184,7 +7492,6 @@ than min spacing</string>
   <tabstop>userDefinedRadioButton</tabstop>
   <tabstop>gridGenerateLinesInsideCheckbox</tabstop>
   <tabstop>gridTopPriorityLinesCheckbox</tabstop>
-  <tabstop>userDefinedGridLinesTextInput</tabstop>
   <tabstop>createUserdefGridLinesFromCurrentButton</tabstop>
   <tabstop>displayXYGridLinesInModelButton</tabstop>
   <tabstop>displayXZGridLinesInModelButton</tabstop>

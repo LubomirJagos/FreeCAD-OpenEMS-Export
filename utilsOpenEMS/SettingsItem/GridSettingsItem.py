@@ -7,7 +7,7 @@ from .SettingsItem import SettingsItem
 #
 class GridSettingsItem(SettingsItem):
     def __init__(self, name="", type="", fixedCount=None, fixedDistance=None,
-                 userDefined=None, units="", xenabled=False, yenabled=False, zenabled=False,
+                 userDefined=None, units="mm", unitsAngle="deg", xenabled=False, yenabled=False, zenabled=False,
                  smoothMeshDefault=None,
                  coordsType='rectangular'):
 
@@ -15,6 +15,7 @@ class GridSettingsItem(SettingsItem):
         self.type = type
         self.coordsType = coordsType
         self.units = units
+        self.unitsAngle = unitsAngle
         self.xenabled = xenabled
         self.yenabled = yenabled
         self.zenabled = zenabled

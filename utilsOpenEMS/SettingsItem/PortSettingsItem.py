@@ -7,16 +7,12 @@ from .  SettingsItem import SettingsItem
 #		- circular waveguide
 #		- rectangular waveguide
 class PortSettingsItem(SettingsItem):
-    def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z",
-                 lumpedExcitationAmplitude=0,
+    def __init__(self, name="", type="", R=0, RUnits="", isActive=False, direction="z", excitationAmplitude=1, infiniteResistance=False,
                  mslFeedShiftValue="", mslFeedShiftUnits="", mslMeasPlaneShiftValue="", mslMeasPlaneShiftUnits="", mslMaterial="", mslPropagation="",
                  waveguideRectDir = "", waveguideCircDir="",
-                 coaxialConductorMaterial = "", coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "", coaxialExcitationAmplitude = 0,
+                 coaxialConductorMaterial = "", coaxialMaterial = "", coaxialPropagation = "", coaxialInnerRadiusValue = 0, coaxialInnerRadiusUnits = "", coaxialShellThicknessValue = 0, coaxialShellThicknessUnits = "", coaxialFeedpointShiftValue = 0, coaxialFeedpointShiftUnits = "", coaxialMeasPlaneShiftValue = 0, coaxialMeasPlaneShiftUnits = "",
                  coplanarMaterial = "", coplanarPropagation = "", coplanarGapValue = 0, coplanarGapUnits = "", coplanarFeedpointShiftValue = 0, coplanarFeedpointShiftUnits = "", coplanarMeasPlaneShiftValue = 0, coplanarMeasPlaneShiftUnits = "",
                  striplineMaterial = "", striplinePropagation = "", striplineHeightValue = 0, striplineHeightUnits = "", striplineFeedpointShiftValue = 0, striplineFeedpointShiftUnits = "", striplineMeasPlaneShiftValue = 0, striplineMeasPlaneShiftUnits = "",
-                 uiprobeDomain="", uiprobeFrequencyList=[],
-                 probeType="", probeDomain="", probeFrequencyList=[],
-                 dumpboxType="", dumpboxDomain="", dumpboxFileType="", dumpboxFrequencyList=[]
                  ):
         self.name = name
         self.type = type
@@ -25,8 +21,8 @@ class PortSettingsItem(SettingsItem):
         self.RUnits = RUnits
         self.isActive = isActive
         self.direction = direction
-
-        self.lumpedExcitationAmplitude = lumpedExcitationAmplitude
+        self.excitationAmplitude = excitationAmplitude
+        self.infiniteResistance = infiniteResistance
 
         self.mslFeedShiftValue = mslFeedShiftValue
         self.mslFeedShiftUnits = mslFeedShiftUnits
@@ -49,7 +45,6 @@ class PortSettingsItem(SettingsItem):
         self.coaxialFeedpointShiftUnits = coaxialFeedpointShiftUnits
         self.coaxialMeasPlaneShiftValue = coaxialMeasPlaneShiftValue
         self.coaxialMeasPlaneShiftUnits = coaxialMeasPlaneShiftUnits
-        self.coaxialExcitationAmplitude = coaxialExcitationAmplitude
 
         self.coplanarMaterial = coplanarMaterial
         self.coplanarPropagation = coplanarPropagation
@@ -68,18 +63,6 @@ class PortSettingsItem(SettingsItem):
         self.striplineFeedpointShiftUnits = striplineFeedpointShiftUnits
         self.striplineMeasPlaneShiftValue = striplineMeasPlaneShiftValue
         self.striplineMeasPlaneShiftUnits = striplineMeasPlaneShiftUnits
-
-        self.uiprobeDomain = uiprobeDomain
-        self.uiprobeFrequencyList = uiprobeFrequencyList
-
-        self.probeType = probeType
-        self.probeDomain = probeDomain
-        self.probeFrequencyList = probeFrequencyList
-
-        self.dumpboxType = dumpboxType
-        self.dumpboxDomain = dumpboxDomain
-        self.dumpboxFileType = dumpboxFileType
-        self.dumpboxFrequencyList = dumpboxFrequencyList
 
         return
 
