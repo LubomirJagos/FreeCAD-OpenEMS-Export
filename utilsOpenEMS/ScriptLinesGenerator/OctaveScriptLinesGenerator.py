@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 import FreeCAD as App
 import Mesh
 import numpy as np
@@ -1718,7 +1718,7 @@ class OctaveScriptLinesGenerator:
         # Update status bar to inform user that exporting has begun.
         if self.statusBar is not None:
             self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
 
         # Constants and variable initialization.
 

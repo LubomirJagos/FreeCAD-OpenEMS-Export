@@ -1,5 +1,5 @@
-from PySide import QtGui, QtCore
-from PySide.QtCore import Slot
+from PySide2 import QtGui, QtCore, QtWidgets
+from PySide2.QtCore import Slot
 import FreeCAD as App
 import FreeCADGui, Part, os
 import re
@@ -84,7 +84,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.installEventFilter(self)
 		
 		# add a statusBar widget (comment to revert to QMessageBox if there are any problems)
-		self.statusBar = QtGui.QStatusBar()
+		self.statusBar = QtWidgets.QStatusBar()
 		self.statusBar.setStyleSheet("QStatusBar{border-top: 1px outset grey;}")
 		self.form.dialogVertLayout.addWidget(self.statusBar)
 
@@ -635,7 +635,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			
 	def objectAssignmentRightTreeWidgetContextClicked(self, event):
-		self.objAssignCtxMenu = QtGui.QMenu(self.form.objectAssignmentRightTreeWidget)
+		self.objAssignCtxMenu = QtWidgets.QMenu(self.form.objectAssignmentRightTreeWidget)
 		action_expand   = self.objAssignCtxMenu.addAction("Expand all")
 		actioN_collapse = self.objAssignCtxMenu.addAction("Collapse all")
 		menu_action = self.objAssignCtxMenu.exec_(self.form.objectAssignmentRightTreeWidget.mapToGlobal(event))
@@ -1036,7 +1036,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			# ADDING ITEMS with UserData object which store them in intelligent way
 			#
-			topItem = QtGui.QTreeWidgetItem([i.Label])
+			topItem = QtWidgets.QTreeWidgetItem([i.Label])
 			itemData = FreeCADSettingsItem(name = i.Label, freeCadId = i.Name)
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
 			if (i.Name.find("Sketch") > -1):
@@ -1340,7 +1340,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def checkTreeWidgetForDuplicityName(self, refTreeWidget, itemName, ignoreSelectedItem=True):
 		isDuplicityName = False
-		iterator = QtGui.QTreeWidgetItemIterator(refTreeWidget, QtGui.QTreeWidgetItemIterator.All)
+		iterator = QtWidgets.QTreeWidgetItemIterator(refTreeWidget, QtWidgets.QTreeWidgetItemIterator.All)
 		while iterator.value():
 			item = iterator.value()
 			if (ignoreSelectedItem == True and item.text(0) == itemName) or (ignoreSelectedItem == False and refTreeWidget.selectedItems()[0] != item and item.text(0) == itemName):
@@ -1929,7 +1929,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		meshPrioritySmoothMeshItemIndex = self.form.meshPriorityTreeView.invisibleRootItem().indexOfChild(meshPrioritySmoothMeshItem)
 		self.form.meshPriorityTreeView.invisibleRootItem().removeChild(meshPrioritySmoothMeshItem)
 
-		newMeshPriorityItems = [QtGui.QTreeWidgetItem([f"Grid, {groupName}, {objName}"]) for objName in assignedObjectNames]
+		newMeshPriorityItems = [QtWidgets.QTreeWidgetItem([f"Grid, {groupName}, {objName}"]) for objName in assignedObjectNames]
 		[item.setIcon(0, gridItem.icon(0)) for item in newMeshPriorityItems]
 		self.form.meshPriorityTreeView.invisibleRootItem().insertChildren(meshPrioritySmoothMeshItemIndex, newMeshPriorityItems)
 

@@ -2,7 +2,7 @@ import os
 import re
 import json
 
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 import FreeCAD as App
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
@@ -35,7 +35,7 @@ class IniFile:
 
     def writeToFile(self):
         freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
-        filename, filter = QtGui.QFileDialog.getSaveFileName(parent=self.form, caption='Write simulation settings file', dir=freeCadFileDir, filter='*.ini')
+        filename, filter = QtWidgets.QFileDialog.getSaveFileName(parent=self.form, caption='Write simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
             self.write(filename)
             return filename
@@ -44,7 +44,7 @@ class IniFile:
 
     def readFromFile(self):
         freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
-        filename, filter = QtGui.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
+        filename, filter = QtWidgets.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
             IniValidator0v1.checkFile(filename)
             self.read(filename)
@@ -72,7 +72,7 @@ class IniFile:
         print("Saving settings to file: " + outFile)
         if self.statusBar is not None:
             self.statusBar.showMessage("Saving settings to file...", 5000)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
 
         if (os.path.exists(outFile)):
             os.remove(outFile)  # Remove outFile in case an old version exists.
@@ -443,7 +443,7 @@ class IniFile:
         print("Load current values from file.")
         if self.statusBar is not None:
             self.statusBar.showMessage("Loading current values from file...", 5000)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
 
         # FIRST DELETE ALL GUI TREE WIDGET ITEMS
         self.guiHelpers.deleteAllSettings()
@@ -754,8 +754,8 @@ class IniFile:
                         if (targetGroup[k].child(m).text(0) == objParent):
                             settingsItem = FreeCADSettingsItem(itemName)
 
-                            # treeItem = QtGui.QTreeWidgetItem([itemName])
-                            treeItem = QtGui.QTreeWidgetItem()
+                            # treeItem = QtWidgets.QTreeWidgetItem([itemName])
+                            treeItem = QtWidgets.QTreeWidgetItem()
                             treeItem.setText(0, itemName)
 
                             #
@@ -861,7 +861,7 @@ class IniFile:
                     print("Priority list adding item " + prioritySettingsKey)
 
                     # adding item into priority list
-                    topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
+                    topItem = QtWidgets.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
                     topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
@@ -903,7 +903,7 @@ class IniFile:
                     print("Priority list adding item " + prioritySettingsKey)
 
                     # adding item into priority list
-                    topItem = QtGui.QTreeWidgetItem([prioritySettingsKey])
+                    topItem = QtWidgets.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
                     topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem

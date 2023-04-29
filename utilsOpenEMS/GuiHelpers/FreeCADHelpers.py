@@ -1,5 +1,5 @@
 import re
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 import FreeCAD as App
 import FreeCADGui, Part
 import Draft
@@ -22,7 +22,7 @@ class FreeCADHelpers:
         currentObjects = App.ActiveDocument.Objects
         objList = []
         for obj in currentObjects:
-            item = QtGui.QTreeWidgetItem([obj.Label])
+            item = QtWidgets.QTreeWidgetItem([obj.Label])
             if (obj.Name.find("Sketch") > -1):
                 item.setIcon(0, QtGui.QIcon("./img/wire.svg"))
             elif (obj.Name.find("Discretized_Edge") > -1):
