@@ -86,6 +86,11 @@ class FreeCADHelpers(CadInterface):
         return FreeCAD.ActiveDocument.Objects
 
     def removeObject(self, objName):
+        """
+        Remove object from FreeCAD, used mainly to remove generated gridlines.
+        :param objName:
+        :return:
+        """
         FreeCAD.ActiveDocument.removeObject(objName)
     def getCurrDocumentFileName(self):
         return FreeCAD.ActiveDocument.FileName

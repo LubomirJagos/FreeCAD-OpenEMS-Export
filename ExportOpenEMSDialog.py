@@ -43,6 +43,8 @@ if APP_CONTEXT == 'Blender':
 
 	print(f"SCRIPT_DIR: {APP_DIR}")
 	sys.path.append(APP_DIR)
+else:
+	APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 path_to_ui = os.path.join(APP_DIR, "ui", "dialog.ui")
@@ -104,14 +106,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# LOCAL OPENEMS OBJECT
 		#
-		self.cadHelpers = FactoryCadInterface.createHelper(APP_DIR)
+		self.cadHelpers = FactoryCadInterface.createHelper(self.APP_DIR)
 
 		#
 		# Change current path to script file folder
 		#
-		abspath = os.path.abspath(__file__)
-		dname = os.path.dirname(abspath)
-		os.chdir(dname)
+		os.chdir(APP_DIR)
 
 		# this will create a Qt widget from our ui file
 		self.form = self.cadHelpers.loadUI(path_to_ui, self)
@@ -386,18 +386,29 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value())
 
 		self.cadInterfaceType = APP_CONTEXT
-		try:
-			# create observer instance
-			from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
-			self.observer = FreeCADDocObserver()
-			self.observer.objectCreated += self.freecadObjectCreated
-			self.observer.objectChanged += self.freecadObjectChanged
-			self.observer.objectDeleted += self.freecadBeforeObjectDeleted
-			self.observer.startObservation()
-		except:
-			self.cadHelpers.printError("Cannot create FreeCAD observer, there is no connection to CAD program signals.")
-			pass
-
+		print("Creating document handlers")
+		if APP_CONTEXT == "FreeCAD":
+			try:
+				# create observer instance
+				from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
+				self.observer = FreeCADDocObserver()
+				self.observer.objectCreated += self.freecadObjectCreated
+				self.observer.objectChanged += self.freecadObjectChanged
+				self.observer.objectDeleted += self.freecadBeforeObjectDeleted
+				self.observer.startObservation()
+			except:
+				self.cadHelpers.printError("Cannot create FreeCAD observer, there is no connection to CAD program signals.")
+				pass
+		elif APP_CONTEXT == "Blender":
+			try:
+				print("TODO add blender register handlers...")
+				#
+				#	TODO:
+				#		- register add/remove/rename handlers for objects
+				#
+			except:
+				self.cadHelpers.printError("Cannot create Blender observer, there is no connection to CAD program signals.")
+				pass
 
 		#
 		#	GUI font size change
@@ -1954,7 +1965,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Grid " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	@Slot(str)
 	def gridTypeChangedToSmoothMesh(self, groupName):
@@ -3209,12 +3220,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
  
 if __name__ == "__main__":
 	#
+	#	TODO:
+	#		- in case of running from Blender app must run in parallel, now Blender window is waiting for close addon
+	#
+
+	#
 	#	Check application running context, when running from FreeCAD or Blender QApplication object is probably already
 	#	created so it's not needed.
 	#	When running from command line as standalone application it's needed to create QApplication.
 	#
 	if APP_CONTEXT in ['None', 'Blender']:
-		app = QtWidgets.QApplication()
+		try:
+			app = QtWidgets.QApplication.instance()
+			if app is None:
+				app = QtWidgets.QApplication(sys.argv)
+		except:
+			pass
 
 	#
 	#	Display openEMS export window.
@@ -3227,3 +3248,4 @@ if __name__ == "__main__":
 	#
 	if APP_CONTEXT in ['None', 'Blender']:
 		app.exec_()
+		#app.exit()

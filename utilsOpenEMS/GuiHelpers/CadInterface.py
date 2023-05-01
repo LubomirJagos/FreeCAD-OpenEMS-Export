@@ -38,6 +38,8 @@ class CadInterface:
             iconPath = os.path.join(self.APP_DIR, "img", "grid.svg")
         elif 'LumpedPart' in categoryName:
             iconPath = os.path.join(self.APP_DIR, "img", "lumpedpart.svg")
+        elif 'Probe' in categoryName:
+            iconPath = os.path.join(self.APP_DIR, "img", "probe.svg")
         elif 'Port' in categoryName:
             iconPath = os.path.join(self.APP_DIR, "img", "port.svg")
         else:
@@ -95,7 +97,6 @@ class CadInterface:
         return None
 
     def getCurrDocumentFileName(self):
-        print(f"aaaa")
         print(f"{__file__} > getCurrDocumentFileName() > {os.path.join(self.APP_DIR, __file__)}")
         return os.path.join(self.APP_DIR, __file__)
 

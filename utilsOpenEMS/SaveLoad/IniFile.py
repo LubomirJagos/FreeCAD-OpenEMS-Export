@@ -28,10 +28,10 @@ class IniFile:
     def __init__(self, form, statusBar = None, guiSignals = None, APP_DIR = ""):
         self.form = form
         self.statusBar = statusBar
-        self.cadHelpers = FactoryCadInterface.createHelper()
+        self.cadHelpers = FactoryCadInterface.createHelper(APP_DIR=APP_DIR)
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar, APP_DIR=APP_DIR)
         self.guiSignals = guiSignals
-        self.APP_DIR = ""
+        self.APP_DIR = APP_DIR
 
     def writeToFile(self):
         freeCadFileDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
