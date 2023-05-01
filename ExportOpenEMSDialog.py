@@ -1,9 +1,7 @@
 from PySide2 import QtGui, QtCore, QtWidgets
 from PySide2.QtCore import Slot
-import FreeCAD as App
-import FreeCADGui, Part, os
+import os, sys
 import re
-import Draft
 import random
 import numpy as np
 import collections
@@ -14,7 +12,40 @@ import copy
 import sys
 import traceback
 
-sys.path.insert(0, os.path.dirname(__file__))
+APP_CONTEXT = "None"
+
+try:
+	import FreeCAD
+	APP_CONTEXT = "FreeCAD"
+except:
+	pass
+
+try:
+	import bpy
+	APP_CONTEXT = "Blender"
+except:
+	pass
+
+print(f"APP_CONTEXT set to {APP_CONTEXT}")
+
+#
+#	Blender special things as that python is quite not giving paths as should be
+#
+APP_DIR = ''
+if APP_CONTEXT == 'Blender':
+	#
+	#	This here is because Blender pyhton is not providing right info about paths in __file__ when running from editor
+	#
+	if bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
+		APP_DIR = os.path.dirname(bpy.context.space_data.text.filepath)
+	else:
+		APP_DIR = os.path.dirname(__file__)
+
+	print(f"SCRIPT_DIR: {APP_DIR}")
+	sys.path.append(APP_DIR)
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+path_to_ui = os.path.join(APP_DIR, "ui", "dialog.ui")
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
@@ -30,8 +61,7 @@ from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveS
 from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
-from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
-from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
+from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
 
@@ -40,17 +70,20 @@ from utilsOpenEMS.SaveLoad.IniFile import IniFile
 # UI file (use Qt Designer to modify)
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
-path_to_ui = "./ui/dialog.ui"
-
 #
 # Main GUI panel class
 #
 class ExportOpenEMSDialog(QtCore.QObject):
 
 	def finished(self):
-		self.observer.endObservation()
-		self.observer = None
-		print("Observer terminated.")
+		"""
+		Finish observing CAD signals for add/remove/rename.
+		:return: None
+		"""
+		if self.cadInterfaceType == "FreeCAD":
+			self.observer.endObservation()
+			self.observer = None
+			print("FreeCAD observer terminated.")
 
 	def eventFilter(self, object, event):
 		if event.type() == QtCore.QEvent.Close:
@@ -59,6 +92,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		
 	def __init__(self):		
 		QtCore.QObject.__init__(self)
+
+		self.APP_DIR = APP_DIR
 
 		#
 		#	Directory for generated .m file for openEMS
@@ -69,7 +104,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# LOCAL OPENEMS OBJECT
 		#
-		self.freeCADHelpers = FreeCADHelpers()
+		self.cadHelpers = FactoryCadInterface.createHelper(APP_DIR)
 
 		#
 		# Change current path to script file folder
@@ -79,7 +114,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		os.chdir(dname)
 
 		# this will create a Qt widget from our ui file
-		self.form = FreeCADGui.PySideUic.loadUi(path_to_ui, self)
+		self.form = self.cadHelpers.loadUI(path_to_ui, self)
 		# self.form.finished.connect(self.finished) # QDialog event
 		self.form.installEventFilter(self)
 		
@@ -109,13 +144,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# GUI helpers function like display message box and so
 		#
-		self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
+		self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar, APP_DIR=APP_DIR)
 		self.guiSignals = GuiSignals()
 
 		#
 		# INI file object to used for save/load operation
 		#
-		self.simulationSettingsFile = IniFile(self.form, statusBar = self.statusBar, guiSignals = self.guiSignals)
+		self.simulationSettingsFile = IniFile(self.form, statusBar = self.statusBar, guiSignals = self.guiSignals, APP_DIR = APP_DIR)
 
 		#
 		# TOP LEVEL ITEMS / Category Items (excitation, grid, materials, ...)
@@ -348,14 +383,21 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### Other Initialization
 		
 		# initialize dB preview label with converted value
-		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value()) 
-	
-		# create observer instance
-		self.observer = FreeCADDocObserver()
-		self.observer.objectCreated += self.freecadObjectCreated
-		self.observer.objectChanged += self.freecadObjectChanged
-		self.observer.objectDeleted += self.freecadBeforeObjectDeleted
-		self.observer.startObservation()
+		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value())
+
+		self.cadInterfaceType = APP_CONTEXT
+		try:
+			# create observer instance
+			from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
+			self.observer = FreeCADDocObserver()
+			self.observer.objectCreated += self.freecadObjectCreated
+			self.observer.objectChanged += self.freecadObjectChanged
+			self.observer.objectDeleted += self.freecadBeforeObjectDeleted
+			self.observer.startObservation()
+		except:
+			self.cadHelpers.printError("Cannot create FreeCAD observer, there is no connection to CAD program signals.")
+			pass
+
 
 		#
 		#	GUI font size change
@@ -380,6 +422,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.portRenamed.connect(self.portRenamed)
 		self.guiSignals.lumpedPartRenamed.connect(self.lumpedPartRenamed)
 		self.guiSignals.probeRenamed.connect(self.probeRenamed)
+
+		print(f"----> init finished")
 
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
@@ -491,17 +535,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 	def eraseAuxGridButtonClicked(self):
 		print("--> Start removing auxiliary gridlines from 3D view.")
-		auxGridLines = App.ActiveDocument.Objects
+		auxGridLines = self.cadHelpers.getObjects()
 		for gridLine in auxGridLines:
 			print("--> Removing " + gridLine.Label + " from 3D view.")
 			if "auxGridLine" in gridLine.Label:
-				App.ActiveDocument.removeObject(gridLine.Name)
+				self.cadHelpers.removeObject(gridLine.Name)
 		print("--> End removing auxiliary gridlines from 3D view.")
 
 	def createUserdefGridLinesFromCurrentButtonClicked(self):
 		"""
 		print("--> Start creating user defined grid from 3D model.")
-		allObjects = App.ActiveDocument.Objects
+		allObjects = self.cadHelpers.getObjects()
 		gridLineListX = []
 		gridLineListY = []
 		gridLineListZ = []
@@ -595,7 +639,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		for item in updatedItems:
 			newName = groupName + ", " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
-			FreeCAD.Console.PrintWarning(f"Updating {item.text(0)} -> {newName}")
+			cadHelper.printWarning(f"Updating {item.text(0)} -> {newName}")
 			item.setText(0, newName)
 
 	def renameMeshPriorityTreeViewItem(self, itemOldName, itemNewName):
@@ -607,7 +651,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		for item in updatedItems:
 			newName = "Grid, " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
-			FreeCAD.Console.PrintWarning(f"Updating {item.text(0)} -> {newName}")
+			cadHelper.printWarning(f"Updating {item.text(0)} -> {newName}")
 			item.setText(0, newName)
 
 	def renameTreeViewItem(self, treeViewRef, itemOldName, itemNewName):
@@ -630,8 +674,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
 		print(currItemLabel)
 		if (currItemLabel):
-			FreeCADGui.Selection.clearSelection()
-			self.freeCADHelpers.selectObjectByLabel(currItemLabel)
+			self.cadHelpers.clearSelection()
+			self.cadHelpers.selectObjectByLabel(currItemLabel)
 
 			
 	def objectAssignmentRightTreeWidgetContextClicked(self, event):
@@ -665,13 +709,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		#	Drawing auxiliary object grid for meshing.
 		#
-		#		example how to draw line for grid: self.freeCADHelpers.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
+		#		example how to draw line for grid: self.cadHelpers.drawDraftLine("gridXY", [-78.0, -138.0, 0.0], [5.0, -101.0, 0.0])
 
 		currSetting = currItem.data(0, QtCore.Qt.UserRole)
 		genScript = ""
 
 		#	must be selected FreeCAD object which is child of grid item which gridlines will be draw
-		gridObj =  App.ActiveDocument.getObjectsByLabel(currItem.text(0))
+		gridObj =  self.cadHelpers.getObjectsByLabel(currItem.text(0))
 		if ("FreeCADSettingItem" in currSetting.type):
 			if ("GridSettingsItem" in currItem.parent().data(0, QtCore.Qt.UserRole).__class__.__name__):
 				currSetting = currItem.parent().data(0, QtCore.Qt.UserRole)
@@ -688,7 +732,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print("Enabled coords: " + str(currSetting.xenabled) + " " + str(currSetting.yenabled) + " " + str(currSetting.zenabled))
 
 		#getting model boundaries to draw gridlines properly
-		modelMinX, modelMinY, modelMinZ, modelMaxX, modelMaxY, modelMaxZ = self.freeCADHelpers.getModelBoundaryBox(self.form.objectAssignmentRightTreeWidget)
+		modelMinX, modelMinY, modelMinZ, modelMaxX, modelMaxY, modelMaxZ = self.cadHelpers.getModelBoundaryBox(self.form.objectAssignmentRightTreeWidget)
 
 		#don't know why I put here this axis list code snippet probably to include case if there are some auxiliary axis but now seems useless
 		#THERE IS QUESTION IN WHICH PLANE GRID SHOULD BE DRAWN IF in XY, XZ or YZ
@@ -734,7 +778,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	
 				for zAuxGridCoord in zAuxGridCoordList:
 					
-					bbPointsVectors = [App.Vector(bbCoords.YMin, bbCoords.XMin, 0), App.Vector(bbCoords.YMin, bbCoords.XMax, 0), App.Vector(bbCoords.YMax, bbCoords.XMin, 0), App.Vector(bbCoords.YMax, bbCoords.XMax, 0)]
+					bbPointsVectors = [self.cadHelpers.Vector(bbCoords.YMin, bbCoords.XMin, 0), self.cadHelpers.Vector(bbCoords.YMin, bbCoords.XMax, 0), self.cadHelpers.Vector(bbCoords.YMax, bbCoords.XMin, 0), self.cadHelpers.Vector(bbCoords.YMax, bbCoords.XMax, 0)]
 					angle1 = math.atan2(bbCoords.YMin, bbCoords.XMin) + 2*math.pi % (2*math.pi)
 					angle2 = math.atan2(bbCoords.YMin, bbCoords.XMax) + 2*math.pi % (2*math.pi)
 					angle3 = math.atan2(bbCoords.YMax, bbCoords.XMin) + 2*math.pi % (2*math.pi)
@@ -756,7 +800,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						indicesMax = a.argmax()
 						closestLineToCenter = bbPointsVectors[indicesMin] - bbPointsVectors[indicesMax]
 
-						#minRadius = closestLineToCenter.distanceToPoint(App.Vector(0,0,0))
+						#minRadius = closestLineToCenter.distanceToPoint(self.cadHelpers.Vector(0,0,0))
 						minRadius = abs((bbPointsVectors[indicesMax].x - bbPointsVectors[indicesMin].x)*bbPointsVectors[indicesMin].y - (bbPointsVectors[indicesMax].y - bbPointsVectors[indicesMin].y)*bbPointsVectors[indicesMin].x)/closestLineToCenter.Length
 						maxRadius = max([math.sqrt(bbCoords.XMin**2 + bbCoords.YMin**2), math.sqrt(bbCoords.XMax**2 + bbCoords.YMax**2)])
 
@@ -766,8 +810,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							xlines = np.linspace(minRadius, maxRadius, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
-							self.freeCADHelpers.drawDraftCircle("auxGridLine", App.Vector(0,0,zAuxGridCoord), xGridLine)
-		
+							self.cadHelpers.drawDraftCircle("auxGridLine", self.cadHelpers.Vector(0,0,zAuxGridCoord), xGridLine)
+
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):												
 						if float(currSetting.getXYZ(refUnit)['y']) == 1:
@@ -778,7 +822,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						print(ylines)
 
 						for yGridLine in ylines:
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [0, 0, zAuxGridCoord], [math.cos(yGridLine)*radius, math.sin(yGridLine)*radius, zAuxGridCoord])
+							self.cadHelpers.drawDraftLine("auxGridLine", [0, 0, zAuxGridCoord], [math.cos(yGridLine)*radius, math.sin(yGridLine)*radius, zAuxGridCoord])
 
 		elif (currSetting.coordsType == 'rectangular' and currGridAxis == "z"):
 
@@ -806,16 +850,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						if float(currSetting.getXYZ(refUnit)['x']) !=  0:
 							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
-								#self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
+								#self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+								self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
 						if float(currSetting.getXYZ(refUnit)['y']) != 0:
 							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
-								#self.freeCADHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+								#self.cadHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+								self.cadHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -843,8 +887,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 							
 						for xGridLine in xlines:
-							#self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
+							#self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, bbCoords.YMin, zAuxGridCoord], [xGridLine, bbCoords.YMax, zAuxGridCoord])
+							self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, modelMinY, zAuxGridCoord], [xGridLine, modelMaxY, zAuxGridCoord])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
@@ -854,8 +898,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 
 						for yGridLine in ylines:
-							#self.freeCADHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
+							#self.cadHelpers.drawDraftLine("auxGridLine", [bbCoords.XMin, yGridLine, zAuxGridCoord], [bbCoords.XMax, yGridLine, zAuxGridCoord])
+							self.cadHelpers.drawDraftLine("auxGridLine", [modelMinX, yGridLine, zAuxGridCoord], [modelMaxX, yGridLine, zAuxGridCoord])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -888,14 +932,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
 							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+								self.cadHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
 						if float(currSetting.getXYZ(refUnit)['y']) != 0:
 							ylines = np.arange(bbCoords.YMin, bbCoords.YMax, currSetting.getXYZ(refUnit)['y'])
 							for yGridLine in ylines:
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+								self.cadHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -923,7 +967,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 						
 						for zGridLine in zlines:
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
+							self.cadHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, modelMinY, zGridLine], [xAuxGridCoord, modelMaxY, zGridLine])
 		
 					#DRAW Y LINES auxiliary grid in 3D view
 					if (currSetting.yenabled):
@@ -933,7 +977,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							ylines = np.linspace(bbCoords.YMin, bbCoords.YMax, int(currSetting.getXYZ(refUnit)['y']))
 						
 						for yGridLine in ylines:
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
+								self.cadHelpers.drawDraftLine("auxGridLine", [xAuxGridCoord, yGridLine, modelMinZ], [xAuxGridCoord, yGridLine, modelMaxZ])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -966,14 +1010,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						if float(currSetting.getXYZ(refUnit)['z']) !=  0:
 							zlines = np.arange(bbCoords.ZMin, bbCoords.ZMax, currSetting.getXYZ(refUnit)['z'])
 							for zGridLine in zlines:
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+								self.cadHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
 						if float(currSetting.getXYZ(refUnit)['x']) != 0:
 							xlines = np.arange(bbCoords.XMin, bbCoords.XMax, currSetting.getXYZ(refUnit)['x'])
 							for xGridLine in xlines:
-								self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+								self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
@@ -1001,7 +1045,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							zlines = np.linspace(bbCoords.ZMin, bbCoords.ZMax, int(currSetting.getXYZ(refUnit)['z']))
 
 						for zGridLine in zlines:
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
+							self.cadHelpers.drawDraftLine("auxGridLine", [modelMinX, yAuxGridCoord, zGridLine], [modelMaxX, yAuxGridCoord, zGridLine])
 		
 					#DRAW X LINES auxiliary grid in 3D view
 					if (currSetting.xenabled):
@@ -1011,7 +1055,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 							xlines = np.linspace(bbCoords.XMin, bbCoords.XMax, int(currSetting.getXYZ(refUnit)['x']))
 
 						for xGridLine in xlines:
-							self.freeCADHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
+							self.cadHelpers.drawDraftLine("auxGridLine", [xGridLine, yAuxGridCoord, modelMinZ], [xGridLine, yAuxGridCoord, modelMaxZ])
 	
 			elif (currSetting.getType() == 'User Defined'):
 				#UNIT FOR MESH										
@@ -1019,7 +1063,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				genScript += "mesh = " + currSetting.getXYZ(refUnit) + ";\n"
 
 		#update whole document
-		App.ActiveDocument.recompute()
+		self.cadHelpers.recompute()
 		print("---> Aux grid drawing finished. \n" + genScript)
 
 	#######################################################################################################################################################################
@@ -1029,7 +1073,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	def initLeftColumnTopLevelItems(self, filterStr = ""):
 		self.form.objectAssignmentLeftTreeWidget.clear()
 
-		items = self.freeCADHelpers.getOpenEMSObjects(filterStr)
+		items = self.cadHelpers.getOpenEMSObjects(filterStr)
 		treeItems = []
 		for i in items:
 			#print("openEMS object to export:" + i.Label)
@@ -1040,11 +1084,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			itemData = FreeCADSettingsItem(name = i.Label, freeCadId = i.Name)
 			topItem.setData(0, QtCore.Qt.UserRole, itemData)
 			if (i.Name.find("Sketch") > -1):
-				topItem.setIcon(0, QtGui.QIcon("./img/wire.svg")) 
+				topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "wire.svg")))
 			elif (i.Name.find("Discretized_Edge") > -1): 
-				topItem.setIcon(0, QtGui.QIcon("./img/curve.svg"))
+				topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "curve.svg")))
 			else:
-				topItem.setIcon(0, QtGui.QIcon("./img/object.svg")) 
+				topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "object.svg")))
 
 			treeItems.append(topItem)
 			self.internalObjectNameLabelList[i.Name] = i.Label		#add object label into internal list for case when label change to update all object labels in GUI
@@ -1056,7 +1100,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#		write empty file ABORT into simulation_output/ folder what should abort simulation in next iteration
 	#
 	def abortSimulationButtonClicked(self, outputDir=None):
-		programdir = os.path.dirname(App.ActiveDocument.FileName)
+		programdir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
 
 		if not outputDir is None:
 			absoluteOutputDir = os.path.join(outputDir, "simulation_output")
@@ -1918,7 +1962,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		newName = "Grid, " + groupName + ", SMOOTH MESH GROUP"
 		[item.setText(0, newName) for item in self.form.meshPriorityTreeView.findItems(searchStr, QtCore.Qt.MatchStartsWith)]
 		[self.form.meshPriorityTreeView.invisibleRootItem().removeChild(item) for item in self.form.meshPriorityTreeView.findItems(newName, QtCore.Qt.MatchStartsWith)[1:]]
-		FreeCAD.Console.PrintWarning(f"Updated {groupName} in mesh priority list")
+		self.cadHelpers.printWarning(f"Updated {groupName} in mesh priority list")
 
 	@Slot(str)
 	def gridTypeChangedFromSmoothMesh(self, groupName):
@@ -1933,7 +1977,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		[item.setIcon(0, gridItem.icon(0)) for item in newMeshPriorityItems]
 		self.form.meshPriorityTreeView.invisibleRootItem().insertChildren(meshPrioritySmoothMeshItemIndex, newMeshPriorityItems)
 
-		FreeCAD.Console.PrintWarning(f"Updated {groupName} in mesh priority list, adding objects: {assignedObjectNames}")
+		self.cadHelpers.printWarning(f"Updated {groupName} in mesh priority list, adding objects: {assignedObjectNames}")
 
 	@Slot(str, str)
 	def materialRenamed(self, oldName, newName):
@@ -1963,7 +2007,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Material " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	@Slot(str, str)
 	def excitationRenamed(self, oldName, newName):
@@ -1973,7 +2017,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Excitation " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	@Slot(str, str)
 	def portRenamed(self, oldName, newName):
@@ -1984,7 +2028,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Port " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	@Slot(str, str)
 	def lumpedPartRenamed(self, oldName, newName):
@@ -1995,7 +2039,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("LumpedPart " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	@Slot(str, str)
 	def probeRenamed(self, oldName, newName):
@@ -2005,7 +2049,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("Probe " + oldName + " renamed to " + newName, forceModal=False)
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
-			FreeCAD.Console.PrintError(traceback.format_exc())
+			self.cadHelpers.printError(traceback.format_exc())
 
 	# EXCITATION SETTINGS
 	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3164,5 +3208,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 ####################################################################################################################################################################
  
 if __name__ == "__main__":
+	#
+	#	Check application running context, when running from FreeCAD or Blender QApplication object is probably already
+	#	created so it's not needed.
+	#	When running from command line as standalone application it's needed to create QApplication.
+	#
+	if APP_CONTEXT in ['None', 'Blender']:
+		app = QtWidgets.QApplication()
+
+	#
+	#	Display openEMS export window.
+	#
 	panel = ExportOpenEMSDialog()
 	panel.show()
+
+	#
+	#	If running as standalone application this will fire application and run it (probably starts Qt event loop).
+	#
+	if APP_CONTEXT in ['None', 'Blender']:
+		app.exec_()

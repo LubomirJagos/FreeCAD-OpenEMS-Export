@@ -3,12 +3,11 @@ import re
 import json
 
 from PySide2 import QtGui, QtCore, QtWidgets
-import FreeCAD as App
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
-from utilsOpenEMS.GuiHelpers.FreeCADHelpers import FreeCADHelpers
+from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
@@ -26,15 +25,16 @@ from utilsOpenEMS.SaveLoad.IniValidator0v1 import IniValidator0v1
 
 class IniFile:
 
-    def __init__(self, form, statusBar = None, guiSignals = None):
+    def __init__(self, form, statusBar = None, guiSignals = None, APP_DIR = ""):
         self.form = form
         self.statusBar = statusBar
-        self.freeCADHelpers = FreeCADHelpers()
-        self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
+        self.cadHelpers = FactoryCadInterface.createHelper()
+        self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar, APP_DIR=APP_DIR)
         self.guiSignals = guiSignals
+        self.APP_DIR = ""
 
     def writeToFile(self):
-        freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
+        freeCadFileDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
         filename, filter = QtWidgets.QFileDialog.getSaveFileName(parent=self.form, caption='Write simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
             self.write(filename)
@@ -43,7 +43,7 @@ class IniFile:
         return None
 
     def readFromFile(self):
-        freeCadFileDir = os.path.dirname(App.ActiveDocument.FileName)
+        freeCadFileDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
         filename, filter = QtWidgets.QFileDialog.getOpenFileName(parent=self.form, caption='Open simulation settings file', dir=freeCadFileDir, filter='*.ini')
         if filename != '':
             IniValidator0v1.checkFile(filename)
@@ -62,8 +62,8 @@ class IniFile:
     def write(self, filename=None):
 
         if filename is None or filename == False:
-            programname = os.path.basename(App.ActiveDocument.FileName)
-            programdir = os.path.dirname(App.ActiveDocument.FileName)
+            programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())
+            programdir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
             programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
             outFile = programdir + '/' + programbase + "_settings.ini"
         else:
@@ -81,7 +81,7 @@ class IniFile:
 
         # SAVE MATERIAL SETTINGS
 
-        materialList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
+        materialList = self.cadHelpers.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
         for k in range(len(materialList)):
             print("Save new MATERIAL constants into file: ")
             print(materialList[k].constants)
@@ -109,7 +109,7 @@ class IniFile:
 
         # SAVE GRID SETTINGS
 
-        gridList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
+        gridList = self.cadHelpers.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
         for k in range(len(gridList)):
             print("Save new GRID constants into file: " + gridList[k].getName())
 
@@ -146,7 +146,7 @@ class IniFile:
 
         # SAVE EXCITATION
 
-        excitationList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
+        excitationList = self.cadHelpers.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
         for k in range(len(excitationList)):
             print("Save new EXCITATION constants into file: " + excitationList[k].getName())
 
@@ -161,7 +161,7 @@ class IniFile:
         #
         # SAVE PORT SETTINGS
         #
-        portList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.portSettingsTreeView)
+        portList = self.cadHelpers.getAllTreeWidgetItems(self.form.portSettingsTreeView)
         for k in range(len(portList)):
             print("Save new PORT constants into file: " + portList[k].getName())
 
@@ -280,7 +280,7 @@ class IniFile:
         #
         # SAVE PROBES SETTINGS
         #
-        probeList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.probeSettingsTreeView)
+        probeList = self.cadHelpers.getAllTreeWidgetItems(self.form.probeSettingsTreeView)
         for k in range(len(probeList)):
             print("Save new PROBE constants into file: " + probeList[k].getName())
 
@@ -378,7 +378,7 @@ class IniFile:
 
         # SAVE LUMPED PART SETTINGS
 
-        lumpedPartList = self.freeCADHelpers.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
+        lumpedPartList = self.cadHelpers.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
         print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
         for k in range(len(lumpedPartList)):
             print("Saving new LUMPED PART " + lumpedPartList[k].getName())
@@ -453,8 +453,8 @@ class IniFile:
             # DEBUG: now read hardwired file name with __file__ + "_settings.ini"
             #
             print("setting default filename...")
-            programname = os.path.basename(App.ActiveDocument.FileName)
-            programdir = os.path.dirname(App.ActiveDocument.FileName)
+            programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())
+            programdir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
             programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
             outFile = programdir + '/' + programbase + "_settings.ini"
         else:
@@ -765,7 +765,7 @@ class IniFile:
                             #
                             errorLoadByName = False
                             try:
-                                freeCadObj = App.ActiveDocument.getObjectsByLabel(itemName)[0]
+                                freeCadObj = self.cadHelpers.getObjectsByLabel(itemName)[0]
                             except:
                                 #
                                 #   Object is not available using its label so it found based on it freeCad ID
@@ -779,7 +779,7 @@ class IniFile:
                                     continue
 
                                 elif len(objFreeCadId) > 0:
-                                    freeCadObj = App.ActiveDocument.getObject(objFreeCadId)
+                                    freeCadObj = self.cadHelpers.getObjectById(objFreeCadId)
                                     if not freeCadObj is None:
                                         #
                                         #   Object was found based on its freeCad ID, icon will be set as warning icon
@@ -812,17 +812,17 @@ class IniFile:
                             treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
                             if (freeCadObj.Name.find("Sketch") > -1):
-                                treeItem.setIcon(0, QtGui.QIcon("./img/wire.svg"))
+                                treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "wire.svg")))
                             elif (freeCadObj.Name.find("Discretized_Edge") > -1):
-                                treeItem.setIcon(0, QtGui.QIcon("./img/curve.svg"))
+                                treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "curve.svg")))
                             else:
-                                treeItem.setIcon(0, QtGui.QIcon("./img/object.svg"))
+                                treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "object.svg")))
 
                             #
                             #	THERE IS MISMATCH BETWEEN NAME STORED IN IN FILE AND FREECAD NAME
                             #
                             if errorLoadByName:
-                                treeItem.setIcon(0, QtGui.QIcon("./img/errorLoadObject.svg"))
+                                treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "errorLoadObject.svg")))
 
                             targetGroup[k].child(m).addChild(treeItem)
                             print("\tItem added")
@@ -863,7 +863,7 @@ class IniFile:
                     # adding item into priority list
                     topItem = QtWidgets.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-                    topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
+                    topItem.setIcon(0, self.cadHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
                 #sort topItemList using its keys
@@ -905,7 +905,7 @@ class IniFile:
                     # adding item into priority list
                     topItem = QtWidgets.QTreeWidgetItem([prioritySettingsKey])
                     topItem.setData(0, QtCore.Qt.UserRole, prioritySettingsType)
-                    topItem.setIcon(0, self.freeCADHelpers.getIconByCategory(prioritySettingsType))
+                    topItem.setIcon(0, self.cadHelpers.getIconByCategory(prioritySettingsType))
                     topItemsList[prioritySettingsOrder] = topItem
 
                 #sort topItemList using its keys

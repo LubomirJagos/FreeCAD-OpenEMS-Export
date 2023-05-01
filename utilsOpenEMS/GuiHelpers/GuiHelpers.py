@@ -1,9 +1,11 @@
 from PySide2 import QtGui, QtCore, QtWidgets
 import re
+import os
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
 class GuiHelpers:
-    def __init__(self, form, statusBar = None):
+    def __init__(self, form, statusBar = None, APP_DIR=""):
+        self.APP_DIR = APP_DIR
         self.form = form
         self.statusBar = statusBar
 
@@ -28,34 +30,32 @@ class GuiHelpers:
     def initRightColumnTopLevelItems(self):
         # MATERIALS
         topItem = QtWidgets.QTreeWidgetItem(["Material"])
-        topItem.setIcon(0, QtGui.QIcon("./img/material.svg"))
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "material.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # EXCITATION
         topItem = QtWidgets.QTreeWidgetItem(["Excitation"])
-        topItem.setIcon(0, QtGui.QIcon("./img/excitation.svg"))
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "excitation.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # GRID
         topItem = QtWidgets.QTreeWidgetItem(["Grid"])
-        topItem.setIcon(0, QtGui.QIcon("./img/grid.svg"))
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "grid.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # PORTS
         topItem = QtWidgets.QTreeWidgetItem(["Port"])
-        topItem.setIcon(0, QtGui.QIcon("./img/port.svg"))
-        # topItem.addChildren([defaultPortItem])	#NO DEFAULT ITEM
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "port.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # PROBES
         topItem = QtWidgets.QTreeWidgetItem(["Probe"])
-        topItem.setIcon(0, QtGui.QIcon("./img/probe.svg"))
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "probe.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # LUMPED PART
         topItem = QtWidgets.QTreeWidgetItem(["LumpedPart"])
-        topItem.setIcon(0, QtGui.QIcon("./img/lumpedpart.svg"))
-        # topItem.addChildren([defaultLumpedPartItem])	#NO DEFAULT ITEM
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "lumpedpart.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         return
@@ -127,7 +127,7 @@ class GuiHelpers:
         itemTypeReg = re.search("(.*)SettingsItem", str(settingsItem.__class__.__name__))
         typeStr = itemTypeReg.group(1)
 
-        treeItem.setIcon(0, QtGui.QIcon("./img/" + typeStr.lower() + ".svg"))
+        treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img",  typeStr.lower()+".svg")))
         treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
         # add item into excitation list

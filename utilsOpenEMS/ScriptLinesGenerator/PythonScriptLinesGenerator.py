@@ -3,13 +3,12 @@
 #
 import os
 from PySide2 import QtGui, QtCore, QtWidgets
-import FreeCAD as App
-import Mesh
 import numpy as np
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
+from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
 class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 
@@ -24,6 +23,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
         # GUI helpers function like display message box and so
         #
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
+        self.cadHelpers = FactoryCadInterface.createHelper()
 
     def getCoordinateSystemScriptLines(self):
         genScript = ""
@@ -130,7 +130,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
                 objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
                 # getting reference to FreeCAD object
-                freeCadObj = [i for i in App.ActiveDocument.Objects if (i.Label) == childName][0]
+                freeCadObj = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName][0]
 
                 if (freeCadObj.Name.find("Discretized_Edge") > -1):
                     #
@@ -194,8 +194,8 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
                     #
                     # going through each concrete material items and generate their .stl files
 
-                    currDir = os.path.dirname(App.ActiveDocument.FileName)
-                    partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
+                    currDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
+                    partToExport = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName]
 
                     #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
                     if (not outputDir is None):
@@ -203,7 +203,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
                     else:
                         exportFileName = os.path.join(currDir, stlModelFileName)
 
-                    Mesh.export(partToExport, exportFileName)
+                    self.cadHelpers.exportSTL(partToExport, exportFileName)
                     print("Material object exported as STL into: " + stlModelFileName)
 
             genScript += "\n"
@@ -239,7 +239,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
             print("#name: " + currSetting.getName())
             print("#type: " + currSetting.getType())
 
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
@@ -416,7 +416,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
             genScript += "% LUMPED PARTS " + currSetting.getName() + "\n"
 
             # traverse through all children item for this particular lumped part settings
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             objsExport = []
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
@@ -478,7 +478,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 
         for [item, currSetting] in items:
 
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
@@ -538,7 +538,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
         _assoc = lambda idx: list(map(str.strip, self.form.meshPriorityTreeView.topLevelItem(idx).text(0).split(',')))
         orderedAssociations = [_assoc(k) for k in reversed(range(meshPrioritiesCount))]
         gridSettingsNodeNames = [gridSettingsNode.text(0) for [gridSettingsNode, gridSettingsInst] in items]
-        fcObjects = {obj.Label: obj for obj in App.ActiveDocument.Objects}
+        fcObjects = {obj.Label: obj for obj in self.cadHelpers.getObjects()}
 
         for gridSettingsNodeName in gridSettingsNodeNames:
             print("Grid type : " + gridSettingsNodeName)
@@ -832,7 +832,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
 
         genScript += "## prepare simulation folder\n"
         genScript += "Sim_Path = os.path.join(currDir, 'simulation_output')\n"
-        genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml'\n"
+        genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(self.cadHelpers.getCurrDocumentFileName()))[0] + ".xml'\n"
 
         genScript += "if os.path.exists(Sim_Path):\n"
         genScript += "\tshutil.rmtree(Sim_Path)   # clear previous directory\n"
@@ -988,7 +988,7 @@ f_res = f0;
                         print("#name: " + currSetting.getName())
                         print("#type: " + currSetting.getType())
 
-                        objs = App.ActiveDocument.Objects
+                        objs = self.cadHelpers.getObjects()
                         for k in range(item.childCount()):
                             childName = item.child(k).text(0)
 
