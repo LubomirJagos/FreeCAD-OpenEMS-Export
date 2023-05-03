@@ -1,68 +1,19 @@
-import re
-from PySide import QtGui, QtCore
-import FreeCAD as App
-import FreeCADGui, Part
+from utilsOpenEMS.GuiHelpers.CadInterface import CadInterface
+
+import FreeCAD
+import FreeCADGui
 import Draft
+import Mesh
 
-class FreeCADHelpers:
-    def getOpenEMSObjects(self, filterStr=""):
-        currentObjects = App.ActiveDocument.Objects
+class FreeCADHelpers(CadInterface):
 
-        objToExport = []
-
-        for obj in currentObjects:
-            if (len(filterStr) > 0 and re.search(filterStr, obj.Label, re.IGNORECASE)):
-                objToExport.append(obj)
-            elif (len(filterStr) == 0):
-                objToExport.append(obj)
-
-        return objToExport
-
-    def getAllObjects(self):
-        currentObjects = App.ActiveDocument.Objects
-        objList = []
-        for obj in currentObjects:
-            item = QtGui.QTreeWidgetItem([obj.Label])
-            if (obj.Name.find("Sketch") > -1):
-                item.setIcon(0, QtGui.QIcon("./img/wire.svg"))
-            elif (obj.Name.find("Discretized_Edge") > -1):
-                item.setIcon(0, QtGui.QIcon("./img/curve.svg"))
-            else:
-                item.setIcon(0, QtGui.QIcon("./img/object.svg"))
-            objList.append(item)
-        return objList
-
-    def getIconByCategory(self, categoryName):
-        if 'Material' in categoryName:
-            iconPath = "./img/material.svg"
-        elif 'Excitation' in categoryName:
-            iconPath = "./img/excitation.svg"
-        elif 'Grid' in categoryName:
-            iconPath = "./img/grid.svg"
-        elif 'LumpedPart' in categoryName:
-            iconPath = "./img/lumpedpart.svg"
-        elif 'Port' in categoryName:
-            iconPath = "./img/port.svg"
-        else:
-            iconPath = "./img/error.svg"
-
-        return QtGui.QIcon(iconPath)
-
-    # return all items, at least all top level
-    def getAllTreeWidgetItems(self, treeWidget):
-        root = treeWidget.invisibleRootItem()
-        child_count = root.childCount()
-        itemList = []
-        for i in range(child_count):
-            print('Copying tree widget item ' + root.child(i).data(0, QtCore.Qt.UserRole).getName())
-            item = root.child(i)
-            itemList.append(item.data(0, QtCore.Qt.UserRole))
-        return itemList
+    def __init__(self, APP_DIR=""):
+        super(FreeCADHelpers, self).__init__(APP_DIR)
 
     def selectObjectByLabel(self, objLabel):
-        freecadObj = App.ActiveDocument.getObjectsByLabel(objLabel)
+        freecadObj = FreeCAD.ActiveDocument.getObjectsByLabel(objLabel)
         if (freecadObj):
-            FreeCADGui.Selection.addSelection(App.ActiveDocument.Name, freecadObj[0].Name, '')
+            FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name, freecadObj[0].Name, '')
 
     #
     #	Draw line in Draft mode, this will be to show grid when going through object assigned to grid.
@@ -71,17 +22,17 @@ class FreeCADHelpers:
     #		rotation hardwires now pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
     #
     def drawDraftLine(self, lineName, p1Array, p2Array, gridLineStyle="Solid"):
-        pl = App.Placement()
+        pl = FreeCAD.Placement()
         pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
-        pl.Base = App.Vector(p1Array[0], p1Array[1], p1Array[2])
-        points = [App.Vector(p1Array[0], p1Array[1], p1Array[2]), App.Vector(p2Array[0], p2Array[1], p2Array[2])]
+        pl.Base = FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2])
+        points = [FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2])]
         line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None)
         line.Label = lineName  # set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
         FreeCADGui.ActiveDocument.getObject(line.Name).DrawStyle = gridLineStyle
         Draft.autogroup(line)
 
     def drawDraftCircle(self, lineName, centerPoint, radius):
-        pl = App.Placement()
+        pl = FreeCAD.Placement()
         pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
         pl.Base = centerPoint
         circle = Draft.makeCircle(radius=radius, placement=pl, face=False, support=None)
@@ -103,7 +54,7 @@ class FreeCADHelpers:
                     for k in range(child_count3):
                         print(root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName())
                         freeCadObjName = root.child(i).child(j).child(k).data(0, QtCore.Qt.UserRole).getName()
-                        freeCadObj = App.ActiveDocument.getObjectsByLabel(freeCadObjName)
+                        freeCadObj = FreeCAD.ActiveDocument.getObjectsByLabel(freeCadObjName)
                         itemList.append(freeCadObj)
 
         # values initialization, for minimal values must have be init to big numbers to be sure they will be overwritten, for max values have to put their small numbers to be sure to be overwritten
@@ -130,3 +81,46 @@ class FreeCADHelpers:
                 maxZ = bBox.ZMax
 
         return minX, minY, minZ, maxX, maxY, maxZ
+
+    def getObjects(self):
+        return FreeCAD.ActiveDocument.Objects
+
+    def removeObject(self, objName):
+        """
+        Remove object from FreeCAD, used mainly to remove generated gridlines.
+        :param objName:
+        :return:
+        """
+        FreeCAD.ActiveDocument.removeObject(objName)
+    def getCurrDocumentFileName(self):
+        return FreeCAD.ActiveDocument.FileName
+
+    def getObjectsByLabel(self, objLabel):
+        return FreeCAD.ActiveDocument.getObjectsByLabel(objLabel)
+
+    def getObjectById(self, objId):
+        return FreeCAD.ActiveDocument.getObject(objId)
+
+    def loadUI(self, path_to_ui, obj):
+        return FreeCADGui.PySideUic.loadUi(path_to_ui, obj)
+
+    def printError(self, msg):
+        FreeCAD.Console.PrintError(msg)
+
+    def printWarning(self, msg):
+        FreeCAD.Console.PrintWarning(msg)
+
+    def clearSelection(self):
+        FreeCADGui.Selection.clearSelection()
+
+    def getCurrDocumentFileName(self):
+        return FreeCAD.ActiveDocument.FileName
+
+    def Vector(self,x,y,z):
+        return FreeCAD.Vector(x,y,z)
+
+    def recompute(self):
+        FreeCAD.ActiveDocument.recompute()
+
+    def exportSTL(self, partToExport, exportFileName):
+        Mesh.export(partToExport, exportFileName)

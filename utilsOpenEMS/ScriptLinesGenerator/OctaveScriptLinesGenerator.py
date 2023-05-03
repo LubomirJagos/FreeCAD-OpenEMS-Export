@@ -2,9 +2,7 @@
 #
 #
 import os
-from PySide import QtGui, QtCore
-import FreeCAD as App
-import Mesh
+from PySide2 import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math
@@ -12,6 +10,7 @@ import math
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
+from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
 class OctaveScriptLinesGenerator:
 
@@ -29,6 +28,7 @@ class OctaveScriptLinesGenerator:
         # GUI helpers function like display message box and so
         #
         self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
+        self.cadHelpers = FactoryCadInterface.createHelper()
 
     def getUnitLengthFromUI_m(self):
         unitStr = self.form.simParamsDeltaUnitList.currentText()
@@ -89,8 +89,8 @@ class OctaveScriptLinesGenerator:
     #       - name without extension
     #
     def getCurrDir(self):
-        programname = os.path.basename(App.ActiveDocument.FileName)
-        programDir = os.path.dirname(App.ActiveDocument.FileName)
+        programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())
+        programDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
         programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
         return [programDir, programbase]
 
@@ -99,8 +99,8 @@ class OctaveScriptLinesGenerator:
     #       outputDir - absolute path to directory where folder with simulation files should be created
     #
     def createOuputDir(self, outputDir):
-        programname = os.path.basename(App.ActiveDocument.FileName)     # FreeCAD filename with extension
-        programdir = os.path.dirname(App.ActiveDocument.FileName)       # FreeCAD file directory
+        programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())     # FreeCAD filename with extension
+        programdir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())       # FreeCAD file directory
         programbase, ext = os.path.splitext(programname)                # FreeCAD filename without extension
 
         #
@@ -265,7 +265,7 @@ class OctaveScriptLinesGenerator:
                     objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
                     # getting reference to FreeCAD object
-                    freeCadObj = [i for i in App.ActiveDocument.Objects if (i.Label) == childName][0]
+                    freeCadObj = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName][0]
 
                     if (freeCadObj.Name.find("Discretized_Edge") > -1):
                         #
@@ -328,8 +328,8 @@ class OctaveScriptLinesGenerator:
                         #
                         # going through each concrete material items and generate their .stl files
 
-                        currDir = os.path.dirname(App.ActiveDocument.FileName)
-                        partToExport = [i for i in App.ActiveDocument.Objects if (i.Label) == childName]
+                        currDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
+                        partToExport = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName]
 
                         #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
                         if (not outputDir is None):
@@ -337,8 +337,8 @@ class OctaveScriptLinesGenerator:
                         else:
                             exportFileName = f"{currDir}/{stlModelFileName}"
 
-                        Mesh.export(partToExport, exportFileName)
-                        print("Material object exported as STL into: " + stlModelFileName)
+                        self.cadHelpers.exportSTL(partToExport, exportFileName)
+                        print("Material object exported as STL into: " + exportFileName)
 
             genScript += "\n"
 
@@ -376,7 +376,7 @@ class OctaveScriptLinesGenerator:
 
             print(f"#PORT - {currSetting.getName()} - {currSetting.getType()}")
 
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
@@ -985,7 +985,7 @@ class OctaveScriptLinesGenerator:
 
             print(f"#PROBE - {currSetting.getName()} - {currSetting.getType()}")
 
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
@@ -1033,7 +1033,7 @@ class OctaveScriptLinesGenerator:
                                 argStr += "]"
                             else:
                                 argStr += "f0]#{ERROR NO FREQUENCIES FOR PROBE FOUND, SO INSTEAD USED f0#}"
-                                App.Console.PrintWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
+                                self.cadHelpers.printWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
 
                         genScript += "CSX = AddProbe(CSX, '" + probeName + "', probeType" + argStr + ");\n"
                         genScript += 'probeStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
@@ -1099,7 +1099,7 @@ class OctaveScriptLinesGenerator:
                             else:
                                 emptyFrequencyListError = True
                                 argStr += "f0]"
-                                App.Console.PrintWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
+                                self.cadHelpers.printWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
 
                         #if error put note about it into script
                         if emptyFrequencyListError:
@@ -1179,7 +1179,7 @@ class OctaveScriptLinesGenerator:
             genScript += "% LUMPED PARTS " + currentSetting.getName() + "\n"
 
             # traverse through all children item for this particular lumped part settings
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
                 print(f"#LUMPED PART {currentSetting.getType()} - {currentSetting.getName()}")
@@ -1237,7 +1237,7 @@ class OctaveScriptLinesGenerator:
 
         for [item, currSetting] in items:
 
-            objs = App.ActiveDocument.Objects
+            objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
 
@@ -1298,7 +1298,7 @@ class OctaveScriptLinesGenerator:
         _assoc = lambda idx: list(map(str.strip, self.form.meshPriorityTreeView.topLevelItem(idx).text(0).split(',')))
         orderedAssociations = [_assoc(k) for k in reversed(range(meshPrioritiesCount))]
         gridSettingsNodeNames = [gridSettingsNode.text(0) for [gridSettingsNode, gridSettingsInst] in items]
-        fcObjects = {obj.Label: obj for obj in App.ActiveDocument.Objects}
+        fcObjects = {obj.Label: obj for obj in self.cadHelpers.getObjects()}
 
         for gridSettingsNodeName in gridSettingsNodeNames:
             print("Grid type : " + gridSettingsNodeName)
@@ -1718,7 +1718,7 @@ class OctaveScriptLinesGenerator:
         # Update status bar to inform user that exporting has begun.
         if self.statusBar is not None:
             self.statusBar.showMessage("Generating OpenEMS script and geometry files ...", 5000)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
 
         # Constants and variable initialization.
 
@@ -1763,7 +1763,7 @@ class OctaveScriptLinesGenerator:
         genScript += "%% prepare simulation folder\n"
         genScript += "Sim_Path = 'simulation_output';\n"
 
-        #genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(App.ActiveDocument.FileName))[0] + ".xml';\n"
+        #genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(self.cadHelpers.getCurrDocumentFileName()))[0] + ".xml';\n"
         genScript += "Sim_CSX = '" + nameBase + ".xml';\n"
 
         genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"

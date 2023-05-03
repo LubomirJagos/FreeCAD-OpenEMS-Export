@@ -1,9 +1,11 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 import re
+import os
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
 class GuiHelpers:
-    def __init__(self, form, statusBar = None):
+    def __init__(self, form, statusBar = None, APP_DIR=""):
+        self.APP_DIR = APP_DIR
         self.form = form
         self.statusBar = statusBar
 
@@ -11,7 +13,7 @@ class GuiHelpers:
         if (not forceModal) and (self.statusBar is not None):
             self.statusBar.showMessage(msgText, 5000)
         else:
-            msgBox = QtGui.QMessageBox()
+            msgBox = QtWidgets.QMessageBox()
             msgBox.setText(msgText)
             msgBox.exec()
 
@@ -19,43 +21,41 @@ class GuiHelpers:
     #   Display messagebox wit Save/Cancel buttons and after user choice return True/False
     #
     def displayYesNoMessage(self, msgText):
-        msgBox = QtGui.QMessageBox()
+        msgBox = QtWidgets.QMessageBox()
         msgBox.setText(msgText)
         #msgBox.setInformativeText("Do you want to save your changes?")
-        msgBox.setStandardButtons(QtGui.QMessageBox.Save | QtGui.QMessageBox.Cancel)
-        return msgBox.exec() == QtGui.QMessageBox.Save
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Cancel)
+        return msgBox.exec() == QtWidgets.QMessageBox.Save
 
     def initRightColumnTopLevelItems(self):
         # MATERIALS
-        topItem = QtGui.QTreeWidgetItem(["Material"])
-        topItem.setIcon(0, QtGui.QIcon("./img/material.svg"))
+        topItem = QtWidgets.QTreeWidgetItem(["Material"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "material.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # EXCITATION
-        topItem = QtGui.QTreeWidgetItem(["Excitation"])
-        topItem.setIcon(0, QtGui.QIcon("./img/excitation.svg"))
+        topItem = QtWidgets.QTreeWidgetItem(["Excitation"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "excitation.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # GRID
-        topItem = QtGui.QTreeWidgetItem(["Grid"])
-        topItem.setIcon(0, QtGui.QIcon("./img/grid.svg"))
+        topItem = QtWidgets.QTreeWidgetItem(["Grid"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "grid.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # PORTS
-        topItem = QtGui.QTreeWidgetItem(["Port"])
-        topItem.setIcon(0, QtGui.QIcon("./img/port.svg"))
-        # topItem.addChildren([defaultPortItem])	#NO DEFAULT ITEM
+        topItem = QtWidgets.QTreeWidgetItem(["Port"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "port.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # PROBES
-        topItem = QtGui.QTreeWidgetItem(["Probe"])
-        topItem.setIcon(0, QtGui.QIcon("./img/probe.svg"))
+        topItem = QtWidgets.QTreeWidgetItem(["Probe"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "probe.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         # LUMPED PART
-        topItem = QtGui.QTreeWidgetItem(["LumpedPart"])
-        topItem.setIcon(0, QtGui.QIcon("./img/lumpedpart.svg"))
-        # topItem.addChildren([defaultLumpedPartItem])	#NO DEFAULT ITEM
+        topItem = QtWidgets.QTreeWidgetItem(["LumpedPart"])
+        topItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img", "lumpedpart.svg")))
         self.form.objectAssignmentRightTreeWidget.insertTopLevelItem(0, topItem)
 
         return
@@ -122,12 +122,12 @@ class GuiHelpers:
     #
     def addSettingsItemGui(self, settingsItem):
         treeItemName = settingsItem.name
-        treeItem = QtGui.QTreeWidgetItem([treeItemName])
+        treeItem = QtWidgets.QTreeWidgetItem([treeItemName])
 
         itemTypeReg = re.search("(.*)SettingsItem", str(settingsItem.__class__.__name__))
         typeStr = itemTypeReg.group(1)
 
-        treeItem.setIcon(0, QtGui.QIcon("./img/" + typeStr.lower() + ".svg"))
+        treeItem.setIcon(0, QtGui.QIcon(os.path.join(self.APP_DIR, "img",  typeStr.lower()+".svg")))
         treeItem.setData(0, QtCore.Qt.UserRole, settingsItem)
 
         # add item into excitation list

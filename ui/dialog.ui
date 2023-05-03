@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1404</width>
-    <height>738</height>
+    <width>1400</width>
+    <height>728</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>FreeCAD to OpenEMS Export</string>
+   <string>OpenEMS Simulation Creator</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -1836,7 +1836,7 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                <property name="text">
                 <string>Hints:
 
-Custom option using fparser lib, possible using user-defined equitaion:
+Custom option using fparser lib, possible using user-defined equation:
     sin(t)
     cos(t)
     if(A,B,C)

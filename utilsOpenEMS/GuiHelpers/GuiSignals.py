@@ -1,4 +1,4 @@
-from PySide.QtCore import Signal, QObject
+from PySide2.QtCore import Signal, QObject
 
 class GuiSignals(QObject):
     materialsChanged = Signal(str)

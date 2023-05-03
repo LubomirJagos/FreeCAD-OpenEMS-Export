@@ -11,7 +11,7 @@ sys.path.insert(0, parentdir)
 
 
 from ExportOpenEMSDialog import ExportOpenEMSDialog
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 
 if __name__ == '__main__':
     #
