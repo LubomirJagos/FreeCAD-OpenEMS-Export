@@ -87,7 +87,8 @@ class BlenderHelpers(CadInterface):
     #########################################################################################################################
 
     def getObjects(self):
-        print(f"{__file__} > getObjects()")
+        #print(f"{__file__} > getObjects()")
+
         #
         #   Simple class to have same members for rest of GUI application, it expecting items to have obj.Name, obj.Label items
         #
@@ -99,7 +100,8 @@ class BlenderHelpers(CadInterface):
         return objList
 
     def getObjectsByLabel(self, objLabel):
-        print(f"{__file__} > getObjectsByLabel()")
+        #print(f"{__file__} > getObjectsByLabel()")
+
         objList = []
         try:
             obj = bpy.context.scene.objects[objLabel]
@@ -110,7 +112,8 @@ class BlenderHelpers(CadInterface):
         return objList
 
     def getObjectById(self, objId):
-        print(f"{__file__} > getObjectById()")
+        #print(f"{__file__} > getObjectById()")
+
         try:
             obj = bpy.context.scene.objects[objId]
             return BlenderToCadObject(obj)
@@ -125,20 +128,29 @@ class BlenderHelpers(CadInterface):
         scene = context.scene
         viewlayer = context.view_layer
 
-        obs = [o for o in scene.objects if o.type == 'MESH' and o.name == partToExport[0].Name]
+        obs = [o for o in scene.objects if o.type == 'MESH' and o.name == partToExport[0].Label]
         bpy.ops.object.select_all(action='DESELECT')
 
         for ob in obs:
             viewlayer.objects.active = ob
             ob.select_set(True)
-            bpy.ops.export_mesh.stl(
-                filepath=str(exportFileName),
-                use_selection=True)
+
+            #
+            #   HERE MUST BE TEMPORARY OBJECT OVERRIDE WHEN RUNNING THIS IN SCRIPT OTHERWISE IT'S NOT GENERATING STL FILES
+            #       when was developing addon using main thread of blender it was running normal, but when running in separate thread
+            #       context override is needed
+            #       https://docs.blender.org/api/current/bpy.ops.html
+            #
+            override = bpy.context.copy()
+            override["selected_objects"] = [ob]
+            with bpy.context.temp_override(**override):
+                bpy.ops.export_mesh.stl(filepath=str(exportFileName), use_selection=True)
+
             ob.select_set(False)
 
     def getCurrDocumentFileName(self):
         currentFile = bpy.data.filepath
-        print(f"{__file__} > getCurrDocumentFileName() > {currentFile}")
+        #print(f"{__file__} > getCurrDocumentFileName() > {currentFile}")
         return currentFile
 
     def removeObject(self, objName):

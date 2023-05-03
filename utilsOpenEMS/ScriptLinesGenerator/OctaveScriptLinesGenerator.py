@@ -338,7 +338,7 @@ class OctaveScriptLinesGenerator:
                             exportFileName = f"{currDir}/{stlModelFileName}"
 
                         self.cadHelpers.exportSTL(partToExport, exportFileName)
-                        print("Material object exported as STL into: " + stlModelFileName)
+                        print("Material object exported as STL into: " + exportFileName)
 
             genScript += "\n"
 
