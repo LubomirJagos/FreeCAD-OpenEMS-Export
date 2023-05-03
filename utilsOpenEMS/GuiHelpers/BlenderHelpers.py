@@ -9,8 +9,11 @@ from mathutils import Vector
 
 class BlenderToCadObject:
     def __init__(self, blenderObj):
-        self.Name = blenderObj.name
-        self.Label = blenderObj.name                        #since in openEMS addon is used Label set it same value as name since names in Blender are unique
+        self.Label = blenderObj.name
+        try:
+            self.Name = blenderObj['freeCadId']
+        except:
+            self.Name = blenderObj.name
         self.Shape = BlenderToCadShapeObject(blenderObj)
 
 class BlenderToCadShapeObject:
@@ -84,7 +87,7 @@ class BlenderHelpers(CadInterface):
     #########################################################################################################################
 
     def getObjects(self):
-
+        print(f"{__file__} > getObjects()")
         #
         #   Simple class to have same members for rest of GUI application, it expecting items to have obj.Name, obj.Label items
         #
@@ -112,6 +115,9 @@ class BlenderHelpers(CadInterface):
             obj = bpy.context.scene.objects[objId]
             return BlenderToCadObject(obj)
         except:
+            for obj in bpy.context.scene.objects:
+                if 'freeCadId' in obj.keys() and obj['freeCadId'] == objId:
+                    return BlenderToCadObject(obj)
             return None
 
     def exportSTL(self, partToExport, exportFileName):

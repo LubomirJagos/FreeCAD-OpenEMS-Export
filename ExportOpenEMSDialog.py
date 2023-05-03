@@ -7,6 +7,7 @@ import numpy as np
 import collections
 import math
 import copy
+import threading
 
 #import needed local classes
 import sys
@@ -22,6 +23,7 @@ except:
 
 try:
 	import bpy
+	import uuid
 	APP_CONTEXT = "Blender"
 except:
 	pass
@@ -86,6 +88,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.observer.endObservation()
 			self.observer = None
 			print("FreeCAD observer terminated.")
+		elif self.cadInterfaceType == "Blender":
+			print(f"Thread killed.")
 
 	def eventFilter(self, object, event):
 		if event.type() == QtCore.QEvent.Close:
@@ -406,8 +410,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#	TODO:
 				#		- register add/remove/rename handlers for objects
 				#
-			except:
+				#bpy.app.handlers.depsgraph_update_post.append(self.blenderSceneUpdatePost)
+				#bpy.app.handlers.depsgraph_update_pre.append(self.blenderSceneUpdatePre)
+			except Exception as e:
 				self.cadHelpers.printError("Cannot create Blender observer, there is no connection to CAD program signals.")
+				self.cadHelpers.printError(f"Error: {e}")
 				pass
 
 		#
@@ -518,6 +525,26 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		# remove object label from internal list
 		del self.internalObjectNameLabelList[obj.Name]
+
+	def blenderSceneUpdatePost(self, scene, depsgraph):
+		print(f"blenderSceneUpdatePost() tiggered")
+		dir(depsgraph)
+		return
+
+	def blenderSceneUpdatePre(self, scene, depsgraph):
+		print(f"blenderSceneUpdatePost() tiggered")
+		dir(depsgraph)
+		return
+
+	def blenderDetectRenamedObjects(self):
+		"""
+		objectPreviousNames = objectsNamesIdList.keys()
+		for k in range(self.form.objectAssignmentLeftTreeWidget.topLevelItemCount()):
+			itemName = self.form.objectAssignmentLeftTreeWidget.topLevelItem(k).text(0)
+			itemData = self.form.objectAssignmentLeftTreeWidget.topLevelItem(k).data(0, QtCore.Qt.UserRole)
+			if not itemName in objectPreviousNames:
+				self.cadHelpers.getObjectsByLabel(itemName)
+		"""
 
 	def simParamsMinDecrementValueChanged(self, newValue):
 		if newValue == 0:
@@ -3223,13 +3250,67 @@ if __name__ == "__main__":
 	#	TODO:
 	#		- in case of running from Blender app must run in parallel, now Blender window is waiting for close addon
 	#
+	if APP_CONTEXT == "Blender":
+		"""
+			Finally this is running, it will create Misc tab on right side of View3D and there is button for open
+			addon to specify simulation.
+			
+			Found in forum here: https://blenderartists.org/t/parent-pyqt-window-widget-to-blenders-window/700722/17
+			related:			 https://blenderartists.org/t/bqt-custom-ui-for-add-ons-tool-in-blender-with-pyqt-or-pyside/1458808
+		"""
+		class PYSIDE_PT_tools_my_panel(bpy.types.Panel):
+			bl_label = "Export to OpenEMS"
+			bl_space_type = 'VIEW_3D'
+			bl_region_type = 'UI'
 
-	#
-	#	Check application running context, when running from FreeCAD or Blender QApplication object is probably already
-	#	created so it's not needed.
-	#	When running from command line as standalone application it's needed to create QApplication.
-	#
-	if APP_CONTEXT in ['None', 'Blender']:
+			def draw(self, context):
+				layout = self.layout
+				layout.operator('pyside.display_window')
+
+
+		class PYSIDE_OT_display_window(bpy.types.Operator):
+			bl_idname = 'pyside.display_window'
+			bl_label = "Show Export Dialog"
+			bl_options = {'REGISTER'}
+
+			def execute(self, context):
+				blenderAssignObjectsUniqueId()
+
+				self.app = QtWidgets.QApplication.instance()
+				if not self.app:
+					self.app = QtWidgets.QApplication(['blender'])
+
+				self.event_loop = QtCore.QEventLoop()
+				self.widget = ExportOpenEMSDialog()
+				self.widget.show()
+
+				return {'FINISHED'}
+
+		CLASSES = [PYSIDE_OT_display_window, PYSIDE_PT_tools_my_panel]
+		def register():
+			for cls in CLASSES:
+				bpy.utils.register_class(cls)
+		def unregister():
+			for cls in CLASSES:
+				bpy.utils.unregister_class(cls)
+
+		def blenderAssignObjectsUniqueId():
+			"""
+			Iterates over bpy.data.object (THIS IS IMPORTANT IT'S DATA NOT CONTEXT.SCENE.OBJECTS) and assign unique id into freeCadId if is not defined.
+			:return: None
+			"""
+			global objectsIdNamesList = []
+			global objectsNamesIdList = []
+			for obj in bpy.data.objects:
+				if not "freeCadId" in obj.keys():
+					obj['freeCadId'] = str(uuid.uuid4())
+					print(f"assigned uuid for {obj.name}: {obj['freeCadId']}")
+				objectsIdNamesList[obj['freeCadId']] = obj.name			#stores names under object id to detect later renamed objects
+				objectsNamesIdList[obj.name] = obj['freeCadId']			#stores names under object id to detect later renamed objects
+
+		register()
+
+	elif APP_CONTEXT == "None":
 		try:
 			app = QtWidgets.QApplication.instance()
 			if app is None:
@@ -3237,15 +3318,17 @@ if __name__ == "__main__":
 		except:
 			pass
 
-	#
-	#	Display openEMS export window.
-	#
-	panel = ExportOpenEMSDialog()
-	panel.show()
+	if APP_CONTEXT in ["None", "FreeCAD"]:
+		#
+		#	Display openEMS export window.
+		#
+		panel = ExportOpenEMSDialog()
+		panel.show()
 
 	#
 	#	If running as standalone application this will fire application and run it (probably starts Qt event loop).
 	#
-	if APP_CONTEXT in ['None', 'Blender']:
+	if APP_CONTEXT in ['None']:
 		app.exec_()
-		#app.exit()
+
+	print("ExportOpenEMSDialog.py finished.")
