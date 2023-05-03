@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>FreeCAD to OpenEMS Export</string>
+   <string>OpenEMS Simulation Creator</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>

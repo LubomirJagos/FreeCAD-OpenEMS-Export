@@ -533,6 +533,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		"""
 		currentObjectsList_Id_Name = {}
 		currentObjectsList_Name_Id = {}
+
 		newObjects_Name_Id = {}
 		deletedObjects_Id_Name = {}
 		renamedObjects_Id_Name = {}
@@ -544,11 +545,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			currentObjectsList_Id_Name[obj['freeCadId']] = obj.name  # stores names under object id to detect later renamed objects
 			currentObjectsList_Name_Id[obj.name] = obj['freeCadId']  # stores names under object id to detect later renamed objects
 
-		if not hasattr(self, 'previousObjectsList_Name_Id') or len(self.previousObjectsList_Name_Id) == 0:
+		if not hasattr(self, 'previousObjectsList_Id_Name') or len(self.previousObjectsList_Name_Id) == 0:
+			#
+			#	These two dict are for blender to react on add/remove/rename object events, since there are no appropriate signals
+			#	from blender there is update for everytime user make addon window active and this dict store values to compare
+			#	current object names and ids to previous values.
+			#
 			self.previousObjectsList_Id_Name = currentObjectsList_Id_Name
 			self.previousObjectsList_Name_Id = currentObjectsList_Name_Id
+
+			#
+			#	Since when these list are created means addon was just run up and here first ID were generated if they werent there so
+			#	internal list for objects which is created during initLetfColumn is not populated, so now repopulate it and internal
+			#	list will have right values of name, id
+			#
+			self.initLeftColumnTopLevelItems(self.form.objectAssignmentFilterLeft.text())
 		else:
-			newObjects_Name_Id = dict([(key,value) for key,value in currentObjectsList_Name_Id.items() if key not in self.previousObjectsList_Name_Id.keys()])
+			newObjects_Name_Id = dict([(key,value) for key,value in currentObjectsList_Name_Id.items() if value not in self.previousObjectsList_Name_Id.values()])
 			deletedObjects_Id_Name = dict([(key,value) for key,value in self.previousObjectsList_Id_Name.items() if key not in currentObjectsList_Id_Name.keys()])
 			renamedObjects_Id_Name = dict([(key,value) for key,value in currentObjectsList_Id_Name.items() if key in self.previousObjectsList_Id_Name.keys() and key in currentObjectsList_Id_Name.keys() and self.previousObjectsList_Id_Name[key] != currentObjectsList_Id_Name[key]])
 
