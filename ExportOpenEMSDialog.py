@@ -38,7 +38,9 @@ if APP_CONTEXT == 'Blender':
 	#
 	#	This here is because Blender pyhton is not providing right info about paths in __file__ when running from editor
 	#
-	if bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
+
+	if hasattr(bpy.context, 'space_data') and bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
+		#this is when this file is run inside blender in text editor
 		APP_DIR = os.path.dirname(bpy.context.space_data.text.filepath)
 	else:
 		APP_DIR = os.path.dirname(__file__)
