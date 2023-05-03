@@ -94,6 +94,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	def eventFilter(self, object, event):
 		if event.type() == QtCore.QEvent.Close:
 			self.finished()
+		elif event.type() == QtCore.QEvent.WindowActivate and self.cadInterfaceType == "Blender":
+			self.blenderWindowActivatedHandler()
 		return super(ExportOpenEMSDialog, self).eventFilter(object, event)
 		
 	def __init__(self):		
@@ -404,19 +406,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.cadHelpers.printError("Cannot create FreeCAD observer, there is no connection to CAD program signals.")
 				pass
 		elif APP_CONTEXT == "Blender":
-			try:
-				print("TODO add blender register handlers...")
-				#
-				#	TODO:
-				#		- register add/remove/rename handlers for objects
-				#
-				#bpy.app.handlers.depsgraph_update_post.append(self.blenderSceneUpdatePost)
-				#bpy.app.handlers.depsgraph_update_pre.append(self.blenderSceneUpdatePre)
-			except Exception as e:
-				self.cadHelpers.printError("Cannot create Blender observer, there is no connection to CAD program signals.")
-				self.cadHelpers.printError(f"Error: {e}")
-				pass
-
+			#
+			#	No handlers registered for Blender since there is no suitable one, add/remove/rename objects is handeld in
+			#	event process when window is focuse objects are re-evaluated.
+			#
+			pass
 		#
 		#	GUI font size change
 		#
@@ -450,7 +444,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.initLeftColumnTopLevelItems(filterStr)
 		
 	
-	def freecadObjectChanged(self, obj, prop):
+	def freecadObjectChanged(self, obj, prop, enableReInitLeftColumn=True):
 		print("freecadObjectChanged :{} ('{}') property changed: {}".format(obj.FullName, obj.Label, prop))
 
 		#property label was changes, object was renamed in freecad
@@ -482,8 +476,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				newLabel = newLabel[:-len(self.internalObjectNameLabelList[obj.Name])] + obj.Label
 				itemToRename.setText(0, newLabel)
 
-			filterStr = self.form.objectAssignmentFilterLeft.text()
-			self.initLeftColumnTopLevelItems(filterStr)
+			#
+			#	TinitLeftCOlumnToLevelItems refill internalObjectNameLabelList, so when working in bulk this reinit must be supressed till last item
+			#
+			if enableReInitLeftColumn:
+				filterStr = self.form.objectAssignmentFilterLeft.text()
+				self.initLeftColumnTopLevelItems(filterStr)
 
 	def freecadBeforeObjectDeleted(self,obj):
 		# event is generated before object is being removed, so observing instances have to 
@@ -526,25 +524,63 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# remove object label from internal list
 		del self.internalObjectNameLabelList[obj.Name]
 
-	def blenderSceneUpdatePost(self, scene, depsgraph):
-		print(f"blenderSceneUpdatePost() tiggered")
-		dir(depsgraph)
-		return
-
-	def blenderSceneUpdatePre(self, scene, depsgraph):
-		print(f"blenderSceneUpdatePost() tiggered")
-		dir(depsgraph)
-		return
-
-	def blenderDetectRenamedObjects(self):
+	def blenderWindowActivatedHandler(self):
 		"""
-		objectPreviousNames = objectsNamesIdList.keys()
-		for k in range(self.form.objectAssignmentLeftTreeWidget.topLevelItemCount()):
-			itemName = self.form.objectAssignmentLeftTreeWidget.topLevelItem(k).text(0)
-			itemData = self.form.objectAssignmentLeftTreeWidget.topLevelItem(k).data(0, QtCore.Qt.UserRole)
-			if not itemName in objectPreviousNames:
-				self.cadHelpers.getObjectsByLabel(itemName)
+		Iterates over bpy.data.object (THIS IS IMPORTANT IT'S DATA NOT CONTEXT.SCENE.OBJECTS) and assign unique id into freeCadId if is not defined.
+		:return: None
 		"""
+		currentObjectsList_Id_Name = {}
+		currentObjectsList_Name_Id = {}
+		newObjects_Name_Id = {}
+		deletedObjects_Id_Name = {}
+		renamedObjects_Id_Name = {}
+
+		for obj in bpy.data.objects:
+			if not "freeCadId" in obj.keys():
+				obj['freeCadId'] = str(uuid.uuid4())
+				print(f"assigned uuid for {obj.name}: {obj['freeCadId']}")
+			currentObjectsList_Id_Name[obj['freeCadId']] = obj.name  # stores names under object id to detect later renamed objects
+			currentObjectsList_Name_Id[obj.name] = obj['freeCadId']  # stores names under object id to detect later renamed objects
+
+		if not hasattr(self, 'previousObjectsList_Name_Id') or len(self.previousObjectsList_Name_Id) == 0:
+			self.previousObjectsList_Id_Name = currentObjectsList_Id_Name
+			self.previousObjectsList_Name_Id = currentObjectsList_Name_Id
+		else:
+			newObjects_Name_Id = dict([(key,value) for key,value in currentObjectsList_Name_Id.items() if key not in self.previousObjectsList_Name_Id.keys()])
+			deletedObjects_Id_Name = dict([(key,value) for key,value in self.previousObjectsList_Id_Name.items() if key not in currentObjectsList_Id_Name.keys()])
+			renamedObjects_Id_Name = dict([(key,value) for key,value in currentObjectsList_Id_Name.items() if key in self.previousObjectsList_Id_Name.keys() and key in currentObjectsList_Id_Name.keys() and self.previousObjectsList_Id_Name[key] != currentObjectsList_Id_Name[key]])
+
+			print(f"new objects: {newObjects_Name_Id}")
+			print(f"deleted objects: {deletedObjects_Id_Name}")
+			print(f"renamed objects: {renamedObjects_Id_Name}")
+
+		class BlenderToCadObject:
+			def __init__(self, label, idStr):
+				self.Label = label
+				self.FullName = label
+				self.Name = idStr
+
+		#
+		#	Operation must be handled in this order to made it correctly:
+		#		rename, delete, new
+		#
+		if len(renamedObjects_Id_Name) > 0:
+			for id,name in renamedObjects_Id_Name.items():
+				self.freecadObjectChanged(BlenderToCadObject(name, id), 'Label', enableReInitLeftColumn=False)
+
+			#reinit left column due it was supressed during bulk renaming
+			self.initLeftColumnTopLevelItems(self.form.objectAssignmentFilterLeft.text())
+
+		if len(deletedObjects_Id_Name) > 0:
+			for id,name in deletedObjects_Id_Name.items():
+				self.freecadBeforeObjectDeleted(BlenderToCadObject(name, id))
+
+		if len(newObjects_Name_Id) > 0:
+			for name,id in newObjects_Name_Id.items():
+				self.freecadObjectCreated(BlenderToCadObject(name, id))
+
+		self.previousObjectsList_Id_Name = currentObjectsList_Id_Name
+		self.previousObjectsList_Name_Id = currentObjectsList_Name_Id
 
 	def simParamsMinDecrementValueChanged(self, newValue):
 		if newValue == 0:
@@ -3274,8 +3310,6 @@ if __name__ == "__main__":
 			bl_options = {'REGISTER'}
 
 			def execute(self, context):
-				blenderAssignObjectsUniqueId()
-
 				self.app = QtWidgets.QApplication.instance()
 				if not self.app:
 					self.app = QtWidgets.QApplication(['blender'])
@@ -3293,20 +3327,6 @@ if __name__ == "__main__":
 		def unregister():
 			for cls in CLASSES:
 				bpy.utils.unregister_class(cls)
-
-		def blenderAssignObjectsUniqueId():
-			"""
-			Iterates over bpy.data.object (THIS IS IMPORTANT IT'S DATA NOT CONTEXT.SCENE.OBJECTS) and assign unique id into freeCadId if is not defined.
-			:return: None
-			"""
-			global objectsIdNamesList = []
-			global objectsNamesIdList = []
-			for obj in bpy.data.objects:
-				if not "freeCadId" in obj.keys():
-					obj['freeCadId'] = str(uuid.uuid4())
-					print(f"assigned uuid for {obj.name}: {obj['freeCadId']}")
-				objectsIdNamesList[obj['freeCadId']] = obj.name			#stores names under object id to detect later renamed objects
-				objectsNamesIdList[obj.name] = obj['freeCadId']			#stores names under object id to detect later renamed objects
 
 		register()
 
