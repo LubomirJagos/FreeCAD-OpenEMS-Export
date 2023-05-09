@@ -728,7 +728,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		for item in updatedItems:
 			newName = groupName + ", " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
-			cadHelper.printWarning(f"Updating {item.text(0)} -> {newName}")
+			self.cadHelpers.printWarning(f"Updating {item.text(0)} -> {newName}")
 			item.setText(0, newName)
 
 	def renameMeshPriorityTreeViewItem(self, itemOldName, itemNewName):
@@ -740,7 +740,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		for item in updatedItems:
 			newName = "Grid, " + itemNewName + ", " + item.text(0)[len(searchStr)+2:]	#must take end of mesh priority item name, means length of searchStr + len(", ")
-			cadHelper.printWarning(f"Updating {item.text(0)} -> {newName}")
+			self.cadHelpers.printWarning(f"Updating {item.text(0)} -> {newName}")
 			item.setText(0, newName)
 
 	def renameTreeViewItem(self, treeViewRef, itemOldName, itemNewName):

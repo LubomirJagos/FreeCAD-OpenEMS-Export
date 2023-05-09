@@ -9,6 +9,8 @@ from mathutils import Vector
 
 class BlenderToCadObject:
     def __init__(self, blenderObj):
+        super(BlenderHelpers, self).__init__(APP_DIR)
+
         self.Label = blenderObj.name
         try:
             self.Name = blenderObj['freeCadId']
@@ -141,10 +143,18 @@ class BlenderHelpers(CadInterface):
             #       context override is needed
             #       https://docs.blender.org/api/current/bpy.ops.html
             #
+            #       export STL function: https://docs.blender.org/api/current/bpy.ops.export_mesh.html
+            #           there is probably problem with units, Blender by default wants to set cm and we want mm
+            #
             override = bpy.context.copy()
             override["selected_objects"] = [ob]
             with bpy.context.temp_override(**override):
-                bpy.ops.export_mesh.stl(filepath=str(exportFileName), use_selection=True)
+                bpy.ops.export_mesh.stl(
+                    filepath=str(exportFileName),
+                    use_selection=True,
+                    ascii=True,
+                    use_mesh_modifiers=True
+                )
 
             ob.select_set(False)
 
