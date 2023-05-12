@@ -13,6 +13,17 @@ class IniValidator0v1:
     IniFileSchema = {
         'topLevelGroups': [
             {
+                'name': r"FILE-INFO",
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'version',
+                        'mandatory': False,
+                        'allowedValues': r"[0-9]+\.[0-9]+"
+                    }
+                ]
+            },
+            {
                 'name': r"MATERIAL-(.+)",
                 'mandatory': False,
                 'items': [

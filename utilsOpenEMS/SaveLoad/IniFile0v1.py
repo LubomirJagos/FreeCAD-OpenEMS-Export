@@ -23,7 +23,7 @@ from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
 from utilsOpenEMS.SaveLoad.IniValidator0v1 import IniValidator0v1
 
-class IniFile:
+class IniFile0v1:
 
     def __init__(self, form, statusBar = None, guiSignals = None, APP_DIR = ""):
         self.form = form
@@ -79,8 +79,12 @@ class IniFile:
 
         settings = QtCore.QSettings(outFile, QtCore.QSettings.IniFormat)
 
-        # SAVE MATERIAL SETTINGS
+        #file info
+        settings.beginGroup("FILE-INFO")
+        settings.setValue("version", "0.1")
+        settings.endGroup()
 
+        # SAVE MATERIAL SETTINGS
         materialList = self.cadHelpers.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
         for k in range(len(materialList)):
             print("Save new MATERIAL constants into file: ")

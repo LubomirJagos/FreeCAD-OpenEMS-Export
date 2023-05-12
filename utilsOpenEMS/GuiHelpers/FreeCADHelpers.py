@@ -1,5 +1,6 @@
 from utilsOpenEMS.GuiHelpers.CadInterface import CadInterface
 
+from PySide2 import QtCore
 import FreeCAD
 import FreeCADGui
 import Draft
@@ -26,10 +27,14 @@ class FreeCADHelpers(CadInterface):
         pl.Rotation.Q = (0.0, 0.0, 0.0, 1.0)
         pl.Base = FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2])
         points = [FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2])]
+
         line = Draft.makeWire(points, placement=pl, closed=False, face=False, support=None)
         line.Label = lineName  # set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
         FreeCADGui.ActiveDocument.getObject(line.Name).DrawStyle = gridLineStyle
         Draft.autogroup(line)
+
+        #line = Draft.makeLine(FreeCAD.Vector(p1Array[0], p1Array[1], p1Array[2]), FreeCAD.Vector(p2Array[0], p2Array[1], p2Array[2]))
+        #line.Label = lineName  # set visible label how line is named, if name already exists FreeCAD adds number suffix like line001, line002, ...
 
     def drawDraftCircle(self, lineName, centerPoint, radius):
         pl = FreeCAD.Placement()
