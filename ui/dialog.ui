@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>728</height>
+    <width>1404</width>
+    <height>738</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1281,7 +1281,11 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                    </widget>
                   </item>
                   <item row="2" column="1">
-                   <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput"/>
+                   <widget class="QDoubleSpinBox" name="materialEpsilonNumberInput">
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
+                   </widget>
                   </item>
                   <item row="0" column="5">
                    <widget class="QLabel" name="label_9">
@@ -1297,6 +1301,9 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                    <widget class="QDoubleSpinBox" name="materialMueNumberInput">
                     <property name="decimals">
                      <number>3</number>
+                    </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
                     </property>
                    </widget>
                   </item>
