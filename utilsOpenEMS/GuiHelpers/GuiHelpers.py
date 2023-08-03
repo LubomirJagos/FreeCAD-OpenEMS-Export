@@ -72,6 +72,7 @@ class GuiHelpers:
         self.form.materialSettingsTreeView.clear()  # delete MATERIAL entries
         self.form.excitationSettingsTreeView.clear()  # delete EXCITATION entries
         self.form.portSettingsTreeView.clear()  # delete PORT entries
+        self.form.probeSettingsTreeView.clear()  # delete PORT entries
         self.form.lumpedPartTreeView.clear()  # delete LUMPED PART entries
 
         self.form.portNf2ffObjectList.clear()   #clear NF2FF combobox
