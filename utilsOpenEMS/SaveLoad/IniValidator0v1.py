@@ -13,6 +13,17 @@ class IniValidator0v1:
     IniFileSchema = {
         'topLevelGroups': [
             {
+                'name': r"FILE-INFO",
+                'mandatory': False,
+                'items': [
+                    {
+                        'name': 'version',
+                        'mandatory': False,
+                        'allowedValues': r"[0-9]+\.[0-9]+"
+                    }
+                ]
+            },
+            {
                 'name': r"MATERIAL-(.+)",
                 'mandatory': False,
                 'items': [
@@ -664,6 +675,11 @@ class IniValidator0v1:
 
     @classmethod
     def checkFile(self, filepath):
+        """
+        Check .ini file if it's valid and print errors found in file against defined schema for this version.
+        :param filepath:
+        :return: [] error list, in case no error list is empty
+        """
         settings = QtCore.QSettings(filepath, QtCore.QSettings.IniFormat)
 
         print(f"####Formal file check using validator: {os.path.basename(__file__)}")
@@ -786,6 +802,7 @@ class IniValidator0v1:
         [print(f"{msg}") for msg in errorList]
         print("#### END report")
 
+        return errorList
 
 if __name__ == "__main__":
     validator = IniValidator0v1()

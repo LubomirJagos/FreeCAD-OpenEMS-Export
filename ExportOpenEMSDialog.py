@@ -4,10 +4,7 @@ import os, sys
 import re
 import random
 import numpy as np
-import collections
 import math
-import copy
-import threading
 
 #import needed local classes
 import sys
@@ -17,6 +14,7 @@ APP_CONTEXT = "None"
 
 try:
 	import FreeCAD
+	import WebGui
 	APP_CONTEXT = "FreeCAD"
 except:
 	pass
@@ -38,6 +36,7 @@ if APP_CONTEXT == 'Blender':
 	#
 	#	This here is because Blender pyhton is not providing right info about paths in __file__ when running from editor
 	#
+	import webbrowser
 
 	if hasattr(bpy.context, 'space_data') and bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
 		#this is when this file is run inside blender in text editor
@@ -71,7 +70,7 @@ from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
 
-from utilsOpenEMS.SaveLoad.IniFile import IniFile
+from utilsOpenEMS.SaveLoad.IniFile0v1 import IniFile0v1
 
 # UI file (use Qt Designer to modify)
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
@@ -158,7 +157,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# INI file object to used for save/load operation
 		#
-		self.simulationSettingsFile = IniFile(self.form, statusBar = self.statusBar, guiSignals = self.guiSignals, APP_DIR = APP_DIR)
+		self.simulationSettingsFile = IniFile0v1(self.form, statusBar = self.statusBar, guiSignals = self.guiSignals, APP_DIR = APP_DIR)
 
 		#
 		# TOP LEVEL ITEMS / Category Items (excitation, grid, materials, ...)
@@ -404,15 +403,31 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.observer.objectChanged += self.freecadObjectChanged
 				self.observer.objectDeleted += self.freecadBeforeObjectDeleted
 				self.observer.startObservation()
+
 			except:
 				self.cadHelpers.printError("Cannot create FreeCAD observer, there is no connection to CAD program signals.")
 				pass
+
+			# connect signal for button to display help page
+			try:
+				self.form.buttonOpenHelpPage.clicked.connect(self.openFreeCADWebGuiHelp)
+			except Exception as e:
+				self.cadHelpers.printError("Error to connect signal for button to display help.")
+				self.cadHelpers.printError(e)
+
 		elif APP_CONTEXT == "Blender":
 			#
 			#	No handlers registered for Blender since there is no suitable one, add/remove/rename objects is handeld in
 			#	event process when window is focuse objects are re-evaluated.
 			#
-			pass
+
+			# connect signal for button to display help page
+			try:
+				self.form.buttonOpenHelpPage.clicked.connect(self.openBlenderWebGuiHelp)
+			except Exception as e:
+				self.cadHelpers.printError("Error to connect signal for button to display help.")
+				self.cadHelpers.printError(e)
+
 		#
 		#	GUI font size change
 		#
@@ -438,6 +453,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.probeRenamed.connect(self.probeRenamed)
 
 		print(f"----> init finished")
+
+	def openFreeCADWebGuiHelp(self):
+		"""
+		Open index help html webpage inside freecad window.
+		:return:
+		"""
+		WebGui.openBrowser(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html")
+
+	def openBlenderWebGuiHelp(self):
+		"""
+		Open index help html webpage in OS webbrowser.
+		:return:
+		"""
+		webbrowser.open(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html", new=2)
 
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
