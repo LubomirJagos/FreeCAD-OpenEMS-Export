@@ -8,8 +8,16 @@ import numpy as np
 from mathutils import Vector
 
 class BlenderToCadObject:
+    #
+    #   __init__() must be REPAIRED!!!
+    #
     def __init__(self, blenderObj):
-        super(BlenderHelpers, self).__init__(APP_DIR)
+        #
+        #   ERROR this is not running, need to figure out but with this in Blender UI is not opened!!!
+        #       NEED TO BE REPAIRED!!!
+        #       HOTFIX for now Sep2023 to comment it and need to test GUI in Blender if it's running
+        #
+        #super(BlenderHelpers, self).__init__(APP_DIR)
 
         self.Label = blenderObj.name
         try:
