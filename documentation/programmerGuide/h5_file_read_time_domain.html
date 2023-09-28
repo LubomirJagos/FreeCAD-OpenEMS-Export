@@ -1,0 +1,57 @@
+<html>
+      <head>
+      </head>
+      <body>
+            <h1>Read .h5 file example</h1>
+            <pre>
+#dump read
+[portEtField portEtMesh] = ReadHDF5Dump([output_dir '/port_ET.h5']);
+
+#
+# Choose node using indexing inside E field box, there is mesh variable which hold distancies between nodes
+#
+for zCoord = 1:3
+  figure;
+  title(["E-field at Z layer " num2str(zCoord)]);
+
+  for row = 1:7
+    for col = 1:3
+      portEx = [];
+      portEy = [];
+      portEz = [];
+
+      nodeIndexX = row;
+      nodeIndexY = col;
+      nodeIndexZ = zCoord;
+
+      for k = 1:length(portEtField.TD.values)
+        portEx = [portEx portEtField.TD.values{k}(nodeIndexX, nodeIndexY, nodeIndexZ,1)];
+        portEy = [portEy portEtField.TD.values{k}(nodeIndexX, nodeIndexY, nodeIndexZ,2)];
+        portEz = [portEz portEtField.TD.values{k}(nodeIndexX, nodeIndexY, nodeIndexZ,3)];
+      end
+
+      portEx = portEx .* 1e-3;
+      portEy = portEy .* 1e-3;
+      portEz = portEz .* 1e-3;
+
+      subplot(7,3,3*(row-1)+col);
+      hold on;
+      ylim([-1, 1]);
+      plot(portEx);
+      plot(portEy);
+      plot(portEz);
+
+      legend("X","Y","Z")
+
+  ##    figure;
+  ##
+  ##    portETotal = abs(sqrt(portEx.^2 + portEy.^2 + portEz.^2))
+  ##    title("E field total value");
+  ##    plot(portETotal)
+
+    end
+  end
+end
+            </pre>
+      </body>
+</html>
