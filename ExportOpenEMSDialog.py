@@ -63,6 +63,7 @@ from utilsOpenEMS.SettingsItem.GridSettingsItem import GridSettingsItem
 from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
+from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2
 from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
@@ -138,7 +139,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# instantiate script generators using this dialog form
 		#
-		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
+		#self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
+
+		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
+		# to be able do in python code generatr same stuff as in octave
+		self.octaveScriptGenerator = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
 

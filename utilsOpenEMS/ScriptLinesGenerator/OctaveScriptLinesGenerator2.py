@@ -12,7 +12,7 @@ from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
-class OctaveScriptLinesGenerator:
+class OctaveScriptLinesGenerator2:
 
     #
     #   constructor, get access to form GUI
@@ -565,36 +565,7 @@ class OctaveScriptLinesGenerator:
 
                     elif (currSetting.getType() == 'microstrip'):
 
-                        #
-                        #   It's important to generate microstrip port right, that means where is placed microstrip line, because microstrip consists from ground plane and trace
-                        #       This is just playing with X,Y,Z coordinates of boundary box for microstrip port for min, max coordinates.
-                        #
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
-
-                        if (currSetting.direction == "XY plane, top layer"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.direction == "YZ plane, right layer"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.direction == "XZ plane, front layer"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
-
-                        if (currSetting.mslPropagation == "z-"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.mslPropagation == "x-"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.mslPropagation == "y-"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getMicrostripStartStopCoords(bbCoords, sf)
 
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
@@ -633,36 +604,10 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'circular waveguide'):
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
-
-                        if (currSetting.waveguideCircDir == "z-"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.waveguideCircDir == "x-"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.waveguideCircDir == "y-"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideRadius = currSetting.getCircularWaveguidStartStopRadius(bbCoords, sf)
 
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
-
-                        #
-                        #   Based on port excitation direction which is not used at waveguide due it has modes, but based on that height and width are resolved.
-                        #
-                        waveguideRadius = 0
-                        if (currSetting.direction[0] == "z"):
-                            waveguideRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-                        elif (currSetting.direction[0] == "x"):
-                            waveguideRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-                        elif (currSetting.direction[0] == "y"):
-                            waveguideRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
 
                         genScript += "%% circular port openEMS code should be here\n"
 
@@ -688,40 +633,10 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'rectangular waveguide'):
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
-
-                        if (currSetting.waveguideRectDir == "z-"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.waveguideRectDir == "x-"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.waveguideRectDir == "y-"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideWidth, waveguideHeight = currSetting.getRectangularWaveguideStartStopWidthHeight(bbCoords, sf)
 
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
-
-                        #
-                        #   Based on port excitation direction which is not used at waveguide due it has modes, but based on that height and width are resolved.
-                        #
-                        waveguideWidth = 0
-                        waveguideHeight = 0
-                        if (currSetting.direction[0] == "z"):
-                            waveguideWidth = abs(portStartX - portStopX)
-                            waveguideHeight = abs(portStartY - portStopY)
-                        elif (currSetting.direction[0] == "x"):
-                            waveguideWidth = abs(portStartY - portStopY)
-                            waveguideHeight = abs(portStartZ - portStopZ)
-                        elif (currSetting.direction[0] == "y"):
-                            waveguideWidth = abs(portStartX - portStopX)
-                            waveguideHeight = abs(portStartZ - portStopZ)
 
                         genScript += "%% rectangular port openEMS code should be here\n"
                         #[CSX,port] = AddRectWaveGuidePort( CSX, prio, portnr, start, stop, dir, a, b, mode_name, exc_amp, varargin )
@@ -741,43 +656,22 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'coaxial'):
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
-
-                        if (currSetting.direction[1] == "-"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                            portStopY = _r(sf * bbCoords.YMin)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-
-                        #calculate coaxial port radius, it's smaller dimension from width, height
-                        coaxialRadius = 0.0
-                        if (currSetting.direction[0] == "z"):
-                            coaxialRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-                        elif (currSetting.direction[0] == "x"):
-                            coaxialRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-                        elif (currSetting.direction[0] == "y"):
-                            coaxialRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, coaxialRadius = currSetting.getCoaxialStartStopAndRadius(bbCoords, sf)
 
                         #
                         #   This is important, radius is calculated from bounding box coordinates from FreeCAD so must be multiplied by metric units used in FreeCAD.
                         #   LuboJ ERROR: not sure if scaling done right
                         #
-                        coaxialRadius = coaxialRadius/2 * self.getFreeCADUnitLength_m() / self.getUnitLengthFromUI_m()
+                        coaxialRadius = coaxialRadius * self.getFreeCADUnitLength_m() / self.getUnitLengthFromUI_m()
 
                         #
                         #   LuboJ ERROR: not sure if scaling done right
                         #
-                        coaxialInnerRadius = _r(currSetting.coaxialInnerRadiusValue * currSetting.getUnitsAsNumber(currSetting.coaxialInnerRadiusUnits) / self.getUnitLengthFromUI_m())
-                        coaxialShellThickness = _r(currSetting.coaxialShellThicknessValue * currSetting.getUnitsAsNumber(currSetting.coaxialShellThicknessUnits) / self.getUnitLengthFromUI_m())
-                        coaxialFeedShift = _r(currSetting.coaxialFeedpointShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialFeedpointShiftUnits) / self.getUnitLengthFromUI_m())
-                        coaxialMeasPlaneShift = _r(currSetting.coaxialMeasPlaneShiftValue * currSetting.getUnitsAsNumber(currSetting.coaxialMeasPlaneShiftUnits) / self.getUnitLengthFromUI_m())
+                        coaxialInnerRadius, coaxialShellThickness, coaxialFeedShift, coaxialMeasPlaneShift = currSetting.getCoaxialInnerRadiusShellThicknessFeedShiftMeasShift()
+                        coaxialInnerRadius = _r(coaxialInnerRadius / self.getUnitLengthFromUI_m())
+                        coaxialShellThickness = _r(coaxialShellThickness / self.getUnitLengthFromUI_m())
+                        coaxialFeedShift = _r(coaxialFeedShift / self.getUnitLengthFromUI_m())
+                        coaxialMeasPlaneShift = _r(coaxialMeasPlaneShift / self.getUnitLengthFromUI_m())
 
                         #
                         #   LuboJ ERROR: FeedShift and MeasPlaneShift doesn't seem to be working properly, it's not moving anything, error is somewhere here in code
@@ -786,17 +680,10 @@ class OctaveScriptLinesGenerator:
                         measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(coaxialMeasPlaneShift)}
 
                         #
-                        #   Port start and end need to be shifted into middle of feed plane
+                        #   Port start and end need to be shifted into middle of feed plane, this is done inside function in port settings
                         #
-                        if (currSetting.direction[0] == "z"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStartZ)
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStopZ)
-                        elif (currSetting.direction[0] == "x"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
-                        elif (currSetting.direction[0] == "y"):
-                            genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStartY, (portStartZ+portStopZ)/2)
-                            genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStopY, (portStartZ+portStopZ)/2)
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStopY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
 
                         genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.direction))
 
@@ -837,91 +724,15 @@ class OctaveScriptLinesGenerator:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'coplanar'):
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, gapWidth, coplanarEVecStr = currSetting.getCoplanarStartStopAndGapWidthAndEVecStr(bbCoords, sf)
 
-                        gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getUnitLengthFromUI_m()
-                        gapWidth_freeCAD_units = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getFreeCADUnitLength_m()
+                        gapWidth = gapWidth / self.getUnitLengthFromUI_m()
                         genScript += 'gap_width = ' + str(gapWidth) + ';\n'
-
-                        #
-                        #   1. set all coords to max or min, this means where coplanar waveguide is placed if on top or bottom of object but we don't know orientation now
-                        #
-                        portStartX = _r(sf * bbCoords.XMin)
-                        portStartY = _r(sf * bbCoords.YMin)
-                        portStartZ = _r(sf * bbCoords.ZMin)
-                        portStopX = _r(sf * bbCoords.XMax)
-                        portStopY = _r(sf * bbCoords.YMax)
-                        portStopZ = _r(sf * bbCoords.ZMax)
-
-                        #
-                        #   2. set coordinates of coplanar based on plane, height must be same
-                        #
-                        if (currSetting.direction == "XY plane, top layer"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.direction == "XY plane, bottom layer"):
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.direction == "YZ plane, right layer"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMax)
-                        elif (currSetting.direction == "YZ plane, left layer"):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.direction == "XZ plane, front layer"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMax)
-                        elif (currSetting.direction == "XZ plane, back layer"):
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStopY = _r(sf * bbCoords.YMin)
-
-                        #
-                        #   3. set coplanar direcion based on propagation
-                        #
-                        if (currSetting.coplanarPropagation == "z-"):
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.coplanarPropagation == "x-"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                        elif (currSetting.coplanarPropagation == "y-"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
-                        elif (currSetting.coplanarPropagation == "z+"):
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.coplanarPropagation == "x+"):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStopX = _r(sf * bbCoords.XMax)
-                        elif (currSetting.coplanarPropagation == "y+"):
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStopY = _r(sf * bbCoords.YMax)
 
                         genScript += 'coplanarDir = {};\n'.format(coplanarDirStr.get(currSetting.coplanarPropagation[0], '?'))  # use just first letter of propagation direction
 
-                        if (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "x"):
-                            genScript += 'coplanarEVec = [0 1 0];\n'
-                            portStartY += gapWidth_freeCAD_units
-                            portStopY -= gapWidth_freeCAD_units
-                        elif (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "y"):
-                            genScript += 'coplanarEVec = [1 0 0];\n'
-                            portStartX += gapWidth_freeCAD_units
-                            portStopX -= gapWidth_freeCAD_units
-                        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "x"):
-                            genScript += 'coplanarEVec = [0 0 1];\n'
-                            portStartZ += gapWidth_freeCAD_units
-                            portStopZ -= gapWidth_freeCAD_units
-                        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "z"):
-                            genScript += 'coplanarEVec = [1 0 0];\n'
-                            portStartX += gapWidth_freeCAD_units
-                            portStopX -= gapWidth_freeCAD_units
-                        elif (currSetting.direction[0:2] == "YZ" and currSetting.coplanarPropagation[0] == "y"):
-                            genScript += 'coplanarEVec = [0 0 1];\n'
-                            portStartZ += gapWidth_freeCAD_units
-                            portStopZ -= gapWidth_freeCAD_units
-                        elif (currSetting.direction[0:2] == "YZ" and currSetting.coplanarPropagation[0] == "z"):
-                            genScript += 'coplanarEVec = [0 1 0];\n'
-                            portStartY += gapWidth_freeCAD_units
-                            portStopY -= gapWidth_freeCAD_units
+                        if (coplanarEVecStr != None):
+                            genScript += f'coplanarEVec = {coplanarEVecStr};\n'
                         else:
                             genScript += 'display("ERROR cannot evaluate right direction check your simulation settings for coplanar port");\n'
                             genScript += 'coplanarEVec = %ERROR cannot evaluate right direction check your simulation settings ;\n'
