@@ -983,10 +983,25 @@ class IniFile0v1:
 
         #
         # Send all appropriate signals to GUI to update all needed items.
-        #       Like materials for microstrip port combobox.
+        #       1. update materials for microstrip port combobox.
+        #       2. emit signal for port tree view to change focus for 1st port to renew in GUI directly after load
+        #           - without this DIRECTLY AFTER STARTING THIS ADDON AND LOADING SOME FILE ie. microstrip combobx
+        #             is not initialized to right material and show first combobox value PEC
         #
         if (self.guiSignals):
+            # 1. step - update all material comboboxes
             self.guiSignals.materialsChanged.emit("update")
+
+            #
+            #   DEBUG code snippet write to log portTreeWidget items labels
+            #
+            #print(f"--> IniFile0v1 > read() > portSettingsTreeView items texts:")
+            #for portItemIndex in range(self.form.portSettingsTreeView.invisibleRootItem().childCount()):
+            #    print(f"{self.form.portSettingsTreeView.invisibleRootItem().child(portItemIndex).text(0)}")
+
+            # 2. step - PORT select first item
+            topItem = self.form.portSettingsTreeView.invisibleRootItem().child(0)
+            self.form.portSettingsTreeView.currentItemChanged.emit(topItem, topItem)    #this signal is connected so it must be emitted
         else:
             print(f"{__file__} > read(): no guiSignals defined, probably not passed into constructor, some UI things doesn't have to be populated")
 
@@ -994,6 +1009,7 @@ class IniFile0v1:
         #   Final message from which file were settings loaded
         #
         self.guiHelpers.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
+        print(f"---> IniFIle0v1 > read() finished.")
 
         return
 

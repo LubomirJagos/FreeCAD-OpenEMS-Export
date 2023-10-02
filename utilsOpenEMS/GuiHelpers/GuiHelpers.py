@@ -207,6 +207,9 @@ class GuiHelpers:
         index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
         if index >= 0:
             controlRef.setCurrentIndex(index)
+            print(f"setComboboxItem for {controlRef} to index {index}")
+        else:
+            print(f"WARNING: Cannot set for {controlRef} item {text}, wasn't found in items.")
 
     def hasPortSomeObjects(self, portName):
         """

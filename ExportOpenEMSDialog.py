@@ -143,7 +143,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
 		# to be able do in python code generatr same stuff as in octave
-		self.octaveScriptGenerator = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar=self.statusBar)
+		self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
 
@@ -309,7 +310,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 		self.form.probeSettingsTreeView.currentItemChanged.connect(self.probeTreeWidgetItemChanged)
 
-		#PORT tab settings events handlers
+		#
+		# PORT tab settings events handlers
+		#
 		self.form.lumpedPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.microstripPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.circularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
@@ -1551,6 +1554,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.portsChanged.emit("update")
 		self.guiSignals.probesChanged.emit("update")
 
+		# PORT select first item
+		topItem = self.form.portSettingsTreeView.itemAt(0,0)
+		self.form.portSettingsTreeView.setCurrentItem(topItem)
+
 	#
 	#	Change current scripts type generator based on radiobutton from UI
 	#		if no type by accident is choosed, octave script generator is used
@@ -1580,6 +1587,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"----> start saving file into {self.simulationOutputDir}")
 
 		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
+		self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
 
 	def drawS11ButtonClicked(self):
 		portName = self.form.drawS11Port.currentText()
@@ -2035,7 +2043,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		:param operation: "add" | "remove" | "update"
 		:return: None
 		"""
-		#print(f"@Slot materialsChanged: {operation}")
+		print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
 			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)				# update microstrip port material combobox
@@ -2799,6 +2807,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		"""
 		Update items in combobox for provided combobox control, this add just metallic material types (metal, conductive sheet). It clears all items and fill them agains with actual values.
 		"""
+		currentItemText = comboboxRef.currentText()
+		print(f"---> updateMaterialComboBoxJustMetals() setComboboxItem {comboboxRef}, current text '{currentItemText}' current item index {comboboxRef.currentIndex()}")
+
 		comboboxRef.clear()
 
 		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
@@ -2808,10 +2819,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			)[0]
 
 		# here user defined are added into coaxial possible material combobox
+		selectedItem = None
 		for k in range(objectAssignemntRightPortParent.childCount()):
 			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
 			if (materialData.type in ["metal", "conducting sheet"]):
-				comboboxRef.addItem(materialData.name)
+				newItem = comboboxRef.addItem(materialData.name)
+				print(f"updating {comboboxRef} with item: {materialData.name}")
+
+		# this set value of combobox to previous value
+		#if (not currentItemText is None and materialData.name == currentItemText):
+		print(f"---> updateMaterialComboBoxJustMetals() setComboboxItem for text '{currentItemText}'")
+		self.guiHelpers.setComboboxItem(comboboxRef, currentItemText)
 
 	@Slot(int)
 	def microstripPortDirectionOnChange(self, activatedItemIndex):
@@ -2966,7 +2984,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#\____/_____/_/ |_/_____/_/ |_/_/  |_/_____/   /____/_____/ /_/   /_/ /___/_/ |_/\____//____/  
 	#
 	def materialTreeWidgetItemChanged(self, current, previous):
-		print("Material item changed.")
+		print("materialTreeWidgetItemChanged(): Material item changed.")
 
 		#if last item was erased from port list do nothing
 		if not self.form.materialSettingsTreeView.currentItem():
@@ -3128,7 +3146,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		return
 
 	def portTreeWidgetItemChanged(self, current, previous):
-		print("Port item changed.")
+		print("portTreeWidgetItemChanged(): Port item changed.")
 
 		#if last item was erased from port list do nothing
 		if not self.form.portSettingsTreeView.currentItem():
