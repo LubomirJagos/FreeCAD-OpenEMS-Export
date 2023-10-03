@@ -1,0 +1,28 @@
+<html>
+      <head>
+      </head>
+      <body>
+            <h1>Material how to define loss</h1>
+            <p>
+               For material definition there are params:
+               <ul>
+                   <li>Epsilon - relative electric permittivity (must be >=1)</li>
+                   <li>Mue - relative magnetic permeability (must be >=1)</li>
+                   <li>Kappa - electric conductivity (must be >=0)</li>
+                   <li>Sigma - magnetic conductivity (non-physical property, must be >=0)</li>
+               </ul>
+            </p>
+            <p>
+               Here is formula how to calculate Kappa from loss parameter which is normally in microwave RF called "tan(Delta)":
+               <pre>
+                    Kappa = atan(2*pi*f*tan(Delta))
+                    pi = 3.14159265...
+                    f = frequency at which tan(Delta) is required to have value as it have
+                    tan(Delta) = material loss parameter which is provided by manufacturer
+               </pre>
+               As seen, tan(Delta) in openEMS for user defined material could be simulated on one frequency, for frequency dependent loss parameter or frequency dependent permitivity or permeability must be used lorentz or debeye material.
+            </p>
+            <pre>
+            </pre>
+      </body>
+</html>
