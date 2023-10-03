@@ -195,7 +195,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
                     #genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
                     #    objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
-                    genScript += f"material_{materialCounter}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
+                    genScript += f"{materialPythonVariable}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
 
                     #   _____ _______ _                                        _   _
                     #  / ____|__   __| |                                      | | (_)
@@ -334,13 +334,17 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                             genScript += 'portR = ' + str(currSetting.R) + '\n'
 
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + '\n'
-                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + "\n"
+
+                        #
+                        #   if currSetting.isActive == False then excitation is 0
+                        #
+                        genScript += f"portExcitationAmplitude = {str(currSetting.excitationAmplitude)} * {'1' if currSetting.isActive else '0'}\n"
 
                         genScript += 'mslDir = {}\n'.format(mslDirStr.get(currSetting.mslPropagation[0], '?')) #use just first letter of propagation direction
                         genScript += 'mslEVec = {}\n'.format(baseVectorStr.get(currSetting.direction, '?'))
 
-                        feedShiftStr = {False: "", True: ", 'FeedShift', " + str(_r(currSetting.mslFeedShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslFeedShiftUnits)))}
-                        measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.mslMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslMeasPlaneShiftUnits)))}
+                        feedShiftStr = {False: "", True: ", FeedShift=" + str(_r(currSetting.mslFeedShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslFeedShiftUnits)))}
+                        measPlaneStr = {False: "", True: ", MeasPlaneShift=" + str(_r(currSetting.mslMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.mslMeasPlaneShiftUnits)))}
 
                         isActiveMSLStr = {False: "", True: ", 'ExcitePort', true"}
 
@@ -353,9 +357,12 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                          f'portStop, ' + \
                                          f'mslDir, ' + \
                                          f'mslEVec, ' + \
+                                         f"excite=portExcitationAmplitude, " + \
                                          f'priority={str(priorityIndex)}, ' + \
-                                         f'R=portR*portUnits, ' + \
-                                         f"excite=portExcitationAmplitude)\n"
+                                         f'R=portR*portUnits' + \
+                                         feedShiftStr.get(True) + \
+                                         measPlaneStr.get(True) + \
+                                   f")\n"
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
