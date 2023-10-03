@@ -359,7 +359,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                          f'mslEVec, ' + \
                                          f"excite=portExcitationAmplitude, " + \
                                          f'priority={str(priorityIndex)}, ' + \
-                                         f'R=portR*portUnits' + \
+                                         f'Feed_R=portR*portUnits' + \
                                          feedShiftStr.get(True) + \
                                          measPlaneStr.get(True) + \
                                    f")\n"
