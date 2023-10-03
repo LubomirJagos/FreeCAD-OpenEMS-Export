@@ -63,8 +63,10 @@ from utilsOpenEMS.SettingsItem.GridSettingsItem import GridSettingsItem
 from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
-from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2
 from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
+
+from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator2 import PythonScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
@@ -144,9 +146,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
 		# to be able do in python code generatr same stuff as in octave
 		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar=self.statusBar)
-		self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
+
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
+		self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		self.scriptGenerator3 = PythonScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 
 		#
 		#	Connect function to change script generator
@@ -1588,6 +1592,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
 		self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
+		self.scriptGenerator3.generateOpenEMSScript(self.simulationOutputDir + "_3rd_generator")
 
 	def drawS11ButtonClicked(self):
 		portName = self.form.drawS11Port.currentText()

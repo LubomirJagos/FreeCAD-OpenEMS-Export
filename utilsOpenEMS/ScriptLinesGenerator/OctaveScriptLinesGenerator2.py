@@ -771,53 +771,13 @@ class OctaveScriptLinesGenerator2:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'stripline'):
-                        portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
-                        portStartY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
-                        portStartZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax)/2)
-                        portStopX = _r(sf * (bbCoords.XMin + bbCoords.XMax)/2)
-                        portStopY = _r(sf * (bbCoords.YMin + bbCoords.YMax)/2)
-                        portStopZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax)/2)
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, striplineHeight = currSetting.getStriplineStartStopAndHeight(bbCoords, sf)
 
-                        if (currSetting.striplinePropagation in ["x+", "y+"] and currSetting.direction == "XY plane"):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStopX = _r(sf * bbCoords.XMax)
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStopY = _r(sf * bbCoords.YMax)
-                        elif (currSetting.striplinePropagation in ["x+", "z+"] and currSetting.direction == "XZ plane"):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStopX = _r(sf * bbCoords.XMax)
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.striplinePropagation in ["y+", "z+"] and currSetting.direction == "YZ plane"):
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStopY = _r(sf * bbCoords.YMax)
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopZ = _r(sf * bbCoords.ZMax)
-                        elif (currSetting.striplinePropagation in ["x-", "y-"] and currSetting.direction == "XY plane"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
-                        elif (currSetting.striplinePropagation in ["x-", "z-"] and currSetting.direction == "XZ plane"):
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-                        elif (currSetting.striplinePropagation in ["y-", "z-"] and currSetting.direction == "YZ plane"):
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStopY = _r(sf * bbCoords.YMin)
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopZ = _r(sf * bbCoords.ZMin)
-
-                        striplineHeight =  0
                         if (currSetting.direction == "YZ plane"):
-                            striplineHeight = _r(sf * (bbCoords.XMax - bbCoords.XMin)/2)
                             genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('x'))
                         elif (currSetting.direction == "XZ plane"):
-                            striplineHeight = _r(sf * (bbCoords.YMax - bbCoords.YMin)/2)
                             genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('y'))
                         elif (currSetting.direction == "XY plane"):
-                            striplineHeight = _r(sf * (bbCoords.ZMax - bbCoords.ZMin)/2)
                             genScript += 'striplineEVec = {};\n'.format(baseVectorStr.get('z'))
 
                         if currSetting.excitationAmplitude != 0:
@@ -857,20 +817,7 @@ class OctaveScriptLinesGenerator2:
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'curve'):
-                        if (_bool(currSetting.direction) == False):
-                            portStartX = _r(sf * bbCoords.XMin)
-                            portStartY = _r(sf * bbCoords.YMin)
-                            portStartZ = _r(sf * bbCoords.ZMin)
-                            portStopX = _r(sf * bbCoords.XMax)
-                            portStopY = _r(sf * bbCoords.YMax)
-                            portStopZ = _r(sf * bbCoords.ZMax)
-                        else:
-                            portStartX = _r(sf * bbCoords.XMax)
-                            portStartY = _r(sf * bbCoords.YMax)
-                            portStartZ = _r(sf * bbCoords.ZMax)
-                            portStopX = _r(sf * bbCoords.XMin)
-                            portStopY = _r(sf * bbCoords.YMin)
-                            portStopZ = _r(sf * bbCoords.ZMin)
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getCurveStartStop(bbCoords, sf)
 
                         genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
                         genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)

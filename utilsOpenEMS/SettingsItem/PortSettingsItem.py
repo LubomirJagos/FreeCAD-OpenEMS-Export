@@ -346,5 +346,71 @@ class PortSettingsItem(SettingsItem):
 
         return portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, gapWidth, coplanarEVecStr
 
+    def getStriplineStartStopAndHeight(self, bbCoords, sf):
+        portStartX = _r(sf * (bbCoords.XMin + bbCoords.XMax) / 2)
+        portStartY = _r(sf * (bbCoords.YMin + bbCoords.YMax) / 2)
+        portStartZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax) / 2)
+        portStopX = _r(sf * (bbCoords.XMin + bbCoords.XMax) / 2)
+        portStopY = _r(sf * (bbCoords.YMin + bbCoords.YMax) / 2)
+        portStopZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax) / 2)
+
+        if (self.striplinePropagation in ["x+", "y+"] and self.direction == "XY plane"):
+            portStartX = _r(sf * bbCoords.XMin)
+            portStopX = _r(sf * bbCoords.XMax)
+            portStartY = _r(sf * bbCoords.YMin)
+            portStopY = _r(sf * bbCoords.YMax)
+        elif (self.striplinePropagation in ["x+", "z+"] and self.direction == "XZ plane"):
+            portStartX = _r(sf * bbCoords.XMin)
+            portStopX = _r(sf * bbCoords.XMax)
+            portStartZ = _r(sf * bbCoords.ZMin)
+            portStopZ = _r(sf * bbCoords.ZMax)
+        elif (self.striplinePropagation in ["y+", "z+"] and self.direction == "YZ plane"):
+            portStartY = _r(sf * bbCoords.YMin)
+            portStopY = _r(sf * bbCoords.YMax)
+            portStartZ = _r(sf * bbCoords.ZMin)
+            portStopZ = _r(sf * bbCoords.ZMax)
+        elif (self.striplinePropagation in ["x-", "y-"] and self.direction == "XY plane"):
+            portStartX = _r(sf * bbCoords.XMax)
+            portStopX = _r(sf * bbCoords.XMin)
+            portStartY = _r(sf * bbCoords.YMax)
+            portStopY = _r(sf * bbCoords.YMin)
+        elif (self.striplinePropagation in ["x-", "z-"] and self.direction == "XZ plane"):
+            portStartX = _r(sf * bbCoords.XMax)
+            portStopX = _r(sf * bbCoords.XMin)
+            portStartZ = _r(sf * bbCoords.ZMax)
+            portStopZ = _r(sf * bbCoords.ZMin)
+        elif (self.striplinePropagation in ["y-", "z-"] and self.direction == "YZ plane"):
+            portStartY = _r(sf * bbCoords.YMax)
+            portStopY = _r(sf * bbCoords.YMin)
+            portStartZ = _r(sf * bbCoords.ZMax)
+            portStopZ = _r(sf * bbCoords.ZMin)
+
+        striplineHeight = 0
+        if (self.direction == "YZ plane"):
+            striplineHeight = _r(sf * (bbCoords.XMax - bbCoords.XMin) / 2)
+        elif (self.direction == "XZ plane"):
+            striplineHeight = _r(sf * (bbCoords.YMax - bbCoords.YMin) / 2)
+        elif (self.direction == "XY plane"):
+            striplineHeight = _r(sf * (bbCoords.ZMax - bbCoords.ZMin) / 2)
+
+        return portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, striplineHeight
+
+    def getCurveStartStop(self, bbCoords, sf):
+        if (_bool(self.direction) == False):
+            portStartX = _r(sf * bbCoords.XMin)
+            portStartY = _r(sf * bbCoords.YMin)
+            portStartZ = _r(sf * bbCoords.ZMin)
+            portStopX = _r(sf * bbCoords.XMax)
+            portStopY = _r(sf * bbCoords.YMax)
+            portStopZ = _r(sf * bbCoords.ZMax)
+        else:
+            portStartX = _r(sf * bbCoords.XMax)
+            portStartY = _r(sf * bbCoords.YMax)
+            portStartZ = _r(sf * bbCoords.ZMax)
+            portStopX = _r(sf * bbCoords.XMin)
+            portStopY = _r(sf * bbCoords.YMin)
+            portStopZ = _r(sf * bbCoords.ZMin)
+
+        return portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ
 
 
