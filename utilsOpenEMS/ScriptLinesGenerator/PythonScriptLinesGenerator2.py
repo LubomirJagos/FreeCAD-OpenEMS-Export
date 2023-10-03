@@ -370,77 +370,33 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'circular waveguide'):
-                        genScript += "%% circular port openEMS code should be here\n"
+                        genScript += "%% circular port openEMS code should be here, NOT IMPLEMENTED python API for it\n"
+
                     elif (currSetting.getType() == 'rectangular waveguide'):
-                        genScript += "%% rectangular port openEMS code should be here\n"
-                    elif (currSetting.getType() == 'et dump'):
-                        #
-                        #   see doc: https://docs.openems.de/python/CSXCAD/CSProperties/CSPropDumpBox.html#CSXCAD.CSProperties.CSPropDumpBox
-                        #   PARAMETERS:
-                        #       dump_type
-                        #       dump_mode
-                        #       file_type
-                        #       frequency
-                        #       sub_sampling
-                        #       opt_resolution
-                        #
-                        #   DUMP TYPES:
-                        #       0: for E - field time - domain dump (default)
-                        #       1 : for H-field time-domain dump
-                        #       2 : for electric current time-domain dump
-                        #       3 : for total current density (rot(H)) time-domain dump
-                        #       10 : for E-field frequency-domain dump
-                        #       11 : for H-field frequency-domain dump
-                        #       12 : for electric current frequency-domain dump
-                        #       13 : for total current density (rot(H)) frequency-domain dump
-                        #       20 : local SAR frequency-domain dump
-                        #       21 : 1g averaging SAR frequency-domain dump
-                        #       22 : 10g averaging SAR frequency-domain dump
-                        #       29 : raw data needed for SAR calculations (electric field FD, cell volume, conductivity and density)
-                        #
-                        #   DUMP MODES:
-                        #      0 : no-interpolation
-                        #      1 : node-interpolation (default, see warning below)
-                        #      2 : cell-interpolation (see warning below)
-                        #
-                        #   FILE TYPES:
-                        #       0 : vtk-file (default)
-                        #       1 : hdf5-file (easier to read by python, using h5py)
-                        #
-                        genScript += f"port[{genScriptPortCount}] = CSX.AddDump('{currSetting.name}', dump_type=0)\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += f"port[{genScriptPortCount}].AddBox(dumpStart, dumpStop)\n"
+                        portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideWidth, waveguideHeight = currSetting.getRectangularWaveguideStartStopWidthHeight(bbCoords, sf)
 
+                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
+                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+
+                        genScript += f"portExcitationAmplitude = {str(currSetting.excitationAmplitude)} * {'1' if currSetting.isActive else '0'}\n"
+
+                        genScript += f'port[{str(genScriptPortCount)}] = FDTD.AddRectWaveGuidePort(' + \
+                                     f'{str(genScriptPortCount)}, ' + \
+                                     f'portStart, ' + \
+                                     f'portStop, ' + \
+                                     f'"{currSetting.waveguideRectDir[0]}", ' + \
+                                     f'{waveguideWidth}, ' + \
+                                     f'{waveguideHeight}, ' + \
+                                     f'"{currSetting.modeName}", ' + \
+                                     f"excite=portExcitationAmplitude, " + \
+                                     f'priority={str(priorityIndex)}, ' + \
+                                     f")\n"
+
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList["{obj.Label}"] = {genScriptPortCount};\n'
                         genScriptPortCount += 1
-                    elif (currSetting.getType() == 'ht dump'):
-                        genScript += f"port[{genScriptPortCount}] = CSX.AddDump('{currSetting.name}', dump_type=1)\n"
-                        genScript += 'dumpStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += f"port[{genScriptPortCount}].AddBox(dumpStart, dumpStop)\n"
 
-                        genScriptPortCount += 1
-                    elif (currSetting.getType() == 'nf2ff box'):
-                        genScript += 'nf2ffStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                      _r(sf * bbCoords.YMin),
-                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'nf2ffStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                      _r(sf * bbCoords.YMax),
-                                                                                      _r(sf * bbCoords.ZMax))
-                        # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
-                        genScript += "[CSX nf2ffBox{" + str(
-                            genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop)\n"
-                        # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
-
-                        genNF2FFBoxCounter += 1
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
 

@@ -168,13 +168,13 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * bbCoords.YMax)
         portStopZ = _r(sf * bbCoords.ZMax)
 
-        if (currSetting.waveguideRectDir == "z-"):
+        if (self.waveguideRectDir == "z-"):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (currSetting.waveguideRectDir == "x-"):
+        elif (self.waveguideRectDir == "x-"):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (currSetting.waveguideRectDir == "y-"):
+        elif (self.waveguideRectDir == "y-"):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
 
