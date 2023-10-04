@@ -625,12 +625,12 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
         sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% LUMPED PART\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# LUMPED PART\n"
+        genScript += "#######################################################################################################################################\n"
 
         for [item, currSetting] in items:
-            genScript += "% LUMPED PARTS " + currSetting.getName() + "\n"
+            genScript += "# LUMPED PARTS " + currSetting.getName() + "\n"
 
             # traverse through all children item for this particular lumped part settings
             objs = self.cadHelpers.getObjects()
@@ -649,24 +649,21 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
 
-                    # PLACEMENT BOX
-                    print(obj.Placement)
-
-                    genScript += 'lumpedPartStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMin),
+                    genScript += 'lumpedPartStart = [{0:g}, {1:g}, {2:g}];\n'.format(_r(sf * bbCoords.XMin),
                                                                                        _r(sf * bbCoords.YMin),
                                                                                        _r(sf * bbCoords.ZMin))
-                    genScript += 'lumpedPartStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(sf * bbCoords.XMax),
+                    genScript += 'lumpedPartStop  = [{0:g}, {1:g}, {2:g}];\n'.format(_r(sf * bbCoords.XMax),
                                                                                        _r(sf * bbCoords.YMax),
                                                                                        _r(sf * bbCoords.ZMax))
 
                     lumpedPartName = currentSetting.name
                     lumpedPartParams = ''
                     if ('r' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'R', " + str(currentSetting.getR())
+                        lumpedPartParams += ",R=" + str(currentSetting.getR())
                     if ('l' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'L', " + str(currentSetting.getL())
+                        lumpedPartParams += ",L=" + str(currentSetting.getL())
                     if ('c' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'C', " + str(currentSetting.getC())
+                        lumpedPartParams += ",C=" + str(currentSetting.getC())
                     lumpedPartParams = lumpedPartParams.strip(',')
 
                     #
@@ -676,9 +673,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     priorityIndex = self.getItemPriority(priorityItemName)
 
                     # WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
-                    genScript += "[CSX] = AddLumpedElement(CSX, '" + lumpedPartName + "', 2, 'Caps', 1, " + lumpedPartParams + ");\n"
-                    genScript += "[CSX] = AddBox(CSX, '" + lumpedPartName + "', " + str(
-                        priorityIndex) + ", lumpedPartStart, lumpedPartStop);\n"
+                    genScript += f"lumpedPart = CSX.AddLumpedElement('{lumpedPartName}', ny='z', caps=True{lumpedPartParams});\n"
+                    genScript += f"lumpedPart.AddBox(lumpedPartStart, lumpedPartStop, priority={str(priorityIndex)});\n"
 
             genScript += "\n"
 
@@ -1139,7 +1135,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         # Write lumped part definitions.
-        #genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
+        genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
 
         # Write probes definitions
         genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
