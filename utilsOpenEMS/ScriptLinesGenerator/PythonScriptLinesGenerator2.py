@@ -649,12 +649,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
 
-                    genScript += 'lumpedPartStart = [{0:g}, {1:g}, {2:g}];\n'.format(_r(sf * bbCoords.XMin),
-                                                                                       _r(sf * bbCoords.YMin),
-                                                                                       _r(sf * bbCoords.ZMin))
-                    genScript += 'lumpedPartStop  = [{0:g}, {1:g}, {2:g}];\n'.format(_r(sf * bbCoords.XMax),
-                                                                                       _r(sf * bbCoords.YMax),
-                                                                                       _r(sf * bbCoords.ZMax))
+                    genScript += 'lumpedPartStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                    genScript += 'lumpedPartStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
 
                     lumpedPartName = currentSetting.name
                     lumpedPartParams = ''
