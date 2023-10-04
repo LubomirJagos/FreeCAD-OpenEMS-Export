@@ -49,9 +49,10 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "def mesh():\n"
         genScript += "\tx,y,z\n"
         genScript += "\n"
-        genScript += "mesh.x = np.array([]); # mesh variable initialization (Note: x y z implies type Cartesian).\n"
-        genScript += "mesh.y = np.array([]);\n"
-        genScript += "mesh.z = np.array([]);\n"
+        genScript += "mesh.x = np.array([]) # mesh variable initialization (Note: x y z implies type Cartesian).\n"
+        genScript += "mesh.y = np.array([])\n"
+        genScript += "mesh.z = np.array([])\n"
+        genScript += "\n"
         genScript += "openEMS_grid = CSX.GetGrid()\n"
         genScript += "openEMS_grid.SetDeltaUnit(unit) # First call with empty mesh to set deltaUnit attribute.\n"
         genScript += "\n"
@@ -68,7 +69,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         # PEC is created by default due it's used when microstrip port is defined, so it's here to have it here.
         # Note that the user will need to create a metal named 'PEC' and populate it to avoid a warning
         # about "no primitives assigned to metal 'PEC'".
-        genScript += "PEC = CSX.AddMetal('PEC');\n"
+        genScript += "materialList = {}\n"                              # !!!THIS IS ON PURPOSE NOT LITERAL {} brackets are generated into code for python
         genScript += "\n"
 
         if not items:
@@ -97,7 +98,6 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                 currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
 
             genScript += f"## MATERIAL - {currSetting.getName()}\n"
-            genScript += "materialList = {}\n"  # !!!THIS IS ON PURPOSE NOT LITERAL {} brackets are generated into code for python
             materialPythonVariable = f"materialList['{currSetting.getName()}']"
 
             if (currSetting.type == 'metal'):
@@ -169,19 +169,23 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     #	there can be circle, circle arc and maybe something else in sketch geometry
                     #
 
+                    genScript += f"points_x = np.array([])\n"
+                    genScript += f"points_y = np.array([])\n"
+                    genScript += f"points_z = np.array([])\n"
                     for geometryObj in freeCadObj.Geometry:
                         if (str(type(geometryObj)).find("LineSegment") > -1):
-                            genScript += "points = [];\n"
-                            genScript += "points(1,1) = " + str(geometryObj.StartPoint.x) + ";"
-                            genScript += "points(2,1) = " + str(geometryObj.StartPoint.y) + ";"
-                            genScript += "points(3,1) = " + str(geometryObj.StartPoint.z) + ";"
-                            genScript += "\n"
-                            genScript += "points(1,2) = " + str(geometryObj.EndPoint.x) + ";"
-                            genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";"
-                            genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
-                            genScript += "\n"
-                            genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                                objModelPriority) + ", points);\n"
+                            genScript += f"points_x.append({str(geometryObj.StartPoint.x)})\n"
+                            genScript += f"points_y.append({str(geometryObj.StartPoint.y)})\n"
+                            genScript += f"points_z.append({str(geometryObj.StartPoint.z)})\n"
+
+                            genScript += f"points_x.append({str(geometryObj.EndPoint.x)})\n"
+                            genScript += f"points_y.append({str(geometryObj.EndPoint.y)})\n"
+                            genScript += f"points_z.append({str(geometryObj.EndPoint.z)})\n"
+
+                    genScript += f"points = np.array([{str(geometryObj.StartPoint.x)}, {str(geometryObj.StartPoint.y)}, {str(geometryObj.StartPoint.z)}])\n"
+
+                    genScript += "\n"
+                    genScript += f"{self.internalMaterialIndexNamesList[currSetting.getName()]}.AddCurve(points, priority={str(objModelPriority)})\n"
 
                     print("Line segments from sketch added.")
 
@@ -396,9 +400,217 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
                         genScript += f'portNamesAndNumbersList["{obj.Label}"] = {genScriptPortCount};\n'
                         genScriptPortCount += 1
+                    elif (currSetting.getType() == 'coaxial'):
+                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coaxial port\n'
+
+                    elif (currSetting.getType() == 'coplanar'):
+                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coplanar port\n'
+
+                    elif (currSetting.getType() == 'stripline'):
+                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE stripline port\n'
+
+                    elif (currSetting.getType() == 'curve'):
+                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE curve port\n'
 
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
+
+            genScript += "\n"
+
+        return genScript
+
+    def getProbeDefinitionsScriptLines(self, items):
+        genScript = ""
+        if not items:
+            return genScript
+
+        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
+        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+
+        # counters for indexing generated python code variables containing list of generated object by their type
+        genProbeCounter = 1
+        genDumpBoxCounter = 1
+
+        # nf2ff box counter, they are stored inside octave cell variable nf2ff{} so this is to index them properly, in octave cells index starts at 1
+        genNF2FFBoxCounter = 1
+
+        #
+        #   This here generates string for port excitation field, ie. for z+ generates [0 0 1], for y- generates [0 -1 0]
+        #       Options for select field x,y,z were removed from GUI, but left here due there could be saved files from previous versions
+        #       with these options so to keep backward compatibility they are treated as positive direction in that directions.
+        #
+        baseVectorStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2', 'XY plane, top layer': '2', 'XY plane, bottom layer': '2', 'XZ plane, front layer': '1', 'XZ plane, back layer': '1', 'YZ plane, right layer': '0', 'YZ plane, left layer': '0',}
+        probeDirStr = {'x': '0', 'y': '1', 'z': '2', 'x+': '0', 'y+': '1', 'z+': '2', 'x-': '0', 'y-': '1', 'z-': '2',}
+
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# PROBES\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "nf2ffBoxList = {}\n"
+        genScript += "dumpBoxList = {}\n"
+        genScript += "probeList = {}\n"
+        genScript += "\n"
+
+        for [item, currSetting] in items:
+
+            print(f"#PROBE - {currSetting.getName()} - {currSetting.getType()}")
+
+            objs = self.cadHelpers.getObjects()
+            for k in range(item.childCount()):
+                childName = item.child(k).text(0)
+
+                genScript += "# PROBE - " + currSetting.getName() + " - " + childName + "\n"
+
+                freecadObjects = [i for i in objs if (i.Label) == childName]
+
+                # print(freecadObjects)
+                for obj in freecadObjects:
+                    print(f"\t{obj.Label}")
+                    # BOUNDING BOX
+                    bbCoords = obj.Shape.BoundBox
+                    print(f"\t\t{bbCoords}")
+
+                    #
+                    # PROBE openEMS GENERATION INTO VARIABLE
+                    #
+                    if (currSetting.getType() == "probe"):
+                        probeName = f"{currSetting.name}_{childName}"
+                        genScript += f'probeName = "{probeName}"\n'
+
+                        genScript += 'probeDirection = {}\n'.format(baseVectorStr.get(currSetting.direction, '?'))
+
+                        if currSetting.probeType == "voltage":
+                            genScript += 'probeType = 0\n'
+                        elif currSetting.probeType == "current":
+                            genScript += 'probeType = 1\n'
+                        else:
+                            genScript += 'probeType = ?    #ERROR probe code generate don\'t know type\n'
+
+                        argStr = ""
+                        if not (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
+                            argStr += f", norm_dir=probeDirection"
+
+                        if (currSetting.probeDomain == "frequency"):
+                            argStr += f", frequency=["
+
+                            if (len(currSetting.probeFrequencyList) > 0):
+                                for freqStr in currSetting.probeFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                argStr += "f0]#{ERROR NO FREQUENCIES FOR PROBE FOUND, SO INSTEAD USED f0#}"
+                                self.cadHelpers.printWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
+
+                        genScript += f"probeList[probeName] = CSX.AddProbe(probeName, probeType" + argStr + ")\n"
+                        genScript += 'probeStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'probeStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += f"probeList[probeName].AddBox(probeStart, probeStop )\n"
+                        genScript += "\n"
+                        genProbeCounter += 1
+
+                    elif (currSetting.getType() == "dumpbox"):
+                        dumpboxName = f"{currSetting.name}_{childName}"
+                        genScript += f'dumpboxName = "{dumpboxName}"\n'
+
+                        dumpType = currSetting.getDumpType()
+                        genScript += f'dumpboxType = {dumpType}\n'
+
+                        argStr = ""
+                        #
+                        #   dump file type:
+                        #       0 = vtk (default)
+                        #       1 = hdf5
+                        #
+                        if (currSetting.dumpboxFileType == "hdf5"):
+                            argStr += f", file_type=1"
+
+                        emptyFrequencyListError = False
+                        if (currSetting.dumpboxDomain == "frequency"):
+                            argStr += ", frequency=["
+
+                            if (len(currSetting.dumpboxFrequencyList) > 0):
+                                for freqStr in currSetting.dumpboxFrequencyList:
+                                    freqStr = freqStr.strip()
+                                    result = re.search(r"([+,\,\-,.,0-9]+)([A-Za-z]+)$", freqStr)
+                                    if result:
+                                        freqValue = float(result.group(1))
+                                        freqUnits = result.group(2)
+                                        freqValue = freqValue * currSetting.getUnitsAsNumber(freqUnits)
+                                        argStr += str(freqValue) + ","
+                                argStr += "]"
+                            else:
+                                emptyFrequencyListError = True
+                                argStr += "f0]"
+                                self.cadHelpers.printWarning(f"dumpbox octave code generator error, no frequencies defined for '{dumpboxName}', using f0 instead\n")
+
+                        #if error put note about it into script
+                        if emptyFrequencyListError:
+                            genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=dumpboxType" + argStr + ") # ERROR script generation no frequencies for dumpbox, therefore using f0\n"
+                        else:
+                            genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=dumpboxType" + argStr + ")\n"
+
+                        genScript += 'dumpboxStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpboxStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpboxStart, dumpboxStop )\n"
+                        genScript += "\n"
+                        genDumpBoxCounter += 1
+
+                    elif (currSetting.getType() == 'et dump'):
+                        dumpboxName = f"{currSetting.name}_{childName}"
+                        genScript += f'dumpboxName = "{dumpboxName}"\n'
+
+                        genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=0, dump_mode=2)\n"
+                        genScript += 'dumpStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
+                                                                                     _r(sf * bbCoords.YMin),
+                                                                                     _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
+                                                                                     _r(sf * bbCoords.YMax),
+                                                                                     _r(sf * bbCoords.ZMax))
+                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpStart, dumpStop)\n"
+                        genDumpBoxCounter += 1
+
+                    elif (currSetting.getType() == 'ht dump'):
+                        dumpboxName = f"{currSetting.name}_{childName}"
+                        genScript += f'dumpboxName = "{dumpboxName}"\n'
+
+                        genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dumnp_type=1, dump_mode=2)\n"
+                        genScript += 'dumpStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
+                                                                                     _r(sf * bbCoords.YMin),
+                                                                                     _r(sf * bbCoords.ZMin))
+                        genScript += 'dumpStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
+                                                                                     _r(sf * bbCoords.YMax),
+                                                                                     _r(sf * bbCoords.ZMax))
+                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpStart, dumpStop );\n"
+                        genDumpBoxCounter += 1
+
+                    elif (currSetting.getType() == 'nf2ff box'):
+                        dumpboxName = f"{currSetting.name} - {childName}"
+                        dumpboxName = dumpboxName.replace(" ", "_")
+                        genScript += f'dumpboxName = "{dumpboxName}"\n'
+
+                        genScript += 'nf2ffStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
+                                                                                      _r(sf * bbCoords.YMin),
+                                                                                      _r(sf * bbCoords.ZMin))
+                        genScript += 'nf2ffStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
+                                                                                      _r(sf * bbCoords.YMax),
+                                                                                      _r(sf * bbCoords.ZMax))
+                        # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
+                        genScript += f"nf2ffBoxList[dumpboxName] = FDTD.CreateNF2FFBox(dumpboxName, nf2ffStart, nf2ffStop)\n"
+                        # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
+
+                        #
+                        #   ATTENTION this is NF2FF box counter
+                        #
+                        self.internalNF2FFIndexNamesList[dumpboxName] = genNF2FFBoxCounter
+                        genNF2FFBoxCounter += 1
+
+                    else:
+                        genScript += '# Unknown port type. Nothing was generated. \n'
 
             genScript += "\n"
 
@@ -505,18 +717,24 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     len(nf2ff_gridlines['z']) > 0)
 
         if writeNF2FFlines:
-            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-            genScript += "% NF2FF PROBES GRIDLINES\n"
-            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+            genScript += "#######################################################################################################################################\n"
+            genScript += "# NF2FF PROBES GRIDLINES\n"
+            genScript += "#######################################################################################################################################\n"
+
+            genScript += "mesh.x = np.array([])\n"
+            genScript += "mesh.y = np.array([])\n"
+            genScript += "mesh.z = np.array([])\n"
 
             if (len(nf2ff_gridlines['x']) > 0):
-                genScript += "mesh.x = [mesh.x " + " ".join(str(i) for i in nf2ff_gridlines['x']) + "];\n"
+                genScript += "mesh.x = np.append(mesh.x " + ", ".join(str(i) for i in nf2ff_gridlines['x']) + ")\n"
             if (len(nf2ff_gridlines['y']) > 0):
-                genScript += "mesh.y = [mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + "];\n"
+                genScript += "mesh.y = np.append(mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + ")\n"
             if (len(nf2ff_gridlines['z']) > 0):
-                genScript += "mesh.z = [mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + "];\n"
+                genScript += "mesh.z = np.append(mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + ")\n"
 
-            genScript += "CSX = DefineRectGrid(CSX, unit, mesh);\n"
+            genScript += "openEMS_grid.AddLine('x', mesh.x)\n"
+            genScript += "openEMS_grid.AddLine('y', mesh.y)\n"
+            genScript += "openEMS_grid.AddLine('z', mesh.z)\n"
             genScript += "\n"
 
         return genScript
@@ -770,6 +988,52 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         return genScript
 
+    def getMinimalGridlineSpacingScriptLines(self):
+        genScript = ""
+
+        if (self.form.genParamMinGridSpacingEnable.isChecked()):
+            minSpacingX = self.form.genParamMinGridSpacingX.value() / 1000 / self.getUnitLengthFromUI_m()
+            minSpacingY = self.form.genParamMinGridSpacingY.value() / 1000 / self.getUnitLengthFromUI_m()
+            minSpacingZ = self.form.genParamMinGridSpacingZ.value() / 1000 / self.getUnitLengthFromUI_m()
+
+            genScript += "#######################################################################################################################################\n"
+            genScript += "# MINIMAL GRIDLINES SPACING, removing gridlines which are closer as defined in GUI\n"
+            genScript += "#######################################################################################################################################\n"
+            genScript += 'mesh.x = openEMS_grid.GetLines("x", True)\n'
+            genScript += 'mesh.y = openEMS_grid.GetLines("y", True)\n'
+            genScript += 'mesh.z = openEMS_grid.GetLines("z", True)\n'
+            genScript += '\n'
+            genScript += 'openEMS_grid.Clear()\n'
+            genScript += '\n'
+            genScript += 'for k in range(len(mesh.x)-1):\n'
+            genScript += '\tif (not np.isinf(mesh.x[k]) and abs(mesh.x[k+1]-mesh.x[k]) <= ' + str(minSpacingX) + '):\n'
+            genScript += '\t\tprint("Removnig line at x: " + str(mesh.x[k+1]))\n'
+            genScript += '\t\tmesh.x[k+1] = np.inf\n'
+            genScript += '\n'
+            genScript += 'for k in range(len(mesh.y)-1):\n'
+            genScript += '\tif (not np.isinf(mesh.y[k]) and abs(mesh.y[k+1]-mesh.y[k]) <= ' + str(minSpacingY) + '):\n'
+            genScript += '\t\tprint("Removnig line at y: " + str(mesh.y[k+1]))\n'
+            genScript += '\t\tmesh.y[k+1] = np.inf\n'
+            genScript += '\n'
+            genScript += 'for k in range(len(mesh.z)-1):\n'
+            genScript += '\tif (not np.isinf(mesh.z[k]) and abs(mesh.z[k+1]-mesh.z[k]) <= ' + str(minSpacingZ) + '):\n'
+            genScript += '\t\tprint("Removnig line at z: " + str(mesh.z[k+1]))\n'
+            genScript += '\t\tmesh.z[k+1] = np.inf\n'
+            genScript += '\n'
+
+            genScript += '\n'
+            genScript += 'mesh.x = mesh.x[~np.isinf(mesh.x)]\n'
+            genScript += 'mesh.y = mesh.y[~np.isinf(mesh.y)]\n'
+            genScript += 'mesh.z = mesh.z[~np.isinf(mesh.z)]\n'
+            genScript += '\n'
+
+            genScript += "openEMS_grid.AddLine('x', mesh.x)\n"
+            genScript += "openEMS_grid.AddLine('y', mesh.y)\n"
+            genScript += "openEMS_grid.AddLine('z', mesh.z)\n"
+            genScript += '\n'
+
+        return genScript
+
     #########################################################################################################################
     #                                  _                       _       _          _ _      _            _
     #                                 | |                     (_)     | |        | (_)    | |          | |
@@ -877,8 +1141,14 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         # Write lumped part definitions.
         #genScript += self.getLumpedPartDefinitionsScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None))
 
+        # Write probes definitions
+        genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
+
         # Write NF2FF probe grid definitions.
-        #genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
 
         print("======================== REPORT END ========================\n")
 

@@ -932,34 +932,8 @@ class OctaveScriptLinesGenerator2:
                     elif (currSetting.getType() == "dumpbox"):
                         dumpboxName = f"{currSetting.name}_{childName}"
 
-                        if currSetting.dumpboxDomain == "time":
-                            if currSetting.dumpboxType == "E field":
-                                genScript += 'dumpboxType = 0;\n'
-                            elif currSetting.dumpboxType == "H field":
-                                genScript += 'dumpboxType = 1;\n'
-                            elif currSetting.dumpboxType == "J field":
-                                genScript += 'dumpboxType = 3;\n'
-                            elif currSetting.dumpboxType == "D field":
-                                genScript += 'dumpboxType = 4;\n'
-                            elif currSetting.dumpboxType == "B field":
-                                genScript += 'dumpboxType = 5;\n'
-                            else:
-                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
-                        elif currSetting.dumpboxDomain == "frequency":
-                            if currSetting.dumpboxType == "E field":
-                                genScript += 'dumpboxType = 10;\n'
-                            elif currSetting.dumpboxType == "H field":
-                                genScript += 'dumpboxType = 11;\n'
-                            elif currSetting.dumpboxType == "J field":
-                                genScript += 'dumpboxType = 13;\n'
-                            elif currSetting.dumpboxType == "D field":
-                                genScript += 'dumpboxType = 14;\n'
-                            elif currSetting.dumpboxType == "B field":
-                                genScript += 'dumpboxType = 15;\n'
-                            else:
-                                genScript += 'dumpboxType = ?;    #ERROR probe code generate don\'t know type\n'
-                        else:
-                            genScript += "dumboxType = ?;   #code generator cannot find domain (time/frequency)\n"
+                        dumpType = currSetting.getDumpType()
+                        genScript += f'dumpboxType = {dumpType};\n'
 
                         argStr = ""
                         #
