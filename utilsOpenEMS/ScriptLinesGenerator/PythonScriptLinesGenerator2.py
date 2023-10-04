@@ -706,12 +706,12 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     bbCoords = obj.Shape.BoundBox
 
                     if (currSetting.getType() == 'nf2ff box'):
-                        nf2ff_gridlines['x'].append(sf * bbCoords.XMin)
-                        nf2ff_gridlines['x'].append(sf * bbCoords.XMax)
-                        nf2ff_gridlines['y'].append(sf * bbCoords.YMin)
-                        nf2ff_gridlines['y'].append(sf * bbCoords.YMax)
-                        nf2ff_gridlines['z'].append(sf * bbCoords.ZMin)
-                        nf2ff_gridlines['z'].append(sf * bbCoords.ZMax)
+                        nf2ff_gridlines['x'].append("{0:g}".format(_r(sf * bbCoords.XMin)))
+                        nf2ff_gridlines['x'].append("{0:g}".format(_r(sf * bbCoords.XMax)))
+                        nf2ff_gridlines['y'].append("{0:g}".format(_r(sf * bbCoords.YMin)))
+                        nf2ff_gridlines['y'].append("{0:g}".format(_r(sf * bbCoords.YMax)))
+                        nf2ff_gridlines['z'].append("{0:g}".format(_r(sf * bbCoords.ZMin)))
+                        nf2ff_gridlines['z'].append("{0:g}".format(_r(sf * bbCoords.ZMax)))
 
         writeNF2FFlines = (len(nf2ff_gridlines['x']) > 0) or (len(nf2ff_gridlines['y']) > 0) or (
                     len(nf2ff_gridlines['z']) > 0)
@@ -726,11 +726,11 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
             genScript += "mesh.z = np.array([])\n"
 
             if (len(nf2ff_gridlines['x']) > 0):
-                genScript += "mesh.x = np.append(mesh.x " + ", ".join(str(i) for i in nf2ff_gridlines['x']) + ")\n"
+                genScript += "mesh.x = np.append(mesh.x, [" + ", ".join(str(i) for i in nf2ff_gridlines['x']) + "])\n"
             if (len(nf2ff_gridlines['y']) > 0):
-                genScript += "mesh.y = np.append(mesh.y " + " ".join(str(i) for i in nf2ff_gridlines['y']) + ")\n"
+                genScript += "mesh.y = np.append(mesh.y, [" + ", ".join(str(i) for i in nf2ff_gridlines['y']) + "])\n"
             if (len(nf2ff_gridlines['z']) > 0):
-                genScript += "mesh.z = np.append(mesh.z " + " ".join(str(i) for i in nf2ff_gridlines['z']) + ")\n"
+                genScript += "mesh.z = np.append(mesh.z, [" + ", ".join(str(i) for i in nf2ff_gridlines['z']) + "])\n"
 
             genScript += "openEMS_grid.AddLine('x', mesh.x)\n"
             genScript += "openEMS_grid.AddLine('y', mesh.y)\n"
@@ -1021,7 +1021,6 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
             genScript += '\t\tmesh.z[k+1] = np.inf\n'
             genScript += '\n'
 
-            genScript += '\n'
             genScript += 'mesh.x = mesh.x[~np.isinf(mesh.x)]\n'
             genScript += 'mesh.y = mesh.y[~np.isinf(mesh.y)]\n'
             genScript += 'mesh.z = mesh.z[~np.isinf(mesh.z)]\n'
@@ -1078,7 +1077,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += self.getInitScriptLines()
 
         genScript += "## switches & options\n"
-        genScript += "postprocessing_only = " + ('True' if self.form.generateJustPreviewCheckbox.isChecked() else 'False')+ ";\n"
+        genScript += "postprocessing_only = " + ('True' if self.form.generateJustPreviewCheckbox.isChecked() else 'False')+ "\n"
         genScript += "draw_3d_pattern = 0  # this may take a while...\n"
         genScript += "use_pml = 0          # use pml boundaries instead of mur\n"
         genScript += "\n"
@@ -1145,7 +1144,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write NF2FF probe grid definitions.
-        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
         # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
         genScript += self.getMinimalGridlineSpacingScriptLines()
