@@ -308,6 +308,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                                                                      _r(sf * bbCoords.ZMax))
                         genScript += 'portR = ' + str(currSetting.R) + '\n'
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + '\n'
+                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + "\n"
                         genScript += 'portDirection = \'' + currSetting.direction + '\'\n'
 
                         print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
@@ -319,7 +320,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                      'port_nr=' + str(genScriptPortCount) + ', ' + \
                                      'R=portR*portUnits, start=portStart, stop=portStop, p_dir=portDirection, ' + \
                                      'priority=' + str(priorityIndex) + ', ' + \
-                                     'excite=' + ('1.0' if currSetting.isActive else '0') + ')\n'
+                                     'excite=' + ('1.0*portExcitationAmplitude' if currSetting.isActive else '0') + ')\n'
 
                         genScriptPortCount += 1
 
