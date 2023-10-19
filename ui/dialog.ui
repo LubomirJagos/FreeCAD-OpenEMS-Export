@@ -7508,6 +7508,28 @@ than min spacing</string>
           </spacer>
          </item>
          <item>
+          <widget class="QPushButton" name="KiCADImportButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>160</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>160</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>KiCAD PCB Import Tool</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="groupBox_OutputFilesType">
            <property name="minimumSize">
             <size>
