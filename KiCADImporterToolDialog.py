@@ -36,6 +36,7 @@ class KiCADImporterToolDialog(QtCore.QObject):
 		QtCore.QObject.__init__(self)
 
 		self.APP_DIR = APP_DIR
+		self.cadInterfaceType = APP_CONTEXT
 
 		#
 		# LOCAL OPENEMS OBJECT
@@ -56,12 +57,30 @@ class KiCADImporterToolDialog(QtCore.QObject):
 		self.guiHelpers = GuiHelpers(self.form, statusBar = self.form.statusBar, APP_DIR=APP_DIR)
 		self.guiSignals = GuiSignals()
 
-		self.cadInterfaceType = APP_CONTEXT
+		#
+		#	BUTTONS HANDLERS
+		#
+		self.form.buttonOpenFile.clicked.connect(self.buttonOpenFileClicked)
+		self.form.buttonImportPcb.clicked.connect(self.buttonImportPcbClicked)
 
 		print(f"----> init finished")
 
 	def show(self):
 		self.form.show()
+
+	def buttonOpenFileClicked(self):
+		filename, filter = QtWidgets.QFileDialog.getOpenFileName(parent=self.form, caption='Open KiCAD PCB file', dir=self.APP_DIR)
+		self.form.inputFileLineEdit.setText(filename)
+
+	def buttonImportPcbClicked(self):
+		filename = self.form.inputFileLineEdit.text()
+		copper_thickness = self.form.copperThickness.value()
+		board_thickness = self.form.boardThickness.value()
+		combo = self.form.importSettingsCombo.isChecked()
+		fuseCoppers = self.form.importSettingsFuseCoppers.isChecked()
+
+		pcb = kicad.KicadFcad(filename)
+		pcb.make(copper_thickness=copper_thickness, board_thickness=board_thickness, combo=combo, fuseCoppers=fuseCoppers)
 
 ####################################################################################################################################################################
 # End of PANEL definition
