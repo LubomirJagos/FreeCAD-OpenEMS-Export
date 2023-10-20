@@ -15,6 +15,7 @@ APP_CONTEXT = "None"
 try:
 	import FreeCAD
 	import WebGui
+	import KiCADImporterToolDialog	#import for KiCAD Import Tool
 	APP_CONTEXT = "FreeCAD"
 except:
 	pass
@@ -92,6 +93,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.observer.endObservation()
 			self.observer = None
 			print("FreeCAD observer terminated.")
+
+			#if KiCAD import tool is opened close it
+			if hasattr(self, "KiCADImportTool"):
+				self.KiCADImportTool.close()
+				del self.KiCADImportTool
+				print("Kicad Import Tool closed")
+
 		elif self.cadInterfaceType == "Blender":
 			print(f"Thread killed.")
 
@@ -404,10 +412,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# initialize dB preview label with converted value
 		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value())
 
+		#
+		#	KiCAD Importer Tool
+		#
+		self.form.KiCADImportButton.clicked.connect(self.KiCADImportButtonClicked)
+
 		self.cadInterfaceType = APP_CONTEXT
 		print("Creating document handlers")
 		if APP_CONTEXT == "FreeCAD":
 			try:
+				self.form.KiCADImportButton.setEnabled(True)	#enable KiCAD Importer Tool, it's JUST FOR FreeCAD
+
 				# create observer instance
 				from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
 				self.observer = FreeCADDocObserver()
@@ -465,6 +480,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.probeRenamed.connect(self.probeRenamed)
 
 		print(f"----> init finished")
+
+	def KiCADImportButtonClicked(self):
+		# if KiCAD import tool is not created create new one
+		if not hasattr(self, "KiCADImportTool"):
+			self.KiCADImportTool = KiCADImporterToolDialog.KiCADImporterToolDialog()
+
+		self.KiCADImportTool.show()
 
 	def openFreeCADWebGuiHelp(self):
 		"""

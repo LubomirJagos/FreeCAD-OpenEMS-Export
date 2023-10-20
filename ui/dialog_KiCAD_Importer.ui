@@ -135,18 +135,6 @@
         </layout>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="groupBoxSingleLayerSettings">
-        <property name="title">
-         <string>Single Layer Settings</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <widget class="QTableView" name="tableSingleLayerSettings"/>
-         </item>
-        </layout>
-       </widget>
-      </item>
       <item row="1" column="1">
        <widget class="QGroupBox" name="groupBoxImportSettings">
         <property name="sizePolicy">
@@ -158,115 +146,101 @@
         <property name="title">
          <string>Import parameters settings</string>
         </property>
-        <layout class="QFormLayout" name="formLayout">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="importSettingsCombo">
+             <property name="text">
+              <string>combo</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="boardThickness">
+             <property name="decimals">
+              <number>6</number>
+             </property>
+             <property name="maximum">
+              <double>1000000.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.350000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Copper thickness (mm)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="copperThickness">
+             <property name="decimals">
+              <number>6</number>
+             </property>
+             <property name="singleStep">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.035000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Board thickness (mm)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QCheckBox" name="importSettingsFuseCoppers">
+             <property name="text">
+              <string>fuse coppers</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonImportPcb">
            <property name="text">
-            <string>Copper thickness (mm)</string>
+            <string>IMPORT KiCAD PCB</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Board thickness (mm)</string>
+         <item>
+          <spacer name="verticalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="copperThickness">
-           <property name="decimals">
-            <number>6</number>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
            </property>
-           <property name="singleStep">
-            <double>0.001000000000000</double>
-           </property>
-           <property name="value">
-            <double>0.035000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="boardThickness">
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="maximum">
-            <double>1000000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.001000000000000</double>
-           </property>
-           <property name="value">
-            <double>1.350000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QCheckBox" name="importSettingsCombo">
-           <property name="text">
-            <string>combo</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QCheckBox" name="importSettingsFuseCoppers">
-           <property name="text">
-            <string>fuse coppers</string>
-           </property>
-          </widget>
+          </spacer>
          </item>
         </layout>
        </widget>
       </item>
-     </layout>
-    </item>
-    <item>
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
-     <widget class="QPushButton" name="buttonImportPcb">
-      <property name="text">
-       <string>IMPORT KiCAD PCB</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="leftMargin">
-       <number>5</number>
-      </property>
-      <property name="topMargin">
-       <number>5</number>
-      </property>
-      <property name="rightMargin">
-       <number>5</number>
-      </property>
-      <property name="bottomMargin">
-       <number>5</number>
-      </property>
-      <item>
-       <widget class="QPushButton" name="buttonSaveSettings">
-        <property name="text">
-         <string>Save settings</string>
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="groupBoxSingleLayerSettings">
+        <property name="title">
+         <string>Single Layer Settings</string>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonLoadSettings">
-        <property name="text">
-         <string>Load settings</string>
-        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QTableView" name="tableSingleLayerSettings"/>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
