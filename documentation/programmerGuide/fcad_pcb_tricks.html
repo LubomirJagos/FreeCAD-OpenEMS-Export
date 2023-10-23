@@ -1,0 +1,43 @@
+<html>
+      <head>
+            <script type="text/javascript">
+                    window.addEventListener("load", (event) => {
+                        code_generator_1_output = document.getElementById("code_generator_1_output");
+                        document.getElementById("code_generator_1_submit").addEventListener("click", (event) => {
+                            let generated_code = "";
+                            let generateVias = document.getElementById("generate_vias").checked ? "True" : "False";
+                            let generateCopperThickness = document.getElementById("generate_copper_thickness").value;
+                            let generateBoardThickness = document.getElementById("generate_board_thickness").value;
+
+                            generated_code += `from fcad_pcb import kicad\n`;
+                            generated_code += `pcb = kicad.KicadFcad(&lt;full_path_to_your_kicad_pcb_file&gt;)\n`;
+                            generated_code += `pcb.make(copper_thickness=${generateCopperThickness}, board_thickness=${generateBoardThickness}, combo=False, fuseCoppers=${generateVias})\n`;
+
+                            code_generator_1_output.innerHTML = generated_code;
+                        });
+                    });
+            </script>
+      </head>
+      <body>
+            <h1>fcad_pcb tips and tricks</h1>
+            <p>
+               Basic usage:
+               <pre>
+from fcad_pcb import kicad
+pcb = kicad.KicadFcad(&lt;full_path_to_your_kicad_pcb_file&gt;)
+pcb.make(copper_thickness=0.035, board_thickness=1.53, combo=False, fuseCoppers=True )
+               </pre>
+            </p>
+            <h3>Code generator</h3>
+            <p>
+               <form id="code_generator_1">
+                     Generate vias <input id="generate_vias" type="checkbox" /><br />
+                     Copper thickness(mm) <input id="generate_copper_thickness" type="number" step="0.001" value="0.035"/><br />
+                     Board thickness(mm) <input id="generate_board_thickness" type="number" step="0.001" value="1.500"/><br />
+                     <input id="code_generator_1_submit" type="button" value="Generate code"/>
+               </form>
+               <pre id="code_generator_1_output">
+               </pre>
+            </p>
+      </body>
+</html>
