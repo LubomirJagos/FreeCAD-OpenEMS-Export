@@ -92,6 +92,9 @@
              <property name="text">
               <string>Fusse coppers, if checked it generates vias between layers</string>
              </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
           </layout>
