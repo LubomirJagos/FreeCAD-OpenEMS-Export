@@ -78,13 +78,16 @@ class KiCADImporterToolDialog(QtCore.QObject):
 
 	def buttonImportPcbClicked(self):
 		filename = self.form.inputFileLineEdit.text()
-		copper_thickness = self.form.copperThickness.value()
-		board_thickness = self.form.boardThickness.value()
 		combo = self.form.importSettingsCombo.isChecked()
 		fuseCoppers = self.form.importSettingsFuseCoppers.isChecked()
 
+		importTraces = self.form.checkBoxImportTraces.isChecked()
+		importPads = self.form.checkBoxImportPads.isChecked()
+		importVias = self.form.checkBoxImportVias.isChecked()
+		importSubstrate = self.form.checkBoxImportSubstrate.isChecked()
+
 		pcb = kicad.KicadFcad(filename)
-		pcb.make(copper_thickness=copper_thickness, board_thickness=board_thickness, combo=combo, fuseCoppers=fuseCoppers)
+		pcb.make(combo=combo, fuseCoppers=fuseCoppers)
 
 ####################################################################################################################################################################
 # End of PANEL definition

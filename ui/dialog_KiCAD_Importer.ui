@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>661</width>
-    <height>651</height>
+    <width>686</width>
+    <height>357</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -77,12 +77,18 @@
            <property name="text">
             <string>traces</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="checkBoxImportPads">
            <property name="text">
             <string>pads</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -91,12 +97,18 @@
            <property name="text">
             <string>vias</string>
            </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="checkBoxImportSubstrate">
            <property name="text">
             <string>substrate</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -117,25 +129,6 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QGroupBox" name="groupBoxSingleLayerImport">
-        <property name="title">
-         <string>Single layer import</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QListWidget" name="layerList"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="buttonImportSingleLayer">
-           <property name="text">
-            <string>Import Single Layer</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="1" column="1">
        <widget class="QGroupBox" name="groupBoxImportSettings">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -149,57 +142,14 @@
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="2" column="1">
+           <item row="0" column="0">
             <widget class="QCheckBox" name="importSettingsCombo">
              <property name="text">
               <string>combo</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="boardThickness">
-             <property name="decimals">
-              <number>6</number>
-             </property>
-             <property name="maximum">
-              <double>1000000.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="value">
-              <double>1.350000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>Copper thickness (mm)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="copperThickness">
-             <property name="decimals">
-              <number>6</number>
-             </property>
-             <property name="singleStep">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="value">
-              <double>0.035000000000000</double>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>Board thickness (mm)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
             <widget class="QCheckBox" name="importSettingsFuseCoppers">
              <property name="text">
               <string>fuse coppers</string>
@@ -227,18 +177,6 @@
             </size>
            </property>
           </spacer>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="groupBoxSingleLayerSettings">
-        <property name="title">
-         <string>Single Layer Settings</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <widget class="QTableView" name="tableSingleLayerSettings"/>
          </item>
         </layout>
        </widget>
