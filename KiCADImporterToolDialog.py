@@ -81,11 +81,6 @@ class KiCADImporterToolDialog(QtCore.QObject):
 		combo = self.form.importSettingsCombo.isChecked()
 		fuseCoppers = self.form.importSettingsFuseCoppers.isChecked()
 
-		importTraces = self.form.checkBoxImportTraces.isChecked()
-		importPads = self.form.checkBoxImportPads.isChecked()
-		importVias = self.form.checkBoxImportVias.isChecked()
-		importSubstrate = self.form.checkBoxImportSubstrate.isChecked()
-
 		pcb = kicad.KicadFcad(filename)
 		pcb.make(combo=combo, fuseCoppers=fuseCoppers)
 

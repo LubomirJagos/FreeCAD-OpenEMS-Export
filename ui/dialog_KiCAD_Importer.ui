@@ -67,68 +67,6 @@
        <number>5</number>
       </property>
       <item row="0" column="0">
-       <widget class="QGroupBox" name="groupBoxPartList">
-        <property name="title">
-         <string>What to import</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <widget class="QCheckBox" name="checkBoxImportTraces">
-           <property name="text">
-            <string>traces</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBoxImportPads">
-           <property name="text">
-            <string>pads</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBoxImportVias">
-           <property name="text">
-            <string>vias</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBoxImportSubstrate">
-           <property name="text">
-            <string>substrate</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="0" column="1">
        <widget class="QGroupBox" name="groupBoxImportSettings">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -145,14 +83,14 @@
            <item row="0" column="0">
             <widget class="QCheckBox" name="importSettingsCombo">
              <property name="text">
-              <string>combo</string>
+              <string>Group all dielectric and copper layers under one object</string>
              </property>
             </widget>
            </item>
            <item row="1" column="0">
             <widget class="QCheckBox" name="importSettingsFuseCoppers">
              <property name="text">
-              <string>fuse coppers</string>
+              <string>Fusse coppers, if checked it generates vias between layers</string>
              </property>
             </widget>
            </item>
