@@ -1,0 +1,29 @@
+<html>
+      <head>
+            <script type="text/javascript">
+                    window.addEventListener("load", (event) => {
+                        code_generator_1_output = document.getElementById("code_generator_1_output");
+                        document.getElementById("code_generator_1_submit").addEventListener("click", (event) => {
+                            let generated_code = "";
+                            code_generator_1_output.innerHTML = generated_code;
+                        });
+                    });
+            </script>
+      </head>
+      <body>
+            <h1>Custom Excitation tips and tricks</h1>
+            <p>
+               OpenEMS is using C/C++ for custom excitation where user can define excitation signal, variable there is 't' for time.<br />
+               <br />
+               fparser url: <a href="http://warp.povusers.org/FunctionParser">http://warp.povusers.org/FunctionParser</a><br />
+            </p>
+
+            <h3>Code generator</h3>
+            <p>
+               <form id="code_generator_1">
+               </form>
+               <pre id="code_generator_1_output">
+               </pre>
+            </p>
+      </body>
+</html>

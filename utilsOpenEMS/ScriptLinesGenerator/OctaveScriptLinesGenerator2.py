@@ -1527,6 +1527,7 @@ class OctaveScriptLinesGenerator2:
                     f0 = currSetting.custom['f0'] * currSetting.getUnitsAsNumber(currSetting.units)
                     genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(
                         currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
+                    genScript += "fc = 0.0;\n"
                     if not definitionsOnly:
                         genScript += "FDTD = SetCustomExcite( FDTD, f0, '" + currSetting.custom['functionStr'].replace(
                             'f0', str(f0)) + "' );\n"

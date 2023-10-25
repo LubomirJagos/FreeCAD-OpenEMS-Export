@@ -629,8 +629,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "# LUMPED PART\n"
         genScript += "#######################################################################################################################################\n"
 
-        for [item, currSetting] in items:
-            genScript += "# LUMPED PARTS " + currSetting.getName() + "\n"
+        for [item, currentSetting] in items:
+            genScript += "# LUMPED PARTS " + currentSetting.getName() + "\n"
 
             # traverse through all children item for this particular lumped part settings
             objs = self.cadHelpers.getObjects()
@@ -944,6 +944,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     f0 = currSetting.custom['f0'] * currSetting.getUnitsAsNumber(currSetting.units)
                     genScript += "f0 = " + str(currSetting.custom['f0']) + "*" + str(
                         currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
+                    genScript += "fc = 0.0;\n"
                     if not definitionsOnly:
                         genScript += "FDTD.SetCustomExcite(f0, '" + currSetting.custom['functionStr'].replace(
                             'f0', str(f0)) + "' )\n"
