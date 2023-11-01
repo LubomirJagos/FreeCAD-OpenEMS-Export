@@ -1328,27 +1328,10 @@ class OctaveScriptLinesGenerator2:
             if (gridSettingsInst.coordsType == "cylindrical"):
                 #FROM GUI ARE GOING DEGREES
 
-                polarXMin = (xmin ** 2 + ymin ** 2) ** .5                  #r
-                polarXMax = (xmax ** 2 + ymax ** 2) ** .5                  #r
-                polarYMin = math.atan2(ymin, xmax)           #theta
-                polarYMax = math.atan2(ymax, xmin)           #theta
-
-                #just for safety to have it right
-                xmin = min(polarXMin, polarXMax)
-                xmax = max(polarXMin, polarXMax)
-                ymin = min(polarYMin, polarYMax)
-                ymax = max(polarYMin, polarYMax)
-
                 #
-                #   THERE IS DIFFERENCE WHEN COORD ORIGIN xy (0,0) IS INSIDE OBJECT SO HERE IS LITTLE REASSIGN if that happen
-                #       x is r (radius) in this case from 0-xmax
-                #       y is theta in this case 0-360deg
-                #       z stays as it is
+                #   Here calculate right r, theta, z from boundaries of object, it depends if origin lays inside boundaries or where object is positioned.
                 #
-                if (bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0):
-                    xmin = 0
-                    ymin = -math.pi
-                    ymax = math.pi
+                xmin, xmax, ymin, ymax, zmin, zmax = gridSettingsInst.getCartesianAsCylindricalCoords(bbCoords, xmin, xmax, ymin, ymax, zmin, zmax)
 
                 if (gridSettingsInst.getType() == 'Smooth Mesh' and gridSettingsInst.unitsAngle == "deg"):
                     yParam = math.radians(gridSettingsInst.smoothMesh['yMaxRes'])
@@ -1365,7 +1348,7 @@ class OctaveScriptLinesGenerator2:
                 if (gridSettingsInst.getType() == 'Smooth Mesh'):
                     yParam = gridSettingsInst.smoothMesh['yMaxRes']
                 elif (gridSettingsInst.getType() == 'User Defined'):
-                    pass                                                #user defined is jaust text, doesn't have ['y']
+                    pass                                                #user defined is just text, doesn't have ['y']
                 else:
                     yParam = gridSettingsInst.getXYZ(refUnit)['y']
 
