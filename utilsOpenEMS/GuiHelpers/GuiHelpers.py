@@ -203,13 +203,29 @@ class GuiHelpers:
             if tabName == self.form.probeSpecificSettingsTab.tabText(index):
                 self.form.probeSpecificSettingsTab.setCurrentIndex(index)
 
-    def setComboboxItem(self, controlRef, text):
+    def setComboboxItem(self, controlRef, text, alternativeEquivalentValues = None):
         index = controlRef.findText(text, QtCore.Qt.MatchFixedString)
         if index >= 0:
             controlRef.setCurrentIndex(index)
-            print(f"setComboboxItem for {controlRef} to index {index}")
+            print(f"setComboboxItem for {controlRef} to value {text} at index {index}")
         else:
-            print(f"WARNING: Cannot set for {controlRef} item {text}, wasn't found in items.")
+            if (alternativeEquivalentValues != None):
+                #
+                #   if alternative values are provided trying to find them
+                #
+                for alternativeValueTuple in alternativeEquivalentValues:
+                    if (alternativeValueTuple[0] == text):
+                        print(f"WARNING: For {controlRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[1]}")
+                        self.setComboboxItem(controlRef, alternativeValueTuple[1])
+                    elif (alternativeValueTuple[1] == text):
+                        print(f"WARNING: For {controlRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[0]}")
+                        self.setComboboxItem(controlRef, alternativeValueTuple[0])
+                return
+            else:
+                print(f"WARNING: Cannot set for {controlRef} item {text}, wasn't found in items.")
+                return
+
+            print(f"WARNING: Cannot set for {controlRef} item {text}, alternative value was not found.")
 
     def hasPortSomeObjects(self, portName):
         """

@@ -216,7 +216,7 @@ class IniValidator0v1:
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['rectangular waveguide', 'circular waveguide', 'coaxial']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'direction',
@@ -246,7 +246,7 @@ class IniValidator0v1:
                     {
                         'name': 'waveguideDirection',
                         'mandatory': "settings.value('type') in ['rectangulare waveguide', 'circular waveguide']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'material',
@@ -281,7 +281,7 @@ class IniValidator0v1:
                     {
                         'name': 'propagation',
                         'mandatory': "settings.value('type') in ['microstrip', 'coplanar', 'stripline']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'coaxialInnerRadiusValue',

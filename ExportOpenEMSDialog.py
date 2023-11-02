@@ -312,6 +312,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			for element in [self.form.fixedCountZNumberInput, self.form.fixedDistanceZNumberInput, self.form.smoothMeshZMaxRes]
 		])
 
+		self.guiSignals.gridCoordsTypeChanged.connect(self.gridCoordsTypeChanged)
+
 		#
 		# Material, Grid, Excitation, ... item changed handler functions.
 		#		
@@ -1798,9 +1800,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					 self.form.auxGridAxis.setCurrentIndex(index)
 				self.form.auxGridAxis.setEnabled(False)				
 
-			#add item into gui tree views
-			self.guiHelpers.addSettingsItemGui(settingsInst)
+			self.guiHelpers.addSettingsItemGui(settingsInst)	#add item into gui tree views
 			self.guiHelpers.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+			self.guiSignals.gridCoordsTypeChanged.emit()		#emit signal to update items dependant on coordinate system (rectangular or cartesian)
 
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
@@ -1863,37 +1865,50 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiSignals.gridTypeChangedFromSmoothMesh.emit(settingsInst.name)
 
 			self.guiHelpers.displayMessage(f"Grid {settingsInst.name} was updated", forceModal=False)
+			self.guiSignals.gridCoordsTypeChanged.emit()		#emit signal to update items dependant on coordinate system (rectangular or cartesian)
 
 	def gridCoordsTypeChoosed(self):
-		"""	
-		if (self.form.gridRectangularRadio.isChecked()):
-			self.form.gridUnitsInput.clear()
-			self.form.gridUnitsInput.addItem("mm")
-			self.form.gridUnitsInput.addItem("m")
-			self.form.gridUnitsInput.addItem("cm")
-			self.form.gridUnitsInput.addItem("nm")
-			self.form.gridUnitsInput.addItem("pm")
-			self.form.gridXEnable.setText("X")
-			self.form.gridYEnable.setText("Y")
-		
-		if (self.form.gridCylindricalRadio.isChecked()):
-			self.form.gridUnitsInput.clear()
-			self.form.gridUnitsInput.addItem("rad")
-			self.form.gridUnitsInput.addItem("deg")
-			self.form.gridXEnable.setText("r")
-			self.form.gridYEnable.setText("phi")
-		"""
-
 		if (self.form.gridRectangularRadio.isChecked()):
 			self.form.gridXEnable.setText("X")
 			self.form.gridYEnable.setText("Y")
 			self.form.gridUnitsInput_2.setEnabled(False)
-		
+
 		if (self.form.gridCylindricalRadio.isChecked()):
 			self.form.gridXEnable.setText("r")
 			self.form.gridYEnable.setText("theta")
 			self.form.gridUnitsInput_2.setEnabled(True)
-		
+
+	@Slot()
+	def gridCoordsTypeChanged(self):
+		"""
+			BASED ON coordination type texts in different port propagation directions are changed
+		"""
+
+		if (self.getCurrentSimulationGridType() == "cylindrical"):
+			[(combobox.clear(), combobox.addItems(["r+", "r-", "theta+", "theta-", "z+", "z-"])) for combobox in [
+				self.form.portCircWaveguideDirection,
+				self.form.portRectWaveguideDirection,
+				self.form.microstripPortPropagationComboBox,
+				self.form.coaxialPortDirection,
+				self.form.coplanarPortPropagationComboBox,
+				self.form.striplinePortPropagationComboBox
+			]]
+			[(combobox.clear(), combobox.addItems(["z", "r", "theta"])) for combobox in [
+				self.form.lumpedPortDirection
+			]]
+		else:
+			[(combobox.clear(), combobox.addItems(["x+", "x-", "y+", "y-", "z+", "z-"])) for combobox in [
+				self.form.portCircWaveguideDirection,
+				self.form.portRectWaveguideDirection,
+				self.form.microstripPortPropagationComboBox,
+				self.form.coaxialPortDirection,
+				self.form.coplanarPortPropagationComboBox,
+				self.form.striplinePortPropagationComboBox
+			]]
+			[(combobox.clear(), combobox.addItems(["z", "x", "y"])) for combobox in [
+				self.form.lumpedPortDirection
+			]]
+
 	#
 	# MATERIAL SETTINGS
 	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -3186,6 +3201,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if not self.form.portSettingsTreeView.currentItem():
 			return
 
+		cartesianCylindricCoordsAlternativeValues = [("x+","r+"),("x-","r-"),("x","r"),("y+","theta+"),("y-","theta-"),("y","theta")]
+
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)
 
@@ -3194,7 +3211,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.lumpedPortRadioButton.click()
 				self.form.lumpedPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 				self.form.lumpedPortActive.setChecked(currSetting.isActive)
 
 				self.form.lumpedPortInfinitResistance.setChecked(currSetting.infiniteResistance)
@@ -3218,7 +3235,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 				self.guiHelpers.setComboboxItem(self.form.microstripPortFeedpointShiftUnits, currSetting.mslFeedShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMeasureShiftUnits, currSetting.mslMeasPlaneShiftUnits)
-				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation, cartesianCylindricCoordsAlternativeValues)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMaterialComboBox, currSetting.mslMaterial)
 
 				self.form.microstripPortInfinitResistance.setChecked(currSetting.infiniteResistance)
@@ -3232,7 +3249,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coaxialPortActive.setChecked(currSetting.isActive)
 				self.form.coaxialPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.coaxialPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				self.form.coaxialPortInnerRadiusValue.setValue(currSetting.coaxialInnerRadiusValue)
 				self.form.coaxialPortShellThicknessValue.setValue(currSetting.coaxialShellThicknessValue)
@@ -3257,7 +3274,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortActive.setChecked(currSetting.isActive)
 				self.form.coplanarPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				#	emit signal to update direction combobox, must be here to have right reaction when change direction combobox,
 				#	then click on radiobutton stripline and
@@ -3285,7 +3302,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.striplinePortActive.setChecked(currSetting.isActive)
 				self.form.striplinePortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.striplinePortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				self.form.striplinePortDirection.activated.emit(self.form.striplinePortDirection.currentIndex())
 
@@ -3308,7 +3325,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
 			self.guiHelpers.setComboboxItem(self.form.portCircWaveguidePolarizationAngle, currSetting.polarizationAngle)
-			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideDirection, currSetting.waveguideCircDir)
+			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideDirection, currSetting.waveguideCircDir, cartesianCylindricCoordsAlternativeValues)
 
 			self.form.portCircWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "rectangular waveguide"):
@@ -3317,7 +3334,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.portRectWaveguideActive.setChecked(currSetting.isActive)
 
 			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
-			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir)
+			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir, cartesianCylindricCoordsAlternativeValues)
 
 			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 

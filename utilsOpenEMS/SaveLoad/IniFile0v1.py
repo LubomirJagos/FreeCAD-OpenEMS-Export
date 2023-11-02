@@ -989,7 +989,11 @@ class IniFile0v1:
         #             is not initialized to right material and show first combobox value PEC
         #
         if (self.guiSignals):
-            # 1. step - update all material comboboxes
+
+            #1. step - update items dependent on coordinate system
+            self.guiSignals.gridCoordsTypeChanged.emit()  # emit signal to update items dependant on coordinate system (rectangular or cartesian)
+
+            # 2. step - update all material comboboxes
             self.guiSignals.materialsChanged.emit("update")
 
             #

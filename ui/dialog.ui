@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1404</width>
-    <height>738</height>
+    <width>1408</width>
+    <height>748</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -589,7 +589,7 @@
                 </size>
                </property>
                <property name="title">
-                <string>GroupBox</string>
+                <string>Coordinate type</string>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_10">
                 <item>
