@@ -1829,6 +1829,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### replace old with new settingsInst
 		selectedItems = self.form.gridSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
+			self.guiHelpers.displayMessage("No item is selected.")
+			return
+
+		#check if all items have same type of coordinate system
+		currentSimulationGridType = self.getCurrentSimulationGridType()
+		if currentSimulationGridType != None and settingsInst.coordsType != currentSimulationGridType:
+			self.guiHelpers.displayMessage("All current defined grids are " + currentSimulationGridType + " you have to remove them or change type of current grid item.")
 			return
 
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.gridSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
