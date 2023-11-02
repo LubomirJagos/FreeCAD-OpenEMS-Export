@@ -1884,8 +1884,19 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			BASED ON coordination type texts in different port propagation directions are changed
 		"""
 
+		def clearComboboxSetValuesRestoreIndex(comboboxRef, values):
+			"""
+				Inner method to clear combobox items add new ones and restore selected items, equivalent item must be at same index
+				This method is specific for this object method that's reason why it's inner method.
+			"""
+			previousIndex = comboboxRef.currentIndex()
+			comboboxRef.clear()
+			comboboxRef.addItems(values)
+			comboboxRef.setCurrentIndex(previousIndex)
+			return
+
 		if (self.getCurrentSimulationGridType() == "cylindrical"):
-			[(combobox.clear(), combobox.addItems(["r+", "r-", "theta+", "theta-", "z+", "z-"])) for combobox in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["r+", "r-", "theta+", "theta-", "z+", "z-"]) for comboboxRef in [
 				self.form.portCircWaveguideDirection,
 				self.form.portRectWaveguideDirection,
 				self.form.microstripPortPropagationComboBox,
@@ -1893,11 +1904,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortPropagationComboBox,
 				self.form.striplinePortPropagationComboBox
 			]]
-			[(combobox.clear(), combobox.addItems(["z", "r", "theta"])) for combobox in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["z", "r", "theta"]) for comboboxRef in [
 				self.form.lumpedPortDirection
 			]]
 		else:
-			[(combobox.clear(), combobox.addItems(["x+", "x-", "y+", "y-", "z+", "z-"])) for combobox in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["x+", "x-", "y+", "y-", "z+", "z-"]) for comboboxRef in [
 				self.form.portCircWaveguideDirection,
 				self.form.portRectWaveguideDirection,
 				self.form.microstripPortPropagationComboBox,
@@ -1905,7 +1916,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortPropagationComboBox,
 				self.form.striplinePortPropagationComboBox
 			]]
-			[(combobox.clear(), combobox.addItems(["z", "x", "y"])) for combobox in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["z", "x", "y"]) for comboboxRef in [
 				self.form.lumpedPortDirection
 			]]
 
