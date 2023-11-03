@@ -1889,14 +1889,30 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				Inner method to clear combobox items add new ones and restore selected items, equivalent item must be at same index
 				This method is specific for this object method that's reason why it's inner method.
 			"""
-			previousIndex = comboboxRef.currentIndex()
+			alternativeEquivalentValues = GridSettingsItem.cartesianCylindricCoordsAlternativeValues
+			text = comboboxRef.currentText()
 			comboboxRef.clear()
 			comboboxRef.addItems(values)
-			comboboxRef.setCurrentIndex(previousIndex)
+
+			index = comboboxRef.findText(text, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				comboboxRef.setCurrentIndex(index)
+				print(f"setComboboxItem for {comboboxRef} to value {text} at index {index}")
+			else:
+				for alternativeValueTuple in alternativeEquivalentValues:
+					if (alternativeValueTuple[0] == text):
+						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[1]}")
+						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[1])
+					elif (alternativeValueTuple[1] == text):
+						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[0]}")
+						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[0])
+				return
+
+			print(f"WARNING: clearComboboxSetValuesRestoreIndex: Cannot set for {comboboxRef} item {text}, wasn't found in items.")
 			return
 
 		if (self.getCurrentSimulationGridType() == "cylindrical"):
-			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["r+", "r-", "theta+", "theta-", "z+", "z-"]) for comboboxRef in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCylindricalPropagationDirection) for comboboxRef in [
 				self.form.portCircWaveguideDirection,
 				self.form.portRectWaveguideDirection,
 				self.form.microstripPortPropagationComboBox,
@@ -1904,11 +1920,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortPropagationComboBox,
 				self.form.striplinePortPropagationComboBox
 			]]
-			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["z", "r", "theta"]) for comboboxRef in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCylindricalLayerDirection) for comboboxRef in [
+				self.form.microstripPortDirection,
+				self.form.coplanarPortDirection,
+				self.form.striplinePortDirection
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCylindricalExcitationDirection) for comboboxRef in [
 				self.form.lumpedPortDirection
 			]]
 		else:
-			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["x+", "x-", "y+", "y-", "z+", "z-"]) for comboboxRef in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCartesianPropagationDirection) for comboboxRef in [
 				self.form.portCircWaveguideDirection,
 				self.form.portRectWaveguideDirection,
 				self.form.microstripPortPropagationComboBox,
@@ -1916,7 +1937,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortPropagationComboBox,
 				self.form.striplinePortPropagationComboBox
 			]]
-			[clearComboboxSetValuesRestoreIndex(comboboxRef, ["z", "x", "y"]) for comboboxRef in [
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCartesianLayerDirection) for comboboxRef in [
+				self.form.microstripPortDirection,
+				self.form.coplanarPortDirection,
+				self.form.striplinePortDirection
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCartesianExcitationDirection) for comboboxRef in [
 				self.form.lumpedPortDirection
 			]]
 
@@ -3212,7 +3238,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if not self.form.portSettingsTreeView.currentItem():
 			return
 
-		cartesianCylindricCoordsAlternativeValues = [("x+","r+"),("x-","r-"),("x","r"),("y+","theta+"),("y-","theta-"),("y","theta")]
+		cartesianCylindricCoordsAlternativeValues = GridSettingsItem.cartesianCylindricCoordsAlternativeValues
 
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)

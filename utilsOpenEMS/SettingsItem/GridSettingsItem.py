@@ -8,6 +8,31 @@ import numpy as np
 #	User Defined   - user has to provide coordinates where lines should be
 #
 class GridSettingsItem(SettingsItem):
+
+    cartesianCylindricCoordsAlternativeValues = [
+        ("x+", "r+"),
+        ("x-", "r-"),
+        ("x", "r"),
+        ("y+", "theta+"),
+        ("y-", "theta-"),
+        ("y", "theta"),
+        ("XY plane, top layer", "r-theta, top layer"),
+        ("XY plane, bottom layer", "r-theta, bottom layer"),
+        ("XZ plane, front layer", "z-theta, outside layer"),
+        ("XZ plane, back layer", "z-theta, inside layer"),
+        ("YZ plane, right layer", "z-theta, outside layer"),    #cylindrical has just 2 independent planes so this is repeating
+        ("YZ plane, left layer", "z-theta, inside layer"),      #cylindrical has just 2 indipendent planes so this is repeating
+    ]
+
+    lumpedPortCartesianExcitationDirection = ["z", "x", "y"]
+    multilayeredPortCartesianLayerDirection = ["XY plane, top layer", "XY plane, bottom layer", "XZ plane, front layer", "XZ plane, back layer", "YZ plane, right layer", "YZ plane, left layer"]
+    multilayeredPortCartesianPropagationDirection = ["x+", "x-", "y+", "y-", "z+", "z-"]
+
+    lumpedPortCylindricalExcitationDirection = ["z", "r", "theta"]
+    multilayeredPortCylindricalLayerDirection = ["r-theta, top layer", "r-theta, bottom layer", "z-theta, outside layer", "z-theta, inside layer"]
+    multilayeredPortCylindricalPropagationDirection = ["r+", "r-", "theta+", "theta-", "z+", "z-"]
+
+
     def __init__(self, name="", type="", fixedCount=None, fixedDistance=None,
                  userDefined=None, units="mm", unitsAngle="deg", xenabled=False, yenabled=False, zenabled=False,
                  smoothMeshDefault=None,
