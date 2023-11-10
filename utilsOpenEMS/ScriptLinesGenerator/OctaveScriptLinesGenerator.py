@@ -789,7 +789,7 @@ class OctaveScriptLinesGenerator:
                         portStopY = _r(sf * bbCoords.YMax)
                         portStopZ = _r(sf * bbCoords.ZMax)
 
-                        if (currSetting.direction[1] == "-"):
+                        if (currSetting.direction[-1] == "-"):
                             portStartX = _r(sf * bbCoords.XMax)
                             portStartY = _r(sf * bbCoords.YMax)
                             portStartZ = _r(sf * bbCoords.ZMax)
@@ -799,11 +799,11 @@ class OctaveScriptLinesGenerator:
 
                         #calculate coaxial port radius, it's smaller dimension from width, height
                         coaxialRadius = 0.0
-                        if (currSetting.direction[0] == "z"):
+                        if (currSetting.direction.startswith("z")):
                             coaxialRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-                        elif (currSetting.direction[0] == "x"):
+                        elif (currSetting.direction.startswith("x")):
                             coaxialRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-                        elif (currSetting.direction[0] == "y"):
+                        elif (currSetting.direction.startswith("y")):
                             coaxialRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
 
                         #
@@ -829,13 +829,13 @@ class OctaveScriptLinesGenerator:
                         #
                         #   Port start and end need to be shifted into middle of feed plane
                         #
-                        if (currSetting.direction[0] == "z"):
+                        if (currSetting.direction.startswith("z")):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStartZ)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, (portStartY+portStopY)/2, portStopZ)
-                        elif (currSetting.direction[0] == "x"):
+                        elif (currSetting.direction.startswith("x") or currSetting.direction.startswith("r")):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, (portStartY+portStopY)/2, (portStartZ+portStopZ)/2)
-                        elif (currSetting.direction[0] == "y"):
+                        elif (currSetting.direction.startswith("y") or currSetting.direction.startswith("theta")):
                             genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStartY, (portStartZ+portStopZ)/2)
                             genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format((portStartX+portStopX)/2, portStopY, (portStartZ+portStopZ)/2)
 
