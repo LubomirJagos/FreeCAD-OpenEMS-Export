@@ -5331,6 +5331,16 @@ OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                 <string>Probe Type</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_25">
+                <item row="1" column="1">
+                 <widget class="QRadioButton" name="etDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Et Dump</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
                 <item row="3" column="1">
                  <widget class="QRadioButton" name="dumpboxProbeRadioButton">
                   <property name="text">
@@ -5351,40 +5361,7 @@ OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="2">
-                 <widget class="QRadioButton" name="eProbeProbeRadioButton">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="text">
-                   <string>E field probe</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QRadioButton" name="etDumpProbeRadioButton">
-                  <property name="text">
-                   <string>Et Dump</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QRadioButton" name="htDumpProbeRadioButton">
-                  <property name="text">
-                   <string>Ht Dump</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="3">
+                <item row="3" column="2">
                  <spacer name="horizontalSpacer_49">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -5397,6 +5374,16 @@ OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                   </property>
                  </spacer>
                 </item>
+                <item row="2" column="1">
+                 <widget class="QRadioButton" name="htDumpProbeRadioButton">
+                  <property name="text">
+                   <string>Ht Dump</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
                 <item row="2" column="0">
                  <widget class="QRadioButton" name="nf2ffBoxProbeRadioButton">
                   <property name="sizePolicy">
@@ -5407,19 +5394,6 @@ OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                   </property>
                   <property name="text">
                    <string>NF2FF Box</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="2">
-                 <widget class="QRadioButton" name="hProbeProbeRadioButton">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="text">
-                   <string>H field probe</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -5504,6 +5478,16 @@ OpenEMS itself support JUST BOX FOR LUMPED PART.</string>
                       <item>
                        <property name="text">
                         <string>voltage</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>E field</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>H field</string>
                        </property>
                       </item>
                      </widget>

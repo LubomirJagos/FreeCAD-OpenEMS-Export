@@ -228,6 +228,59 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         return genScript
 
+    def getCartesianOrCylindricalScriptLinesFromStartStop(self, bbCoords, startPointName=None, stopPointName=None):
+        genScript = "";
+        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
+        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+
+        strPortCoordsCartesianToCylindrical = ""
+        strPortCoordsCartesianToCylindrical += "[generatedAuxTheta, generatedAuxR, generatedAuxZ] = cart2pol(portStart);\n"
+        strPortCoordsCartesianToCylindrical += "portStart = [generatedAuxR, generatedAuxTheta, generatedAuxZ];\n"
+        strPortCoordsCartesianToCylindrical += "[generatedAuxTheta, generatedAuxR, generatedAuxZ] = cart2pol(portStop);\n"
+        strPortCoordsCartesianToCylindrical += "portStop = [generatedAuxR, generatedAuxTheta, generatedAuxZ];\n"
+
+        if (self.getModelCoordsType() == "cylindrical"):
+            # CYLINDRICAL COORDINATE TYPE USED
+            if ((bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0) or
+                (bbCoords.XMin >= 0 and bbCoords.YMin >= 0 and bbCoords.XMax <= 0 and bbCoords.YMax <= 0)
+            ):
+                #
+                # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
+                #
+                radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+
+                genScript += 'portStart = [ 0, -math.pi, {0:g} ]\n'.format(_r(sf * bbCoords.ZMin))
+                genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)),
+                                                                          _r(sf * bbCoords.ZMax))
+            else:
+                #
+                # port is lying outside origin
+                #
+                genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
+                                                                             _r(sf * bbCoords.YMin),
+                                                                             _r(sf * bbCoords.ZMin))
+                genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
+                                                                             _r(sf * bbCoords.YMax),
+                                                                             _r(sf * bbCoords.ZMax))
+                genScript += strPortCoordsCartesianToCylindrical
+
+        else:
+            # CARTESIAN GRID USED
+            genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
+                                                                         _r(sf * bbCoords.YMin),
+                                                                         _r(sf * bbCoords.ZMin))
+            genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
+                                                                         _r(sf * bbCoords.YMax),
+                                                                         _r(sf * bbCoords.ZMax))
+
+        if (not startPointName is None):
+            genScript = genScript.replace("portStart", startPointName)
+        if (not stopPointName is None):
+            genScript = genScript.replace("portStop", stopPointName)
+
+        return genScript
+
     def getPortDefinitionsScriptLines(self, items):
         genScript = ""
         if not items:
@@ -266,10 +319,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         for [item, currSetting] in items:
 
-            print("#")
-            print("#PORT")
-            print("#name: " + currSetting.getName())
-            print("#type: " + currSetting.getType())
+            print(f"#PORT - {currSetting.getName()} - {currSetting.getType()}")
 
             objs = self.cadHelpers.getObjects()
             for k in range(item.childCount()):
@@ -277,8 +327,6 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
                 genScript += "## PORT - " + currSetting.getName() + " - " + childName + "\n"
 
-                print("##Children:")
-                print("\t" + childName)
                 freecadObjects = [i for i in objs if (i.Label) == childName]
 
                 # print(freecadObjects)
@@ -286,9 +334,6 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
                     print('\tFreeCAD lumped port BoundBox: ' + str(bbCoords))
-                    print('\t\tXMin: ' + str(bbCoords.XMin))
-                    print('\t\tYMin: ' + str(bbCoords.YMin))
-                    print('\t\tZMin: ' + str(bbCoords.ZMin))
 
                     #
                     #	getting item priority
@@ -300,21 +345,16 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     # PORT openEMS GENERATION INTO VARIABLE
                     #
                     if (currSetting.getType() == 'lumped'):
-                        genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'portStop  = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += 'portR = ' + str(currSetting.R) + '\n'
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
+
+                        if currSetting.infiniteResistance:
+                            genScript += 'portR = inf\n'
+                        else:
+                            genScript += 'portR = ' + str(currSetting.R) + '\n'
+
                         genScript += 'portUnits = ' + str(currSetting.getRUnits()) + '\n'
                         genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + "\n"
                         genScript += 'portDirection = \'' + currSetting.direction + '\'\n'
-
-                        print('\tportStart = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMin), _r(bbCoords.YMin),
-                                                                                _r(bbCoords.ZMin)))
-                        print('\tportStop  = [ {0:g}, {1:g}, {2:g} ];\n'.format(_r(bbCoords.XMax), _r(bbCoords.YMax),
-                                                                                _r(bbCoords.ZMax)))
 
                         genScript += 'port[' + str(genScriptPortCount) + '] = FDTD.AddLumpedPort(' + \
                                      'port_nr=' + str(genScriptPortCount) + ', ' + \
@@ -322,6 +362,9 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                      'priority=' + str(priorityIndex) + ', ' + \
                                      'excite=' + ('1.0*portExcitationAmplitude' if currSetting.isActive else '0') + ')\n'
 
+                        internalPortName = currSetting.name + " - " + obj.Label
+                        self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
+                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
 
                     #
@@ -330,8 +373,13 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
                     elif (currSetting.getType() == 'microstrip'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getMicrostripStartStopCoords(bbCoords, sf)
-                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ]\n'.format(portStartX, portStartY, portStartZ)
-                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ]\n'.format(portStopX, portStopY, portStopZ)
+                        bbCoords.Xmin = portStartX
+                        bbCoords.Ymin = portStartY
+                        bbCoords.Zmin = portStartZ
+                        bbCoords.Xmax = portStopX
+                        bbCoords.Ymax = portStopY
+                        bbCoords.Zmax = portStopZ
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         if currSetting.infiniteResistance:
                             genScript += 'portR = inf\n'
@@ -375,13 +423,20 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         genScriptPortCount += 1
 
                     elif (currSetting.getType() == 'circular waveguide'):
+                        #
+                        #   NOV 2023 - PYTHON API NOT IMPLEMENTED
+                        #
                         genScript += "%% circular port openEMS code should be here, NOT IMPLEMENTED python API for it\n"
 
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideWidth, waveguideHeight = currSetting.getRectangularWaveguideStartStopWidthHeight(bbCoords, sf)
-
-                        genScript += 'portStart  = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStartX, portStartY, portStartZ)
-                        genScript += 'portStop = [ {0:g}, {1:g}, {2:g} ];\n'.format(portStopX, portStopY, portStopZ)
+                        bbCoords.Xmin = portStartX
+                        bbCoords.Ymin = portStartY
+                        bbCoords.Zmin = portStartZ
+                        bbCoords.Xmax = portStopX
+                        bbCoords.Ymax = portStopY
+                        bbCoords.Zmax = portStopZ
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += f"portExcitationAmplitude = {str(currSetting.excitationAmplitude)} * {'1' if currSetting.isActive else '0'}\n"
 
@@ -402,12 +457,21 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         genScript += f'portNamesAndNumbersList["{obj.Label}"] = {genScriptPortCount};\n'
                         genScriptPortCount += 1
                     elif (currSetting.getType() == 'coaxial'):
+                        #
+                        #   NOV 2023 - PYTHON API NOT IMPLEMENTED
+                        #
                         genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coaxial port\n'
 
                     elif (currSetting.getType() == 'coplanar'):
+                        #
+                        #   NOV 2023 - PYTHON API NOT IMPLEMENTED
+                        #
                         genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coplanar port\n'
 
                     elif (currSetting.getType() == 'stripline'):
+                        #
+                        #   NOV 2023 - PYTHON API NOT IMPLEMENTED
+                        #
                         genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE stripline port\n'
 
                     elif (currSetting.getType() == 'curve'):
@@ -483,6 +547,10 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                             genScript += 'probeType = 0\n'
                         elif currSetting.probeType == "current":
                             genScript += 'probeType = 1\n'
+                            elif currSetting.probeType == "E field":
+                            genScript += 'probeType = 2\n'
+                        elif currSetting.probeType == "H field":
+                            genScript += 'probeType = 3\n'
                         else:
                             genScript += 'probeType = ?    #ERROR probe code generate don\'t know type\n'
 
@@ -508,8 +576,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                                 self.cadHelpers.printWarning(f"probe octave code generator error, no frequencies defined for '{probeName}', using f0 instead\n")
 
                         genScript += f"probeList[probeName] = CSX.AddProbe(probeName, probeType" + argStr + ")\n"
-                        genScript += 'probeStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                        genScript += 'probeStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "probeStart", "probeStop")
                         genScript += f"probeList[probeName].AddBox(probeStart, probeStop )\n"
                         genScript += "\n"
                         genProbeCounter += 1
@@ -555,8 +622,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         else:
                             genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=dumpboxType" + argStr + ")\n"
 
-                        genScript += 'dumpboxStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpboxStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "dumpboxStart", "dumpboxStop")
                         genScript += f"dumpBoxList[dumpboxName].AddBox(dumpboxStart, dumpboxStop )\n"
                         genScript += "\n"
                         genDumpBoxCounter += 1
@@ -566,13 +632,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         genScript += f'dumpboxName = "{dumpboxName}"\n'
 
                         genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=0, dump_mode=2)\n"
-                        genScript += 'dumpStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpStart, dumpStop)\n"
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "dumpboxStart", "dumpboxStop")
+                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpboxStart, dumpboxStop)\n"
                         genDumpBoxCounter += 1
 
                     elif (currSetting.getType() == 'ht dump'):
@@ -580,13 +641,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         genScript += f'dumpboxName = "{dumpboxName}"\n'
 
                         genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dumnp_type=1, dump_mode=2)\n"
-                        genScript += 'dumpStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                     _r(sf * bbCoords.YMin),
-                                                                                     _r(sf * bbCoords.ZMin))
-                        genScript += 'dumpStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                     _r(sf * bbCoords.YMax),
-                                                                                     _r(sf * bbCoords.ZMax))
-                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpStart, dumpStop );\n"
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "dumpboxStart", "dumpboxStop")
+                        genScript += f"dumpBoxList[dumpboxName].AddBox(dumpboxStart, dumpboxStop );\n"
                         genDumpBoxCounter += 1
 
                     elif (currSetting.getType() == 'nf2ff box'):
@@ -594,12 +650,8 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         dumpboxName = dumpboxName.replace(" ", "_")
                         genScript += f'dumpboxName = "{dumpboxName}"\n'
 
-                        genScript += 'nf2ffStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin),
-                                                                                      _r(sf * bbCoords.YMin),
-                                                                                      _r(sf * bbCoords.ZMin))
-                        genScript += 'nf2ffStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax),
-                                                                                      _r(sf * bbCoords.YMax),
-                                                                                      _r(sf * bbCoords.ZMax))
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "nf2ffStart", "nf2ffStop")
+
                         # genScript += 'nf2ffUnit = ' + currSetting.getUnitAsScriptLine() + ';\n'
                         genScript += f"nf2ffBoxList[dumpboxName] = FDTD.CreateNF2FFBox(dumpboxName, nf2ffStart, nf2ffStop)\n"
                         # NF2FF grid lines are generated below via getNF2FFDefinitionsScriptLines()
@@ -637,10 +689,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
             objsExport = []
             for k in range(item.childCount()):
                 childName = item.child(k).text(0)
-                print("#")
                 print("#LUMPED PART " + currentSetting.getType())
-                print("#name " + currentSetting.getName())
-                print("#")
 
                 freecadObjects = [i for i in objs if (i.Label) == childName]
                 for obj in freecadObjects:
@@ -649,8 +698,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                     # BOUNDING BOX
                     bbCoords = obj.Shape.BoundBox
 
-                    genScript += 'lumpedPartStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMin), _r(sf * bbCoords.YMin), _r(sf * bbCoords.ZMin))
-                    genScript += 'lumpedPartStop  = [{0:g}, {1:g}, {2:g}]\n'.format(_r(sf * bbCoords.XMax), _r(sf * bbCoords.YMax), _r(sf * bbCoords.ZMax))
+                    genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "lumpedPartStart", "lumpedPartStop")
 
                     lumpedPartName = currentSetting.name
                     lumpedPartParams = ''
@@ -871,14 +919,22 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "# This file has been automatically generated. Manual changes may be overwritten.\n"
         genScript += "#\n"
         genScript += "### Import Libraries\n"
+        genScript += "import math\n"
+        genScript += "import numpy as np\n"
         genScript += "import os, tempfile, shutil\n"
         genScript += "from pylab import *\n"
         genScript += "import CSXCAD\n"
         genScript += "from openEMS import openEMS\n"
         genScript += "from openEMS.physical_constants import *\n"
-        genScript += "#\n"
+        genScript += "\n"
 
-        genScript += "#\n"
+        genScript += "def cart2pol(pointCoords):"
+        genScript += "\ttheta = np.arctan2(pointCoords(1), pointCoords(0))"
+        genScript += "\tr = np.sqrt(pointCoords(0) ** 2 + pointCoords(1) ** 2)"
+        genScript += "\tz = pointCoords(2)"
+        genScript += "\treturn (rho, phi)"
+        genScript += "\n"
+
         genScript += "# Change current path to script file folder\n"
         genScript += "#\n"
         genScript += "abspath = os.path.abspath(__file__)\n"

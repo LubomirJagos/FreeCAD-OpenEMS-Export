@@ -972,6 +972,10 @@ class OctaveScriptLinesGenerator2:
                             genScript += 'probeType = 0;\n'
                         elif currSetting.probeType == "current":
                             genScript += 'probeType = 1;\n'
+                        elif currSetting.probeType == "E field":
+                            genScript += 'probeType = 2;\n'
+                        elif currSetting.probeType == "H field":
+                            genScript += 'probeType = 3;\n'
                         else:
                             genScript += 'probeType = ?;    #ERROR probe code generate don\'t know type\n'
 
