@@ -547,7 +547,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                             genScript += 'probeType = 0\n'
                         elif currSetting.probeType == "current":
                             genScript += 'probeType = 1\n'
-                            elif currSetting.probeType == "E field":
+                        elif currSetting.probeType == "E field":
                             genScript += 'probeType = 2\n'
                         elif currSetting.probeType == "H field":
                             genScript += 'probeType = 3\n'
@@ -928,11 +928,15 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "from openEMS.physical_constants import *\n"
         genScript += "\n"
 
-        genScript += "def cart2pol(pointCoords):"
-        genScript += "\ttheta = np.arctan2(pointCoords(1), pointCoords(0))"
-        genScript += "\tr = np.sqrt(pointCoords(0) ** 2 + pointCoords(1) ** 2)"
-        genScript += "\tz = pointCoords(2)"
-        genScript += "\treturn (rho, phi)"
+        genScript += "#\n"
+        genScript += "# FUNCTION TO CONVERT CARTESIAN TO CYLINDRICAL COORDINATES\n"
+        genScript += "#     returns coordinates in order [theta, r, z]\n"
+        genScript += "#\n"
+        genScript += "def cart2pol(pointCoords):\n"
+        genScript += "\ttheta = np.arctan2(pointCoords(1), pointCoords(0))\n"
+        genScript += "\tr = np.sqrt(pointCoords(0) ** 2 + pointCoords(1) ** 2)\n"
+        genScript += "\tz = pointCoords(2)\n"
+        genScript += "\treturn theta, r, z\n"
         genScript += "\n"
 
         genScript += "# Change current path to script file folder\n"

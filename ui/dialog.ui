@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1408</width>
-    <height>748</height>
+    <width>1412</width>
+    <height>757</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2062,7 +2062,7 @@ Custom option using fparser lib, possible using user-defined equation:
                 <bool>true</bool>
                </property>
                <property name="currentIndex">
-                <number>6</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="Lumped">
                 <attribute name="title">
@@ -2162,6 +2162,9 @@ on its size, ie. if in axis length is 1mm then
                      <widget class="QDoubleSpinBox" name="lumpedPortResistanceValue">
                       <property name="maximum">
                        <double>10000000000.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>50.000000000000000</double>
                       </property>
                      </widget>
                     </item>

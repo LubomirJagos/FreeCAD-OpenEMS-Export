@@ -1405,9 +1405,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				isObjAlreadyInCategory = False
 				itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
 				for item in itemWithSameName:
-					print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
-					if (item.parent() == rightItem):
+					#there must be check if item has parent, if pareent is None it means it's category name and categories ALWAYS HAVE SUBCATEGORIES
+					#case scenario:
+					#	- item freecad obj is named excitation
+					#	- there is excitation category
+					#	- in itemWithSameName Excitation category is inclucded so next condition filter it away
+					#
+					if (item.parent() != None and item.parent() == rightItem):
+						print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
 						isObjAlreadyInCategory = True
+
 				if (isObjAlreadyInCategory):
 					self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
 					continue
@@ -1673,6 +1680,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	return
 
 		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName, nf2ffBoxInputPortName, freq, freqCount)
+
+		# display message that script was generated
+		self.guiHelpers.displayMessage("Script to display far field generated.")
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
