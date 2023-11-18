@@ -1899,13 +1899,20 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				comboboxRef.setCurrentIndex(index)
 				print(f"setComboboxItem for {comboboxRef} to value {text} at index {index}")
 			else:
+				flagWasAlternativeValueUsed = False
 				for alternativeValueTuple in alternativeEquivalentValues:
 					if (alternativeValueTuple[0] == text):
+						flagWasAlternativeValueUsed = True
 						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[1]}")
 						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[1])
 					elif (alternativeValueTuple[1] == text):
+						flagWasAlternativeValueUsed = True
 						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[0]}")
 						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[0])
+
+				if (not flagWasAlternativeValueUsed):
+					print(f"WARNING: clearComboboxSetValuesRestoreIndex: Cannot set for {comboboxRef} item {text} alternative equivalent, no value.");
+
 				return
 
 			print(f"WARNING: clearComboboxSetValuesRestoreIndex: Cannot set for {comboboxRef} item {text}, wasn't found in items.")
@@ -1923,6 +1930,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCylindricalLayerDirection) for comboboxRef in [
 				self.form.microstripPortDirection,
 				self.form.coplanarPortDirection,
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredSymmetricPortCylindricalLayerDirection) for comboboxRef in [
 				self.form.striplinePortDirection
 			]]
 			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCylindricalExcitationDirection) for comboboxRef in [
@@ -1940,6 +1949,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCartesianLayerDirection) for comboboxRef in [
 				self.form.microstripPortDirection,
 				self.form.coplanarPortDirection,
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredSymmetricPortCartesianLayerDirection) for comboboxRef in [
 				self.form.striplinePortDirection
 			]]
 			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCartesianExcitationDirection) for comboboxRef in [

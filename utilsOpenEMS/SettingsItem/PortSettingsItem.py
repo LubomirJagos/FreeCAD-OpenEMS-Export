@@ -107,23 +107,23 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * bbCoords.YMax)
         portStopZ = _r(sf * bbCoords.ZMax)
 
-        if (self.direction == "XY plane, top layer"):
+        if (self.direction.startswith(("XY plane, top layer", "r-theta, top layer"))):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (self.direction == "YZ plane, right layer"):
+        elif (self.direction.startswith(("YZ plane, right layer", "z-theta, outside layer"))):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (self.direction == "XZ plane, front layer"):
+        elif (self.direction.startswith(("XZ plane, front layer", "z-theta, outside layer"))):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
 
-        if (self.mslPropagation == "z-"):
+        if (self.mslPropagation.startswith("z-")):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (self.mslPropagation == "x-"):
+        elif (self.mslPropagation.startswith(("x-", "r-"))):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (self.mslPropagation == "y-"):
+        elif (self.mslPropagation.startswith(("y-", "theta-"))):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
 
@@ -137,13 +137,13 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * bbCoords.YMax)
         portStopZ = _r(sf * bbCoords.ZMax)
 
-        if (self.waveguideCircDir == "z-"):
+        if (self.waveguideCircDirstartswith("z-")):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (self.waveguideCircDir == "x-"):
+        elif (self.waveguideCircDir.startswith(("x-", "r-"))):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (self.waveguideCircDir == "y-"):
+        elif (self.waveguideCircDir.startswith(("y-", "theta-"))):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
 
@@ -151,11 +151,11 @@ class PortSettingsItem(SettingsItem):
         #   Based on port excitation direction which is not used at waveguide due it has modes, but based on that height and width are resolved.
         #
         waveguideRadius = 0
-        if (self.direction[0] == "z"):
+        if (self.direction.startswith("z")):
             waveguideRadius = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-        elif (self.direction[0] == "x"):
+        elif (self.direction.startswith(("x", "r"))):
             waveguideRadius = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-        elif (self.direction[0] == "y"):
+        elif (self.direction.startswith(("y", "theta"))):
             waveguideRadius = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
 
         return portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideRadius
@@ -168,13 +168,13 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * bbCoords.YMax)
         portStopZ = _r(sf * bbCoords.ZMax)
 
-        if (self.waveguideRectDir == "z-"):
+        if (self.waveguideRectDir in ["z-"]):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (self.waveguideRectDir == "x-"):
+        elif (self.waveguideRectDir in ["x-", "r-"]):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (self.waveguideRectDir == "y-"):
+        elif (self.waveguideRectDir in ["y-", "theta-"]):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
 
@@ -183,13 +183,13 @@ class PortSettingsItem(SettingsItem):
         #
         waveguideWidth = 0
         waveguideHeight = 0
-        if (self.direction[0] == "z"):
+        if (self.direction.startswith("z")):
             waveguideWidth = abs(portStartX - portStopX)
             waveguideHeight = abs(portStartY - portStopY)
-        elif (self.direction[0] == "x"):
+        elif (self.direction.startswith(("x", "r"))):
             waveguideWidth = abs(portStartY - portStopY)
             waveguideHeight = abs(portStartZ - portStopZ)
-        elif (self.direction[0] == "y"):
+        elif (self.direction.startswith(("y", "theta"))):
             waveguideWidth = abs(portStartX - portStopX)
             waveguideHeight = abs(portStartZ - portStopZ)
 
@@ -203,7 +203,7 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * bbCoords.YMax)
         portStopZ = _r(sf * bbCoords.ZMax)
 
-        if (self.direction[1] == "-"):
+        if (self.direction.endswith("-")):
             portStartX = _r(sf * bbCoords.XMax)
             portStartY = _r(sf * bbCoords.YMax)
             portStartZ = _r(sf * bbCoords.ZMax)
@@ -213,11 +213,11 @@ class PortSettingsItem(SettingsItem):
 
         # calculate coaxial port radius, it's smaller dimension from width, height
         coaxialDiameter = 0.0
-        if (self.direction[0] == "z"):
+        if (self.direction.startswith("z")):
             coaxialDiameter = min(abs(portStartX - portStopX), abs(portStartY - portStopY))
-        elif (self.direction[0] == "x"):
+        elif (self.direction.startswith(("x", "r"))):
             coaxialDiameter = min(abs(portStartY - portStopY), abs(portStartZ - portStopZ))
-        elif (self.direction[0] == "y"):
+        elif (self.direction.startswith(("y", "theta"))):
             coaxialDiameter = min(abs(portStartX - portStopX), abs(portStartZ - portStopZ))
 
         coaxialRadius = coaxialDiameter / 2
@@ -225,7 +225,7 @@ class PortSettingsItem(SettingsItem):
         #
         #   Port start and end need to be shifted into middle of feed plane
         #
-        if (self.direction[0] == "z"):
+        if (self.direction.startswith("z")):
             calcPortStartX = (portStartX + portStopX) / 2
             calcPortStartY = (portStartY + portStopY) / 2
             calcPortStartZ = portStartZ
@@ -233,7 +233,7 @@ class PortSettingsItem(SettingsItem):
             calcPortStopY = (portStartY + portStopY) / 2
             calcPortStopZ = portStopZ
 
-        elif (self.direction[0] == "x"):
+        elif (self.direction.startswith(("x", "r"))):
             calcPortStartX = portStartX
             calcPortStartY = (portStartY + portStopY) / 2
             calcPortStartZ = (portStartZ + portStopZ) / 2
@@ -241,7 +241,7 @@ class PortSettingsItem(SettingsItem):
             calcPortStopY = (portStartY + portStopY) / 2
             calcPortStopZ = (portStartZ + portStopZ) / 2
 
-        elif (self.direction[0] == "y"):
+        elif (self.direction.startswith(("y", "theta"))):
             calcPortStartX = (portStartX + portStopX) / 2
             calcPortStartY = portStartY
             calcPortStartZ = (portStartZ + portStopZ) / 2
@@ -273,22 +273,22 @@ class PortSettingsItem(SettingsItem):
         #
         #   2. set coordinates of coplanar based on plane, height must be same
         #
-        if (currSetting.direction == "XY plane, top layer"):
+        if (currSetting.direction in ["XY plane, top layer", "r-theta, top layer"]):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMax)
-        elif (currSetting.direction == "XY plane, bottom layer"):
+        elif (currSetting.direction in ["XY plane, bottom layer", "r-theta, bottom layer"]):
             portStartZ = _r(sf * bbCoords.ZMin)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (currSetting.direction == "YZ plane, right layer"):
+        elif (currSetting.direction in ["YZ plane, right layer", "z-theta, outside layer"]):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMax)
-        elif (currSetting.direction == "YZ plane, left layer"):
+        elif (currSetting.direction in ["YZ plane, left layer", "z-theta, inside layer"]):
             portStartX = _r(sf * bbCoords.XMin)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (currSetting.direction == "XZ plane, front layer"):
+        elif (currSetting.direction in ["XZ plane, front layer", "z-theta, outside layer"]):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMax)
-        elif (currSetting.direction == "XZ plane, back layer"):
+        elif (currSetting.direction in ["XZ plane, back layer", "z-theta, inside layer"]):
             portStartY = _r(sf * bbCoords.YMin)
             portStopY = _r(sf * bbCoords.YMin)
 
@@ -298,46 +298,46 @@ class PortSettingsItem(SettingsItem):
         if (currSetting.coplanarPropagation == "z-"):
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (currSetting.coplanarPropagation == "x-"):
+        elif (currSetting.coplanarPropagation in ["x-", "r-"]):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
-        elif (currSetting.coplanarPropagation == "y-"):
+        elif (currSetting.coplanarPropagation in ["y-", "theta-"]):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
         elif (currSetting.coplanarPropagation == "z+"):
             portStartZ = _r(sf * bbCoords.ZMin)
             portStopZ = _r(sf * bbCoords.ZMax)
-        elif (currSetting.coplanarPropagation == "x+"):
+        elif (currSetting.coplanarPropagation in ["x+", "r+"]):
             portStartX = _r(sf * bbCoords.XMin)
             portStopX = _r(sf * bbCoords.XMax)
-        elif (currSetting.coplanarPropagation == "y+"):
+        elif (currSetting.coplanarPropagation in ["y+", "theta+"]):
             portStartY = _r(sf * bbCoords.YMin)
             portStopY = _r(sf * bbCoords.YMax)
 
         gapWidth = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits)
         gapWidth_freeCAD_units = currSetting.coplanarGapValue * currSetting.getUnitsAsNumber(currSetting.coplanarGapUnits) / self.getFreeCADUnitLength_m()
 
-        if (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "x"):
+        if (currSetting.direction.startswith(("XY", "r-theta")) and currSetting.coplanarPropagation.startswith(("x", "r"))):
             coplanarEVecStr = '[0 1 0]'
             portStartY += gapWidth_freeCAD_units
             portStopY -= gapWidth_freeCAD_units
-        elif (currSetting.direction[0:2] == "XY" and currSetting.coplanarPropagation[0] == "y"):
+        elif (currSetting.direction.startswith(("XY", "r-theta")) and currSetting.coplanarPropagation.startswith(("y", "theta"))):
             coplanarEVecStr = '[1 0 0]'
             portStartX += gapWidth_freeCAD_units
             portStopX -= gapWidth_freeCAD_units
-        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "x"):
+        elif (currSetting.direction.startswith(("XZ", "z-theta")) and currSetting.coplanarPropagation.startswith(("x", "r"))):
             coplanarEVecStr = '[0 0 1]'
             portStartZ += gapWidth_freeCAD_units
             portStopZ -= gapWidth_freeCAD_units
-        elif (currSetting.direction[0:2] == "XZ" and currSetting.coplanarPropagation[0] == "z"):
+        elif (currSetting.direction.startswith(("XZ", "z-theta")) and currSetting.coplanarPropagation.startswith("z")):
             coplanarEVecStr = '[1 0 0]'
             portStartX += gapWidth_freeCAD_units
             portStopX -= gapWidth_freeCAD_units
-        elif (currSetting.direction[0:2] == "YZ" and currSetting.coplanarPropagation[0] == "y"):
+        elif (currSetting.direction.startswith(("XZ", "z-theta")) and currSetting.coplanarPropagation.startswith(("y", "theta"))):
             coplanarEVecStr = '[0 0 1]'
             portStartZ += gapWidth_freeCAD_units
             portStopZ -= gapWidth_freeCAD_units
-        elif (currSetting.direction[0:2] == "YZ" and currSetting.coplanarPropagation[0] == "z"):
+        elif (currSetting.direction.startswith(("XZ", "z-theta")) and currSetting.coplanarPropagation.startswith("z")):
             coplanarEVecStr = '[0 1 0]'
             portStartY += gapWidth_freeCAD_units
             portStopY -= gapWidth_freeCAD_units
@@ -354,32 +354,32 @@ class PortSettingsItem(SettingsItem):
         portStopY = _r(sf * (bbCoords.YMin + bbCoords.YMax) / 2)
         portStopZ = _r(sf * (bbCoords.ZMin + bbCoords.ZMax) / 2)
 
-        if (self.striplinePropagation in ["x+", "y+"] and self.direction == "XY plane"):
+        if (self.striplinePropagation in ["x+", "y+", "r+", "theta+"] and self.direction in ["XY plane", "r-theta plane"]):
             portStartX = _r(sf * bbCoords.XMin)
             portStopX = _r(sf * bbCoords.XMax)
             portStartY = _r(sf * bbCoords.YMin)
             portStopY = _r(sf * bbCoords.YMax)
-        elif (self.striplinePropagation in ["x+", "z+"] and self.direction == "XZ plane"):
+        elif (self.striplinePropagation in ["x+", "z+", "r+"] and self.direction == "XZ plane"):
             portStartX = _r(sf * bbCoords.XMin)
             portStopX = _r(sf * bbCoords.XMax)
             portStartZ = _r(sf * bbCoords.ZMin)
             portStopZ = _r(sf * bbCoords.ZMax)
-        elif (self.striplinePropagation in ["y+", "z+"] and self.direction == "YZ plane"):
+        elif (self.striplinePropagation in ["y+", "z+", "theta+"] and self.direction == "YZ plane"):
             portStartY = _r(sf * bbCoords.YMin)
             portStopY = _r(sf * bbCoords.YMax)
             portStartZ = _r(sf * bbCoords.ZMin)
             portStopZ = _r(sf * bbCoords.ZMax)
-        elif (self.striplinePropagation in ["x-", "y-"] and self.direction == "XY plane"):
+        elif (self.striplinePropagation in ["x-", "y-", "r-", "theta-"] and self.direction == "XY plane"):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
-        elif (self.striplinePropagation in ["x-", "z-"] and self.direction == "XZ plane"):
+        elif (self.striplinePropagation in ["x-", "z-", "r-"] and self.direction == "XZ plane"):
             portStartX = _r(sf * bbCoords.XMax)
             portStopX = _r(sf * bbCoords.XMin)
             portStartZ = _r(sf * bbCoords.ZMax)
             portStopZ = _r(sf * bbCoords.ZMin)
-        elif (self.striplinePropagation in ["y-", "z-"] and self.direction == "YZ plane"):
+        elif (self.striplinePropagation in ["y-", "z-", "theta-"] and self.direction == "YZ plane"):
             portStartY = _r(sf * bbCoords.YMax)
             portStopY = _r(sf * bbCoords.YMin)
             portStartZ = _r(sf * bbCoords.ZMax)

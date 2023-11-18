@@ -211,7 +211,7 @@ class IniValidator0v1:
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['lumped']",
-                        'allowedValues': r"(x|y|z)"
+                        'allowedValues': r"(x|y|z|r|theta)"
                     },
                     {
                         'name': 'direction',
@@ -221,12 +221,12 @@ class IniValidator0v1:
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['microstrip', 'coplanar']",
-                        'allowedValues': r"(XY plane, top layer|XY plane, bottom layer|XZ plane, front layer|XZ plane, back layer|YZ plane, right layer|YZ plane, left layer)"
+                        'allowedValues': r"(XY plane, top layer|XY plane, bottom layer|XZ plane, front layer|XZ plane, back layer|YZ plane, right layer|YZ plane, left layer|r-theta, top layer| r-theta, bottom layer|z-theta, outside layer|z-theta, inside layer)"
                     },
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['stripline']",
-                        'allowedValues': r"(XY plane|XZ plane|YZ plane)"
+                        'allowedValues': r"(XY plane|XZ plane|YZ plane|r-theta plane|z-theta plane)"
                     },
                     {
                         'name': 'polarizationAngle',

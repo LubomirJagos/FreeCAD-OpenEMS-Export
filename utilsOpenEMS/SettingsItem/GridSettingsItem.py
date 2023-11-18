@@ -22,6 +22,9 @@ class GridSettingsItem(SettingsItem):
         ("XZ plane, back layer", "z-theta, inside layer"),
         ("YZ plane, right layer", "z-theta, outside layer"),    #cylindrical has just 2 independent planes so this is repeating
         ("YZ plane, left layer", "z-theta, inside layer"),      #cylindrical has just 2 indipendent planes so this is repeating
+        ("XY plane", "r-theta plane"),
+        ("XZ plane", "z-theta plane"),                          #cylindrical has just 2 independent planes so this is repeating
+        ("YZ plane", "z-theta plane"),                          #cylindrical has just 2 independent planes so this is repeating
     ]
 
     lumpedPortCartesianExcitationDirection = ["z", "x", "y"]
@@ -32,6 +35,8 @@ class GridSettingsItem(SettingsItem):
     multilayeredPortCylindricalLayerDirection = ["r-theta, top layer", "r-theta, bottom layer", "z-theta, outside layer", "z-theta, inside layer"]
     multilayeredPortCylindricalPropagationDirection = ["r+", "r-", "theta+", "theta-", "z+", "z-"]
 
+    multilayeredSymmetricPortCartesianLayerDirection = ["XY plane", "XZ plane", "YZ plane"]
+    multilayeredSymmetricPortCylindricalLayerDirection = ["r-theta plane", "z-theta plane", "z-theta plane"]
 
     def __init__(self, name="", type="", fixedCount=None, fixedDistance=None,
                  userDefined=None, units="mm", unitsAngle="deg", xenabled=False, yenabled=False, zenabled=False,

@@ -77,7 +77,7 @@
           <string notr="true"/>
          </property>
          <property name="currentIndex">
-          <number>6</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="objectAssignmentTab">
           <attribute name="title">
@@ -2062,7 +2062,7 @@ Custom option using fparser lib, possible using user-defined equation:
                 <bool>true</bool>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>6</number>
                </property>
                <widget class="QWidget" name="Lumped">
                 <attribute name="title">
