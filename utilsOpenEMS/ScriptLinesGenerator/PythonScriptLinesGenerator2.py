@@ -814,6 +814,266 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                 print("Failed to resolve '{}'.".format(gridName))
                 continue
             itemListIdx = gridSettingsNodeNames.index(gridName)
+
+            #GridSettingsItem object from GUI
+            gridSettingsInst = items[itemListIdx][1]
+
+            #Grid category object from GUI
+            gridCategoryObj = items[itemListIdx][0]
+
+            #
+            #   Fixed Distance, Fixed Count mesh boundaries coords obtain
+            #
+            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count']):
+                fcObject = fcObjects.get(FreeCADObjectName, None)
+                if (not fcObject):
+                    print("Failed to resolve '{}'.".format(FreeCADObjectName))
+                    continue
+
+                ### Produce script output.
+
+                if (not "Shape" in dir(fcObject)):
+                    continue
+
+                bbCoords = fcObject.Shape.BoundBox
+
+                # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                if gridSettingsInst.generateLinesInside:
+                    delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
+                    print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
+                else:
+                    delta = 0
+
+                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
+                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
+                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+
+                # Write grid definition.
+                genScript += "## GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
+
+            #
+            #   Smooth Mesh boundaries coords obtain
+            #
+            elif (gridSettingsInst.getType() == "Smooth Mesh"):
+
+                xList = []
+                yList = []
+                zList = []
+
+                #iterate over grid smooth mesh category freecad children
+                for k in range(gridCategoryObj.childCount()):
+                    FreeCADObjectName = gridCategoryObj.child(k).text(0)
+
+                    fcObject = fcObjects.get(FreeCADObjectName, None)
+                    if (not fcObject):
+                        print("Smooth Mesh - Failed to resolve '{}'.".format(FreeCADObjectName))
+                        continue
+
+                    ### Produce script output.
+
+                    if (not "Shape" in dir(fcObject)):
+                        continue
+
+                    bbCoords = fcObject.Shape.BoundBox
+
+                    # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                    if gridSettingsInst.generateLinesInside:
+                        delta = self.maxGridResolution_m * sf * 0.001  # LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
+                        print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
+                    else:
+                        delta = 0
+
+                    #append boundary coordinates into list
+                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
+                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
+                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
+                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
+                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+
+                    # Write grid definition.
+                    genScript += "## GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
+
+                #order from min -> max coordinates in each list
+                xList.sort()
+                yList.sort()
+                zList.sort()
+
+            #
+            #   Real octave mesh lines code generate starts here
+            #
+
+            #in case of cylindrical coordinates convert xyz to theta,r,z
+            if (gridSettingsInst.coordsType == "cylindrical"):
+                #FROM GUI ARE GOING DEGREES
+
+                #
+                #   Here calculate right r, theta, z from boundaries of object, it depends if origin lays inside boundaries or where object is positioned.
+                #
+                xmin, xmax, ymin, ymax, zmin, zmax = gridSettingsInst.getCartesianAsCylindricalCoords(bbCoords, xmin, xmax, ymin, ymax, zmin, zmax)
+
+                if (gridSettingsInst.getType() == 'Smooth Mesh' and gridSettingsInst.unitsAngle == "deg"):
+                    yParam = math.radians(gridSettingsInst.smoothMesh['yMaxRes'])
+                elif (gridSettingsInst.getType() == 'Fixed Distance' and gridSettingsInst.unitsAngle == "deg"):
+                    yParam = math.radians(gridSettingsInst.getXYZ(refUnit)['y'])
+                elif (gridSettingsInst.getType() == 'User Defined'):
+                    pass  # user defined is jaust text, doesn't have ['y']
+                else:
+                    yParam = gridSettingsInst.getXYZ(refUnit)['y']
+
+                #z coordinate stays as was
+
+            else:
+                if (gridSettingsInst.getType() == 'Smooth Mesh'):
+                    yParam = gridSettingsInst.smoothMesh['yMaxRes']
+                elif (gridSettingsInst.getType() == 'User Defined'):
+                    pass                                                #user defined is just text, doesn't have ['y']
+                else:
+                    yParam = gridSettingsInst.getXYZ(refUnit)['y']
+
+            if (gridSettingsInst.getType() == 'Fixed Distance'):
+                if gridSettingsInst.xenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
+                    genScript += "mesh.x = np.concatenate((mesh.x, np.arange({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
+                if gridSettingsInst.yenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
+                    genScript += "mesh.y = np.concatenate((mesh.y, np.arange({0:g},{1:g},{2:g})))\n".format(_r(ymin),_r(ymax),_r(yParam))
+                if gridSettingsInst.zenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
+                    genScript += "mesh.z = np.concatenate((mesh.z, np.arange({0:g},{1:g},{2:g})))\n".format(_r(zmin),_r(zmax),_r(gridSettingsInst.getXYZ(refUnit)['z']))
+
+            elif (gridSettingsInst.getType() == 'Fixed Count'):
+                if gridSettingsInst.xenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
+                    if (not gridSettingsInst.getXYZ()['x'] == 1):
+                        genScript += "mesh.x = np.concatenate((mesh.x, linspace({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
+                    else:
+                        genScript += "mesh.x = np.append(mesh.x, {0:g})\n".format(_r((xmin + xmax) / 2))
+
+                if gridSettingsInst.yenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
+                    if (not gridSettingsInst.getXYZ()['y'] == 1):
+                        genScript += "mesh.y = np.concatenate((mesh.y, linspace({0:g},{1:g},{2:g})))\n".format(_r(ymin), _r(ymax), _r(yParam))
+                    else:
+                        genScript += "mesh.y = np.append(mesh.y, {0:g})\n".format(_r((ymin + ymax) / 2))
+
+                if gridSettingsInst.zenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
+                    if (not gridSettingsInst.getXYZ()['z'] == 1):
+                        genScript += "mesh.z = np.concatenate((mesh.z, linspace({0:g},{1:g},{2:g})))\n".format(_r(zmin), _r(zmax), _r(gridSettingsInst.getXYZ(refUnit)['z']))
+                    else:
+                        genScript += "mesh.z = np.append(mesh.z, {0:g})\n".format(_r((zmin + zmax) / 2))
+
+            elif (gridSettingsInst.getType() == 'User Defined'):
+                if gridSettingsInst.xenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
+                if gridSettingsInst.yenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
+                if gridSettingsInst.zenabled:
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
+
+                genScript += "xmin = {0:g}\n".format(_r(xmin))
+                genScript += "xmax = {0:g}\n".format(_r(xmax))
+                genScript += "ymin = {0:g}\n".format(_r(ymin))
+                genScript += "ymax = {0:g}\n".format(_r(ymax))
+                genScript += "zmin = {0:g}\n".format(_r(zmin))
+                genScript += "zmax = {0:g}\n".format(_r(zmax))
+                genScript += gridSettingsInst.getXYZ() + "\n"
+
+            elif (gridSettingsInst.getType() == 'Smooth Mesh'):
+                genScript += "smoothMesh = {}\n"
+                if gridSettingsInst.xenabled:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xList[0]), _r(xList[-1]))
+
+                    genScript += f"smoothMesh.x = {str(xList)};\n"
+                    if gridSettingsInst.smoothMesh['xMaxRes'] == 0:
+                        genScript += "smoothMesh.x = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.x, max_res/unit) #max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.x = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.x, {gridSettingsInst.smoothMesh['xMaxRes']})\n"
+                    genScript += "mesh.x = np.concatenate((mesh.x, smoothMesh.x))\n"
+                if gridSettingsInst.yenabled:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(yList[0]), _r(yList[-1]))
+
+                    genScript += f"smoothMesh.y = {str(yList)};\n"
+                    if gridSettingsInst.smoothMesh['yMaxRes'] == 0:
+                        genScript += "smoothMesh.y = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.y, max_res/unit) #max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.y = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.y, {yParam})\n"
+                    genScript += "mesh.y = np.concatenate((mesh.y, smoothMesh.y))\n"
+                if gridSettingsInst.zenabled:
+
+                    #when top priority lines setting set, remove lines between min and max in ax direction
+                    if gridSettingsInst.topPriorityLines:
+                        genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zList[0]), _r(zList[-1]))
+
+                    genScript += f"smoothMesh.z = {str(zList)};\n"
+                    if gridSettingsInst.smoothMesh['zMaxRes'] == 0:
+                        genScript += "smoothMesh.z = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.z, max_res/unit) #max_res calculated in excitation part\n"
+                    else:
+                        genScript += f"smoothMesh.z = CSXCAD.SmoothMeshLines.SmoothMeshLines(smoothMesh.z, {gridSettingsInst.smoothMesh['zMaxRes']})\n"
+                    genScript += "mesh.z = np.concatenate((mesh.z, smoothMesh.z))\n"
+
+            genScript += "\n"
+
+        genScript += "openEMS_grid.AddLine('x', mesh.x)\n"
+        genScript += "openEMS_grid.AddLine('y', mesh.y)\n"
+        genScript += "openEMS_grid.AddLine('z', mesh.z)\n"
+        genScript += "\n"
+
+        return genScript
+
+    def getOrderedGridDefinitionsScriptLines_old_01(self, items):
+        genScript = ""
+        meshPrioritiesCount = self.form.meshPriorityTreeView.topLevelItemCount()
+
+        if (not items) or (meshPrioritiesCount == 0):
+            return genScript
+
+        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
+        refUnitStr = self.form.simParamsDeltaUnitList.currentText()
+        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# GRID LINES\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "\n"
+
+        # Create lists and dict to be able to resolve ordered list of (grid settings instance <-> FreeCAD object) associations.
+        # In its current form, this implies user-defined grid lines have to be associated with the simulation volume.
+        _assoc = lambda idx: list(map(str.strip, self.form.meshPriorityTreeView.topLevelItem(idx).text(0).split(',')))
+        orderedAssociations = [_assoc(k) for k in reversed(range(meshPrioritiesCount))]
+        gridSettingsNodeNames = [gridSettingsNode.text(0) for [gridSettingsNode, gridSettingsInst] in items]
+        fcObjects = {obj.Label: obj for obj in self.cadHelpers.getObjects()}
+
+        for gridSettingsNodeName in gridSettingsNodeNames:
+            print("Grid type : " + gridSettingsNodeName)
+
+        for k, [categoryName, gridName, FreeCADObjectName] in enumerate(orderedAssociations):
+
+            print("Grid priority level {} : {} :: {}".format(k, FreeCADObjectName, gridName))
+
+            if not (gridName in gridSettingsNodeNames):
+                print("Failed to resolve '{}'.".format(gridName))
+                continue
+            itemListIdx = gridSettingsNodeNames.index(gridName)
             gridSettingsInst = items[itemListIdx][1]
 
             fcObject = fcObjects.get(FreeCADObjectName, None)
