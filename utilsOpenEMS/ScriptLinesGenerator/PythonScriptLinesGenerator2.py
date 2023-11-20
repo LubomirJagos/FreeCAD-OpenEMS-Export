@@ -4,6 +4,8 @@
 import os
 from PySide2 import QtGui, QtCore, QtWidgets
 import numpy as np
+import re
+import math
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2
@@ -45,7 +47,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         else:
             genScript += "%%%%%% ERROR GRID COORDINATION SYSTEM TYPE UNKNOWN"				
         """
-        genScript += "FDTD.SetCoordSystem(0) # Cartesian coordinate system.\n"
+
         genScript += "def mesh():\n"
         genScript += "\tx,y,z\n"
         genScript += "\n"
@@ -364,7 +366,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
                         internalPortName = currSetting.name + " - " + obj.Label
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
-                        genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
+                        genScript += f'portNamesAndNumbersList["{obj.Label}"] = {genScriptPortCount};\n'
                         genScriptPortCount += 1
 
                     #
@@ -1424,10 +1426,15 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         genScript += "## setup FDTD parameter & excitation function\n"
         genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + "\n"
-        genScript += "min_decrement = " + str(
-            self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
-        genScript += "CSX = CSXCAD.ContinuousStructure()\n"
-        genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
+
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "CSX = CSXCAD.ContinuousStructure(CoordSystem=1)\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement, CoordSystem=1)\n"
+        else:
+            genScript += "CSX = CSXCAD.ContinuousStructure()\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
+
         genScript += "FDTD.SetCSX(CSX)\n"
         genScript += "\n"
 

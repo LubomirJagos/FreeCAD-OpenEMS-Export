@@ -1054,7 +1054,7 @@ class OctaveScriptLinesGenerator2:
 
                         genScript += "CSX = AddDump(CSX, '" + dumpboxName + "', 'DumpType', 0, 'DumpMode', 2);\n"
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "dumpboxStart", "dumpboxStop")
-                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpStart, dumpStop );\n"
+                        genScript += "CSX = AddBox(CSX, '" + dumpboxName + "', 0, dumpboxStart, dumpboxStop );\n"
 
                     elif (currSetting.getType() == 'ht dump'):
                         dumpboxName = f"{currSetting.name}_{childName}"
