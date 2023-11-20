@@ -153,12 +153,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
 		# to be able do in python code generatr same stuff as in octave
-		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar=self.statusBar)
-		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
+		self.octaveScriptGenerator = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		self.pythonScriptGenerator = PythonScriptLinesGenerator2(self.form, statusBar = self.statusBar)
 
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
-		self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
-		self.scriptGenerator3 = PythonScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		#self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		#self.scriptGenerator3 = PythonScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 
 		#
 		#	Connect function to change script generator
@@ -1622,8 +1622,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"----> start saving file into {self.simulationOutputDir}")
 
 		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
-		self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
-		self.scriptGenerator3.generateOpenEMSScript(self.simulationOutputDir + "_3rd_generator")
+		#self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
+		#self.scriptGenerator3.generateOpenEMSScript(self.simulationOutputDir + "_3rd_generator")
 
 	def drawS11ButtonClicked(self):
 		portName = self.form.drawS11Port.currentText()

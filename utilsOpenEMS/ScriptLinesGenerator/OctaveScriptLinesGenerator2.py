@@ -1945,7 +1945,7 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
         genScript += """%% postprocessing & do the plots
 freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 
-port = calcPort( port, Sim_Path, freq);
+port = calcPort(port, Sim_Path, freq);
 s11 = port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.ref./ port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.inc;
 s11_dB = 20*log10(abs(s11));
 

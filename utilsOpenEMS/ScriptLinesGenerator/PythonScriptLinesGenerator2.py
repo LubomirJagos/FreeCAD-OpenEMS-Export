@@ -61,7 +61,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         return genScript
 
-    def getMaterialDefinitionsScriptLines(self, items, outputDir=None):
+    def getMaterialDefinitionsScriptLines(self, items, outputDir=None, generateObjects=True):
         genScript = ""
 
         genScript += "#######################################################################################################################################\n"
@@ -79,152 +79,155 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
 
         materialCounter = -1    #increment of this variable is at beginning f for loop so start at 0
         simObjectCounter = 0
-        for [item, currSetting] in items:
 
-            #
-            #   Materials are stored in variables in python script, so this is counter to create universal name ie. material_1, material_2, ...
-            #
-            materialCounter += 1
-
-            print(currSetting)
-            if (currSetting.getName() == 'Material Default'):
-                print("#Material Default")
-                print("---")
-                continue
-
-            print("#")
-            print("#MATERIAL")
-            print("#name: " + currSetting.getName())
-            print("#epsilon, mue, kappa, sigma")
-            print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(
-                currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
-
-            genScript += f"## MATERIAL - {currSetting.getName()}\n"
-            materialPythonVariable = f"materialList['{currSetting.getName()}']"
-
-            if (currSetting.type == 'metal'):
-                genScript += f"{materialPythonVariable} = CSX.AddMetal('{currSetting.getName()}')\n"
-                self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
-            elif (currSetting.type == 'userdefined'):
-                self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
-                genScript += f"{materialPythonVariable} = CSX.AddMaterial('{currSetting.getName()}')\n"
-
-                smp_args = []
-                if str(currSetting.constants['epsilon']) != "0":
-                    smp_args.append(f"epsilon={str(currSetting.constants['epsilon'])}")
-                if str(currSetting.constants['mue']) != "0":
-                    smp_args.append(f"mue={str(currSetting.constants['mue'])}")
-                if str(currSetting.constants['kappa']) != "0":
-                    smp_args.append(f"kappa={str(currSetting.constants['kappa'])}")
-                if str(currSetting.constants['sigma']) != "0":
-                    smp_args.append(f"sigma={str(currSetting.constants['sigma'])}")
-
-                genScript += f"{materialPythonVariable}.SetMaterialProperty(" + ", ".join(smp_args) + ")\n"
-            elif (currSetting.type == 'conducting sheet'):
-                genScript += f"{materialPythonVariable} = CSX.AddConductingSheet(" + \
-                             f"'{currSetting.getName()}', " + \
-                             f"conductivity={str(currSetting.constants['conductingSheetConductivity'])}, " + \
-                             f"thickness={str(currSetting.constants['conductingSheetThicknessValue'])}*{str(currSetting.getUnitsAsNumber(currSetting.constants['conductingSheetThicknessUnits']))}" + \
-                             f")\n"
-                self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
-
-            # first print all current material children names
-            for k in range(item.childCount()):
-                childName = item.child(k).text(0)
-                print("##Children:")
-                print("\t" + childName)
-
-            # now export material children, if it's object export as STL, if it's curve export as curve
-            for k in range(item.childCount()):
-                simObjectCounter += 1               #counter for objects
-                childName = item.child(k).text(0)
+        # now export material children, if it's object export as STL, if it's curve export as curve
+        if (generateObjects):
+            for [item, currSetting] in items:
 
                 #
-                #	getting item priority
+                #   Materials are stored in variables in python script, so this is counter to create universal name ie. material_1, material_2, ...
                 #
-                objModelPriorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
-                objModelPriority = self.getItemPriority(objModelPriorityItemName)
+                materialCounter += 1
 
-                # getting reference to FreeCAD object
-                freeCadObj = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName][0]
+                print(currSetting)
+                if (currSetting.getName() == 'Material Default'):
+                    print("#Material Default")
+                    print("---")
+                    continue
 
-                if (freeCadObj.Name.find("Discretized_Edge") > -1):
+                print("#")
+                print("#MATERIAL")
+                print("#name: " + currSetting.getName())
+                print("#epsilon, mue, kappa, sigma")
+                print("#" + str(currSetting.constants['epsilon']) + ", " + str(currSetting.constants['mue']) + ", " + str(
+                    currSetting.constants['kappa']) + ", " + str(currSetting.constants['sigma']))
+
+                genScript += f"## MATERIAL - {currSetting.getName()}\n"
+                materialPythonVariable = f"materialList['{currSetting.getName()}']"
+
+                if (currSetting.type == 'metal'):
+                    genScript += f"{materialPythonVariable} = CSX.AddMetal('{currSetting.getName()}')\n"
+                    self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
+                elif (currSetting.type == 'userdefined'):
+                    self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
+                    genScript += f"{materialPythonVariable} = CSX.AddMaterial('{currSetting.getName()}')\n"
+
+                    smp_args = []
+                    if str(currSetting.constants['epsilon']) != "0":
+                        smp_args.append(f"epsilon={str(currSetting.constants['epsilon'])}")
+                    if str(currSetting.constants['mue']) != "0":
+                        smp_args.append(f"mue={str(currSetting.constants['mue'])}")
+                    if str(currSetting.constants['kappa']) != "0":
+                        smp_args.append(f"kappa={str(currSetting.constants['kappa'])}")
+                    if str(currSetting.constants['sigma']) != "0":
+                        smp_args.append(f"sigma={str(currSetting.constants['sigma'])}")
+
+                    genScript += f"{materialPythonVariable}.SetMaterialProperty(" + ", ".join(smp_args) + ")\n"
+                elif (currSetting.type == 'conducting sheet'):
+                    genScript += f"{materialPythonVariable} = CSX.AddConductingSheet(" + \
+                                 f"'{currSetting.getName()}', " + \
+                                 f"conductivity={str(currSetting.constants['conductingSheetConductivity'])}, " + \
+                                 f"thickness={str(currSetting.constants['conductingSheetThicknessValue'])}*{str(currSetting.getUnitsAsNumber(currSetting.constants['conductingSheetThicknessUnits']))}" + \
+                                 f")\n"
+                    self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
+
+                # first print all current material children names
+                for k in range(item.childCount()):
+                    childName = item.child(k).text(0)
+                    print("##Children:")
+                    print("\t" + childName)
+
+                # now export material children, if it's object export as STL, if it's curve export as curve
+                for k in range(item.childCount()):
+                    simObjectCounter += 1               #counter for objects
+                    childName = item.child(k).text(0)
+
                     #
-                    #	Adding discretized curve
+                    #	getting item priority
                     #
+                    objModelPriorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
+                    objModelPriority = self.getItemPriority(objModelPriorityItemName)
 
-                    curvePoints = freeCadObj.Points
-                    genScript += "points = [];\n"
-                    for k in range(0, len(curvePoints)):
-                        genScript += "points(1," + str(k + 1) + ") = " + str(curvePoints[k].x) + ";"
-                        genScript += "points(2," + str(k + 1) + ") = " + str(curvePoints[k].y) + ";"
-                        genScript += "points(3," + str(k + 1) + ") = " + str(curvePoints[k].z) + ";"
+                    # getting reference to FreeCAD object
+                    freeCadObj = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName][0]
+
+                    if (freeCadObj.Name.find("Discretized_Edge") > -1):
+                        #
+                        #	Adding discretized curve
+                        #
+
+                        curvePoints = freeCadObj.Points
+                        genScript += "points = [];\n"
+                        for k in range(0, len(curvePoints)):
+                            genScript += "points(1," + str(k + 1) + ") = " + str(curvePoints[k].x) + ";"
+                            genScript += "points(2," + str(k + 1) + ") = " + str(curvePoints[k].y) + ";"
+                            genScript += "points(3," + str(k + 1) + ") = " + str(curvePoints[k].z) + ";"
+                            genScript += "\n"
+
+                        genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
+                            objModelPriority) + ", points);\n"
+                        print("Curve added to generated script using its points.")
+
+                    elif (freeCadObj.Name.find("Sketch") > -1):
+                        #
+                        #	Adding JUST LINE SEGMENTS FROM SKETCH, THIS NEED TO BE IMPROVED TO PROPERLY GENERATE CURVE FROM SKETCH,
+                        #	there can be circle, circle arc and maybe something else in sketch geometry
+                        #
+
+                        genScript += f"points_x = np.array([])\n"
+                        genScript += f"points_y = np.array([])\n"
+                        genScript += f"points_z = np.array([])\n"
+                        for geometryObj in freeCadObj.Geometry:
+                            if (str(type(geometryObj)).find("LineSegment") > -1):
+                                genScript += f"points_x.append({str(geometryObj.StartPoint.x)})\n"
+                                genScript += f"points_y.append({str(geometryObj.StartPoint.y)})\n"
+                                genScript += f"points_z.append({str(geometryObj.StartPoint.z)})\n"
+
+                                genScript += f"points_x.append({str(geometryObj.EndPoint.x)})\n"
+                                genScript += f"points_y.append({str(geometryObj.EndPoint.y)})\n"
+                                genScript += f"points_z.append({str(geometryObj.EndPoint.z)})\n"
+
+                        genScript += f"points = np.array([{str(geometryObj.StartPoint.x)}, {str(geometryObj.StartPoint.y)}, {str(geometryObj.StartPoint.z)}])\n"
+
                         genScript += "\n"
+                        genScript += f"{self.internalMaterialIndexNamesList[currSetting.getName()]}.AddCurve(points, priority={str(objModelPriority)})\n"
 
-                    genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                        objModelPriority) + ", points);\n"
-                    print("Curve added to generated script using its points.")
+                        print("Line segments from sketch added.")
 
-                elif (freeCadObj.Name.find("Sketch") > -1):
-                    #
-                    #	Adding JUST LINE SEGMENTS FROM SKETCH, THIS NEED TO BE IMPROVED TO PROPERLY GENERATE CURVE FROM SKETCH,
-                    #	there can be circle, circle arc and maybe something else in sketch geometry
-                    #
-
-                    genScript += f"points_x = np.array([])\n"
-                    genScript += f"points_y = np.array([])\n"
-                    genScript += f"points_z = np.array([])\n"
-                    for geometryObj in freeCadObj.Geometry:
-                        if (str(type(geometryObj)).find("LineSegment") > -1):
-                            genScript += f"points_x.append({str(geometryObj.StartPoint.x)})\n"
-                            genScript += f"points_y.append({str(geometryObj.StartPoint.y)})\n"
-                            genScript += f"points_z.append({str(geometryObj.StartPoint.z)})\n"
-
-                            genScript += f"points_x.append({str(geometryObj.EndPoint.x)})\n"
-                            genScript += f"points_y.append({str(geometryObj.EndPoint.y)})\n"
-                            genScript += f"points_z.append({str(geometryObj.EndPoint.z)})\n"
-
-                    genScript += f"points = np.array([{str(geometryObj.StartPoint.x)}, {str(geometryObj.StartPoint.y)}, {str(geometryObj.StartPoint.z)}])\n"
-
-                    genScript += "\n"
-                    genScript += f"{self.internalMaterialIndexNamesList[currSetting.getName()]}.AddCurve(points, priority={str(objModelPriority)})\n"
-
-                    print("Line segments from sketch added.")
-
-                else:
-                    #
-                    #	Adding part as STL model, first export it into file and that file load using octave openEMS function
-                    #
-
-                    currDir, baseName = self.getCurrDir()
-                    stlModelFileName = childName + "_gen_model.stl"
-
-                    #genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
-                    #    objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
-                    genScript += f"{materialPythonVariable}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
-
-                    #   _____ _______ _                                        _   _
-                    #  / ____|__   __| |                                      | | (_)
-                    # | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __
-                    #  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \
-                    #  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
-                    # |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
-                    #                           __/ |
-                    #                          |___/
-                    #
-                    # going through each concrete material items and generate their .stl files
-
-                    currDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
-                    partToExport = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName]
-
-                    #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
-                    if (not outputDir is None):
-                        exportFileName = os.path.join(outputDir, stlModelFileName)
                     else:
-                        exportFileName = os.path.join(currDir, stlModelFileName)
+                        #
+                        #	Adding part as STL model, first export it into file and that file load using octave openEMS function
+                        #
 
-                    self.cadHelpers.exportSTL(partToExport, exportFileName)
-                    print("Material object exported as STL into: " + stlModelFileName)
+                        currDir, baseName = self.getCurrDir()
+                        stlModelFileName = childName + "_gen_model.stl"
+
+                        #genScript += "CSX = ImportSTL( CSX, '" + currSetting.getName() + "'," + str(
+                        #    objModelPriority) + ", [currDir '/" + stlModelFileName + "'],'Transform',{'Scale', fc_unit/unit} );\n"
+                        genScript += f"{materialPythonVariable}.AddPolyhedronReader(os.path.join(currDir,'{stlModelFileName}'), priority={objModelPriority}).ReadFile()\n"
+
+                        #   _____ _______ _                                        _   _
+                        #  / ____|__   __| |                                      | | (_)
+                        # | (___    | |  | |        __ _  ___ _ __   ___ _ __ __ _| |_ _  ___  _ __
+                        #  \___ \   | |  | |       / _` |/ _ \ '_ \ / _ \ '__/ _` | __| |/ _ \| '_ \
+                        #  ____) |  | |  | |____  | (_| |  __/ | | |  __/ | | (_| | |_| | (_) | | | |
+                        # |_____/   |_|  |______|  \__, |\___|_| |_|\___|_|  \__,_|\__|_|\___/|_| |_|
+                        #                           __/ |
+                        #                          |___/
+                        #
+                        # going through each concrete material items and generate their .stl files
+
+                        currDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
+                        partToExport = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName]
+
+                        #output directory path construction, if there is no parameter for output dir then output is in current freecad file dir
+                        if (not outputDir is None):
+                            exportFileName = os.path.join(outputDir, stlModelFileName)
+                        else:
+                            exportFileName = os.path.join(currDir, stlModelFileName)
+
+                        self.cadHelpers.exportSTL(partToExport, exportFileName)
+                        print("Material object exported as STL into: " + stlModelFileName)
 
             genScript += "\n"
 
@@ -474,25 +477,30 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         #
                         #   NOV 2023 - PYTHON API NOT IMPLEMENTED
                         #
-                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coaxial port\n'
+                        genScript += '# ERROR: caoxial port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE\n'
+                        genScript += '# raise BaseException("caoxial port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE coaxial port")\n'
 
                     elif (currSetting.getType() == 'coplanar'):
                         #
                         #   NOV 2023 - PYTHON API NOT IMPLEMENTED
                         #
-                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE coplanar port\n'
+                        genScript += '# ERROR: coplanar port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE\n'
+                        genScript += 'raise BaseException("coplanar port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE")\n'
 
                     elif (currSetting.getType() == 'stripline'):
                         #
                         #   NOV 2023 - PYTHON API NOT IMPLEMENTED
                         #
-                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE stripline port\n'
+                        genScript += '# ERROR: stripline port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE\n'
+                        genScript += 'raise BaseException("stripline port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE")\n'
 
                     elif (currSetting.getType() == 'curve'):
-                        genScript += '# ERROR: NOT IMPLEMENTED IN PYTHON INTERFACE curve port\n'
+                        genScript += '# ERROR: curve port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE\n'
+                        genScript += 'raise BaseException("curve port function NOT IMPLEMENTED IN openEMS PYTHON INTERFACE")\n'
 
                     else:
-                        genScript += '% Unknown port type. Nothing was generated. \n'
+                        genScript += '# Unknown port type. Nothing was generated.\n'
+                        genScript += 'raise BaseException("Unknown port type. Nothing was generated.")\n'
 
             genScript += "\n"
 
@@ -1197,6 +1205,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "import numpy as np\n"
         genScript += "import os, tempfile, shutil\n"
         genScript += "from pylab import *\n"
+        genScript += "import csv\n"
         genScript += "import CSXCAD\n"
         genScript += "from openEMS import openEMS\n"
         genScript += "from openEMS.physical_constants import *\n"
@@ -1495,8 +1504,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "from CSXCAD import AppCSXCAD_BIN\n"
         genScript += "os.system(AppCSXCAD_BIN + ' \"{}\"'.format(CSX_file))\n"
         genScript += "\n"
-        genScript += "if not postprocessing_only:\n"
-        genScript += "\tFDTD.Run(Sim_Path, verbose=3, cleanup=True, setup_only=setup_only, debug_pec=debug_pec)\n"
+        genScript += "FDTD.Run(Sim_Path, verbose=3, cleanup=True, setup_only=setup_only, debug_pec=debug_pec)\n"
 
         # Write _OpenEMS.py script file to current directory.
         currDir, nameBase = self.getCurrDir()
@@ -1735,89 +1743,79 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
         print('Script to display far field written into: ' + fileName)
         self.guiHelpers.displayMessage('Script to display far field written into: ' + fileName, forceModal=False)
 
-    def drawS11ButtonClicked(self, outputDir=None):
+    def drawS11ButtonClicked(self, outputDir=None, portName=""):
         genScript = ""
+        genScript += "# Plot S11\n"
+        genScript += "#\n"
 
-        excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
-                                                                                 QtCore.Qt.MatchFixedString)
-        if len(excitationCategory) >= 0:
-            # FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-            item = excitationCategory[0].child(0)
-            currSetting = item.data(0, QtCore.Qt.UserRole)  # at index 0 is Default Excitation
+        genScript += self.getInitScriptLines()
 
-            if (currSetting.getType() == 'sinusodial'):
-                genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
-                pass
-            elif (currSetting.getType() == 'gaussian'):
-                genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                pass
-            elif (currSetting.getType() == 'custom'):
-                genScript += "%custom\n"
-                pass
-            pass
+        genScript += "currDir = os.getcwd()\n"
+        genScript += "Sim_Path = os.path.join(currDir, r'simulation_output')\n"
+        genScript += "print(currDir)\n"
+        genScript += "\n"
 
-        genScript += """%% postprocessing & do the plots
-freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-U = ReadUI( {'port_ut1','et'}, 'simulation_output/', freq ); % time domain/freq domain voltage
-I = ReadUI( 'port_it1', 'simulation_output/', freq ); % time domain/freq domain current (half time step is corrected)
+        genScript += "## setup FDTD parameter & excitation function\n"
+        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + "\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 
-% plot time domain voltage
-figure
-[ax,h1,h2] = plotyy( U.TD{1}.t/1e-9, U.TD{1}.val, U.TD{2}.t/1e-9, U.TD{2}.val );
-set( h1, 'Linewidth', 2 );
-set( h1, 'Color', [1 0 0] );
-set( h2, 'Linewidth', 2 );
-set( h2, 'Color', [0 0 0] );
-grid on
-title( 'time domain voltage' );
-xlabel( 'time t / ns' );
-ylabel( ax(1), 'voltage ut1 / V' );
-ylabel( ax(2), 'voltage et / V' );
-% now make the y-axis symmetric to y=0 (align zeros of y1 and y2)
-y1 = ylim(ax(1));
-y2 = ylim(ax(2));
-ylim( ax(1), [-max(abs(y1)) max(abs(y1))] );
-ylim( ax(2), [-max(abs(y2)) max(abs(y2))] );
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "CSX = CSXCAD.ContinuousStructure(CoordSystem=1)\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement, CoordSystem=1)\n"
+        else:
+            genScript += "CSX = CSXCAD.ContinuousStructure()\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
 
-% plot feed point impedance
-figure
-Zin = U.FD{1}.val ./ I.FD{1}.val;
-plot( freq/1e6, real(Zin), 'k-', 'Linewidth', 2 );
-hold on
-grid on
-plot( freq/1e6, imag(Zin), 'r--', 'Linewidth', 2 );
-title( 'feed point impedance' );
-xlabel( 'frequency f / MHz' );
-ylabel( 'impedance Z_{in} / Ohm' );
-legend( 'real', 'imag' );
+        genScript += "FDTD.SetCSX(CSX)\n"
+        genScript += "\n"
 
-% plot reflection coefficient S11
-figure
-uf_inc = 0.5*(U.FD{1}.val + I.FD{1}.val * 50);
-if_inc = 0.5*(I.FD{1}.val - U.FD{1}.val / 50);
-uf_ref = U.FD{1}.val - uf_inc;
-if_ref = I.FD{1}.val - if_inc;
-s11 = uf_ref ./ uf_inc;
-plot( freq/1e6, 20*log10(abs(s11)), 'k-', 'Linewidth', 2 );
-grid on
-title( 'reflection coefficient S_{11}' );
-xlabel( 'frequency f / MHz' );
-ylabel( 'reflection coefficient |S_{11}|' );
+        # List categories and items.
+        itemsByClassName = self.getItemsByClassName()
 
-P_in = 0.5*U.FD{1}.val .* conj( I.FD{1}.val );
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
 
-%
-%   Write S11, real and imag Z_in into CSV file separated by ';'
-%
-filename = 'openEMS_simulation_s11_dB.csv';
-fid = fopen(filename, 'w');
-fprintf(fid, 'freq (MHz);s11 (dB);real Z_in (Ohm); imag Z_in (Ohm)\\n');
-fclose(fid)
-s11_dB = horzcat((freq/1e6)', 20*log10(abs(s11))', real(Zin)', imag(Zin)');
-dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
+        # Write excitation definition.
+        genScript += self.getExcitationScriptLines(definitionsOnly=True)
+
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None),
+                                                            outputDir, generateObjects=False)
+
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
+
+        # Write port definitions.
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
+
+        genScript += f"""## postprocessing & do the plots
+freq = np.linspace(max(1e6,f0-fc),f0+fc,501)
+port[{self.internalPortIndexNamesList[portName]}].CalcPort(Sim_Path, freq)
+
+print(port[{self.internalPortIndexNamesList[portName]}].uf_ref, port[{self.internalPortIndexNamesList[portName]}].uf_inc)
+s11 = port[{self.internalPortIndexNamesList[portName]}].uf_ref / port[{self.internalPortIndexNamesList[portName]}].uf_inc
+s11_dB = 20.0*np.log10(np.abs(s11))
+figure()
+plot(freq/1e6, s11_dB, 'k-', linewidth=2, label='$S_{{11}}$')
+grid()
+legend()
+ylabel('S11-Parameter (dB)')
+xlabel('Frequency (MHz)')
+show()
+
+#
+#   Write S11, real and imag Z_in into CSV file separated by ';'
+#
+filename = 'openEMS_simulation_s11_dB.csv'
+
+import csv
+with open(filename, 'w', newline='') as csvfile:
+\twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+\twriter.writerow(['freq (MHz)', 's11 (dB)'])
+\twriter.writerows(np.array([(freq/1e6), s11_dB]).T) #creates array with 1st row frequencies, 2nd row S11 and transpose it
 """
 
         #
@@ -1837,13 +1835,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         print('Draw result from simulation file written into: ' + fileName)
         self.guiHelpers.displayMessage('Draw result from simulation file written into: ' + fileName, forceModal=False)
 
-        # run octave script using command shell
-        cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
-        print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        #print(result)
-
-    def drawS21ButtonClicked(self, outputDir=None):
+    def drawS21ButtonClicked(self, outputDir=None, sourcePortName="", targetPortName=""):
         genScript = ""
         genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
         genScript += "%\n"
@@ -1859,11 +1851,9 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         itemsByClassName = self.getItemsByClassName()
 
         # Write excitation definition.
-
         genScript += self.getExcitationScriptLines(definitionsOnly=True)
 
         # Write port definitions.
-
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         # Post-processing and plot generation.
