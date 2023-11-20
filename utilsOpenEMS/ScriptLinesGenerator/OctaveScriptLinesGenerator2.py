@@ -490,15 +490,28 @@ class OctaveScriptLinesGenerator2:
             if ((bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0) or
                 (bbCoords.XMin >= 0 and bbCoords.YMin >= 0 and bbCoords.XMax <= 0 and bbCoords.YMax <= 0)
             ):
-                #
-                # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
-                #
-                radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
-                radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+                if (bbCoords.XMin != bbCoords.XMax and bbCoords.YMin != bbCoords.YMax):
+                    #
+                    # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
+                    #
+                    radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                    radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
 
-                genScript += 'portStart = [ 0, -pi, {0:g} ];\n'.format(_r(sf * bbCoords.ZMin))
-                genScript += 'portStop  = [ {0:g}, pi, {1:g} ];\n'.format(_r(max(radius1, radius2)),
-                                                                          _r(sf * bbCoords.ZMax))
+                    genScript += 'portStart = [ 0, -math.pi, {0:g} ]\n'.format(_r(sf * bbCoords.ZMin))
+                    genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)),
+                                                                              _r(sf * bbCoords.ZMax))
+                else:
+                    #
+                    #   Object is thin it's plane or line crossing origin
+                    #
+                    radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                    theta1 = math.atan2(bbCoords.YMin, bbCoords.XMin)
+                    radius2 = -math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+
+                    genScript += 'portStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius1), _r(theta1), _r(sf * bbCoords.ZMin))
+                    genScript += 'portStop = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius2), _r(theta1), _r(sf * bbCoords.ZMax))
+                    genScript += '\n'
+
             else:
                 #
                 # port is lying outside origin

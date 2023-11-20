@@ -246,15 +246,27 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
             if ((bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0) or
                 (bbCoords.XMin >= 0 and bbCoords.YMin >= 0 and bbCoords.XMax <= 0 and bbCoords.YMax <= 0)
             ):
-                #
-                # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
-                #
-                radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
-                radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+                if (bbCoords.XMin != bbCoords.XMax and bbCoords.YMin != bbCoords.YMax):
+                    #
+                    # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
+                    #
+                    radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                    radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
 
-                genScript += 'portStart = [ 0, -math.pi, {0:g} ]\n'.format(_r(sf * bbCoords.ZMin))
-                genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)),
-                                                                          _r(sf * bbCoords.ZMax))
+                    genScript += 'portStart = [ 0, -math.pi, {0:g} ]\n'.format(_r(sf * bbCoords.ZMin))
+                    genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)),
+                                                                              _r(sf * bbCoords.ZMax))
+                else:
+                    #
+                    #   Object is thin it's plane or line crossing origin
+                    #
+                    radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                    theta1 = math.atan2(bbCoords.YMin, bbCoords.XMin)
+                    radius2 = -math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+
+                    genScript += 'portStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius1), _r(theta1), _r(sf * bbCoords.ZMin))
+                    genScript += 'portStop = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius2), _r(theta1), _r(sf * bbCoords.ZMax))
+                    genScript += '\n'
             else:
                 #
                 # port is lying outside origin
@@ -1195,9 +1207,9 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "#     returns coordinates in order [theta, r, z]\n"
         genScript += "#\n"
         genScript += "def cart2pol(pointCoords):\n"
-        genScript += "\ttheta = np.arctan2(pointCoords(1), pointCoords(0))\n"
-        genScript += "\tr = np.sqrt(pointCoords(0) ** 2 + pointCoords(1) ** 2)\n"
-        genScript += "\tz = pointCoords(2)\n"
+        genScript += "\ttheta = np.arctan2(pointCoords[1], pointCoords[0])\n"
+        genScript += "\tr = np.sqrt(pointCoords[0] ** 2 + pointCoords[1] ** 2)\n"
+        genScript += "\tz = pointCoords[2]\n"
         genScript += "\treturn theta, r, z\n"
         genScript += "\n"
 
@@ -1395,7 +1407,6 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += self.getInitScriptLines()
 
         genScript += "## switches & options\n"
-        genScript += "postprocessing_only = " + ('True' if self.form.generateJustPreviewCheckbox.isChecked() else 'False')+ "\n"
         genScript += "draw_3d_pattern = 0  # this may take a while...\n"
         genScript += "use_pml = 0          # use pml boundaries instead of mur\n"
         genScript += "\n"
@@ -1403,14 +1414,10 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "print(currDir)\n"
         genScript += "\n"
 
-        genScript += "# --no-simulation : dry run to view geometry, validate settings, no FDTD computations\n"
-        genScript += "# --debug-PEC     : generated PEC skeleton (use ParaView to inspect)\n"
-        openEMS_opt = []
-        if self.form.generateDebugPECCheckbox.isChecked():
-            openEMS_opt.append('--debug-PEC')
-        if self.form.generateJustPreviewCheckbox.isChecked():
-            openEMS_opt.append('--no-simulation')
-        genScript += "openEMS_opts = '" + " ".join(openEMS_opt) + "'\n"
+        genScript += "# setup_only : dry run to view geometry, validate settings, no FDTD computations\n"
+        genScript += "# debug_pec  : generated PEC skeleton (use ParaView to inspect)\n"
+        genScript += f"debug_pec = {'True' if self.form.generateDebugPECCheckbox.isChecked() else 'False'}\n"
+        genScript += f"setup_only = {'True' if self.form.generateJustPreviewCheckbox.isChecked() else 'False'}\n"
         genScript += "\n"
 
         # Write simulation settings.
@@ -1489,7 +1496,7 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "os.system(AppCSXCAD_BIN + ' \"{}\"'.format(CSX_file))\n"
         genScript += "\n"
         genScript += "if not postprocessing_only:\n"
-        genScript += "\tFDTD.Run(Sim_Path, verbose=3, cleanup=True)\n"
+        genScript += "\tFDTD.Run(Sim_Path, verbose=3, cleanup=True, setup_only=setup_only, debug_pec=debug_pec)\n"
 
         # Write _OpenEMS.py script file to current directory.
         currDir, nameBase = self.getCurrDir()
