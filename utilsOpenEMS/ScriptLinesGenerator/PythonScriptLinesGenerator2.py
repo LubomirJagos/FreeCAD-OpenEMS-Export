@@ -157,15 +157,14 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         #
 
                         curvePoints = freeCadObj.Points
-                        genScript += "points = [];\n"
+                        genScript += "points = [[],[],[]]\n"
                         for k in range(0, len(curvePoints)):
-                            genScript += "points(1," + str(k + 1) + ") = " + str(curvePoints[k].x) + ";"
-                            genScript += "points(2," + str(k + 1) + ") = " + str(curvePoints[k].y) + ";"
-                            genScript += "points(3," + str(k + 1) + ") = " + str(curvePoints[k].z) + ";"
+                            genScript += f"points[0].append({curvePoints[k].x})\n"
+                            genScript += f"points[1].append({curvePoints[k].y})\n"
+                            genScript += f"points[2].append({curvePoints[k].z})\n"
                             genScript += "\n"
 
-                        genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                            objModelPriority) + ", points);\n"
+                        genScript += f"{materialPythonVariable}.AddCurve(points);\n"
                         print("Curve added to generated script using its points.")
 
                     elif (freeCadObj.Name.find("Sketch") > -1):
@@ -1528,136 +1527,67 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
     #
     #	Write NF2FF Button clicked, generate script to display far field pattern
     #
-    def writeNf2ffButtonClicked(self, outputDir=None):
+    def writeNf2ffButtonClicked(self, outputDir=None, nf2ffBoxName="", nf2ffBoxInputPortName="", plotFrequency=0, freqCount=501):
         genScript = ""
-        genScript += """close all
-clear
-clc
+        genScript += "# Plot far field for structure.\n"
+        genScript += "#\n"
 
-Sim_Path = "simulation_output";
-CSX = InitCSX();
+        genScript += self.getInitScriptLines()
 
-"""
+        genScript += "currDir = os.getcwd()\n"
+        genScript += "Sim_Path = os.path.join(currDir, r'simulation_output')\n"
+        genScript += "print(currDir)\n"
+        genScript += "\n"
 
-        refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
-        sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
+        genScript += "## setup FDTD parameter & excitation function\n"
+        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + "\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 
-        excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation",
-                                                                                 QtCore.Qt.MatchFixedString)
-        if len(excitationCategory) >= 0:
-            # FOR WHOLE SIMULATION THERE IS JUST ONE EXCITATION DEFINED, so first is taken!
-            item = excitationCategory[0].child(0)
-            currSetting = item.data(0, QtCore.Qt.UserRole)  # at index 0 is Default Excitation
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "CSX = CSXCAD.ContinuousStructure(CoordSystem=1)\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement, CoordSystem=1)\n"
+        else:
+            genScript += "CSX = CSXCAD.ContinuousStructure()\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
 
-            if (currSetting.getType() == 'sinusodial'):
-                genScript += "f0 = " + str(currSetting.sinusodial['f0']) + ";\n"
-                pass
-            elif (currSetting.getType() == 'gaussian'):
-                genScript += "f0 = " + str(currSetting.gaussian['f0']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                genScript += "fc = " + str(currSetting.gaussian['fc']) + "*" + str(
-                    currSetting.getUnitsAsNumber(currSetting.units)) + ";\n"
-                pass
-            elif (currSetting.getType() == 'custom'):
-                genScript += "%custom\n"
-                pass
-            pass
+        genScript += "FDTD.SetCSX(CSX)\n"
+        genScript += "\n"
 
-        genScript += """
-freq = linspace( max([0,f0-fc]), f0+fc, 501 );
-f_res = f0;
-"""
-        genScriptPortCount = 1
-        genNF2FFBoxCounter = 1
-        currentNF2FFBoxIndex = 1
+        # List categories and items.
+        itemsByClassName = self.getItemsByClassName()
 
-        allItems = []
-        childCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-        for k in range(childCount):
-            allItems.append(self.form.objectAssignmentRightTreeWidget.topLevelItem(k))
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
 
-        for m in range(len(allItems)):
-            currItem = allItems[m]
+        # Write excitation definition.
+        genScript += self.getExcitationScriptLines(definitionsOnly=True)
 
-            for k in range(currItem.childCount()):
-                item = currItem.child(k)
-                itemData = item.data(0, QtCore.Qt.UserRole)
-                if (itemData):
-                    if (itemData.__class__.__name__ == "PortSettingsItem"):
-                        print("Port Settings detected")
-                        currSetting = item.data(0, QtCore.Qt.UserRole)
-                        print("#")
-                        print("#PORT")
-                        print("#name: " + currSetting.getName())
-                        print("#type: " + currSetting.getType())
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir, generateObjects=False)
 
-                        objs = self.cadHelpers.getObjects()
-                        for k in range(item.childCount()):
-                            childName = item.child(k).text(0)
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
 
-                            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                            genScript += "% PORT - " + currSetting.getName() + " - " + childName + "\n"
-                            genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        # Write port definitions:
+        #    - must be after gridlines definitions
+        #    - must be before nf2ff
+        genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
-                            print("##Children:")
-                            print("\t" + childName)
-                            freecadObjects = [i for i in objs if (i.Label) == childName]
+        # Write probes definitions
+        genScript += self.getProbeDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
-                            # print(freecadObjects)
-                            for obj in freecadObjects:
-                                # BOUNDING BOX
-                                bbCoords = obj.Shape.BoundBox
+        # Write NF2FF probe grid definitions. THIS NEEDS TO BE DONE TO FILL self.internalNF2FFIndexNamesList[] with keys and indexes, key = "[nf2ff probe category name] - [object label]"
+        genScript += self.getNF2FFDefinitionsScriptLines(itemsByClassName.get("ProbeSettingsItem", None))
 
-                                #
-                                #	getting item priority
-                                #
-                                priorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
-                                priorityIndex = self.getItemPriority(priorityItemName)
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
 
-                                #
-                                # PORT openEMS GENERATION INTO VARIABLE
-                                #
-                                if (currSetting.getType() == 'lumped' and currSetting.isActive):
-                                    genScript += 'portStart = [' + str(bbCoords.XMin) + ', ' + str(
-                                        bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-                                    genScript += 'portStop = [' + str(bbCoords.XMax) + ', ' + str(
-                                        bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-                                    genScript += 'portR = ' + str(currSetting.R) + ';\n'
-                                    genScript += 'portUnits = ' + str(currSetting.getRUnits()) + ';\n'
-
-                                    if (currSetting.direction == 'x'):
-                                        genScript += 'portDirection = [1 0 0];\n'
-                                    elif (currSetting.direction == 'y'):
-                                        genScript += 'portDirection = [0 1 0];\n'
-                                    elif (currSetting.direction == 'z'):
-                                        genScript += 'portDirection = [0 0 1];\n'
-
-                                    genScript_isActive = ""
-                                    if (currSetting.isActive):
-                                        genScript_isActive = " , true"
-
-                                    genScript += '[CSX port{' + str(
-                                        genScriptPortCount) + '}] = AddLumpedPort(CSX, ' + str(
-                                        priorityIndex) + ', ' + str(
-                                        genScriptPortCount) + ', portR*portUnits, portStart, portStop, portDirection' + genScript_isActive + ');\n'
-                                    genScript += 'port{' + str(genScriptPortCount) + '} = calcPort( port{' + str(
-                                        genScriptPortCount) + '}, Sim_Path, freq);\n'
-
-                                    genScriptPortCount += 1
-                                elif (currSetting.getType() == 'nf2ff box'):
-                                    genScript += 'nf2ffStart = [' + str(bbCoords.XMin) + ', ' + str(
-                                        bbCoords.YMin) + ', ' + str(bbCoords.ZMin) + '];\n'
-                                    genScript += 'nf2ffStop = [' + str(bbCoords.XMax) + ', ' + str(
-                                        bbCoords.YMax) + ', ' + str(bbCoords.ZMax) + '];\n'
-                                    genScript += "[CSX nf2ffBox{" + str(
-                                        genNF2FFBoxCounter) + "}] = CreateNF2FFBox(CSX, '" + currSetting.name + "', nf2ffStart, nf2ffStop);\n"
-
-                                    # update nf2ffBox index for which far field diagram will be calculated in octave script
-                                    if self.form.portNf2ffObjectList.currentText() == currSetting.name:
-                                        currentNF2FFBoxIndex = genNF2FFBoxCounter
-
-                                    # increase nf2ff port counter
-                                    genNF2FFBoxCounter += 1
+        #
+        #   Current NF2FF box index
+        #
+        print(f"writeNf2ffButtonClicked() > generate script, getting nf2ff box index for '{nf2ffBoxName}'")
+        currentNF2FFBoxIndex = self.internalNF2FFIndexNamesList[nf2ffBoxName.replace(" ", "_")]
+        currentNF2FFInputPortIndex = self.internalPortIndexNamesList[nf2ffBoxInputPortName]
 
         thetaStart = str(self.form.portNf2ffThetaStart.value())
         thetaStop = str(self.form.portNf2ffThetaStop.value())
@@ -1667,65 +1597,74 @@ f_res = f0;
         phiStop = str(self.form.portNf2ffPhiStop.value())
         phiStep = str(self.form.portNf2ffPhiStep.value())
 
-        genScript += """
-%% NFFF contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% get accepted antenna power at frequency f0
-%
-%	WARNING - hardwired 1st port
-%
-P_in_0 = interp1(freq, port{1}.P_acc, f0);
+        #
+        #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, plotFrequency and frequencies count
+        #       port is calculated to get P_in (input power)
+        #
+        genScript += f"freq = np.linspace(max([0, f0-fc]), f0+fc, {freqCount})\n"
+        genScript += f"plotFrequency = {plotFrequency}\n"
+        genScript += "port[" + str(currentNF2FFInputPortIndex) + "].CalcPort(Sim_Path, freq)\n"
+        genScript += "\n"
 
-% calculate the far field at phi=0 degrees and at phi=90 degrees
+        genScript += f"""
+## NFFF contour plots
+# get accepted antenna power at frequency f0
+#
+P_in_0 = np.interp(f0, freq, port[{currentNF2FFInputPortIndex}].P_acc)
 
-%thetaRange = unique([0:0.5:90 90:180]);
-thetaRange = unique([""" + thetaStart + """:""" + thetaStep + """:""" + thetaStop + """]);
+# calculate the far field at phi=0 degrees and at phi=90 degrees
 
-%phiRange = (0:2:360) - 180;
-phiRange = (""" + phiStart + """:""" + phiStep + """:""" + phiStop + """) - 180;
+thetaRange = np.arange({thetaStart}, {thetaStop}, {thetaStep})
+phiRange = np.arange({phiStart}, {phiStop}, {phiStep}) - 180
 
-disp( 'calculating the 3D far field...' );
+print( 'calculating the 3D far field...' )
 
-%
-%	nf2ffBox{index} - index is set based on GUI option choosed which NF2FF box should be calculated
-%
-%	'Mode',1 - always recalculate data
-%		url: https://github.com/thliebig/openEMS/blob/master/matlab/CalcNF2FF.m
-%
-nf2ff = CalcNF2FF(nf2ffBox{""" + str(currentNF2FFBoxIndex) + """}, Sim_Path, f_res, thetaRange*pi/180, phiRange*pi/180, 'Mode', 1, 'Outfile', '3D_Pattern.h5', 'Verbose', 1);
+#
+#	nf2ffBoxList[<name>] - NF2FF box structure which should be calculated
+#
+nf2ff = nf2ffBoxList['{nf2ffBoxName.replace(" ", "_")}'].CalcNF2FF(Sim_Path, plotFrequency, thetaRange*pi/180, phiRange*pi/180, outfile='3D_Pattern.h5', verbose=True, read_cached=True)
 
-theta_HPBW = interp1(nf2ff.E_norm{1}(:,1)/max(nf2ff.E_norm{1}(:,1)),thetaRange,1/sqrt(2))*2;
+Dmax_dB = 10*log10(nf2ff.Dmax[0])
+E_norm = 20.0*log10(nf2ff.E_norm[0]/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
 
-% display power and directivity
-disp( ['radiated power: Prad = ' num2str(nf2ff.Prad) ' Watt']);
-disp( ['directivity: Dmax = ' num2str(nf2ff.Dmax) ' (' num2str(10*log10(nf2ff.Dmax)) ' dBi)'] );
-disp( ['efficiency: nu_rad = ' num2str(100*nf2ff.Prad./P_in_0) ' %']);
-disp( ['theta_HPBW = ' num2str(theta_HPBW) ' Â°']);
+theta_HPBW = thetaRange[ np.where(squeeze(E_norm[:,phiRange==0])<Dmax_dB-3)[0][0] ]
 
+# display power and directivity
+print('radiated power: Prad = ' + str(nf2ff.Prad[0]) + ' Watt')
+print('directivity: Dmax = ' + str(Dmax_dB) + ' dBi)')
+print('efficiency: nu_rad = ' + str(100*nf2ff.Prad[0]/P_in_0) + ' %')
+print('theta_HPBW = ' + str(theta_HPBW) + ' Â°')
 
-%%
-directivity = nf2ff.P_rad{1}/nf2ff.Prad*4*pi;
-directivity_CPRH = abs(nf2ff.E_cprh{1}).^2./max(nf2ff.E_norm{1}(:)).^2*nf2ff.Dmax;
-directivity_CPLH = abs(nf2ff.E_cplh{1}).^2./max(nf2ff.E_norm{1}(:)).^2*nf2ff.Dmax;
+##
+E_norm = 20.0*log10(nf2ff.E_norm[0]/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
+E_CPRH = 20.0*log10(np.abs(nf2ff.E_cprh[0])/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
+E_CPLH = 20.0*log10(np.abs(nf2ff.E_cplh[0])/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
 
-%%
-figure
-plot(thetaRange, 10*log10(directivity(:,1)'),'k-','LineWidth',2);
-hold on
-grid on
-xlabel('theta (deg)');
-ylabel('directivity (dBi)');
-plot(thetaRange, 10*log10(directivity_CPRH(:,1)'),'g--','LineWidth',2);
-plot(thetaRange, 10*log10(directivity_CPLH(:,1)'),'r-.','LineWidth',2);
-legend('norm','CPRH','CPLH');
+##
+figure()
+plot(thetaRange, E_norm[:,phiRange==0],'k-' , linewidth=2, label='$|E|$')
+plot(thetaRange, E_CPRH[:,phiRange==0],'g--', linewidth=2, label='$|E_{{CPRH}}|$')
+plot(thetaRange, E_CPLH[:,phiRange==0],'r-.', linewidth=2, label='$|E_{{CPLH}}|$')
+grid()
+xlabel('theta (deg)')
+ylabel('directivity (dBi)')
+title('Frequency: {{}} GHz'.format(nf2ff.freq[0]/1e9))
+legend()
 
-%% dump to vtk
-DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',1e-3);
-DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3);
-DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3);
+show()
+  
+## dump to vtk
+#
+# this is from matlab/octave example need to be figure out for python
+#
+#DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',1e-3)
+#DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3)
+#DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3)
 
-E_far_normalized = nf2ff.E_norm{1} / max(nf2ff.E_norm{1}(:)) * nf2ff.Dmax;
-DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3);
+#E_far_normalized = nf2ff.E_norm[1] / max(nf2ff.E_norm[1](:)) * nf2ff.Dmax
+#DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3)
 """
+
         #
         # WRITE OpenEMS Script file into current dir
         #
@@ -1811,7 +1750,6 @@ show()
 #
 filename = 'openEMS_simulation_s11_dB.csv'
 
-import csv
 with open(filename, 'w', newline='') as csvfile:
 \twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 \twriter.writerow(['freq (MHz)', 's11 (dB)'])
@@ -1837,70 +1775,73 @@ with open(filename, 'w', newline='') as csvfile:
 
     def drawS21ButtonClicked(self, outputDir=None, sourcePortName="", targetPortName=""):
         genScript = ""
-        genScript += "% Plot S11, S21 parameters from OpenEMS results.\n"
-        genScript += "%\n"
+        genScript += "# Plot S11, S21 parameters from OpenEMS results.\n"
+        genScript += "#\n"
 
         genScript += self.getInitScriptLines()
 
-        genScript += "Sim_Path = 'simulation_output';\n"
-        genScript += "CSX = InitCSX('CoordSystem',0);\n"
+        genScript += "currDir = os.getcwd()\n"
+        genScript += "Sim_Path = os.path.join(currDir, r'simulation_output')\n"
+        genScript += "print(currDir)\n"
         genScript += "\n"
 
         # List categories and items.
-
         itemsByClassName = self.getItemsByClassName()
+
+        # Write coordinate system definitions.
+        genScript += self.getCoordinateSystemScriptLines()
 
         # Write excitation definition.
         genScript += self.getExcitationScriptLines(definitionsOnly=True)
+
+        # Write material definitions.
+        genScript += self.getMaterialDefinitionsScriptLines(itemsByClassName.get("MaterialSettingsItem", None), outputDir, generateObjects=False)
+
+        # Write grid definitions.
+        genScript += self.getOrderedGridDefinitionsScriptLines(itemsByClassName.get("GridSettingsItem", None))
+
+        # Write scriptlines which removes gridline too close, must be enabled in GUI, it's checking checkbox inside
+        genScript += self.getMinimalGridlineSpacingScriptLines()
 
         # Write port definitions.
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         # Post-processing and plot generation.
-
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% POST-PROCESSING AND PLOT GENERATION\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# POST-PROCESSING AND PLOT GENERATION\n"
+        genScript += "#######################################################################################################################################\n"
         genScript += "\n"
-        genScript += "freq = linspace( max([0,f0-fc]), f0+fc, 501 );\n"
-        genScript += "port = calcPort( port, Sim_Path, freq);\n"
+        genScript += "freq = np.linspace(max(1e6, f0 - fc), f0 + fc, 501)\n"
+        genScript += f"port[{self.internalPortIndexNamesList[portName]}].CalcPort(Sim_Path, freq)\n"
         genScript += "\n"
-        genScript += "s11 = port{1}.uf.ref./ port{1}.uf.inc;\n"
-        genScript += "s21 = port{2}.uf.ref./ port{1}.uf.inc;\n"
+        genScript += "s11 = port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.ref./ port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.inc\n"
+        genScript += "s21 = port[" + str(self.internalPortIndexNamesList[targetPortName]) + "].uf.ref./ port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.inc\n"
         genScript += "\n"
-        genScript += "s11_dB = 20*log10(abs(s11));\n"
-        genScript += "s21_dB = 20*log10(abs(s21));\n"
+        genScript += "s11_dB = 20*log10(abs(s11))\n"
+        genScript += "s21_dB = 20*log10(abs(s21))\n"
         genScript += "\n"
-        genScript += "plot(freq/1e9,s11_dB,'k-','LineWidth',2);\n"
-        genScript += "hold on;\n"
-        genScript += "grid on;\n"
-        genScript += "plot(freq/1e9,s21_dB,'r--','LineWidth',2);\n"
-        genScript += "legend('S_{11}','S_{21}');\n"
-        genScript += "ylabel('S-Parameter (dB)','FontSize',12);\n"
-        genScript += "xlabel('frequency (GHz) \\rightarrow','FontSize',12);\n"
-        genScript += "ylim([-40 2]);\n"
+        genScript += "plot(freq/1e9,s11_dB,'k-', linewidth=2)\n"
+        genScript += "grid())\n"
+        genScript += "plot(freq/1e9,s21_dB,'r--', linewidth=2)\n"
+        genScript += "legend('S_{11}','S_{21}')\n"
+        genScript += "ylabel('S-Parameter (dB)', fontsize=12)\n"
+        genScript += "xlabel('frequency (GHz) \\rightarrow', fontsize=12)\n"
+        genScript += "ylim([-40 2])\n"
         genScript += "\n"
 
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-        genScript += "% SAVE PLOT DATA\n"
-        genScript += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# SAVE PLOT DATA\n"
+        genScript += "#######################################################################################################################################\n"
         genScript += "\n"
-        genScript += "save_plot_data = 0;\n"
+        genScript += "#"
+        genScript += "#   Write S11, real and imag Z_in into CSV file separated by ';'"
+        genScript += "#"
+        genScript += "filename = 'openEMS_simulation_s11_dB.csv'"
         genScript += "\n"
-        genScript += "if (save_plot_data != 0)\n"
-        genScript += "	mfile_name = mfilename('fullpath');\n"
-        genScript += "	[pathstr,name,ext] = fileparts(mfile_name);\n"
-        genScript += "	output_fn = strcat(pathstr, '/', name, '.csv')\n"
-        genScript += "	\n"
-        genScript += "	%% write header to file\n"
-        genScript += "	textHeader = '#f(Hz)\\tS11(dB)\\tS21(dB)';\n"
-        genScript += "	fid = fopen(output_fn, 'w');\n"
-        genScript += "	fprintf(fid, '%s\\n', textHeader);\n"
-        genScript += "	fclose(fid);\n"
-        genScript += "	\n"
-        genScript += "	%% write data to end of file\n"
-        genScript += "	dlmwrite(output_fn, [abs(freq)', s11_dB', s21_dB'],'delimiter','\\t','precision',6, '-append');\n"
-        genScript += "end\n"
+        genScript += "with open(filename, 'w', newline='') as csvfile:"
+        genScript += "\twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)"
+        genScript += "\twriter.writerow(['freq (Hz)', 's11 (dB)', 's21 (dB)'])"
+        genScript += "\twriter.writerows(np.array([freq, s11_dB, s21_dB]).T)  # creates array with 1st row frequencies, 2nd row S11 and transpose it"
         genScript += "\n"
 
         # Write OpenEMS Script file into current dir.
@@ -1918,10 +1859,3 @@ with open(filename, 'w', newline='') as csvfile:
         f.close()
         print('Draw result from simulation file written to: ' + fileName)
         self.guiHelpers.displayMessage('Draw result from simulation file written to: ' + fileName, forceModal=False)
-
-        # Run octave script using command shell.
-
-        cmdToRun = self.getOctaveExecCommand(fileName, '-q --persist')
-        print('Running command: ' + cmdToRun)
-        result = os.system(cmdToRun)
-        print(result)
