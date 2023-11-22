@@ -1783,6 +1783,9 @@ class OctaveScriptLinesGenerator2:
         # List categories and items.
         itemsByClassName = self.getItemsByClassName()
 
+        # Write boundary conditions definitions.
+        genScript += self.getBoundaryConditionsScriptLines()
+
         # Write coordinate system definitions.
         genScript += self.getCoordinateSystemScriptLines()
 

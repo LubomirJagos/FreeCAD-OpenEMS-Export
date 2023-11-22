@@ -937,16 +937,16 @@ class IniFile0v1:
                 #
                 try:
                     self.guiHelpers.setComboboxItem(self.form.portNf2ffObjectList, settings.value("nf2ffObject"))
-                    self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
-                    self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
-                    self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
-                    self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
-                    self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
-                    self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
-                    self.form.portNf2ffFreqCount.setValue(settings.value("nf2ffFreqCount"))
+                    self.form.portNf2ffThetaStart.setValue(float(settings.value("nf2ffThetaStart")))
+                    self.form.portNf2ffThetaStop.setValue(float(settings.value("nf2ffThetaStop")))
+                    self.form.portNf2ffThetaStep.setValue(float(settings.value("nf2ffThetaStep")))
+                    self.form.portNf2ffPhiStart.setValue(float(settings.value("nf2ffPhiStart")))
+                    self.form.portNf2ffPhiStop.setValue(float(settings.value("nf2ffPhiStop")))
+                    self.form.portNf2ffPhiStep.setValue(float(settings.value("nf2ffPhiStep")))
+                    self.form.portNf2ffFreqCount.setValue(float(settings.value("nf2ffFreqCount")))
 
                     self.guiHelpers.setComboboxItem(self.form.portNf2ffInput, settings.value("nf2ffInputPort"))
-                    self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreqValue"))
+                    self.form.portNf2ffFreq.setValue(float(settings.value("nf2ffFreqValue")))
                 except:
                     pass
 

@@ -1556,6 +1556,9 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         # List categories and items.
         itemsByClassName = self.getItemsByClassName()
 
+        # Write boundary conditions definitions.
+        genScript += self.getBoundaryConditionsScriptLines()
+
         # Write coordinate system definitions.
         genScript += self.getCoordinateSystemScriptLines()
 
@@ -1601,28 +1604,75 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         #   ATTENTION THIS IS SPECIFIC FOR FAR FIELD PLOTTING, plotFrequency and frequencies count
         #       port is calculated to get P_in (input power)
         #
-        genScript += f"freq = np.linspace(max([0, f0-fc]), f0+fc, {freqCount})\n"
-        genScript += f"plotFrequency = {plotFrequency}\n"
-        genScript += "port[" + str(currentNF2FFInputPortIndex) + "].CalcPort(Sim_Path, freq)\n"
-        genScript += "\n"
-
         genScript += f"""
-## NFFF contour plots
-# get accepted antenna power at frequency f0
+#######################################################################################################################################
+# Farfield plot and 3D gain generated
+#######################################################################################################################################
+
+def generatorFunc_DumpFF2VTK(farfield, t, a, filename):
+    '''
+       Create .vtk file
+       params:
+           farfield: 2D array of values of field
+           t:        theta angles in radians
+           a:        phi angles in radians
+           filename: output file name
+    '''
+
+    with (open(filename, 'w') as outFile):
+         outFile.write(f"# vtk DataFile Version 3.0\\n")
+         outFile.write(f"Structured Grid by python-interface of openEMS\\n")
+         outFile.write(f"ASCII\\n")
+         outFile.write(f"DATASET STRUCTURED_GRID\\n")
+
+         outFile.write(f"DIMENSIONS 1 {{len(t)}} {{len(a)}}\\n")
+         outFile.write(f"POINTS {{len(t)*len(a)}} double\\n")
+
+         for na in range(len(a)):
+             for nt in range(len(t)):
+                 val1 = farfield[nt][na]*math.sin(t[nt])*math.cos(a[na])
+                 val2 = farfield[nt][na]*math.sin(t[nt])*math.sin(a[na])
+                 val3 = farfield[nt][na]*math.cos(t[nt])
+                 outFile.write(f"{{val1}} {{val2}} {{val3}}\\n")
+
+         outFile.write(f'\\n\\n');
+         outFile.write(f'POINT_DATA {{len(t)*len(a)}}\\n');
+         outFile.write(f'SCALARS gain double 1\\n');
+         outFile.write(f'LOOKUP_TABLE default\\n');
+         for na in range(len(a)):
+             for nt in range(len(t)):
+                 outFile.write(f"{{farfield[nt][na]}}\\n")
+
 #
+# Frequency range
+#
+freq = np.linspace(max([0, f0-fc]), f0+fc, {freqCount})
+plotFrequency = {plotFrequency}
+port[{currentNF2FFInputPortIndex}].CalcPort(Sim_Path, freq)
 P_in_0 = np.interp(f0, freq, port[{currentNF2FFInputPortIndex}].P_acc)
 
-# calculate the far field at phi=0 degrees and at phi=90 degrees
+#
+# Calculate the far field at phi=0 degrees and at phi=90 degrees
+#   Using angles in degrees.
+#
+def arangeWithEndpoint(start, stop, step=1, endpoint=True):
+    arr = np.arange(start, stop, step)
 
-thetaRange = np.arange({thetaStart}, {thetaStop}, {thetaStep})
-phiRange = np.arange({phiStart}, {phiStop}, {phiStep}) - 180
+    if endpoint and arr[-1]+step==stop:
+        arr = np.concatenate([arr,[stop]])
+
+    return arr
+
+thetaRange = arangeWithEndpoint({thetaStart}, {thetaStop}, {thetaStep})
+phiRange = arangeWithEndpoint({phiStart}, {phiStop}, {phiStep}) - 180
 
 print( 'calculating the 3D far field...' )
 
 #
 #	nf2ffBoxList[<name>] - NF2FF box structure which should be calculated
+#       INPUT ANGLES ARE IN DEGREES for python interface!
 #
-nf2ff = nf2ffBoxList['{nf2ffBoxName.replace(" ", "_")}'].CalcNF2FF(Sim_Path, plotFrequency, thetaRange*pi/180, phiRange*pi/180, outfile='3D_Pattern.h5', verbose=True, read_cached=True)
+nf2ff = nf2ffBoxList['{nf2ffBoxName.replace(" ", "_")}'].CalcNF2FF(Sim_Path, plotFrequency, thetaRange, phiRange, outfile='3D_Pattern.h5', verbose=True, read_cached=False)
 
 Dmax_dB = 10*log10(nf2ff.Dmax[0])
 E_norm = 20.0*log10(nf2ff.E_norm[0]/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
@@ -1633,7 +1683,14 @@ theta_HPBW = thetaRange[ np.where(squeeze(E_norm[:,phiRange==0])<Dmax_dB-3)[0][0
 print('radiated power: Prad = ' + str(nf2ff.Prad[0]) + ' Watt')
 print('directivity: Dmax = ' + str(Dmax_dB) + ' dBi)')
 print('efficiency: nu_rad = ' + str(100*nf2ff.Prad[0]/P_in_0) + ' %')
-print('theta_HPBW = ' + str(theta_HPBW) + ' Â°')
+print('theta_HPBW = ' + str(theta_HPBW) + '°')
+
+with (open('openEMS_simulation_nf2ff_info.txt', 'w') as outFile):
+    outFile.write(f'radiated power: Prad = {{nf2ff.Prad[0]}} Watt\\n')
+    outFile.write(f'directivity: Dmax = {{Dmax_dB}} dBi)\\n')
+    outFile.write(f'efficiency: nu_rad = {{100*nf2ff.Prad[0]/P_in_0}} %\\n')
+    outFile.write(f'theta_HPBW = {{theta_HPBW}}°\\n')
+    outFile.write(f'\\n')
 
 ##
 E_norm = 20.0*log10(nf2ff.E_norm[0]/np.max(nf2ff.E_norm[0])) + 10*log10(nf2ff.Dmax[0])
@@ -1653,16 +1710,19 @@ legend()
 
 show()
   
-## dump to vtk
 #
-# this is from matlab/octave example need to be figure out for python
+# Dump radiation field to vtk file
 #
-#DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',1e-3)
-#DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3)
-#DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3)
+directivity = nf2ff.P_rad[0]/nf2ff.Prad*4*pi
+directivity_CPRH = np.abs(nf2ff.E_cprh[0])**2/np.max(nf2ff.E_norm[0][:])**2*nf2ff.Dmax[0]
+directivity_CPLH = np.abs(nf2ff.E_cplh[0])**2/np.max(nf2ff.E_norm[0][:])**2*nf2ff.Dmax[0]
 
-#E_far_normalized = nf2ff.E_norm[1] / max(nf2ff.E_norm[1](:)) * nf2ff.Dmax
-#DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3)
+generatorFunc_DumpFF2VTK(directivity, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern.vtk'))
+generatorFunc_DumpFF2VTK(directivity_CPRH, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_CPRH.vtk'))
+generatorFunc_DumpFF2VTK(directivity_CPLH, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_CPLH.vtk'))
+
+E_far_normalized = E_norm / np.max(E_norm) * nf2ff.Dmax[0]
+generatorFunc_DumpFF2VTK(E_far_normalized, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_E_norm.vtk'))
 """
 
         #
