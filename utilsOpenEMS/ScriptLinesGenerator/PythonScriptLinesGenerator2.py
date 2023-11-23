@@ -959,15 +959,15 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                 if gridSettingsInst.xenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.x = np.delete(mesh.x, np.argwhere((mesh.x >= {0:g}) & (mesh.x <= {1:g})))\n".format(_r(xmin), _r(xmax))
-                    genScript += "mesh.x = np.concatenate((mesh.x, np.arange({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
+                    genScript += "mesh.x = np.concatenate((mesh.x, arangeWithEndpoint({0:g},{1:g},{2:g})))\n".format(_r(xmin), _r(xmax), _r(gridSettingsInst.getXYZ(refUnit)['x']))
                 if gridSettingsInst.yenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.y = np.delete(mesh.y, np.argwhere((mesh.y >= {0:g}) & (mesh.y <= {1:g})))\n".format(_r(ymin), _r(ymax))
-                    genScript += "mesh.y = np.concatenate((mesh.y, np.arange({0:g},{1:g},{2:g})))\n".format(_r(ymin),_r(ymax),_r(yParam))
+                    genScript += "mesh.y = np.concatenate((mesh.y, arangeWithEndpoint({0:g},{1:g},{2:g})))\n".format(_r(ymin),_r(ymax),_r(yParam))
                 if gridSettingsInst.zenabled:
                     if gridSettingsInst.topPriorityLines:
                         genScript += "mesh.z = np.delete(mesh.z, np.argwhere((mesh.z >= {0:g}) & (mesh.z <= {1:g})))\n".format(_r(zmin), _r(zmax))
-                    genScript += "mesh.z = np.concatenate((mesh.z, np.arange({0:g},{1:g},{2:g})))\n".format(_r(zmin),_r(zmax),_r(gridSettingsInst.getXYZ(refUnit)['z']))
+                    genScript += "mesh.z = np.concatenate((mesh.z, arangeWithEndpoint({0:g},{1:g},{2:g})))\n".format(_r(zmin),_r(zmax),_r(gridSettingsInst.getXYZ(refUnit)['z']))
 
             elif (gridSettingsInst.getType() == 'Fixed Count'):
                 if gridSettingsInst.xenabled:
@@ -1219,6 +1219,17 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "\tr = np.sqrt(pointCoords[0] ** 2 + pointCoords[1] ** 2)\n"
         genScript += "\tz = pointCoords[2]\n"
         genScript += "\treturn theta, r, z\n"
+        genScript += "\n"
+
+        genScript += "#\n"
+        genScript += "# FUNCTION TO GIVE RANGE WITH ENDPOINT INCLUDED arangeWithEndpoint(0,10,2.5) = [0, 2.5, 5, 7.5, 10]\n"
+        genScript += "#     returns coordinates in order [theta, r, z]\n"
+        genScript += "#\n"
+        genScript += "def arangeWithEndpoint(start, stop, step=1, endpoint=True):\n"
+        genScript += "\tarr = np.arange(start, stop, step)\n"
+        genScript += "\tif endpoint and arr[-1] + step == stop:\n"
+        genScript += "\t\tarr = np.concatenate([arr, [stop]])\n"
+        genScript += "\treturn arr\n"
         genScript += "\n"
 
         genScript += "# Change current path to script file folder\n"
@@ -1655,14 +1666,6 @@ P_in_0 = np.interp(f0, freq, port[{currentNF2FFInputPortIndex}].P_acc)
 # Calculate the far field at phi=0 degrees and at phi=90 degrees
 #   Using angles in degrees.
 #
-def arangeWithEndpoint(start, stop, step=1, endpoint=True):
-    arr = np.arange(start, stop, step)
-
-    if endpoint and arr[-1]+step==stop:
-        arr = np.concatenate([arr,[stop]])
-
-    return arr
-
 thetaRange = arangeWithEndpoint({thetaStart}, {thetaStop}, {thetaStep})
 phiRange = arangeWithEndpoint({phiStart}, {phiStop}, {phiStep}) - 180
 
