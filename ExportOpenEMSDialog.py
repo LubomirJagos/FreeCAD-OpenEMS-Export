@@ -15,6 +15,7 @@ APP_CONTEXT = "None"
 try:
 	import FreeCAD
 	import WebGui
+	import KiCADImporterToolDialog	#import for KiCAD Import Tool
 	APP_CONTEXT = "FreeCAD"
 except:
 	pass
@@ -65,6 +66,9 @@ from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
 
+from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator2 import PythonScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
@@ -89,6 +93,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.observer.endObservation()
 			self.observer = None
 			print("FreeCAD observer terminated.")
+
+			#if KiCAD import tool is opened close it
+			if hasattr(self, "KiCADImportTool"):
+				self.KiCADImportTool.close()
+				del self.KiCADImportTool
+				print("Kicad Import Tool closed")
+
 		elif self.cadInterfaceType == "Blender":
 			print(f"Thread killed.")
 
@@ -138,9 +149,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#
 		# instantiate script generators using this dialog form
 		#
-		self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
-		self.pythonScriptGenerator = PythonScriptLinesGenerator(self.form, statusBar = self.statusBar)
+		#self.octaveScriptGenerator = OctaveScriptLinesGenerator(self.form, statusBar = self.statusBar)
+
+		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
+		# to be able do in python code generatr same stuff as in octave
+		self.octaveScriptGenerator = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		self.pythonScriptGenerator = PythonScriptLinesGenerator2(self.form, statusBar = self.statusBar)
+
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
+		#self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
+		#self.scriptGenerator3 = PythonScriptLinesGenerator2(self.form, statusBar=self.statusBar)
 
 		#
 		#	Connect function to change script generator
@@ -294,6 +312,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			for element in [self.form.fixedCountZNumberInput, self.form.fixedDistanceZNumberInput, self.form.smoothMeshZMaxRes]
 		])
 
+		self.guiSignals.gridCoordsTypeChanged.connect(self.gridCoordsTypeChanged)
+
 		#
 		# Material, Grid, Excitation, ... item changed handler functions.
 		#		
@@ -304,7 +324,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 		self.form.probeSettingsTreeView.currentItemChanged.connect(self.probeTreeWidgetItemChanged)
 
-		#PORT tab settings events handlers
+		#
+		# PORT tab settings events handlers
+		#
 		self.form.lumpedPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.microstripPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.circularWaveguidePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
@@ -392,10 +414,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# initialize dB preview label with converted value
 		self.simParamsMinDecrementValueChanged(self.form.simParamsMinDecrement.value())
 
+		#
+		#	KiCAD Importer Tool
+		#
+		self.form.KiCADImportButton.clicked.connect(self.KiCADImportButtonClicked)
+
 		self.cadInterfaceType = APP_CONTEXT
 		print("Creating document handlers")
 		if APP_CONTEXT == "FreeCAD":
 			try:
+				self.form.KiCADImportButton.setEnabled(True)	#enable KiCAD Importer Tool, it's JUST FOR FreeCAD
+
 				# create observer instance
 				from utilsOpenEMS.GuiHelpers.FreeCADDocObserver import FreeCADDocObserver
 				self.observer = FreeCADDocObserver()
@@ -453,6 +482,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.probeRenamed.connect(self.probeRenamed)
 
 		print(f"----> init finished")
+
+	def KiCADImportButtonClicked(self):
+		# if KiCAD import tool is not created create new one
+		if not hasattr(self, "KiCADImportTool"):
+			self.KiCADImportTool = KiCADImporterToolDialog.KiCADImporterToolDialog()
+
+		self.KiCADImportTool.show()
 
 	def openFreeCADWebGuiHelp(self):
 		"""
@@ -1369,9 +1405,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				isObjAlreadyInCategory = False
 				itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
 				for item in itemWithSameName:
-					print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
-					if (item.parent() == rightItem):
+					#there must be check if item has parent, if pareent is None it means it's category name and categories ALWAYS HAVE SUBCATEGORIES
+					#case scenario:
+					#	- item freecad obj is named excitation
+					#	- there is excitation category
+					#	- in itemWithSameName Excitation category is inclucded so next condition filter it away
+					#
+					if (item.parent() != None and item.parent() == rightItem):
+						print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
 						isObjAlreadyInCategory = True
+
 				if (isObjAlreadyInCategory):
 					self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
 					continue
@@ -1546,6 +1589,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.portsChanged.emit("update")
 		self.guiSignals.probesChanged.emit("update")
 
+		# PORT select first item
+		topItem = self.form.portSettingsTreeView.itemAt(0,0)
+		self.form.portSettingsTreeView.setCurrentItem(topItem)
+
 	#
 	#	Change current scripts type generator based on radiobutton from UI
 	#		if no type by accident is choosed, octave script generator is used
@@ -1575,6 +1622,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"----> start saving file into {self.simulationOutputDir}")
 
 		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
+		#self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
+		#self.scriptGenerator3.generateOpenEMSScript(self.simulationOutputDir + "_3rd_generator")
 
 	def drawS11ButtonClicked(self):
 		portName = self.form.drawS11Port.currentText()
@@ -1631,6 +1680,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	return
 
 		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir, nf2ffBoxName, nf2ffBoxInputPortName, freq, freqCount)
+
+		# display message that script was generated
+		self.guiHelpers.displayMessage("Script to display far field generated.")
 
 	# GRID SETTINGS
 	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -1758,9 +1810,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					 self.form.auxGridAxis.setCurrentIndex(index)
 				self.form.auxGridAxis.setEnabled(False)				
 
-			#add item into gui tree views
-			self.guiHelpers.addSettingsItemGui(settingsInst)
+			self.guiHelpers.addSettingsItemGui(settingsInst)	#add item into gui tree views
 			self.guiHelpers.updateMeshPriorityDisableItems()	#update grid priority table at object assignment panel
+			self.guiSignals.gridCoordsTypeChanged.emit()		#emit signal to update items dependant on coordinate system (rectangular or cartesian)
 
 	def gridSettingsRemoveButtonClicked(self):
 		#selectedItem = self.form.gridSettingsTreeView.selectedItems()[0].data(0, QtCore.Qt.UserRole)
@@ -1789,6 +1841,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		### replace old with new settingsInst
 		selectedItems = self.form.gridSettingsTreeView.selectedItems()
 		if len(selectedItems) != 1:
+			self.guiHelpers.displayMessage("No item is selected.")
+			return
+
+		#check if all items have same type of coordinate system
+		currentSimulationGridType = self.getCurrentSimulationGridType()
+		if currentSimulationGridType != None and settingsInst.coordsType != currentSimulationGridType:
+			self.guiHelpers.displayMessage("All current defined grids are " + currentSimulationGridType + " you have to remove them or change type of current grid item.")
 			return
 
 		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.gridSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
@@ -1816,37 +1875,98 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiSignals.gridTypeChangedFromSmoothMesh.emit(settingsInst.name)
 
 			self.guiHelpers.displayMessage(f"Grid {settingsInst.name} was updated", forceModal=False)
+			self.guiSignals.gridCoordsTypeChanged.emit()		#emit signal to update items dependant on coordinate system (rectangular or cartesian)
 
 	def gridCoordsTypeChoosed(self):
-		"""	
-		if (self.form.gridRectangularRadio.isChecked()):
-			self.form.gridUnitsInput.clear()
-			self.form.gridUnitsInput.addItem("mm")
-			self.form.gridUnitsInput.addItem("m")
-			self.form.gridUnitsInput.addItem("cm")
-			self.form.gridUnitsInput.addItem("nm")
-			self.form.gridUnitsInput.addItem("pm")
-			self.form.gridXEnable.setText("X")
-			self.form.gridYEnable.setText("Y")
-		
-		if (self.form.gridCylindricalRadio.isChecked()):
-			self.form.gridUnitsInput.clear()
-			self.form.gridUnitsInput.addItem("rad")
-			self.form.gridUnitsInput.addItem("deg")
-			self.form.gridXEnable.setText("r")
-			self.form.gridYEnable.setText("phi")
-		"""
-
 		if (self.form.gridRectangularRadio.isChecked()):
 			self.form.gridXEnable.setText("X")
 			self.form.gridYEnable.setText("Y")
 			self.form.gridUnitsInput_2.setEnabled(False)
-		
+
 		if (self.form.gridCylindricalRadio.isChecked()):
 			self.form.gridXEnable.setText("r")
 			self.form.gridYEnable.setText("theta")
 			self.form.gridUnitsInput_2.setEnabled(True)
-		
+
+	@Slot()
+	def gridCoordsTypeChanged(self):
+		"""
+			BASED ON coordination type texts in different port propagation directions are changed
+		"""
+
+		def clearComboboxSetValuesRestoreIndex(comboboxRef, values):
+			"""
+				Inner method to clear combobox items add new ones and restore selected items, equivalent item must be at same index
+				This method is specific for this object method that's reason why it's inner method.
+			"""
+			alternativeEquivalentValues = GridSettingsItem.cartesianCylindricCoordsAlternativeValues
+			text = comboboxRef.currentText()
+			comboboxRef.clear()
+			comboboxRef.addItems(values)
+
+			index = comboboxRef.findText(text, QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				comboboxRef.setCurrentIndex(index)
+				print(f"setComboboxItem for {comboboxRef} to value {text} at index {index}")
+			else:
+				flagWasAlternativeValueUsed = False
+				for alternativeValueTuple in alternativeEquivalentValues:
+					if (alternativeValueTuple[0] == text):
+						flagWasAlternativeValueUsed = True
+						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[1]}")
+						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[1])
+					elif (alternativeValueTuple[1] == text):
+						flagWasAlternativeValueUsed = True
+						print(f"WARNING: For {comboboxRef} instead {text} trying to use alternative equivalent value {alternativeValueTuple[0]}")
+						self.guiHelpers.setComboboxItem(comboboxRef, alternativeValueTuple[0])
+
+				if (not flagWasAlternativeValueUsed):
+					print(f"WARNING: clearComboboxSetValuesRestoreIndex: Cannot set for {comboboxRef} item {text} alternative equivalent, no value.");
+
+				return
+
+			print(f"WARNING: clearComboboxSetValuesRestoreIndex: Cannot set for {comboboxRef} item {text}, wasn't found in items.")
+			return
+
+		if (self.getCurrentSimulationGridType() == "cylindrical"):
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCylindricalPropagationDirection) for comboboxRef in [
+				self.form.portCircWaveguideDirection,
+				self.form.portRectWaveguideDirection,
+				self.form.microstripPortPropagationComboBox,
+				self.form.coaxialPortDirection,
+				self.form.coplanarPortPropagationComboBox,
+				self.form.striplinePortPropagationComboBox
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCylindricalLayerDirection) for comboboxRef in [
+				self.form.microstripPortDirection,
+				self.form.coplanarPortDirection,
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredSymmetricPortCylindricalLayerDirection) for comboboxRef in [
+				self.form.striplinePortDirection
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCylindricalExcitationDirection) for comboboxRef in [
+				self.form.lumpedPortDirection
+			]]
+		else:
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCartesianPropagationDirection) for comboboxRef in [
+				self.form.portCircWaveguideDirection,
+				self.form.portRectWaveguideDirection,
+				self.form.microstripPortPropagationComboBox,
+				self.form.coaxialPortDirection,
+				self.form.coplanarPortPropagationComboBox,
+				self.form.striplinePortPropagationComboBox
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredPortCartesianLayerDirection) for comboboxRef in [
+				self.form.microstripPortDirection,
+				self.form.coplanarPortDirection,
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.multilayeredSymmetricPortCartesianLayerDirection) for comboboxRef in [
+				self.form.striplinePortDirection
+			]]
+			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCartesianExcitationDirection) for comboboxRef in [
+				self.form.lumpedPortDirection
+			]]
+
 	#
 	# MATERIAL SETTINGS
 	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
@@ -2030,7 +2150,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		:param operation: "add" | "remove" | "update"
 		:return: None
 		"""
-		#print(f"@Slot materialsChanged: {operation}")
+		print(f"@Slot materialsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
 			self.updateMaterialComboBoxJustMetals(self.form.microstripPortMaterialComboBox)				# update microstrip port material combobox
@@ -2794,6 +2914,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		"""
 		Update items in combobox for provided combobox control, this add just metallic material types (metal, conductive sheet). It clears all items and fill them agains with actual values.
 		"""
+		currentItemText = comboboxRef.currentText()
+		print(f"---> updateMaterialComboBoxJustMetals() setComboboxItem {comboboxRef}, current text '{currentItemText}' current item index {comboboxRef.currentIndex()}")
+
 		comboboxRef.clear()
 
 		# iterates over materials due if there are metal or conducting sheet they are added into microstrip possible materials combobox
@@ -2803,10 +2926,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			)[0]
 
 		# here user defined are added into coaxial possible material combobox
+		selectedItem = None
 		for k in range(objectAssignemntRightPortParent.childCount()):
 			materialData = objectAssignemntRightPortParent.child(k).data(0, QtCore.Qt.UserRole)
 			if (materialData.type in ["metal", "conducting sheet"]):
-				comboboxRef.addItem(materialData.name)
+				newItem = comboboxRef.addItem(materialData.name)
+				print(f"updating {comboboxRef} with item: {materialData.name}")
+
+		# this set value of combobox to previous value
+		#if (not currentItemText is None and materialData.name == currentItemText):
+		print(f"---> updateMaterialComboBoxJustMetals() setComboboxItem for text '{currentItemText}'")
+		self.guiHelpers.setComboboxItem(comboboxRef, currentItemText)
 
 	@Slot(int)
 	def microstripPortDirectionOnChange(self, activatedItemIndex):
@@ -2961,7 +3091,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#\____/_____/_/ |_/_____/_/ |_/_/  |_/_____/   /____/_____/ /_/   /_/ /___/_/ |_/\____//____/  
 	#
 	def materialTreeWidgetItemChanged(self, current, previous):
-		print("Material item changed.")
+		print("materialTreeWidgetItemChanged(): Material item changed.")
 
 		#if last item was erased from port list do nothing
 		if not self.form.materialSettingsTreeView.currentItem():
@@ -3123,11 +3253,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		return
 
 	def portTreeWidgetItemChanged(self, current, previous):
-		print("Port item changed.")
+		print("portTreeWidgetItemChanged(): Port item changed.")
 
 		#if last item was erased from port list do nothing
 		if not self.form.portSettingsTreeView.currentItem():
 			return
+
+		cartesianCylindricCoordsAlternativeValues = GridSettingsItem.cartesianCylindricCoordsAlternativeValues
 
 		currSetting = self.form.portSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.portSettingsNameInput.setText(currSetting.name)
@@ -3137,7 +3269,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.lumpedPortRadioButton.click()
 				self.form.lumpedPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.lumpedPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.lumpedPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 				self.form.lumpedPortActive.setChecked(currSetting.isActive)
 
 				self.form.lumpedPortInfinitResistance.setChecked(currSetting.infiniteResistance)
@@ -3161,7 +3293,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 				self.guiHelpers.setComboboxItem(self.form.microstripPortFeedpointShiftUnits, currSetting.mslFeedShiftUnits)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMeasureShiftUnits, currSetting.mslMeasPlaneShiftUnits)
-				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation)
+				self.guiHelpers.setComboboxItem(self.form.microstripPortPropagationComboBox, currSetting.mslPropagation, cartesianCylindricCoordsAlternativeValues)
 				self.guiHelpers.setComboboxItem(self.form.microstripPortMaterialComboBox, currSetting.mslMaterial)
 
 				self.form.microstripPortInfinitResistance.setChecked(currSetting.infiniteResistance)
@@ -3175,7 +3307,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coaxialPortActive.setChecked(currSetting.isActive)
 				self.form.coaxialPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.coaxialPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.coaxialPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.coaxialPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				self.form.coaxialPortInnerRadiusValue.setValue(currSetting.coaxialInnerRadiusValue)
 				self.form.coaxialPortShellThicknessValue.setValue(currSetting.coaxialShellThicknessValue)
@@ -3200,7 +3332,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.coplanarPortActive.setChecked(currSetting.isActive)
 				self.form.coplanarPortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.coplanarPortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.coplanarPortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				#	emit signal to update direction combobox, must be here to have right reaction when change direction combobox,
 				#	then click on radiobutton stripline and
@@ -3228,7 +3360,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.striplinePortActive.setChecked(currSetting.isActive)
 				self.form.striplinePortResistanceValue.setValue(float(currSetting.R))
 				self.guiHelpers.setComboboxItem(self.form.striplinePortResistanceUnits, currSetting.RUnits)
-				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction)
+				self.guiHelpers.setComboboxItem(self.form.striplinePortDirection, currSetting.direction, cartesianCylindricCoordsAlternativeValues)
 
 				self.form.striplinePortDirection.activated.emit(self.form.striplinePortDirection.currentIndex())
 
@@ -3251,7 +3383,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
 			self.guiHelpers.setComboboxItem(self.form.portCircWaveguidePolarizationAngle, currSetting.polarizationAngle)
-			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideDirection, currSetting.waveguideCircDir)
+			self.guiHelpers.setComboboxItem(self.form.portCircWaveguideDirection, currSetting.waveguideCircDir, cartesianCylindricCoordsAlternativeValues)
 
 			self.form.portCircWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 		elif (currSetting.type.lower() == "rectangular waveguide"):
@@ -3260,7 +3392,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.form.portRectWaveguideActive.setChecked(currSetting.isActive)
 
 			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideModeName, currSetting.modeName)						#set mode, e.g. TE11, TM21, ...
-			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir)
+			self.guiHelpers.setComboboxItem(self.form.portRectWaveguideDirection, currSetting.waveguideRectDir, cartesianCylindricCoordsAlternativeValues)
 
 			self.form.portRectWaveguideExcitationAmplitude.setValue(float(currSetting.excitationAmplitude))
 

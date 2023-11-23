@@ -937,16 +937,16 @@ class IniFile0v1:
                 #
                 try:
                     self.guiHelpers.setComboboxItem(self.form.portNf2ffObjectList, settings.value("nf2ffObject"))
-                    self.form.portNf2ffThetaStart.setValue(settings.value("nf2ffThetaStart"))
-                    self.form.portNf2ffThetaStop.setValue(settings.value("nf2ffThetaStop"))
-                    self.form.portNf2ffThetaStep.setValue(settings.value("nf2ffThetaStep"))
-                    self.form.portNf2ffPhiStart.setValue(settings.value("nf2ffPhiStart"))
-                    self.form.portNf2ffPhiStop.setValue(settings.value("nf2ffPhiStop"))
-                    self.form.portNf2ffPhiStep.setValue(settings.value("nf2ffPhiStep"))
-                    self.form.portNf2ffFreqCount.setValue(settings.value("nf2ffFreqCount"))
+                    self.form.portNf2ffThetaStart.setValue(float(settings.value("nf2ffThetaStart")))
+                    self.form.portNf2ffThetaStop.setValue(float(settings.value("nf2ffThetaStop")))
+                    self.form.portNf2ffThetaStep.setValue(float(settings.value("nf2ffThetaStep")))
+                    self.form.portNf2ffPhiStart.setValue(float(settings.value("nf2ffPhiStart")))
+                    self.form.portNf2ffPhiStop.setValue(float(settings.value("nf2ffPhiStop")))
+                    self.form.portNf2ffPhiStep.setValue(float(settings.value("nf2ffPhiStep")))
+                    self.form.portNf2ffFreqCount.setValue(float(settings.value("nf2ffFreqCount")))
 
                     self.guiHelpers.setComboboxItem(self.form.portNf2ffInput, settings.value("nf2ffInputPort"))
-                    self.form.portNf2ffFreq.setValue(settings.value("nf2ffFreqValue"))
+                    self.form.portNf2ffFreq.setValue(float(settings.value("nf2ffFreqValue")))
                 except:
                     pass
 
@@ -983,10 +983,29 @@ class IniFile0v1:
 
         #
         # Send all appropriate signals to GUI to update all needed items.
-        #       Like materials for microstrip port combobox.
+        #       1. update materials for microstrip port combobox.
+        #       2. emit signal for port tree view to change focus for 1st port to renew in GUI directly after load
+        #           - without this DIRECTLY AFTER STARTING THIS ADDON AND LOADING SOME FILE ie. microstrip combobx
+        #             is not initialized to right material and show first combobox value PEC
         #
         if (self.guiSignals):
+
+            #1. step - update items dependent on coordinate system
+            self.guiSignals.gridCoordsTypeChanged.emit()  # emit signal to update items dependant on coordinate system (rectangular or cartesian)
+
+            # 2. step - update all material comboboxes
             self.guiSignals.materialsChanged.emit("update")
+
+            #
+            #   DEBUG code snippet write to log portTreeWidget items labels
+            #
+            #print(f"--> IniFile0v1 > read() > portSettingsTreeView items texts:")
+            #for portItemIndex in range(self.form.portSettingsTreeView.invisibleRootItem().childCount()):
+            #    print(f"{self.form.portSettingsTreeView.invisibleRootItem().child(portItemIndex).text(0)}")
+
+            # 2. step - PORT select first item
+            topItem = self.form.portSettingsTreeView.invisibleRootItem().child(0)
+            self.form.portSettingsTreeView.currentItemChanged.emit(topItem, topItem)    #this signal is connected so it must be emitted
         else:
             print(f"{__file__} > read(): no guiSignals defined, probably not passed into constructor, some UI things doesn't have to be populated")
 
@@ -994,6 +1013,7 @@ class IniFile0v1:
         #   Final message from which file were settings loaded
         #
         self.guiHelpers.displayMessage("Settings loaded from file: " + outFile, forceModal=False)
+        print(f"---> IniFIle0v1 > read() finished.")
 
         return
 

@@ -211,22 +211,22 @@ class IniValidator0v1:
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['lumped']",
-                        'allowedValues': r"(x|y|z)"
+                        'allowedValues': r"(x|y|z|r|theta)"
                     },
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['rectangular waveguide', 'circular waveguide', 'coaxial']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['microstrip', 'coplanar']",
-                        'allowedValues': r"(XY plane, top layer|XY plane, bottom layer|XZ plane, front layer|XZ plane, back layer|YZ plane, right layer|YZ plane, left layer)"
+                        'allowedValues': r"(XY plane, top layer|XY plane, bottom layer|XZ plane, front layer|XZ plane, back layer|YZ plane, right layer|YZ plane, left layer|r-theta, top layer| r-theta, bottom layer|z-theta, outside layer|z-theta, inside layer)"
                     },
                     {
                         'name': 'direction',
                         'mandatory': "settings.value('type') in ['stripline']",
-                        'allowedValues': r"(XY plane|XZ plane|YZ plane)"
+                        'allowedValues': r"(XY plane|XZ plane|YZ plane|r-theta plane|z-theta plane)"
                     },
                     {
                         'name': 'polarizationAngle',
@@ -246,7 +246,7 @@ class IniValidator0v1:
                     {
                         'name': 'waveguideDirection',
                         'mandatory': "settings.value('type') in ['rectangulare waveguide', 'circular waveguide']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'material',
@@ -281,7 +281,7 @@ class IniValidator0v1:
                     {
                         'name': 'propagation',
                         'mandatory': "settings.value('type') in ['microstrip', 'coplanar', 'stripline']",
-                        'allowedValues': r"(x+|y+|z+|x-|y-|z-)"
+                        'allowedValues': r"(x+|y+|z+|x-|y-|z-|r+|r-|theta+|theta-)"
                     },
                     {
                         'name': 'coaxialInnerRadiusValue',

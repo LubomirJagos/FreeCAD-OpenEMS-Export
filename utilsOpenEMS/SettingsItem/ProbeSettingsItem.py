@@ -33,4 +33,37 @@ class ProbeSettingsItem(SettingsItem):
     def getRUnits(self):
         return self.getUnitsAsNumber(self.RUnits)
 
+    def getDumpType(self):
+        dumpboxType = None
 
+        if self.dumpboxDomain == "time":
+            if self.dumpboxType == "E field":
+                dumpboxType = 0
+            elif self.dumpboxType == "H field":
+                dumpboxType = 1
+            elif self.dumpboxType == "J field":
+                dumpboxType = 3
+            elif self.dumpboxType == "D field":
+                dumpboxType = 4
+            elif self.dumpboxType == "B field":
+                dumpboxType = 5
+            else:
+                dumpboxType = '#ERROR probe code generate don\'t know type'
+
+        elif self.dumpboxDomain == "frequency":
+            if self.dumpboxType == "E field":
+                dumpboxType = 10
+            elif self.dumpboxType == "H field":
+                dumpboxType = 11
+            elif self.dumpboxType == "J field":
+                dumpboxType = 13
+            elif self.dumpboxType == "D field":
+                dumpboxType = 14
+            elif self.dumpboxType == "B field":
+                dumpboxType = 15
+            else:
+                dumpboxType = '#ERROR probe code generate don\'t know type'
+        else:
+            dumpboxType = "#code generator cannot find domain (time/frequency)"
+
+        return str(dumpboxType)

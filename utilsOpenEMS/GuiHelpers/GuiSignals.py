@@ -8,6 +8,7 @@ class GuiSignals(QObject):
     gridRenamed = Signal(str, str)
     gridTypeChangedToSmoothMesh = Signal(str)
     gridTypeChangedFromSmoothMesh = Signal(str)
+    gridCoordsTypeChanged = Signal()
 
     materialRenamed = Signal(str, str)
     excitationRenamed = Signal(str, str)
