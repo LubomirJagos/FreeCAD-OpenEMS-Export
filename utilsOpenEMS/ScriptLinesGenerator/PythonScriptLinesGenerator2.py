@@ -1848,6 +1848,20 @@ with open(filename, 'w', newline='') as csvfile:
         genScript += "print(currDir)\n"
         genScript += "\n"
 
+        genScript += "## setup FDTD parameter & excitation function\n"
+        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + "\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + " # 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
+
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "CSX = CSXCAD.ContinuousStructure(CoordSystem=1)\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement, CoordSystem=1)\n"
+        else:
+            genScript += "CSX = CSXCAD.ContinuousStructure()\n"
+            genScript += "FDTD = openEMS(NrTS=max_timesteps, EndCriteria=min_decrement)\n"
+
+        genScript += "FDTD.SetCSX(CSX)\n"
+        genScript += "\n"
+
         # List categories and items.
         itemsByClassName = self.getItemsByClassName()
 
@@ -1875,36 +1889,38 @@ with open(filename, 'w', newline='') as csvfile:
         genScript += "#######################################################################################################################################\n"
         genScript += "\n"
         genScript += "freq = np.linspace(max(1e6, f0 - fc), f0 + fc, 501)\n"
-        genScript += f"port[{self.internalPortIndexNamesList[portName]}].CalcPort(Sim_Path, freq)\n"
+        genScript += f"port[{self.internalPortIndexNamesList[sourcePortName]}].CalcPort(Sim_Path, freq)\n"
+        genScript += f"port[{self.internalPortIndexNamesList[targetPortName]}].CalcPort(Sim_Path, freq)\n"
         genScript += "\n"
-        genScript += "s11 = port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.ref./ port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.inc\n"
-        genScript += "s21 = port[" + str(self.internalPortIndexNamesList[targetPortName]) + "].uf.ref./ port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf.inc\n"
+        genScript += "s11 = port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_ref / port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_inc\n"
+        genScript += "s21 = port[" + str(self.internalPortIndexNamesList[targetPortName]) + "].uf_ref / port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_inc\n"
         genScript += "\n"
         genScript += "s11_dB = 20*log10(abs(s11))\n"
         genScript += "s21_dB = 20*log10(abs(s21))\n"
         genScript += "\n"
         genScript += "plot(freq/1e9,s11_dB,'k-', linewidth=2)\n"
-        genScript += "grid())\n"
+        genScript += "grid()\n"
         genScript += "plot(freq/1e9,s21_dB,'r--', linewidth=2)\n"
-        genScript += "legend('S_{11}','S_{21}')\n"
+        genScript += "legend(('$S_{11}$','$S_{21}$'))\n"
         genScript += "ylabel('S-Parameter (dB)', fontsize=12)\n"
         genScript += "xlabel('frequency (GHz) \\rightarrow', fontsize=12)\n"
-        genScript += "ylim([-40 2])\n"
+        genScript += "ylim([-40, 2])\n"
+        genScript += "show()\n"
         genScript += "\n"
 
         genScript += "#######################################################################################################################################\n"
         genScript += "# SAVE PLOT DATA\n"
         genScript += "#######################################################################################################################################\n"
         genScript += "\n"
-        genScript += "#"
-        genScript += "#   Write S11, real and imag Z_in into CSV file separated by ';'"
-        genScript += "#"
-        genScript += "filename = 'openEMS_simulation_s11_dB.csv'"
+        genScript += "#\n"
+        genScript += "#   Write S11, real and imag Z_in into CSV file separated by ';'\n"
+        genScript += "#\n"
+        genScript += "filename = 'openEMS_simulation_s11_dB.csv'\n"
         genScript += "\n"
-        genScript += "with open(filename, 'w', newline='') as csvfile:"
-        genScript += "\twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)"
-        genScript += "\twriter.writerow(['freq (Hz)', 's11 (dB)', 's21 (dB)'])"
-        genScript += "\twriter.writerows(np.array([freq, s11_dB, s21_dB]).T)  # creates array with 1st row frequencies, 2nd row S11 and transpose it"
+        genScript += "with open(filename, 'w', newline='') as csvfile:\n"
+        genScript += "\twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)\n"
+        genScript += "\twriter.writerow(['freq (Hz)', 's11 (dB)', 's21 (dB)'])\n"
+        genScript += "\twriter.writerows(np.array([freq, s11_dB, s21_dB]).T)  # creates array with 1st row frequencies, 2nd row S11 and transpose it\n"
         genScript += "\n"
 
         # Write OpenEMS Script file into current dir.
