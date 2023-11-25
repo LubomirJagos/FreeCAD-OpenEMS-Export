@@ -165,4 +165,105 @@ class CommonScriptLinesGenerator:
         Generate points for conducting sheet area. Conducting sheet must lay in XY,XZ or YZ plane.
         :return: list of vertices which creates area of conducting sheet.
         """
-        return []
+
+        #
+        #   Sketch is added as polygon into conducting sheet material
+        #
+        normDir = ""
+        elevation = 0.0
+        points = [[],[]]
+        bbCoords = freeCadObj.Shape.BoundBox
+
+        if (_r(bbCoords.XMin) == _r(bbCoords.XMax)):
+            normDir = "x"
+            elevation = _r(bbCoords.XMin)
+        elif (_r(bbCoords.YMin) == _r(bbCoords.YMax)):
+            normDir = "y"
+            elevation = _r(bbCoords.YMin)
+        elif (_r(bbCoords.ZMin) == _r(bbCoords.ZMax)):
+            normDir = "z"
+            elevation = _r(bbCoords.ZMin)
+        else:
+            normDir = "ERROR: sketch not lay in coordinate plane, conducting sheet polygon must lay in XY, XZ or YZ plane"
+
+        """
+        for geometryObj in freeCadObj.Geometry:
+            if (str(type(geometryObj)).find("LineSegment") > -1):
+                points[0].append(_r(geometryObj.StartPoint.x))
+                points[1].append(_r(geometryObj.StartPoint.y))
+        """
+
+        if normDir == 'x':
+            for v in freeCadObj.Shape.OrderedVertexes:
+                points[0].append(_r(v.Y))
+                points[1].append(_r(v.Z))
+            points[0].append(_r(freeCadObj.Shape.OrderedVertexes[0].Y))
+            points[1].append(_r(freeCadObj.Shape.OrderedVertexes[0].Z))
+        elif normDir == 'y':
+            for v in freeCadObj.Shape.OrderedVertexes:
+                points[0].append(_r(v.X))
+                points[1].append(_r(v.Z))
+            points[0].append(_r(freeCadObj.Shape.OrderedVertexes[0].X))
+            points[1].append(_r(freeCadObj.Shape.OrderedVertexes[0].Z))
+        elif normDir == 'z':
+            for v in freeCadObj.Shape.OrderedVertexes:
+                points[0].append(_r(v.X))
+                points[1].append(_r(v.Y))
+            points[0].append(_r(freeCadObj.Shape.OrderedVertexes[0].X))
+            points[1].append(_r(freeCadObj.Shape.OrderedVertexes[0].Y))
+
+        return normDir, elevation, points
+
+    def getFacePointsForConductingSheet(self, freeCadObj):
+
+        normDir = ""
+        elevation = ""
+        facesList = []
+
+        bbCoords = freeCadObj.Shape.BoundBox
+
+        if (len(freeCadObj.Shape.Faces) > 0):
+
+            if (_r(bbCoords.XMin) == _r(bbCoords.XMax)):
+                normDir = "x"
+                elevation = bbCoords.XMin
+
+                for face in freeCadObj.Shape.Faces:
+                    points = [[], []]
+                    for vertex in face.Vertexes:
+                        points[0].append(_r(vertex.Y))
+                        points[1].append(_r(vertex.Z))
+                    points[0].append(_r(face.Vertexes[0].Y))
+                    points[1].append(_r(face.Vertexes[0].Z))
+                    facesList.append(points)
+
+            elif (_r(bbCoords.YMin) == _r(bbCoords.YMax)):
+                normDir = "y"
+                elevation = bbCoords.YMin
+
+                for face in freeCadObj.Shape.Faces:
+                    points = [[], []]
+                    for vertex in face.Vertexes:
+                        points[0].append(_r(vertex.X))
+                        points[1].append(_r(vertex.Z))
+                    points[0].append(_r(face.Vertexes[0].X))
+                    points[1].append(_r(face.Vertexes[0].Z))
+                    facesList.append(points)
+
+            elif (_r(bbCoords.ZMin) == _r(bbCoords.ZMax)):
+                normDir = "z"
+                elevation = bbCoords.ZMin
+
+                for face in freeCadObj.Shape.Faces:
+                    points = [[], []]
+                    for vertex in face.Vertexes:
+                        points[0].append(_r(vertex.X))
+                        points[1].append(_r(vertex.Y))
+                    points[0].append(_r(face.Vertexes[0].X))
+                    points[1].append(_r(face.Vertexes[0].Y))
+                    facesList.append(points)
+
+        else:
+            pass
+
+        return normDir, elevation, facesList

@@ -98,10 +98,12 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                 if (currSetting.type == 'metal'):
                     genScript += f"{materialPythonVariable} = CSX.AddMetal('{currSetting.getName()}')\n"
+                    genScript += "\n"
                     self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
                 elif (currSetting.type == 'userdefined'):
                     self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
                     genScript += f"{materialPythonVariable} = CSX.AddMaterial('{currSetting.getName()}')\n"
+                    genScript += "\n"
 
                     smp_args = []
                     if str(currSetting.constants['epsilon']) != "0":
@@ -120,6 +122,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                                  f"conductivity={str(currSetting.constants['conductingSheetConductivity'])}, " + \
                                  f"thickness={str(currSetting.constants['conductingSheetThicknessValue'])}*{str(currSetting.getUnitsAsNumber(currSetting.constants['conductingSheetThicknessUnits']))}" + \
                                  f")\n"
+                    genScript += "\n"
                     self.internalMaterialIndexNamesList[currSetting.getName()] = materialPythonVariable
 
                 # first print all current material children names
@@ -142,7 +145,80 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                     # getting reference to FreeCAD object
                     freeCadObj = [i for i in self.cadHelpers.getObjects() if (i.Label) == childName][0]
 
-                    if (freeCadObj.Name.find("Discretized_Edge") > -1):
+                    #
+                    #   HERE IS OBJECT GENERATOR THERE ARE FEW SPECIAL CASES WHICH ARE HANDLED FIRST AND IF OBJECT IS NORMAL STRUCTURE AT THE END IS GENERATED AS .stl FILR:
+                    #       - conducting sheet = just plane is generated, in case of 3D object shell of object bounding box is generated
+                    #       - discretized edge = curve from line is generated
+                    #       - sketch           = curve is generated from it's vertices
+                    #
+                    if (currSetting.type == 'conducting sheet'):
+                        #
+                        #   Here comes object generator for conducting sheet. It's possible to define it as plane in XY, XZ, YZ plane in cartesian coords and XY plane in cylindrical coords.
+                        #   So in case of conducting sheet no .stl is generated, it will be generated rectangle based on bounding box.
+                        #
+                        genScript += "##conducting sheet object\n"
+                        genScript += f"#object Label: {freeCadObj.Label}\n"
+                        bbCoords = freeCadObj.Shape.BoundBox
+
+                        if (freeCadObj.Name.find("Sketch") > -1):
+                            #
+                            # If object is sketch then it's added as it outline
+                            #
+
+                            normDir, elevation, points = self.getSketchPointsForConductingSheet(freeCadObj)
+                            if not normDir.startswith("ERROR"):
+                                genScript += "points = [[],[]]\n"
+                                if len(points[0])  == 0:
+                                    genScript += "## ERROR, no points for polygon for conducting sheet nothing generated"
+                                else:
+                                    for k in range(len(points[0])):
+                                        genScript += f"points[0].append({points[0][k]})\n"
+                                        genScript += f"points[1].append({points[1][k]})\n"
+                                genScript += "\n"
+
+                                genScript += f"{materialPythonVariable}.AddPolygon(points, '{normDir}', {elevation}, priority={objModelPriority})\n"
+                                genScript += "\n"
+                                print("material conducting sheet: polygon into conducting sheet added.")
+                            else:
+                                genScript += f"## {normDir}\n"
+                                genScript += "\n"
+                                print("ERROR: material conducting sheet: " + normDir)
+
+                        elif (_r(bbCoords.XMin) == _r(bbCoords.XMax) or _r(bbCoords.YMin) == _r(bbCoords.YMax) or _r(bbCoords.ZMin) == _r(bbCoords.ZMax)):
+                            #
+                            # Adding planar object into conducting sheet, if it consists from faces then each face is added as polygon.
+                            #
+
+                            normDir, elevation, facesList = self.getFacePointsForConductingSheet(freeCadObj)
+                            if normDir != "":
+                                for face in facesList:
+                                    genScript += f"points = [[],[]]\n"
+                                    for pointIndex in range(len(face[0])):
+                                        genScript += f"points[0].append({face[0][pointIndex]})\n"
+                                        genScript += f"points[1].append({face[1][pointIndex]})\n"
+                                        genScript += "\n"
+                                    genScript += f"{materialPythonVariable}.AddPolygon(points, '{normDir}', {elevation}, priority={objModelPriority})\n"
+                                    genScript += "\n"
+                            else:
+                                genScript += f"#\tObject has no faces, conducting sheet is generated based on object bounding box since it's planar.\n"
+                                genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)},{_r(bbCoords.YMin)},{_r(bbCoords.ZMin)}], [{_r(bbCoords.XMax)},{_r(bbCoords.YMax)},{_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                                genScript += "\n"
+
+                        else:
+                            #
+                            # If object is 3D object then it's boundaries are added as conducting sheets.
+                            #
+
+                            genScript += f"#\tObject is 3D so there are sheets on its boundary box generated.\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMin)}], [{_r(bbCoords.XMax)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMin)}], priority={objModelPriority})\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMin)}], [{_r(bbCoords.XMax)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMin)}], [{_r(bbCoords.XMin)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMax)}], [{_r(bbCoords.XMax)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMin)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMin)}], [{_r(bbCoords.XMax)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                            genScript += f"{materialPythonVariable}.AddBox([{_r(bbCoords.XMax)}, {_r(bbCoords.YMin)}, {_r(bbCoords.ZMin)}], [{_r(bbCoords.XMax)}, {_r(bbCoords.YMax)}, {_r(bbCoords.ZMax)}], priority={objModelPriority})\n"
+                            genScript += "\n"
+
+                    elif (freeCadObj.Name.find("Discretized_Edge") > -1):
                         #
                         #	Adding discretized curve
                         #
@@ -155,7 +231,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += f"points[2].append({_r(curvePoints[k].z)})\n"
                             genScript += "\n"
 
-                        genScript += f"{materialPythonVariable}.AddCurve(points);\n"
+                        genScript += f"{materialPythonVariable}.AddCurve(points, priority={objModelPriority})\n"
                         genScript += "\n"
                         print("Curve added to generated script using its points.")
 
@@ -200,7 +276,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += f"points[2].append({_r(v.Z)})\n"
                             genScript += "\n"
 
-                        genScript += f"{materialPythonVariable}.AddCurve(points);\n"
+                        genScript += f"{materialPythonVariable}.AddCurve(points, priority={objModelPriority})\n"
                         genScript += "\n"
                         print("Line segments from sketch added.")
 
@@ -238,6 +314,8 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                         self.cadHelpers.exportSTL(partToExport, exportFileName)
                         print("Material object exported as STL into: " + stlModelFileName)
+
+                genScript += "\n"   #newline after each COMPLETE material category code generated
 
             genScript += "\n"
 
@@ -856,7 +934,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
             #
             #   Fixed Distance, Fixed Count mesh boundaries coords obtain
             #
-            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count']):
+            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count', 'User Defined']):
                 fcObject = fcObjects.get(FreeCADObjectName, None)
                 if (not fcObject):
                     print("Failed to resolve '{}'.".format(FreeCADObjectName))

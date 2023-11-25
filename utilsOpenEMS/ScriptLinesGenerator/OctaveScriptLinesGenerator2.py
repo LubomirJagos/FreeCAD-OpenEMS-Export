@@ -147,111 +147,51 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                         if (freeCadObj.Name.find("Sketch") > -1):
                             #
-                            #   Sketch is added as polygon into conducting sheet material
+                            # If object is sketch then it's added as it outline
                             #
-                            normDir = ""
-                            elevation = ""
-                            if (bbCoords.XMin == bbCoords.XMax):
-                                normDir = "x"
-                                elevation = bbCoords.XMin
 
-                                pointIndex = 1
+                            normDir, elevation, points = self.getSketchPointsForConductingSheet(freeCadObj)
+                            if not normDir.startswith("ERROR"):
                                 genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.y)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.z)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
+                                if len(points[0])  == 0:
+                                    genScript += "%% ERROR, no points for polygon for conducting sheet nothing generated"
+                                else:
+                                    for k in range(len(points[0])):
+                                        genScript += f"points(1,{k+1}) = {points[0][k]};\n"
+                                        genScript += f"points(2,{k+1}) = {points[1][k]};\n"
+                                genScript += "\n"
 
-                            elif (bbCoords.YMin == bbCoords.YMax):
-                                normDir = "y"
-                                elevation = bbCoords.YMin
-
-                                pointIndex = 1
-                                genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.x)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.z)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
-
-                            elif (bbCoords.ZMin == bbCoords.ZMax):
-                                normDir = "z"
-                                elevation = bbCoords.ZMin
-
-                                pointIndex = 1
-                                genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.x)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.y)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
-
+                                genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {elevation}, points);\n"
+                                genScript += "\n"
+                                print("material conducting sheet: polygon into conducting sheet added.")
                             else:
-                                normDir = "ERROR: sketch not lay in coordinate plane"
+                                genScript += normDir + "\n"
+                                genScript += "\n"
+                                print("ERROR: material conducting sheet: " + normDir)
 
-                            genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                            print("polygon into conducting sheet added.")
-
-                        elif (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
+                        elif (_r(bbCoords.XMin) == _r(bbCoords.XMax) or _r(bbCoords.YMin) == _r(bbCoords.YMax) or _r(bbCoords.ZMin) == _r(bbCoords.ZMax)):
                             #
-                            # Adding planar object into conducting sheet, if it consiss from faces then each face is added as polygon.
+                            # Adding planar object into conducting sheet, if it consists from faces then each face is added as polygon.
                             #
 
-                            if (len(freeCadObj.Shape.Faces) > 0):
-
-                                normDir = ""
-                                elevation = ""
-                                if (bbCoords.XMin == bbCoords.XMax):
-                                    normDir = "x"
-                                    elevation = bbCoords.XMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.Y)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Z)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                                elif (bbCoords.YMin == bbCoords.YMax):
-                                    normDir = "y"
-                                    elevation = bbCoords.YMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.X)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Z)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                                elif (bbCoords.ZMin == bbCoords.ZMax):
-                                    normDir = "z"
-                                    elevation = bbCoords.ZMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.X)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Y)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
+                            normDir, elevation, facesList = self.getFacePointsForConductingSheet(freeCadObj)
+                            if normDir != "":
+                                for face in facesList:
+                                    genScript += "points = [];\n"
+                                    for pointIndex in range(len(face[0])):
+                                        genScript += f"points(1,{pointIndex+1}) = {face[0][pointIndex]};"
+                                        genScript += f"points(2,{pointIndex+1}) = {face[1][pointIndex]};"
+                                        genScript += "\n"
+                                    genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
                             else:
-                                genScript += f"%\tObject is planar as it should be.\n"
+                                genScript += f"%\tObject has no faces, conducting sheet is generated based on object bounding box since it's planar.\n"
                                 genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMax)} {_r(bbCoords.ZMax)}]);\n"
+
                         else:
+                            #
+                            # If object is 3D object then it's boundaries are added as conducting sheets.
+                            #
+
                             genScript += f"%\tObject is 3D so there are sheets on its boundary box generated.\n"
                             genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMax)} {_r(bbCoords.ZMin)}]);\n"
                             genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMax)}]);\n"
@@ -1135,7 +1075,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
             #
             #   Fixed Distance, Fixed Count mesh boundaries coords obtain
             #
-            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count']):
+            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count', 'User Defined']):
                 fcObject = fcObjects.get(FreeCADObjectName, None)
                 if (not fcObject):
                     print("Failed to resolve '{}'.".format(FreeCADObjectName))
