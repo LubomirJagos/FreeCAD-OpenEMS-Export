@@ -12,24 +12,15 @@ from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import Octave
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
-class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
+from utilsOpenEMS.ScriptLinesGenerator.CommonScriptLinesGenerator import CommonScriptLinesGenerator
+
+class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
     #
     #   constructor, get access to form GUI
     #
     def __init__(self, form, statusBar = None):
-        self.form = form
-        self.statusBar = statusBar
-
-        self.internalPortIndexNamesList = {}
-        self.internalNF2FFIndexNamesList = {}
-        self.internalMaterialIndexNamesList = {}
-
-        #
-        # GUI helpers function like display message box and so
-        #
-        self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
-        self.cadHelpers = FactoryCadInterface.createHelper()
+        super(PythonScriptLinesGenerator2, self).__init__(form, statusBar)
 
     def getCoordinateSystemScriptLines(self):
         genScript = ""
