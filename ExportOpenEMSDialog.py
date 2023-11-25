@@ -1608,6 +1608,48 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.scriptGenerator = self.octaveScriptGenerator
 			self.guiHelpers.displayMessage("Some error - output type changed to default octave", forceModal=False)
 
+	def checkMaterialForFaceObjects(self):
+		"""
+		Check if materials categories contain faces objects and if yes display warning, due there is problem
+		that openEMS not generate right nodes for planar STL objects.
+
+		THIS CHECK IS NOW AVAILABLE JUST IN FreeCAD!
+		:return:
+		"""
+		outMessage = ""
+		objListStr = ""
+
+		if APP_CONTEXT == "FreeCAD":
+			materialCategories = self.scriptGenerator.getItemsByClassName().get("MaterialSettingsItem", None)
+			for [materialItem, currSetting] in materialCategories:
+
+				#
+				#	This check is just for materials which are no conducting sheets, conducting sheets containing faces are kind ok, since they can lay
+				#	just on XY, XZ, YZ planes
+				#
+				if currSetting.type != "conducting sheet":
+					allCadObjects = self.scriptGenerator.cadHelpers.getObjects()
+					for k in range(materialItem.childCount()):
+						childName = materialItem.child(k).text(0)
+						freeCadObj = [i for i in  allCadObjects if (i.Label) == childName][0]
+						if freeCadObj.Name.startswith("Face"):
+							objListStr += f"\t{materialItem.text(0)} - {freeCadObj.Label}\n"
+
+			#
+			#	If objects were found create warning message
+			#
+			if len(objListStr) > 0:
+				outMessage += "Following objects in materials categories are type of Face which are generated as planar STL objects and mesh for them WILL NOT BE GENERATED, please check mesh using debug PEC and debug material switch/variables:\n"
+				outMessage += objListStr
+
+		elif APP_CONTEXT == "Blender":
+			#
+			#	NOT IMPLEMENTED, wasn't tried how Blender behaves.
+			#
+			pass
+
+		return outMessage
+
 	#
 	#	After click on generate openEMS script file button there is check if settings are saved, if not user is asked if he want's to save settings if not
 	#	all simulation connected files will be generated inside local directory next to freecad file.
@@ -1617,6 +1659,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			saveSettingsFlag = self.guiHelpers.displayYesNoMessage("Simulation settings aren't saved till now, do you want to save them? It's recommended to save sttings, otherwise simulaation files will be generated in same folder as FreeCAD file.")
 			if saveSettingsFlag:
 				self.saveToFileSettingsButtonClicked()
+
+		#
+		#	WARNING: Check material categories for Face objects which casue error in metal generate for openEMS for FreeCAD
+		#
+		faceObjectsWarning = self.checkMaterialForFaceObjects()
+		if len(faceObjectsWarning) > 0:
+			self.guiHelpers.displayMessage(faceObjectsWarning, forceModal=True)
 
 		#write result .m file into subfolder named after .ini file next to simulation settings .ini file
 		print(f"----> start saving file into {self.simulationOutputDir}")

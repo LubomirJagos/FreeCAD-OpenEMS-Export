@@ -1587,7 +1587,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
         # Show message or update status bar to inform user that exporting has finished.
 
-        self.guiHelpers.displayMessage('Simulation script written to: ' + fileName, forceModal=False)
+        self.guiHelpers.displayMessage('Simulation script written to: ' + fileName, forceModal=True)
         print('Simulation script written to: ' + fileName)
 
         return
@@ -1983,7 +1983,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         genScript += "plot(freq/1e9,s21_dB,'r--','LineWidth',2);\n"
         genScript += "legend('S_{11}','S_{21}');\n"
         genScript += "ylabel('S-Parameter (dB)','FontSize',12);\n"
-        genScript += "xlabel('frequency (GHz) \\rightarrow','FontSize',12);\n"
+        genScript += "xlabel('frequency (GHz)','FontSize',12);\n"
         genScript += "ylim([-40 2]);\n"
         genScript += "\n"
 
