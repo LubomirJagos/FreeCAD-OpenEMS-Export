@@ -12,141 +12,15 @@ from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
 
-class OctaveScriptLinesGenerator2:
+from utilsOpenEMS.ScriptLinesGenerator.CommonScriptLinesGenerator import CommonScriptLinesGenerator
+
+class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
     #
     #   constructor, get access to form GUI
     #
     def __init__(self, form, statusBar = None):
-        self.form = form
-        self.statusBar = statusBar
-
-        self.internalPortIndexNamesList = {}
-        self.internalNF2FFIndexNamesList = {}
-
-        #
-        # GUI helpers function like display message box and so
-        #
-        self.guiHelpers = GuiHelpers(self.form, statusBar = self.statusBar)
-        self.cadHelpers = FactoryCadInterface.createHelper()
-
-    def getUnitLengthFromUI_m(self):
-        unitStr = self.form.simParamsDeltaUnitList.currentText()
-        return SettingsItem.getUnitsAsNumber(unitStr)
-
-    def getFreeCADUnitLength_m(self):
-        # # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
-        # # Below is one way to retrieve this value from schemaTranslate() without implying it.
-        # [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), App.Units.Scheme.SI2 )
-        # return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
-        return 0.001
-
-    def getItemsByClassName(self):
-        categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()
-        categoryNodes = [self.form.objectAssignmentRightTreeWidget.topLevelItem(k) for k in range(categoryCount)]
-        itemsByClassName = {}
-        for m, categoryNode in enumerate(categoryNodes):  # for each category
-            for k in range(categoryNode.childCount()):  # for each child item in a given category
-                item = categoryNode.child(k)
-                itemData = item.data(0, QtCore.Qt.UserRole)
-                if not itemData:
-                    continue
-                itemClassName = itemData.__class__.__name__
-                if not (itemClassName in itemsByClassName):
-                    itemsByClassName[itemClassName] = [[item, itemData]]
-                else:
-                    itemsByClassName[itemClassName].append([item, itemData])
-
-        print("generateOpenEMSScript: Item classes found = " + ", ".join(itemsByClassName.keys()))
-
-        return itemsByClassName
-
-    #
-    #	Returns object priority
-    #		priorityItemName - string which identifies item by its text in priority tree view widget
-    #
-    def getItemPriority(self, priorityItemName):
-        #
-        #	priority is read from tree view
-        #
-        priorityItemValue = 42
-        itemsCount = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
-        for k in range(itemsCount):
-            priorityItem = self.form.objectAssignmentPriorityTreeView.topLevelItem(k)
-            if priorityItemName in priorityItem.text(0):
-                #
-                #	THIS IS MY FORMULA TO HAVE AT LEAST TWO 0 AT END AND NOT HAVE PRIORITY INDEX 0 BUT START AT 100 AT LEAST!
-                #		ATTENTION: higher number means higher priority so fromual is: (1001 - k)     ...to get item at top of tree view with highest priority numbers!
-                #
-                priorityItemValue = (100 - k) * 100
-                break  # this will break loop SO JUST ONE ITEM FROM PRIORITY LIST IS DELETED
-
-        return priorityItemValue
-
-    #
-    #   Returns current FreeCAD file:
-    #       - absolute directory
-    #       - name without extension
-    #
-    def getCurrDir(self):
-        programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())
-        programDir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())
-        programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-        return [programDir, programbase]
-
-    #
-    #   Creates output dir in current FreeCAD file directory if not exists.
-    #       outputDir - absolute path to directory where folder with simulation files should be created
-    #
-    def createOuputDir(self, outputDir):
-        programname = os.path.basename(self.cadHelpers.getCurrDocumentFileName())     # FreeCAD filename with extension
-        programdir = os.path.dirname(self.cadHelpers.getCurrDocumentFileName())       # FreeCAD file directory
-        programbase, ext = os.path.splitext(programname)                # FreeCAD filename without extension
-
-        #
-        #   Simulation files will be saved in folder named based on FreeCAD filename and suffix _openEMS_simulation
-        #       If parameter outputDir is not set this folder will be generated in the same folder as FreeCAD file.
-        #       If outputDir is set folder with simulation folder with files is genenrated next to .ini file
-        #
-        if outputDir is None or outputDir == False:
-            absoluteOutputDir = f"{programdir}/{programbase}_openEMS_simulation"
-        else:
-            absoluteOutputDir = outputDir
-
-        if not os.path.exists(absoluteOutputDir):
-            os.makedirs(absoluteOutputDir)
-            print(f"Created directory for simulation: {outputDir}")
-
-        return absoluteOutputDir
-
-    def reportFreeCADItemSettings(self, items):
-        # "FreeCAD item detection everywhere in Main Tree!!! need to get rid this, now it's tolerated during development!"
-        if not items:
-            return
-
-        for [item, currSetting] in items:
-            #	GET PARENT NODE DATATYPE
-            print("#")
-            print("#FREECAD OBJ.")
-            if (str(item.parent().text(0)) == "Grid"):
-                print("name: Grid Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Ports"):
-                print("name: Port Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Excitation"):
-                print("name: Excitation Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            elif (str(item.parent().text(0)) == "Materials"):
-                print("name: Material Default")
-                print("type: FreeCADSettingsItem")
-                pass
-            else:
-                print("Parent of FreeCADSettingItem UNKNOWN")
-                pass
+        super(OctaveScriptLinesGenerator2, self).__init__(form, statusBar)
 
     def getOctaveExecCommand(self, mFileName, options=""):
         cmd = self.form.octaveExecCommandList.currentText()
@@ -174,17 +48,6 @@ class OctaveScriptLinesGenerator2:
         genScript += "\n"
 
         return genScript
-
-    def getModelCoordsType(self):
-        """
-        Returns current coordinate system, as there can be just rectangular or just cylindrical for all grid items it's enough to look at first grid item.
-        :return: string (rectangular, cylindrical)
-        """
-        if self.form.gridSettingsTreeView.topLevelItemCount() > 0:
-            coordsType = self.form.gridSettingsTreeView.topLevelItem(0).data(0, QtCore.Qt.UserRole).coordsType
-        else:
-            coordsType = "rectangular"
-        return coordsType
 
     def getCoordinateSystemScriptLines(self):
         genScript = ""
@@ -284,111 +147,51 @@ class OctaveScriptLinesGenerator2:
 
                         if (freeCadObj.Name.find("Sketch") > -1):
                             #
-                            #   Sketch is added as polygon into conducting sheet material
+                            # If object is sketch then it's added as it outline
                             #
-                            normDir = ""
-                            elevation = ""
-                            if (bbCoords.XMin == bbCoords.XMax):
-                                normDir = "x"
-                                elevation = bbCoords.XMin
 
-                                pointIndex = 1
+                            normDir, elevation, points = self.getSketchPointsForConductingSheet(freeCadObj)
+                            if not normDir.startswith("ERROR"):
                                 genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.y)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.z)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
+                                if len(points[0])  == 0:
+                                    genScript += "%% ERROR, no points for polygon for conducting sheet nothing generated"
+                                else:
+                                    for k in range(len(points[0])):
+                                        genScript += f"points(1,{k+1}) = {points[0][k]};\n"
+                                        genScript += f"points(2,{k+1}) = {points[1][k]};\n"
+                                genScript += "\n"
 
-                            elif (bbCoords.YMin == bbCoords.YMax):
-                                normDir = "y"
-                                elevation = bbCoords.YMin
-
-                                pointIndex = 1
-                                genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.x)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.z)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
-
-                            elif (bbCoords.ZMin == bbCoords.ZMax):
-                                normDir = "z"
-                                elevation = bbCoords.ZMin
-
-                                pointIndex = 1
-                                genScript += "points = [];\n"
-                                for geometryObj in freeCadObj.Geometry:
-                                    if (str(type(geometryObj)).find("LineSegment") > -1):
-                                        genScript += f"points(1,{pointIndex}) = " + str(_r(geometryObj.StartPoint.x)) + ";"
-                                        genScript += f"points(2,{pointIndex}) = " + str(_r(geometryObj.StartPoint.y)) + ";"
-                                        genScript += "\n"
-                                        pointIndex += 1
-
+                                genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {elevation}, points);\n"
+                                genScript += "\n"
+                                print("material conducting sheet: polygon into conducting sheet added.")
                             else:
-                                normDir = "ERROR: sketch not lay in coordinate plane"
+                                genScript += normDir + "\n"
+                                genScript += "\n"
+                                print("ERROR: material conducting sheet: " + normDir)
 
-                            genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                            print("polygon into conducting sheet added.")
-
-                        elif (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax or bbCoords.ZMin == bbCoords.ZMax):
+                        elif (_r(bbCoords.XMin) == _r(bbCoords.XMax) or _r(bbCoords.YMin) == _r(bbCoords.YMax) or _r(bbCoords.ZMin) == _r(bbCoords.ZMax)):
                             #
-                            # Adding planar object into conducting sheet, if it consiss from faces then each face is added as polygon.
+                            # Adding planar object into conducting sheet, if it consists from faces then each face is added as polygon.
                             #
 
-                            if (len(freeCadObj.Shape.Faces) > 0):
-
-                                normDir = ""
-                                elevation = ""
-                                if (bbCoords.XMin == bbCoords.XMax):
-                                    normDir = "x"
-                                    elevation = bbCoords.XMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.Y)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Z)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                                elif (bbCoords.YMin == bbCoords.YMax):
-                                    normDir = "y"
-                                    elevation = bbCoords.YMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.X)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Z)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
-                                elif (bbCoords.ZMin == bbCoords.ZMax):
-                                    normDir = "z"
-                                    elevation = bbCoords.ZMin
-
-                                    for face in freeCadObj.Shape.Faces:
-                                        pointIndex = 1
-                                        genScript += "points = [];\n"
-                                        for vertex in face.Vertexes:
-                                            genScript += f"points(1,{pointIndex}) = " + str(_r(vertex.X)) + ";"
-                                            genScript += f"points(2,{pointIndex}) = " + str(_r(vertex.Y)) + ";"
-                                            genScript += "\n"
-                                            pointIndex += 1
-                                        genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
-
+                            normDir, elevation, facesList = self.getFacePointsForConductingSheet(freeCadObj)
+                            if normDir != "":
+                                for face in facesList:
+                                    genScript += "points = [];\n"
+                                    for pointIndex in range(len(face[0])):
+                                        genScript += f"points(1,{pointIndex+1}) = {face[0][pointIndex]};"
+                                        genScript += f"points(2,{pointIndex+1}) = {face[1][pointIndex]};"
+                                        genScript += "\n"
+                                    genScript += f"CSX = AddPolygon(CSX, '{currSetting.getName()}', {str(objModelPriority)}, '{normDir}', {_r(elevation)}, points);\n"
                             else:
-                                genScript += f"%\tObject is planar as it should be.\n"
+                                genScript += f"%\tObject has no faces, conducting sheet is generated based on object bounding box since it's planar.\n"
                                 genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMax)} {_r(bbCoords.ZMax)}]);\n"
+
                         else:
+                            #
+                            # If object is 3D object then it's boundaries are added as conducting sheets.
+                            #
+
                             genScript += f"%\tObject is 3D so there are sheets on its boundary box generated.\n"
                             genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMax)} {_r(bbCoords.ZMin)}]);\n"
                             genScript += f"CSX = AddBox(CSX,'{currSetting.getName()}',{str(objModelPriority)},[{_r(bbCoords.XMin)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMin)}],[{_r(bbCoords.XMax)} {_r(bbCoords.YMin)} {_r(bbCoords.ZMax)}]);\n"
@@ -420,6 +223,8 @@ class OctaveScriptLinesGenerator2:
                         #	there can be circle, circle arc and maybe something else in sketch geometry
                         #
 
+                        """
+                        # WRONG SINCE StartPoint, EndPoint are defined in XY and not in absolute coordinates
                         for geometryObj in freeCadObj.Geometry:
                             if (str(type(geometryObj)).find("LineSegment") > -1):
                                 genScript += "points = [];\n"
@@ -431,8 +236,30 @@ class OctaveScriptLinesGenerator2:
                                 genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";"
                                 genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
                                 genScript += "\n"
-                                genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                                    objModelPriority) + ", points);\n"
+                                genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+                        """
+
+                        genScript += "points = [];\n"
+                        for v in freeCadObj.Shape.OrderedVertexes:
+                            genScript += f"points(1,2) = {_r(v.X)};"
+                            genScript += f"points(2,2) = {_r(v.Y)};"
+                            genScript += f"points(3,2) = {_r(v.Z)};"
+                            genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+                            genScript += "\n"
+
+                        #   HERE IS MADE ASSUMPTION THAT:
+                        #       We suppose in sketch there are no mulitple closed sketches
+                        #
+                        #   Add first vertex into list
+                        #
+                        genScript += "points = [];\n"
+                        v = freeCadObj.Shape.OrderedVertexes[0]
+                        if len(freeCadObj.OpenVertices) == 0:
+                            genScript += f"points(1,2) = {_r(v.X)};"
+                            genScript += f"points(2,2) = {_r(v.Y)};"
+                            genScript += f"points(3,2) = {_r(v.Z)};"
+                            genScript += f"CSX = AddCurve(CSX,'{currSetting.getName()}',{objModelPriority}, points);\n"
+                            genScript += "\n"
 
                         print("Line segments from sketch added.")
 
@@ -1248,7 +1075,7 @@ class OctaveScriptLinesGenerator2:
             #
             #   Fixed Distance, Fixed Count mesh boundaries coords obtain
             #
-            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count']):
+            if (gridSettingsInst.getType() in ['Fixed Distance', 'Fixed Count', 'User Defined']):
                 fcObject = fcObjects.get(FreeCADObjectName, None)
                 if (not fcObject):
                     print("Failed to resolve '{}'.".format(FreeCADObjectName))
