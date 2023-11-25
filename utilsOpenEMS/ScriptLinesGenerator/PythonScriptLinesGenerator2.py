@@ -159,12 +159,13 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         curvePoints = freeCadObj.Points
                         genScript += "points = [[],[],[]]\n"
                         for k in range(0, len(curvePoints)):
-                            genScript += f"points[0].append({curvePoints[k].x})\n"
-                            genScript += f"points[1].append({curvePoints[k].y})\n"
-                            genScript += f"points[2].append({curvePoints[k].z})\n"
+                            genScript += f"points[0].append({_r(curvePoints[k].x)})\n"
+                            genScript += f"points[1].append({_r(curvePoints[k].y)})\n"
+                            genScript += f"points[2].append({_r(curvePoints[k].z)})\n"
                             genScript += "\n"
 
                         genScript += f"{materialPythonVariable}.AddCurve(points);\n"
+                        genScript += "\n"
                         print("Curve added to generated script using its points.")
 
                     elif (freeCadObj.Name.find("Sketch") > -1):
@@ -173,24 +174,43 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
                         #	there can be circle, circle arc and maybe something else in sketch geometry
                         #
 
-                        genScript += f"points_x = np.array([])\n"
-                        genScript += f"points_y = np.array([])\n"
-                        genScript += f"points_z = np.array([])\n"
+                        genScript += "points = [[],[],[]]\n"
+
+                        """
+                        # WRONG SINCE StartPoint, EndPoint are defined in XY and not in absolute coordinates
                         for geometryObj in freeCadObj.Geometry:
                             if (str(type(geometryObj)).find("LineSegment") > -1):
-                                genScript += f"points_x.append({str(geometryObj.StartPoint.x)})\n"
-                                genScript += f"points_y.append({str(geometryObj.StartPoint.y)})\n"
-                                genScript += f"points_z.append({str(geometryObj.StartPoint.z)})\n"
+                                genScript += f"points[0].append({geometryObj.StartPoint.x})\n"
+                                genScript += f"points[1].append({geometryObj.StartPoint.y})\n"
+                                genScript += f"points[2].append({geometryObj.StartPoint.z})\n"
 
-                                genScript += f"points_x.append({str(geometryObj.EndPoint.x)})\n"
-                                genScript += f"points_y.append({str(geometryObj.EndPoint.y)})\n"
-                                genScript += f"points_z.append({str(geometryObj.EndPoint.z)})\n"
+                                genScript += f"points[0].append({geometryObj.EndPoint.x})\n"
+                                genScript += f"points[1].append({geometryObj.EndPoint.y})\n"
+                                genScript += f"points[2].append({geometryObj.EndPoint.z})\n"
 
-                        genScript += f"points = np.array([{str(geometryObj.StartPoint.x)}, {str(geometryObj.StartPoint.y)}, {str(geometryObj.StartPoint.z)}])\n"
+                                genScript += "\n"
+                        """
 
+                        for v in freeCadObj.Shape.OrderedVertexes:
+                            genScript += f"points[0].append({_r(v.X)})\n"
+                            genScript += f"points[1].append({_r(v.Y)})\n"
+                            genScript += f"points[2].append({_r(v.Z)})\n"
+                            genScript += "\n"
+
+                        #   HERE IS MADE ASSUMPTION THAT:
+                        #       We suppose in sketch there are no mulitple closed sketches
+                        #
+                        #   Add first vertex into list
+                        #
+                        v = freeCadObj.Shape.OrderedVertexes[0]
+                        if len(freeCadObj.OpenVertices) == 0:
+                            genScript += f"points[0].append({_r(v.X)})\n"
+                            genScript += f"points[1].append({_r(v.Y)})\n"
+                            genScript += f"points[2].append({_r(v.Z)})\n"
+                            genScript += "\n"
+
+                        genScript += f"{materialPythonVariable}.AddCurve(points);\n"
                         genScript += "\n"
-                        genScript += f"{self.internalMaterialIndexNamesList[currSetting.getName()]}.AddCurve(points, priority={str(objModelPriority)})\n"
-
                         print("Line segments from sketch added.")
 
                     else:
@@ -1226,6 +1246,9 @@ class PythonScriptLinesGenerator2(OctaveScriptLinesGenerator2):
         genScript += "#     returns coordinates in order [theta, r, z]\n"
         genScript += "#\n"
         genScript += "def arangeWithEndpoint(start, stop, step=1, endpoint=True):\n"
+        genScript += "\tif start == stop:\n"
+        genScript += "\t\treturn [start]\n"
+        genScript += "\n"
         genScript += "\tarr = np.arange(start, stop, step)\n"
         genScript += "\tif endpoint and arr[-1] + step == stop:\n"
         genScript += "\t\tarr = np.concatenate([arr, [stop]])\n"

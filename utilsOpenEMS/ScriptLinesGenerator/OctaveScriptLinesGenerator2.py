@@ -420,6 +420,8 @@ class OctaveScriptLinesGenerator2:
                         #	there can be circle, circle arc and maybe something else in sketch geometry
                         #
 
+                        """
+                        # WRONG SINCE StartPoint, EndPoint are defined in XY and not in absolute coordinates
                         for geometryObj in freeCadObj.Geometry:
                             if (str(type(geometryObj)).find("LineSegment") > -1):
                                 genScript += "points = [];\n"
@@ -431,8 +433,30 @@ class OctaveScriptLinesGenerator2:
                                 genScript += "points(2,2) = " + str(geometryObj.EndPoint.y) + ";"
                                 genScript += "points(3,2) = " + str(geometryObj.EndPoint.z) + ";"
                                 genScript += "\n"
-                                genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(
-                                    objModelPriority) + ", points);\n"
+                                genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+                        """
+
+                        genScript += "points = [];\n"
+                        for v in freeCadObj.Shape.OrderedVertexes:
+                            genScript += f"points(1,2) = {_r(v.X)};"
+                            genScript += f"points(2,2) = {_r(v.Y)};"
+                            genScript += f"points(3,2) = {_r(v.Z)};"
+                            genScript += "CSX = AddCurve(CSX,'" + currSetting.getName() + "'," + str(objModelPriority) + ", points);\n"
+                            genScript += "\n"
+
+                        #   HERE IS MADE ASSUMPTION THAT:
+                        #       We suppose in sketch there are no mulitple closed sketches
+                        #
+                        #   Add first vertex into list
+                        #
+                        genScript += "points = [];\n"
+                        v = freeCadObj.Shape.OrderedVertexes[0]
+                        if len(freeCadObj.OpenVertices) == 0:
+                            genScript += f"points(1,2) = {_r(v.X)};"
+                            genScript += f"points(2,2) = {_r(v.Y)};"
+                            genScript += f"points(3,2) = {_r(v.Z)};"
+                            genScript += f"CSX = AddCurve(CSX,'{currSetting.getName()}',{objModelPriority}, points);\n"
+                            genScript += "\n"
 
                         print("Line segments from sketch added.")
 
