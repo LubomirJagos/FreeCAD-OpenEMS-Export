@@ -1587,7 +1587,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
         # Show message or update status bar to inform user that exporting has finished.
 
-        self.guiHelpers.displayMessage('Simulation script written to: ' + fileName, forceModal=False)
+        self.guiHelpers.displayMessage('Simulation script written to: ' + fileName, forceModal=True)
         print('Simulation script written to: ' + fileName)
 
         return
