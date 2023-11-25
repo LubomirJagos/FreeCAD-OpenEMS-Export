@@ -1983,7 +1983,7 @@ dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
         genScript += "plot(freq/1e9,s21_dB,'r--','LineWidth',2);\n"
         genScript += "legend('S_{11}','S_{21}');\n"
         genScript += "ylabel('S-Parameter (dB)','FontSize',12);\n"
-        genScript += "xlabel('frequency (GHz) \\rightarrow','FontSize',12);\n"
+        genScript += "xlabel('frequency (GHz)','FontSize',12);\n"
         genScript += "ylim([-40 2]);\n"
         genScript += "\n"
 

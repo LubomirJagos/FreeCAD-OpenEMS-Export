@@ -1886,19 +1886,33 @@ generatorFunc_DumpFF2VTK(E_far_normalized, nf2ff.theta, nf2ff.phi, os.path.join(
         genScript += self.getPortDefinitionsScriptLines(itemsByClassName.get("PortSettingsItem", None))
 
         genScript += f"""## postprocessing & do the plots
-freq = np.linspace(max(1e6,f0-fc),f0+fc,501)
+freq = np.linspace(max(1e6,f0-fc), f0+fc, 501)
 port[{self.internalPortIndexNamesList[portName]}].CalcPort(Sim_Path, freq)
 
-print(port[{self.internalPortIndexNamesList[portName]}].uf_ref, port[{self.internalPortIndexNamesList[portName]}].uf_inc)
+Zin = port[{self.internalPortIndexNamesList[portName]}].uf_tot / port[{self.internalPortIndexNamesList[portName]}].if_tot
 s11 = port[{self.internalPortIndexNamesList[portName]}].uf_ref / port[{self.internalPortIndexNamesList[portName]}].uf_inc
 s11_dB = 20.0*np.log10(np.abs(s11))
+
+# plot S11 parameter
 figure()
 plot(freq/1e6, s11_dB, 'k-', linewidth=2, label='$S_{{11}}$')
 grid()
 legend()
-ylabel('S11-Parameter (dB)')
+title('S11-Parameter (dB) of {portName}')
+ylabel('S11 (dB)')
 xlabel('Frequency (MHz)')
-show()
+
+# plot the feed point impedance
+figure()
+plot(freq / 1e6, np.real(Zin), 'k-', linewidth=2, label=r'$\Re(Z_{{in}})$')
+grid()
+plot(freq / 1e6, np.imag(Zin), 'r--', linewidth=2, label=r'$\Im(Z_{{in}})$')
+title('impedance of {portName}')
+xlabel('frequency (MHz)')
+ylabel('$Z (\\Omega)$')
+legend()
+
+show()  #show all figures at once
 
 #
 #   Write S11, real and imag Z_in into CSV file separated by ';'
@@ -1907,8 +1921,14 @@ filename = 'openEMS_simulation_s11_dB.csv'
 
 with open(filename, 'w', newline='') as csvfile:
 \twriter = csv.writer(csvfile, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-\twriter.writerow(['freq (MHz)', 's11 (dB)'])
-\twriter.writerows(np.array([(freq/1e6), s11_dB]).T) #creates array with 1st row frequencies, 2nd row S11 and transpose it
+\twriter.writerow(['freq (MHz)', 's11 (dB)', 'real Z_in', 'imag Z_in', 'Z_in total'])
+\twriter.writerows(np.array([
+\t\t(freq/1e6),
+\t\ts11_dB,
+\t\tnp.real(Zin),
+\t\tnp.imag(Zin),
+\t\tnp.abs(Zin)
+\t]).T) #creates array with 1st row frequencies, 2nd row S11, ... and transpose it
 """
 
         #
@@ -1984,8 +2004,8 @@ with open(filename, 'w', newline='') as csvfile:
         genScript += f"port[{self.internalPortIndexNamesList[sourcePortName]}].CalcPort(Sim_Path, freq)\n"
         genScript += f"port[{self.internalPortIndexNamesList[targetPortName]}].CalcPort(Sim_Path, freq)\n"
         genScript += "\n"
-        genScript += "s11 = port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_ref / port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_inc\n"
-        genScript += "s21 = port[" + str(self.internalPortIndexNamesList[targetPortName]) + "].uf_ref / port[" + str(self.internalPortIndexNamesList[sourcePortName]) + "].uf_inc\n"
+        genScript += f"s11 = port[{self.internalPortIndexNamesList[sourcePortName]}].uf_ref / port[{self.internalPortIndexNamesList[sourcePortName]}].uf_inc\n"
+        genScript += f"s21 = port[{self.internalPortIndexNamesList[targetPortName]}].uf_ref / port[{self.internalPortIndexNamesList[sourcePortName]}].uf_inc\n"
         genScript += "\n"
         genScript += "s11_dB = 20*log10(abs(s11))\n"
         genScript += "s21_dB = 20*log10(abs(s21))\n"
@@ -1994,8 +2014,9 @@ with open(filename, 'w', newline='') as csvfile:
         genScript += "grid()\n"
         genScript += "plot(freq/1e9,s21_dB,'r--', linewidth=2)\n"
         genScript += "legend(('$S_{11}$','$S_{21}$'))\n"
-        genScript += "ylabel('S-Parameter (dB)', fontsize=12)\n"
-        genScript += "xlabel('frequency (GHz) \\rightarrow', fontsize=12)\n"
+        genScript += f"title('S21-Parameter\\n{sourcePortName} $\\\\rightarrow$ {targetPortName}', fontsize=12)\n"
+        genScript += "ylabel('S21(dB)', fontsize=12)\n"
+        genScript += "xlabel('frequency (GHz)', fontsize=12)\n"
         genScript += "ylim([-40, 2])\n"
         genScript += "show()\n"
         genScript += "\n"
