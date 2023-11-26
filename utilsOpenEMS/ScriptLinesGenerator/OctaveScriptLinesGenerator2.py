@@ -957,18 +957,25 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "lumpedPartStart", "lumpedPartStop")
 
                     lumpedPartName = currentSetting.name
-                    lumpedPartParams = ''
 
-                    lumpedPartParams += f"'Direction', '{currentSetting.getDirection()}'"
+                    lumpedPartParams = ""
+
+                    direction = currentSetting.getDirection()
+                    if (direction == 'x'):
+                        lumpedPartParams += f"0"
+                    elif (direction == 'y'):
+                        lumpedPartParams += f"1"
+                    elif (direction == 'z'):
+                        lumpedPartParams += f"2"
 
                     if ('r' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",R=" + str(currentSetting.getR())
+                        lumpedPartParams += f", 'R', {currentSetting.getR()}"
                     if ('l' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",L=" + str(currentSetting.getL())
+                        lumpedPartParams += f", 'L', {currentSetting.getL()}"
                     if ('c' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",C=" + str(currentSetting.getC())
+                        lumpedPartParams += f", 'C', {currentSetting.getC()}"
 
-                    lumpedPartParams += f",'Caps', {'1' if currentSetting.getCapsEnabled() else '0'}"
+                    lumpedPartParams += f", 'Caps', {'1' if currentSetting.getCapsEnabled() else '0'}"
 
                     #
                     #   WARNING: This was added just recently needs to be validated.

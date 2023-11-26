@@ -810,27 +810,27 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "lumpedPartStart", "lumpedPartStop")
 
-                    lumpedPartName = currentSetting.name
-                    lumpedPartParams = ''
-
-                    lumpedPartParams += f"ny='{currentSetting.getDirection()}' "
+                    lumpedPartParams = f"'{currentSetting.name}'"
+                    lumpedPartParams += f", ny='{currentSetting.getDirection()}'"
 
                     if ('r' in currentSetting.getType().lower()):
-                        lumpedPartParams += f",R={currentSetting.getR()} "
+                        lumpedPartParams += f", R={currentSetting.getR()}"
                     if ('l' in currentSetting.getType().lower()):
-                        lumpedPartParams += f",L={currentSetting.getL()} "
+                        lumpedPartParams += f", L={currentSetting.getL()}"
                     if ('c' in currentSetting.getType().lower()):
-                        lumpedPartParams += f",C={currentSetting.getC()} "
+                        lumpedPartParams += f", C={currentSetting.getC()}"
 
-                    lumpedPartParams += f",caps={'True' if currentSetting.getCapsEnabled() else 'False'} "
+                    lumpedPartParams += f", caps={'True' if currentSetting.getCapsEnabled() else 'False'}"
 
                     #
                     #   WARNING: This was added just recently needs to be validated.
                     #
+                    """
                     if (currentSetting.getCombinationType() == 'parallel'):
-                        lumpedPartParams += f",LEtype=0"
+                        lumpedPartParams += f", LEtype=0"
                     elif (currentSetting.getCombinationType() == 'series'):
-                        lumpedPartParams += f",LEtype=1"
+                        lumpedPartParams += f", LEtype=1"
+                    """
 
                     #
                     #	getting item priority
@@ -839,7 +839,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                     priorityIndex = self.getItemPriority(priorityItemName)
 
                     # WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
-                    genScript += f"lumpedPart = CSX.AddLumpedElement('{lumpedPartName}', {lumpedPartParams});\n"
+                    genScript += f"lumpedPart = CSX.AddLumpedElement({lumpedPartParams});\n"
                     genScript += f"lumpedPart.AddBox(lumpedPartStart, lumpedPartStop, priority={priorityIndex});\n"
 
             genScript += "\n"

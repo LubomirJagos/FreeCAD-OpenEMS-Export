@@ -20,31 +20,20 @@ class LumpedPartSettingsItem(SettingsItem):
             typeStr += 'C'
         return typeStr
 
-    def getUnits(self, type=''):
-        units = ''
-        type = type.lower()
-        if ('r' in type):
-            units = self.params['RUnits']
-        elif ('l' in type):
-            units = self.params['LUnits']
-        elif ('c' in type):
-            units = self.params['CUnits']
-        return self.getUnitsAsNumber(units)
-
     def getR(self):
-        outStr = f"{self.params['R']}*{self.getUnitsAsNumber(self.getUnits('R'))}"
+        outStr = f"{self.params['R']}*{self.getUnitsAsNumber(self.params['RUnits'])}"
         return outStr
 
     def getL(self):
-        outStr = f"{self.params['L']}*{self.getUnitsAsNumber(self.getUnits('L'))}"
+        outStr = f"{self.params['L']}*{self.getUnitsAsNumber(self.params['LUnits'])}"
         return outStr
 
     def getC(self):
-        outStr = f"{self.params['C']}*{self.getUnitsAsNumber(self.getUnits('C'))}"
+        outStr = f"{self.params['C']}*{self.getUnitsAsNumber(self.params['CUnits'])}"
         return outStr
 
     def getCapsEnabled(self):
-        outValue = _bool(self.params["capEnabled"])
+        outValue = _bool(self.params["capsEnabled"])
         return outValue
 
     def getDirection(self):
