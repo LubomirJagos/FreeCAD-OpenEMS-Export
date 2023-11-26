@@ -3073,6 +3073,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			lumpedPartItem.params['CUnits'] = self.form.lumpedPartCUnits.currentText()
 			lumpedPartItem.params['CEnabled'] = 1
 
+		lumpedPartItem.params['capsEnabled'] = self.form.lumpedPartCapsEnable.isChecked()
+		lumpedPartItem.params['direction'] = self.form.lumpedPartDirection.currentText()
+		lumpedPartItem.params['combinationType'] = self.form.lumpedPartCombinationType.currentText()
+
 		return lumpedPartItem
 		
 	
@@ -3499,6 +3503,28 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		index = self.form.lumpedPartCUnits.findText(currSetting.params['CUnits'], QtCore.Qt.MatchFixedString)
 		if index >= 0:
 			self.form.lumpedPartCUnits.setCurrentIndex(index)
+
+		try:
+			self.form.lumpedPartCapsEnable.setChecked(_bool(currSetting.params['capsEnabled']))
+		except:
+			print("WARNING: LumpedPart: capsEnabled value not found.")
+			pass
+
+		try:
+			index = self.form.lumpedPartDirection.findText(currSetting.params['direction'], QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.lumpedPartDirection.setCurrentIndex(index)
+		except:
+			print("WARNING: LumpedPart: direction value not found.")
+			pass
+
+		try:
+			index = self.form.lumpedPartCombinationType.findText(currSetting.params['combinationType'], QtCore.Qt.MatchFixedString)
+			if index >= 0:
+				self.form.lumpedPartCombinationType.setCurrentIndex(index)
+		except:
+			print("WARNING: LumpedPart: combinationType value not found.")
+			pass
 
 		return
 
