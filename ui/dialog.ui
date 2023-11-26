@@ -7567,7 +7567,7 @@ than min spacing</string>
             <item>
              <widget class="QRadioButton" name="radioButton_pythonType">
               <property name="text">
-               <string>python (experimental)</string>
+               <string>python</string>
               </property>
              </widget>
             </item>
