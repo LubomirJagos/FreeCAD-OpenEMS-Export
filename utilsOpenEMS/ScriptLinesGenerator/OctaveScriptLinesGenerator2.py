@@ -957,14 +957,35 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "lumpedPartStart", "lumpedPartStop")
 
                     lumpedPartName = currentSetting.name
-                    lumpedPartParams = ''
+
+                    lumpedPartParams = ""
+
+                    direction = currentSetting.getDirection()
+                    if (direction == 'x'):
+                        lumpedPartParams += f"0"
+                    elif (direction == 'y'):
+                        lumpedPartParams += f"1"
+                    elif (direction == 'z'):
+                        lumpedPartParams += f"2"
+
                     if ('r' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'R', " + str(currentSetting.getR())
+                        lumpedPartParams += f", 'R', {currentSetting.getR()}"
                     if ('l' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'L', " + str(currentSetting.getL())
+                        lumpedPartParams += f", 'L', {currentSetting.getL()}"
                     if ('c' in currentSetting.getType().lower()):
-                        lumpedPartParams += ",'C', " + str(currentSetting.getC())
-                    lumpedPartParams = lumpedPartParams.strip(',')
+                        lumpedPartParams += f", 'C', {currentSetting.getC()}"
+
+                    lumpedPartParams += f", 'Caps', {'1' if currentSetting.getCapsEnabled() else '0'}"
+
+                    #
+                    #   WARNING: This was added just recently needs to be validated.
+                    #
+                    """
+                    if (currentSetting.getCombinationType() == 'parallel'):
+                        lumpedPartParams += f",LEtype=0"
+                    elif (currentSetting.getCombinationType() == 'series'):
+                        lumpedPartParams += f",LEtype=1"
+                    """
 
                     #
                     #	getting item priority
@@ -973,8 +994,8 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     priorityIndex = self.getItemPriority(priorityItemName)
 
                     # WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
-                    genScript += "[CSX] = AddLumpedElement(CSX, '" + lumpedPartName + "', 2, 'Caps', 1, " + lumpedPartParams + ");\n"
-                    genScript += "[CSX] = AddBox(CSX, '" + lumpedPartName + "', " + str(priorityIndex) + ", lumpedPartStart, lumpedPartStop);\n"
+                    genScript += f"[CSX] = AddLumpedElement(CSX, '{lumpedPartName}', {lumpedPartParams});\n"
+                    genScript += f"[CSX] = AddBox(CSX, '{lumpedPartName}', {priorityIndex}, lumpedPartStart, lumpedPartStop);\n"
 
             genScript += "\n"
 

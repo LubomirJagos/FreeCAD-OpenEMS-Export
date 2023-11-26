@@ -413,6 +413,18 @@ class IniValidator0v1:
                                 'mandatory': True,
                                 'allowedValues': 'bool'
                             },
+                            'direction': {
+                                'mandatory': True,
+                                'allowedValues': r"(x|y|z)"
+                            },
+                            'capsEnabled': {
+                                'mandatory': True,
+                                'allowedValues': 'bool'
+                            },
+                            'combinationType': {
+                                'mandatory': True,
+                                'allowedValues': r"(series|parallel)"
+                            }
                         }
                     },
                 ]
