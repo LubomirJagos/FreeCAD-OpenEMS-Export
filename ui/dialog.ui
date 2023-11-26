@@ -5248,6 +5248,11 @@ no TM modes.</string>
                  <widget class="QComboBox" name="lumpedPartCombinationType">
                   <item>
                    <property name="text">
+                    <string>---</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
                     <string>parallel</string>
                    </property>
                   </item>
