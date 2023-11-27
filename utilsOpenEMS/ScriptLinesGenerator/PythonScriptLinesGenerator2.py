@@ -337,7 +337,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
             if ((bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0) or
                 (bbCoords.XMin >= 0 and bbCoords.YMin >= 0 and bbCoords.XMax <= 0 and bbCoords.YMax <= 0)
             ):
-                if (bbCoords.XMin != bbCoords.XMax and bbCoords.YMin != bbCoords.YMax):
+                if (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax):
                     #
                     # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
                     #
