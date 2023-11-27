@@ -839,6 +839,20 @@ class IniFile0v1:
                 categorySettings = LumpedPartSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.params = json.loads(settings.value('params'))
+
+                #
+                #   This is just assign default values for some params which were added later, it's like security check to have them set
+                #
+                if (not "capsEnabled" in categorySettings.params.keys()):
+                    categorySettings.params["capsEnabled"] = True
+                    print(f"WARNING: {os.path.basename(__file__)}: read(): LumpedPart: {itemName}: setting default value for capsEnabled to True")
+                if (not "direction" in categorySettings.params.keys()):
+                    categorySettings.params["direction"] = "z"
+                    print(f"WARNING: {os.path.basename(__file__)}: read(): LumpedPart: {itemName}: setting default value for direction to 'z'")
+                if (not "combinationType" in categorySettings.params.keys()):
+                    categorySettings.params["combinationType"] = None
+                    print(f"WARNING: {os.path.basename(__file__)}: read(): LumpedPart: {itemName}: setting default value for combinationType to None")
+
                 settings.endGroup()
 
             elif (re.compile("PRIORITYLIST-OBJECTS").search(settingsGroup)):
