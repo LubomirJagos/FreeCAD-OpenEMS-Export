@@ -9,6 +9,9 @@ def _bool(s):
 def _r(x):
 	return np.round(x, 14)
 
+def _r2(x):
+	return np.round(x, 13)
+
 def _getFreeCADUnitLength_m(self):
 	# # FreeCAD uses mm internally, so getFreeCADUnitLength_m() should always return 0.001.
 	# # Below is one way to retrieve this value from schemaTranslate() without implying it.

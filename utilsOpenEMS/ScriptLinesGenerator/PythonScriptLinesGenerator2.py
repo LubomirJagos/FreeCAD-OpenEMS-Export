@@ -7,7 +7,7 @@ import numpy as np
 import re
 import math
 
-from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
+from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r, _r2
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
@@ -337,7 +337,18 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
             if ((bbCoords.XMin <= 0 and bbCoords.YMin <= 0 and bbCoords.XMax >= 0 and bbCoords.YMax >= 0) or
                 (bbCoords.XMin >= 0 and bbCoords.YMin >= 0 and bbCoords.XMax <= 0 and bbCoords.YMax <= 0)
             ):
-                if (bbCoords.XMin == bbCoords.XMax or bbCoords.YMin == bbCoords.YMax):
+                if (_r2(bbCoords.XMin) == _r2(bbCoords.XMax) or _r2(bbCoords.YMin) == _r2(bbCoords.YMax)):
+                    #
+                    #   Object is thin it's plane or line crossing origin
+                    #
+                    radius1 = -math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
+                    theta1 = math.atan2(bbCoords.YMin, bbCoords.XMin)
+                    radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
+
+                    genScript += 'portStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius1), _r(theta1), _r(sf * bbCoords.ZMin))
+                    genScript += 'portStop = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius2), _r(theta1), _r(sf * bbCoords.ZMax))
+                    genScript += '\n'
+                else:
                     #
                     # origin [0,0,0] is contained inside boundary box, so now must used theta 0-360deg
                     #
@@ -345,18 +356,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                     radius2 = math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
 
                     genScript += 'portStart = [ 0, -math.pi, {0:g} ]\n'.format(_r(sf * bbCoords.ZMin))
-                    genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)),
-                                                                              _r(sf * bbCoords.ZMax))
-                else:
-                    #
-                    #   Object is thin it's plane or line crossing origin
-                    #
-                    radius1 = math.sqrt((sf * bbCoords.XMin) ** 2 + (sf * bbCoords.YMin) ** 2)
-                    theta1 = math.atan2(bbCoords.YMin, bbCoords.XMin)
-                    radius2 = -math.sqrt((sf * bbCoords.XMax) ** 2 + (sf * bbCoords.YMax) ** 2)
-
-                    genScript += 'portStart = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius1), _r(theta1), _r(sf * bbCoords.ZMin))
-                    genScript += 'portStop = [{0:g}, {1:g}, {2:g}]\n'.format(_r(radius2), _r(theta1), _r(sf * bbCoords.ZMax))
+                    genScript += 'portStop  = [ {0:g}, math.pi, {1:g} ]\n'.format(_r(max(radius1, radius2)), _r(sf * bbCoords.ZMax))
                     genScript += '\n'
             else:
                 #
