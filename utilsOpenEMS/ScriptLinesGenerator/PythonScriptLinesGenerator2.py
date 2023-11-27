@@ -370,6 +370,15 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                                                                              _r(sf * bbCoords.ZMax))
                 genScript += strPortCoordsCartesianToCylindrical
 
+                if (bbCoords.YMin <= 0 and bbCoords.YMax >= 0):
+                    #
+                    #   special case when planar object lays on X axis like in Y+ and Y- in this case theta is generated:
+                    #       -pi for start point
+                    #       +pi for stop point
+                    #   therefore to correct this since theta is in range -pi..+pi I have to add 360deg so +2*pi for start point will get it right as it should be
+                    #
+                    genScript += f"portStart[1] += 2*math.pi\n"
+
         else:
             # CARTESIAN GRID USED
             genScript += 'portStart = [ {0:g}, {1:g}, {2:g} ]\n'.format(_r(sf * bbCoords.XMin),
