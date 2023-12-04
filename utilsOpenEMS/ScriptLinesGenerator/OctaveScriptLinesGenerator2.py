@@ -1550,8 +1550,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
         genScript += "%% setup FDTD parameter & excitation function\n"
         genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + ";\n"
-        genScript += "min_decrement = " + str(
-            self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 
         if (self.getModelCoordsType() == "cylindrical"):
             genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement, 'CoordSystem', 1);\n"
@@ -1634,6 +1633,15 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
         genScript += "Sim_Path = 'simulation_output';\n"
         genScript += "currDir = strrep(pwd(), '\\', '\\\\');\n"
         genScript += "display(currDir);\n"
+        genScript += "\n"
+
+        genScript += "%% setup FDTD parameter & excitation function\n"
+        genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + ";\n"
+        genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement, 'CoordSystem', 1);\n"
+        else:
+            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement);\n"
         genScript += "\n"
 
         # List categories and items.
