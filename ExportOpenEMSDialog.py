@@ -312,6 +312,27 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			for element in [self.form.fixedCountZNumberInput, self.form.fixedDistanceZNumberInput, self.form.smoothMeshZMaxRes]
 		])
 
+		# grid offset gui form enable/disable
+		self.form.gridXEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridXEnable.checkState() == QtCore.Qt.Checked and self.form.gridGenerateLinesInsideCheckbox.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.gridOffsetX]
+		])
+		self.form.gridYEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridYEnable.checkState() == QtCore.Qt.Checked and self.form.gridGenerateLinesInsideCheckbox.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.gridOffsetY]
+		])
+		self.form.gridZEnable.stateChanged.connect(lambda:[
+			element.setEnabled(True)
+			if self.form.gridZEnable.checkState() == QtCore.Qt.Checked and self.form.gridGenerateLinesInsideCheckbox.checkState() == QtCore.Qt.Checked else
+			element.setEnabled(False)
+			for element in [self.form.gridOffsetZ]
+		])
+		self.form.gridGenerateLinesInsideCheckbox.stateChanged.connect(self.gridGenerateLinesInsideCheckboxToggle)
+
 		self.guiSignals.gridCoordsTypeChanged.connect(self.gridCoordsTypeChanged)
 
 		#
@@ -1832,6 +1853,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
 		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
 
+		gridItem.gridOffset['x'] = self.form.gridOffsetX.value()
+		gridItem.gridOffset['y'] = self.form.gridOffsetY.value()
+		gridItem.gridOffset['z'] = self.form.gridOffsetZ.value()
+		gridItem.gridOffset['units'] = self.form.gridOffsetUnits.currentText()
+
 		return gridItem
 		
 
@@ -2015,6 +2041,19 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			[clearComboboxSetValuesRestoreIndex(comboboxRef, GridSettingsItem.lumpedPortCartesianExcitationDirection) for comboboxRef in [
 				self.form.lumpedPortDirection
 			]]
+
+	def gridGenerateLinesInsideCheckboxToggle(self):
+		self.form.gridOffsetX.setEnabled(False)
+		self.form.gridOffsetY.setEnabled(False)
+		self.form.gridOffsetZ.setEnabled(False)
+
+		if self.form.gridGenerateLinesInsideCheckbox.checkState() == QtCore.Qt.Checked:
+			if self.form.gridXEnable.checkState() == QtCore.Qt.Checked:
+				self.form.gridOffsetX.setEnabled(True)
+			if self.form.gridYEnable.checkState() == QtCore.Qt.Checked:
+				self.form.gridOffsetY.setEnabled(True)
+			if self.form.gridZEnable.checkState() == QtCore.Qt.Checked:
+				self.form.gridOffsetZ.setEnabled(True)
 
 	#
 	# MATERIAL SETTINGS
@@ -3210,6 +3249,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.smoothMeshZMaxRes.setValue(0)
 		self.form.gridGenerateLinesInsideCheckbox.setChecked(False)
 		self.form.gridTopPriorityLinesCheckbox.setChecked(False)
+		self.form.gridOffsetX.setValue(0)
+		self.form.gridOffsetY.setValue(0)
+		self.form.gridOffsetZ.setValue(0)
+		self.guiHelpers.setComboboxItem(self.form.gridOffsetUnits, 'um')
 
 		#set values in grid settings by actual selected item
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
@@ -3263,6 +3306,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.form.gridGenerateLinesInsideCheckbox.setChecked(currSetting.generateLinesInside)
 		self.form.gridTopPriorityLinesCheckbox.setChecked(currSetting.topPriorityLines)
+
+		try:
+			self.form.gridOffsetX.setValue(currSetting.gridOffset['x'])
+			self.form.gridOffsetY.setValue(currSetting.gridOffset['y'])
+			self.form.gridOffsetZ.setValue(currSetting.gridOffset['z'])
+			self.guiHelpers.setComboboxItem(self.form.gridOffsetUnits, currSetting.gridOffset['units'])
+		except:
+			pass
 
 		return
 

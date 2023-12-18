@@ -89,6 +89,28 @@ class IniValidator0v1:
                         'allowedValues': "bool"
                     },
                     {
+                        'name': 'gridOffset',
+                        'mandatory': False,
+                        'allowedValues': {
+                            'x': {
+                                'mandatory': True,
+                                'allowedValues': "float"
+                            },
+                            'y': {
+                                'mandatory': True,
+                                'allowedValues': "float"
+                            },
+                            'z': {
+                                'mandatory': True,
+                                'allowedValues': "float"
+                            },
+                            'units': {
+                                'mandatory': True,
+                                'allowedValues': r"(pm|nm|um|mm|cm|m|km)"
+                            }
+                        }
+                    },
+                    {
                         'name': 'topPriorityLines',
                         'mandatory': True,
                         'allowedValues': "bool"

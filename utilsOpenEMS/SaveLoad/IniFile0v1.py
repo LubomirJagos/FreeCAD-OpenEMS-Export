@@ -146,6 +146,12 @@ class IniFile0v1:
                 settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
 
+            try:
+                settings.setValue("gridOffset", json.dumps(gridList[k].gridOffset))
+            except Exception as e:
+                settings.setValue("gridOffset", {'x': 0, 'y': 0, 'z': 0, 'units': 'um'})
+                print(f"IniFile.py > write(), ERROR, set default values for gridOffset\n{e}")
+
             settings.endGroup()
 
         # SAVE EXCITATION
@@ -521,6 +527,11 @@ class IniFile0v1:
                         print(f"Error during load reading smooth mesh: {e}")
                 else:
                     print(f"Grid reading {categorySettings.type} cannot find aditional infor needed for settings, default values left set.")
+
+                try:
+                    categorySettings.gridOffset = json.loads(settings.value('gridOffset'))
+                except Exception as e:
+                    print(f"Error during load reading grid offset: {e}")
 
                 settings.endGroup()
 

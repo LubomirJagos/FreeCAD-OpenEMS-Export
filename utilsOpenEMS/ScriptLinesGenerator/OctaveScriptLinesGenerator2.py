@@ -458,12 +458,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     elif (currSetting.getType() == 'microstrip'):
 
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getMicrostripStartStopCoords(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         if currSetting.infiniteResistance:
@@ -501,12 +501,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     elif (currSetting.getType() == 'circular waveguide'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideRadius = currSetting.getCircularWaveguidStartStopRadius(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += "%% circular port openEMS code should be here\n"
@@ -534,12 +534,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideWidth, waveguideHeight = currSetting.getRectangularWaveguideStartStopWidthHeight(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += "%% rectangular port openEMS code should be here\n"
@@ -586,12 +586,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                         #
                         #   Port start and end need to be shifted into middle of feed plane, this is done inside function in port settings
                         #
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.direction))
@@ -650,12 +650,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                             genScript += f"coplanarEVec = coplanarEVec * portExcitationAmplitude;\n"
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         if currSetting.infiniteResistance:
@@ -698,12 +698,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                             genScript += 'striplineEVec = striplineEVec * portExcitationAmplitude;\n'
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += 'striplineDir = {};\n'.format(striplineDirStr.get(currSetting.striplinePropagation[0], '?'))  # use just first letter of propagation direction
@@ -738,12 +738,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     elif (currSetting.getType() == 'curve'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getCurveStartStop(bbCoords, sf)
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         isActiveStr = {False: "", True: ", true"}
