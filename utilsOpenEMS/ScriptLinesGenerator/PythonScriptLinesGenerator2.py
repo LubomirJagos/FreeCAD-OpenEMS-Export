@@ -835,7 +835,8 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                     #   WARNING: This was added just recently needs to be validated.
                     #
                     if (currentSetting.getCombinationType() == 'parallel'):
-                        lumpedPartParams += f", LEtype=0"
+                        #lumpedPartParams += f", LEtype=0"
+                        pass
                     elif (currentSetting.getCombinationType() == 'series'):
                         lumpedPartParams += f", LEtype=1"
                     else:
