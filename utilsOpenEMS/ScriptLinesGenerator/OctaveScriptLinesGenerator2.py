@@ -458,12 +458,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     elif (currSetting.getType() == 'microstrip'):
 
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getMicrostripStartStopCoords(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         if currSetting.infiniteResistance:
@@ -501,12 +501,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     elif (currSetting.getType() == 'circular waveguide'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideRadius = currSetting.getCircularWaveguidStartStopRadius(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += "%% circular port openEMS code should be here\n"
@@ -534,12 +534,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     elif (currSetting.getType() == 'rectangular waveguide'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ, waveguideWidth, waveguideHeight = currSetting.getRectangularWaveguideStartStopWidthHeight(bbCoords, sf)
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += "%% rectangular port openEMS code should be here\n"
@@ -586,12 +586,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                         #
                         #   Port start and end need to be shifted into middle of feed plane, this is done inside function in port settings
                         #
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += 'coaxialDir = {};\n'.format(coaxialDirStr.get(currSetting.direction))
@@ -650,12 +650,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                             genScript += f"coplanarEVec = coplanarEVec * portExcitationAmplitude;\n"
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         if currSetting.infiniteResistance:
@@ -698,12 +698,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                             genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
                             genScript += 'striplineEVec = striplineEVec * portExcitationAmplitude;\n'
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         genScript += 'striplineDir = {};\n'.format(striplineDirStr.get(currSetting.striplinePropagation[0], '?'))  # use just first letter of propagation direction
@@ -738,12 +738,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     elif (currSetting.getType() == 'curve'):
                         portStartX, portStartY, portStartZ, portStopX, portStopY, portStopZ = currSetting.getCurveStartStop(bbCoords, sf)
 
-                        bbCoords.Xmin = portStartX
-                        bbCoords.Ymin = portStartY
-                        bbCoords.Zmin = portStartZ
-                        bbCoords.Xmax = portStopX
-                        bbCoords.Ymax = portStopY
-                        bbCoords.Zmax = portStopZ
+                        bbCoords.XMin = portStartX
+                        bbCoords.YMin = portStartY
+                        bbCoords.ZMin = portStartZ
+                        bbCoords.XMax = portStopX
+                        bbCoords.YMax = portStopY
+                        bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
 
                         isActiveStr = {False: "", True: ", true"}
@@ -989,9 +989,10 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     #   WARNING: This was added just recently needs to be validated.
                     #
                     if (currentSetting.getCombinationType() == 'parallel'):
-                        lumpedPartParams += f",LEtype=0"
+                        #lumpedPartParams += f", 'LEtype', 0"
+                        pass
                     elif (currentSetting.getCombinationType() == 'series'):
-                        lumpedPartParams += f",LEtype=1"
+                        lumpedPartParams += f", 'LEtype', 1"
                     else:
                         pass
 
@@ -1117,19 +1118,23 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                 bbCoords = fcObject.Shape.BoundBox
 
-                # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                deltaX = 0
+                deltaY = 0
+                deltaZ = 0
                 if gridSettingsInst.generateLinesInside:
-                    delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
-                    print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
-                else:
-                    delta = 0
+                    gridOffset = gridSettingsInst.getGridOffset()
+                    unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
+                    deltaX = gridOffset['x'] * unitsAsNumber
+                    deltaY = gridOffset['y'] * unitsAsNumber
+                    deltaZ = gridOffset['z'] * unitsAsNumber
+                    print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
 
-                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
-                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX
+                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY
+                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ
+                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX
+                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY
+                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ
 
                 # Write grid definition.
                 genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
@@ -1159,20 +1164,24 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     bbCoords = fcObject.Shape.BoundBox
 
-                    # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                    deltaX = 0
+                    deltaY = 0
+                    deltaZ = 0
                     if gridSettingsInst.generateLinesInside:
-                        delta = self.maxGridResolution_m * sf * 0.001  # LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
-                        print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
-                    else:
-                        delta = 0
+                        gridOffset = gridSettingsInst.getGridOffset()
+                        unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
+                        deltaX = gridOffset['x'] * unitsAsNumber
+                        deltaY = gridOffset['y'] * unitsAsNumber
+                        deltaZ = gridOffset['z'] * unitsAsNumber
+                        print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
 
                     #append boundary coordinates into list
-                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
-                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
-                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
-                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
-                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
-                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX)
+                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY)
+                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ)
+                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX)
+                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY)
+                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ)
 
                     # Write grid definition.
                     genScript += "%% GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
@@ -1751,12 +1760,12 @@ plot(thetaRange, 10*log10(directivity_CPLH(:,1)'),'r-.','LineWidth',2);
 legend('norm','CPRH','CPLH');
 
 %% dump to vtk
-DumpFF2VTK([Sim_Path '/3D_Pattern.vtk'],directivity,thetaRange,phiRange,'scale',1e-3);
+DumpFF2VTK([Sim_Path '/3D_Pattern_GAIN.vtk'],directivity,thetaRange,phiRange,'scale',1e-3);
 DumpFF2VTK([Sim_Path '/3D_Pattern_CPRH.vtk'],directivity_CPRH,thetaRange,phiRange,'scale',1e-3);
 DumpFF2VTK([Sim_Path '/3D_Pattern_CPLH.vtk'],directivity_CPLH,thetaRange,phiRange,'scale',1e-3);
 
 E_far_normalized = nf2ff.E_norm{1} / max(nf2ff.E_norm{1}(:)) * nf2ff.Dmax;
-DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3);
+DumpFF2VTK([Sim_Path '/3D_Pattern_Efield_normalized.vtk'],E_far_normalized,thetaRange,phiRange,1e-3);
 """
 
         #
@@ -1813,23 +1822,40 @@ DumpFF2VTK([Sim_Path '/3D_Pattern_normalized.vtk'],E_far_normalized,thetaRange,p
 freq = linspace( max([0,f0-fc]), f0+fc, 501 );
 
 port = calcPort(port, Sim_Path, freq);
-s11 = port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.ref./ port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.inc;
+s11 = port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.ref ./ port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.inc;
 s11_dB = 20*log10(abs(s11));
+Zin = port{""" + str(self.internalPortIndexNamesList[portName]) + """}.uf.tot ./ port{""" + str(self.internalPortIndexNamesList[portName]) + """}.if.tot;
 
-plot( freq/1e6, 20*log10(abs(s11)), 'k-', 'Linewidth', 2 );
+% plot feed point impedance
+figure
+plotObj1 = plot( freq/1e6, real(Zin), 'k-', 'Linewidth', 2 );
+hold on
+grid on
+plot( freq/1e6, imag(Zin), 'r--', 'Linewidth', 2 );
+title( 'feed point impedance' );
+xlabel( 'frequency f / MHz' );
+ylabel( 'impedance Z_{in} / Ohm' );
+legend( 'real', 'imag' );
+
+figure
+plotObj2 = plot( freq/1e6, 20*log10(abs(s11)), 'k-', 'Linewidth', 2 );
 grid on
 title( 'reflection coefficient S_{11}' );
 xlabel( 'frequency f / MHz' );
 ylabel( 'reflection coefficient |S_{11}|' );
+
+% wait for plot windows to be closed
+waitfor(plotObj1);
+waitfor(plotObj2);
 
 %
 %   Write S11, real and imag Z_in into CSV file separated by ';'
 %
 filename = 'openEMS_simulation_s11_dB.csv';
 fid = fopen(filename, 'w');
-fprintf(fid, 'freq (MHz);s11 (dB);\\n');
+fprintf(fid, 'freq (MHz);s11 (dB);Z real (Ohm);Z imag (Ohm);Z abs (Ohm)\\n');
 fclose(fid)
-s11_dB = horzcat((freq/1e6)', s11_dB');
+s11_dB = horzcat((freq/1e6)', s11_dB', real(Zin)', imag(Zin)', abs(Zin)');
 dlmwrite(filename, s11_dB, '-append', 'delimiter', ';');
 """
 

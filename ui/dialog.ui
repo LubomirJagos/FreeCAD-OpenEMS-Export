@@ -725,127 +725,6 @@
                 <string>Grid settings</string>
                </property>
                <layout class="QGridLayout" name="gridLayout">
-                <item row="4" column="3">
-                 <widget class="Line" name="line_3">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="0">
-                 <widget class="QRadioButton" name="userDefinedRadioButton">
-                  <property name="text">
-                   <string>User defined</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="fixedCountRadioButton">
-                  <property name="text">
-                   <string>Fixed count</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QRadioButton" name="smoothMeshRadioButton">
-                  <property name="text">
-                   <string>SmoothMesh</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="4">
-                 <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>0</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="3">
-                 <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>5</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0">
-                 <widget class="Line" name="line">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>0</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>5</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QCheckBox" name="gridXEnable">
-                  <property name="text">
-                   <string>X</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="4">
-                 <widget class="Line" name="line_4">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="4">
-                 <widget class="QCheckBox" name="gridZEnable">
-                  <property name="text">
-                   <string>Z</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="fixedDistanceRadioButton">
-                  <property name="text">
-                   <string>Fixed distance</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="3">
                  <widget class="QCheckBox" name="gridYEnable">
                   <property name="text">
@@ -853,61 +732,31 @@
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="1">
-                 <widget class="Line" name="line_2">
+                <item row="10" column="0">
+                 <widget class="QRadioButton" name="userDefinedRadioButton">
+                  <property name="text">
+                   <string>User defined</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="Line" name="line_5">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="3">
-                 <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="gridGenerateLinesInsideCheckbox">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
-                  <property name="decimals">
-                   <number>0</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="4">
-                 <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>5</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000000000000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="5">
-                 <widget class="QLabel" name="label_106">
                   <property name="text">
-                   <string>max resolution
-in grid units</string>
+                   <string>boundaries offset</string>
                   </property>
                  </widget>
                 </item>
-                <item row="5" column="1">
-                 <widget class="QDoubleSpinBox" name="smoothMeshXMaxRes">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="decimals">
-                   <number>3</number>
-                  </property>
-                  <property name="maximum">
-                   <double>1000.000000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="3">
+                <item row="8" column="3">
                  <widget class="QDoubleSpinBox" name="smoothMeshYMaxRes">
                   <property name="enabled">
                    <bool>false</bool>
@@ -920,7 +769,287 @@ in grid units</string>
                   </property>
                  </widget>
                 </item>
+                <item row="0" column="1">
+                 <widget class="QCheckBox" name="gridXEnable">
+                  <property name="text">
+                   <string>X</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QRadioButton" name="fixedCountRadioButton">
+                  <property name="text">
+                   <string>Fixed count</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="1">
+                 <widget class="QDoubleSpinBox" name="smoothMeshXMaxRes">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="5">
+                 <widget class="QComboBox" name="gridOffsetUnits">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="currentText">
+                   <string>um</string>
+                  </property>
+                  <property name="currentIndex">
+                   <number>3</number>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>m</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>cm</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>mm</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>um</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>nm</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>pm</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="8" column="5">
+                 <widget class="QLabel" name="label_106">
+                  <property name="text">
+                   <string>max resolution
+in grid units</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="0">
+                 <widget class="QRadioButton" name="smoothMeshRadioButton">
+                  <property name="text">
+                   <string>SmoothMesh</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="0">
+                 <widget class="Line" name="line">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="Line" name="line_8">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="3">
+                 <widget class="Line" name="line_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="Line" name="line_6">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QRadioButton" name="fixedDistanceRadioButton">
+                  <property name="text">
+                   <string>Fixed distance</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="gridOffsetX">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="4">
+                 <widget class="QDoubleSpinBox" name="gridOffsetZ">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="4">
+                 <widget class="Line" name="line_4">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="3">
+                 <widget class="Line" name="line_7">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="3">
+                 <widget class="QDoubleSpinBox" name="fixedCountYNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="3">
+                 <widget class="QDoubleSpinBox" name="fixedDistanceYNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QDoubleSpinBox" name="fixedDistanceXNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="4">
+                 <widget class="QDoubleSpinBox" name="fixedCountZNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4">
+                 <widget class="QCheckBox" name="gridZEnable">
+                  <property name="text">
+                   <string>Z</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QDoubleSpinBox" name="fixedCountXNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
                 <item row="5" column="4">
+                 <widget class="QDoubleSpinBox" name="fixedDistanceZNumberInput">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QDoubleSpinBox" name="gridOffsetY">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="1">
+                 <widget class="Line" name="line_2">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="4">
                  <widget class="QDoubleSpinBox" name="smoothMeshZMaxRes">
                   <property name="enabled">
                    <bool>false</bool>
@@ -932,6 +1061,22 @@ in grid units</string>
                    <double>1000.000000000000000</double>
                   </property>
                  </widget>
+                </item>
+                <item row="3" column="0">
+                 <spacer name="verticalSpacer_28">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>5</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </widget>
@@ -948,16 +1093,6 @@ in grid units</string>
                 <string>Special Grid Settings</string>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_20">
-                <item>
-                 <widget class="QCheckBox" name="gridGenerateLinesInsideCheckbox">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>shift gridlines inward by λmin/20/1000</string>
-                  </property>
-                 </widget>
-                </item>
                 <item>
                  <widget class="QCheckBox" name="gridTopPriorityLinesCheckbox">
                   <property name="text">
@@ -1084,9 +1219,15 @@ mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];</string>
 #    ymin,ymax
 #    zmin,zmax
 #
+MATLAB/OCTAVE code example:
 mesh.x = [mesh.x, xmin, (xmin+xmax)/2, xmax];
 mesh.y = [mesh.y, ymin, (ymin+ymax)/2, ymax];
 mesh.z = [mesh.z, zmin, (zmin+zmax)/2, zmax];
+
+PYTHON code example:
+mesh.x = np.concatenate((mesh.x, [...array...]))
+mesh.y = np.concatenate((mesh.y, [...array...]))
+mesh.z = np.concatenate((mesh.z, [...array...]))
 
 In case of cylindrical coords still use:
     mesh.x is treated like r
@@ -1708,6 +1849,9 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                 </item>
                 <item row="3" column="3">
                  <widget class="QDoubleSpinBox" name="gaussianExcitationFcNumberInput">
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
                   </property>
@@ -1737,6 +1881,9 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -1786,6 +1933,9 @@ VALUES OF MESH.X,Y,Z WHEN USED</string>
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="decimals">
+                   <number>5</number>
                   </property>
                   <property name="maximum">
                    <double>1000000000000.000000000000000</double>
@@ -7732,7 +7882,6 @@ than min spacing</string>
   <tabstop>fixedDistanceYNumberInput</tabstop>
   <tabstop>fixedDistanceZNumberInput</tabstop>
   <tabstop>userDefinedRadioButton</tabstop>
-  <tabstop>gridGenerateLinesInsideCheckbox</tabstop>
   <tabstop>gridTopPriorityLinesCheckbox</tabstop>
   <tabstop>createUserdefGridLinesFromCurrentButton</tabstop>
   <tabstop>displayXYGridLinesInModelButton</tabstop>

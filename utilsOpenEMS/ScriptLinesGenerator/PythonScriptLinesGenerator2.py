@@ -835,7 +835,8 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                     #   WARNING: This was added just recently needs to be validated.
                     #
                     if (currentSetting.getCombinationType() == 'parallel'):
-                        lumpedPartParams += f", LEtype=0"
+                        #lumpedPartParams += f", LEtype=0"
+                        pass
                     elif (currentSetting.getCombinationType() == 'series'):
                         lumpedPartParams += f", LEtype=1"
                     else:
@@ -968,19 +969,23 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                 bbCoords = fcObject.Shape.BoundBox
 
-                # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                deltaX = 0
+                deltaY = 0
+                deltaZ = 0
                 if gridSettingsInst.generateLinesInside:
-                    delta = self.maxGridResolution_m * sf * 0.001   #LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
-                    print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
-                else:
-                    delta = 0
+                    gridOffset = gridSettingsInst.getGridOffset()
+                    unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
+                    deltaX = gridOffset['x'] * unitsAsNumber
+                    deltaY = gridOffset['y'] * unitsAsNumber
+                    deltaZ = gridOffset['z'] * unitsAsNumber
+                    print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
 
-                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
-                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta
-                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta
-                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta
+                xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX
+                ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY
+                zmax = sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ
+                xmin = sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX
+                ymin = sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY
+                zmin = sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ
 
                 # Write grid definition.
                 genScript += "## GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
@@ -1010,20 +1015,24 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                     bbCoords = fcObject.Shape.BoundBox
 
-                    # If generateLinesInside is selected, grid line region is shifted inward by lambda/20.
+                    deltaX = 0
+                    deltaY = 0
+                    deltaZ = 0
                     if gridSettingsInst.generateLinesInside:
-                        delta = self.maxGridResolution_m * sf * 0.001  # LuboJ, added multiply by 0.001 because still lambda/20 for 4GHz is 3.75mm too much
-                        print("GRID generateLinesInside object detected, setting correction constant to " + str(delta) + "m (meters)")
-                    else:
-                        delta = 0
+                        gridOffset = gridSettingsInst.getGridOffset()
+                        unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
+                        deltaX = gridOffset['x'] * unitsAsNumber
+                        deltaY = gridOffset['y'] * unitsAsNumber
+                        deltaZ = gridOffset['z'] * unitsAsNumber
+                        print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
 
                     #append boundary coordinates into list
-                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
-                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
-                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
-                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * delta)
-                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * delta)
-                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * delta)
+                    xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX)
+                    yList.append(sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY)
+                    zList.append(sf * bbCoords.ZMax - np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ)
+                    xList.append(sf * bbCoords.XMin + np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX)
+                    yList.append(sf * bbCoords.YMin + np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY)
+                    zList.append(sf * bbCoords.ZMin + np.sign(bbCoords.ZMax - bbCoords.ZMin) * deltaZ)
 
                     # Write grid definition.
                     genScript += "## GRID - " + gridSettingsInst.getName() + " - " + FreeCADObjectName + ' (' + gridSettingsInst.getType() + ")\n"
@@ -1833,12 +1842,12 @@ directivity = nf2ff.P_rad[0]/nf2ff.Prad*4*pi
 directivity_CPRH = np.abs(nf2ff.E_cprh[0])**2/np.max(nf2ff.E_norm[0][:])**2*nf2ff.Dmax[0]
 directivity_CPLH = np.abs(nf2ff.E_cplh[0])**2/np.max(nf2ff.E_norm[0][:])**2*nf2ff.Dmax[0]
 
-generatorFunc_DumpFF2VTK(directivity, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern.vtk'))
+generatorFunc_DumpFF2VTK(directivity, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_GAIN.vtk'))
 generatorFunc_DumpFF2VTK(directivity_CPRH, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_CPRH.vtk'))
 generatorFunc_DumpFF2VTK(directivity_CPLH, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_CPLH.vtk'))
 
 E_far_normalized = E_norm / np.max(E_norm) * nf2ff.Dmax[0]
-generatorFunc_DumpFF2VTK(E_far_normalized, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_E_norm.vtk'))
+generatorFunc_DumpFF2VTK(E_far_normalized, nf2ff.theta, nf2ff.phi, os.path.join(Sim_Path, '3D_Pattern_Efield_norm.vtk'))
 """
 
         #
@@ -1914,15 +1923,6 @@ Zin = port[{self.internalPortIndexNamesList[portName]}].uf_tot / port[{self.inte
 s11 = port[{self.internalPortIndexNamesList[portName]}].uf_ref / port[{self.internalPortIndexNamesList[portName]}].uf_inc
 s11_dB = 20.0*np.log10(np.abs(s11))
 
-# plot S11 parameter
-figure()
-plot(freq/1e6, s11_dB, 'k-', linewidth=2, label='$S_{{11}}$')
-grid()
-legend()
-title('S11-Parameter (dB) of {portName}')
-ylabel('S11 (dB)')
-xlabel('Frequency (MHz)')
-
 # plot the feed point impedance
 figure()
 plot(freq / 1e6, np.real(Zin), 'k-', linewidth=2, label=r'$\Re(Z_{{in}})$')
@@ -1932,6 +1932,15 @@ title('impedance of {portName}')
 xlabel('frequency (MHz)')
 ylabel('$Z (\\Omega)$')
 legend()
+
+# plot S11 parameter
+figure()
+plot(freq/1e6, s11_dB, 'k-', linewidth=2, label='$S_{{11}}$')
+grid()
+legend()
+title('S11-Parameter (dB) of {portName}')
+ylabel('S11 (dB)')
+xlabel('Frequency (MHz)')
 
 show()  #show all figures at once
 

@@ -38,7 +38,7 @@ class GridSettingsItem(SettingsItem):
     multilayeredSymmetricPortCartesianLayerDirection = ["XY plane", "XZ plane", "YZ plane"]
     multilayeredSymmetricPortCylindricalLayerDirection = ["r-theta plane", "z-theta plane", "z-theta plane"]
 
-    def __init__(self, name="", type="", fixedCount=None, fixedDistance=None,
+    def __init__(self, name="", type="", gridOffset=None, fixedCount=None, fixedDistance=None,
                  userDefined=None, units="mm", unitsAngle="deg", xenabled=False, yenabled=False, zenabled=False,
                  smoothMeshDefault=None,
                  coordsType='rectangular'):
@@ -51,11 +51,15 @@ class GridSettingsItem(SettingsItem):
         self.xenabled = xenabled
         self.yenabled = yenabled
         self.zenabled = zenabled
+
         self.fixedCount = {'x': 0, 'y': 0, 'z': 0} if fixedCount is None else fixedCount
         self.fixedDistance = {'x': 0, 'y': 0, 'z': 0} if fixedDistance is None else fixedDistance
         self.smoothMesh = {'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0} if smoothMeshDefault is None else smoothMeshDefault
         self.userDefined = {'data': ""} if userDefined is None else userDefined
+
         self.generateLinesInside = False
+        self.gridOffset = {'x': 0, 'y': 0, 'z': 0, 'units': 'um'} if gridOffset is None else gridOffset
+
         self.topPriorityLines = True
 
     # Return xyz distances, count or user defined array based what user asked for.
@@ -80,6 +84,9 @@ class GridSettingsItem(SettingsItem):
                 m  -> 1.0
         """
         return self.getUnitsAsNumber(self.units)
+
+    def getGridOffset(self):
+        return self.gridOffset if self.generateLinesInside else {'x': 0, 'y': 0, 'z': 0, 'units': 'um'}
 
     def getCartesianAsCylindricalCoords(self, bbCoords, xmin, xmax, ymin, ymax, zmin, zmax):
         # radius must be chosen from all corners
