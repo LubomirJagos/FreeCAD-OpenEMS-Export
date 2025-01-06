@@ -1,4 +1,4 @@
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 import re
 import os
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
