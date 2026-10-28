@@ -1,5 +1,5 @@
-from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtCore import Slot
+from PySide6 import QtGui, QtCore, QtWidgets
+from PySide6.QtCore import Slot
 import os, sys
 import re
 import random
@@ -14,11 +14,15 @@ APP_CONTEXT = "None"
 
 try:
 	import FreeCAD
-	import WebGui
 	import KiCADImporterToolDialog	#import for KiCAD Import Tool
 	APP_CONTEXT = "FreeCAD"
 except:
 	pass
+
+try:
+	import WebGui	#optional, not present in all FreeCAD versions (e.g. removed in 1.1.x)
+except:
+	WebGui = None
 
 try:
 	import bpy
@@ -516,7 +520,13 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		Open index help html webpage inside freecad window.
 		:return:
 		"""
-		WebGui.openBrowser(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html")
+		helpPath = f"{os.path.dirname(__file__)}\\documentation\\help\\index.html"
+		if WebGui is not None:
+			WebGui.openBrowser(helpPath)
+		else:
+			#WebGui module not available (e.g. removed in FreeCAD 1.1.x), fall back to OS browser
+			import webbrowser
+			webbrowser.open(helpPath, new=2)
 
 	def openBlenderWebGuiHelp(self):
 		"""

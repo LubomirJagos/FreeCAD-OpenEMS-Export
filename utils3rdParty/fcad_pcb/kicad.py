@@ -312,10 +312,21 @@ def make_gr_rect(params):
     end = makeVect(params.end)
     return Part.makePolygon([start, Vector(start.x, end.y), end, Vector(end.x, start.y), start])
 
+def getWidth(p, default=0):
+    # KiCad 5 stores line width as a direct '(width X)' attribute on graphic
+    # items. KiCad 6+ nests it as '(stroke (width X) (type ...))' instead.
+    # Support both so board outlines from newer KiCad files still parse.
+    w = getattr(p, 'width', None)
+    if w is None:
+        stroke = getattr(p, 'stroke', None)
+        if stroke is not None:
+            w = getattr(stroke, 'width', None)
+    return w if w is not None else default
+
 def makePrimitve(key, params):
     for param in SexpList(params):
         try:
-            width = getattr(param,'width',0)
+            width = getWidth(param,0)
             if width and key == 'gr_circle':
                 return make_gr_circle(param, width), 0
             else:
@@ -637,17 +648,30 @@ class KicadFcad:
                 raise KeyError('layer {} not found'.format(layer))
             return (layer, self.pcb.layers[str(layer)][0])
 
+    def isCopperLayer(self,layer_type):
+        # KiCad 5 and earlier fixed copper layers to indices 0-31 and every
+        # other layer to 32+. KiCad 7+ allows arbitrary index assignment
+        # (e.g. Edge.Cuts, F.SilkS, F.CrtYd can all end up with index <= 31),
+        # so index alone can no longer tell copper from non-copper. The
+        # layer's declared type (signal/power/mixed/jumper vs user) is the
+        # reliable, version-independent signal.
+        try:
+            return unquote(self.pcb.layers[str(layer_type)][1]) in (
+                    'signal','power','mixed','jumper')
+        except Exception:
+            return layer_type <= 31
+
     def setLayer(self,layer):
         self.layer_type, self.layer_name = self.findLayer(layer)
         self.layer = unquote(self.layer_name)
-        if self.layer_type <= 31:
+        if self.isCopperLayer(self.layer_type):
             self.layer_match = '*.Cu'
         else:
             self.layer_match = '*.{}'.format(self.layer.split('.')[-1])
 
     def _copperLayers(self):
         coppers = [ (int(t),unquote(self.pcb.layers[t][0])) \
-                        for t in self.pcb.layers if int(t)<=31]
+                        for t in self.pcb.layers if self.isCopperLayer(t)]
         coppers.sort(key=lambda x : x[0])
         return coppers
 
@@ -662,9 +686,10 @@ class KicadFcad:
                     last_copper = 0.0
                     for layer in stackup.layer:
                         layer_type, _ = self.findLayer(layer[0], 99)
+                        is_copper = self.isCopperLayer(layer_type)
                         t = getattr(layer, 'thickness',
-                                self.copper_thickness if layer_type<=32 else self.layer_thickness)
-                        if layer_type <= 31:
+                                self.copper_thickness if is_copper else self.layer_thickness)
+                        if is_copper:
                             last_copper = offset
                         # Some layer (e.g. dielectric) may have more than one
                         # thickness field. Add them all.
@@ -698,7 +723,7 @@ class KicadFcad:
             layer, name = self.findLayer(item[0], 99)
             self._stackup_map[unquote(name)] = item
             thickness = item[2]
-            if layer <= 31: # is copper layer
+            if self.isCopperLayer(layer): # is copper layer
                 if accumulate is not None:
                     # counting intermediate layer(s) thickness
                     board_thickness += accumulate
@@ -1146,8 +1171,10 @@ class KicadFcad:
 
     def _makeEdgeCuts(self, sexp, ctx, wires, non_closed, at=None, layers=None):
         if not layers:
-            # default to layer Edge.Cuts
-            layers = [44]
+            # default to layer Edge.Cuts. Look up by name rather than the
+            # legacy fixed index 44, since KiCad 7+ no longer guarantees a
+            # fixed numeric index for this layer.
+            layers = ['Edge.Cuts']
         for l in layers:
             try:
                 _,layer = self.findLayer(l)
@@ -1182,7 +1209,7 @@ class KicadFcad:
                     shape.rotate(Vector(),Vector(0,0,1),angle)
                 if at:
                     shape.translate(at)
-                edges += [[getattr(l,'width',1e-7), e] for e in shape.Edges]
+                edges += [[getWidth(l,1e-7), e] for e in shape.Edges]
 
         # The line width in edge cuts are important. When milling, the line
         # width can represent the diameter of the drill bits to use. The user
@@ -1274,7 +1301,7 @@ class KicadFcad:
             # try Edge.Cuts first
             self._makeEdgeCuts(self.module, 'fp', wires, non_closed)
             # try F.CrtYd and B.CrtYd
-            self._makeEdgeCuts(self.module, 'fp', wires, non_closed, layers=(46, 47))
+            self._makeEdgeCuts(self.module, 'fp', wires, non_closed, layers=('F.CrtYd', 'B.CrtYd'))
         else:
             for m in self.pcb.module:
                 self._makeEdgeCuts(m, 'fp', wires, non_closed, getattr(m, 'at', None))
@@ -1436,7 +1463,7 @@ class KicadFcad:
                     w = make_oval(size+Vector(ofs,ofs))
                     ovals[min(size.x,size.y)].append(w)
                     oval_count += 1
-                elif 0 in p.drill and \
+                elif 0 in p.drill and p.drill[0]>0 and \
                         p.drill[0]>=minSize and \
                         (not maxSize or p.drill[0]<=maxSize):
                     w = make_circle(Vector(p.drill[0]+ofs))
@@ -1473,7 +1500,15 @@ class KicadFcad:
                         via_skip += 1
                         continue
 
-                    if v.drill>=minSize and (not maxSize or v.drill<=maxSize):
+                    if v.drill<=0:
+                        # Malformed via (0 or negative drill diameter), e.g. from
+                        # a lossy Altium/other-EDA to KiCad conversion. Building a
+                        # zero-radius hole crashes the OCC kernel, so skip it
+                        # instead of aborting the whole import.
+                        self._log('skip via with invalid drill size {} at {}',
+                                v.drill, list(makeVect(v.at)), level='warning')
+                        via_skip += 1
+                    elif v.drill>=minSize and (not maxSize or v.drill<=maxSize):
 
                         z_offsets = [layer_offsets[unquote(n)] for n in v.layers]
                         pos = makeVect(v.at)
@@ -2276,12 +2311,12 @@ class KicadFcad:
         layer = self.layer
         objs = []
         try:
-            self.setLayer(0)
+            self.setLayer('F.Cu')
             objs.append(self.loadParts(combo=combo))
         except Exception as e:
             self._log('{}',e,level='error')
         try:
-            self.setLayer(31)
+            self.setLayer('B.Cu')
             objs.append(self.loadParts(combo=combo))
         except Exception as e:
             self._log('{}',e,level='error')

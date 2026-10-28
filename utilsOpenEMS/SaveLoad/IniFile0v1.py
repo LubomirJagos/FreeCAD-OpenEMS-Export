@@ -2,7 +2,7 @@ import os
 import re
 import json
 
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
 

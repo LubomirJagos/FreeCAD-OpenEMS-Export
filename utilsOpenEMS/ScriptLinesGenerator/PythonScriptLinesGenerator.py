@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 import numpy as np
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
@@ -899,7 +899,8 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
         genScript += "\tos.mkdir(Sim_Path)\n"
         genScript += "CSX.Write2XML(CSX_file)\n"
         genScript += "from CSXCAD import AppCSXCAD_BIN\n"
-        genScript += "os.system(AppCSXCAD_BIN + ' \"{}\"'.format(CSX_file))\n"
+        genScript += "import subprocess\n"
+        genScript += "subprocess.run([AppCSXCAD_BIN + '.exe', CSX_file])  # blocks until AppCSXCAD window is closed\n"
         genScript += "\n"
         genScript += "if not postprocessing_only:\n"
         genScript += "\tFDTD.Run(Sim_Path, verbose=3, cleanup=True)\n"

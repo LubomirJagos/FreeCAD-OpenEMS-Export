@@ -1,5 +1,5 @@
-from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtCore import Slot
+from PySide6 import QtGui, QtCore, QtWidgets
+from PySide6.QtCore import Slot
 import os, sys
 import re
 

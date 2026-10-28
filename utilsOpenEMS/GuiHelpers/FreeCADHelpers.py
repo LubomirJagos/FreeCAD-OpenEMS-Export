@@ -1,6 +1,6 @@
 from utilsOpenEMS.GuiHelpers.CadInterface import CadInterface
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 import FreeCAD
 import FreeCADGui
 import Draft

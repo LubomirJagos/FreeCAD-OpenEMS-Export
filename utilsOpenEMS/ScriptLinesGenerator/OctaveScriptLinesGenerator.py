@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math

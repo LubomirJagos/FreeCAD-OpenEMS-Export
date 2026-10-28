@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math
@@ -759,7 +759,7 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
                         dumpboxName = f"{currSetting.name}_{childName}"
                         genScript += f'dumpboxName = "{dumpboxName}"\n'
 
-                        genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dumnp_type=1, dump_mode=2)\n"
+                        genScript += f"dumpBoxList[dumpboxName] = CSX.AddDump(dumpboxName, dump_type=1, dump_mode=2)\n"
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords, "dumpboxStart", "dumpboxStop")
                         genScript += f"dumpBoxList[dumpboxName].AddBox(dumpboxStart, dumpboxStop );\n"
                         genDumpBoxCounter += 1
@@ -1634,7 +1634,8 @@ class PythonScriptLinesGenerator2(CommonScriptLinesGenerator):
         genScript += "\tos.mkdir(Sim_Path)\n"
         genScript += "CSX.Write2XML(CSX_file)\n"
         genScript += "from CSXCAD import AppCSXCAD_BIN\n"
-        genScript += "os.system(AppCSXCAD_BIN + ' \"{}\"'.format(CSX_file))\n"
+        genScript += "import subprocess\n"
+        genScript += "subprocess.run([AppCSXCAD_BIN + '.exe', CSX_file])  # blocks until AppCSXCAD window is closed\n"
         genScript += "\n"
         genScript += "FDTD.Run(Sim_Path, verbose=3, cleanup=True, setup_only=setup_only, debug_pec=debug_pec)\n"
 
