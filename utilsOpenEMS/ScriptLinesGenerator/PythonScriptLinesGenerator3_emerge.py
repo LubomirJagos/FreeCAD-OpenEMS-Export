@@ -682,8 +682,7 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
 
                         portModeName = currSetting.modeName
                         match = re.match('TE([0-9]{1})([0-9]{1})', portModeName)
-                        portModeNumber1, portModeNumber2 = match.groups()
-                        portModeType = str(tuple(portModeNumber1, portModeNumber2))
+                        portModeNumbers = match.groups()
 
                         portPermittivity = 1.0
                         portExcitationAmplitude = str(currSetting.excitationAmplitude)
@@ -696,6 +695,8 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
                         bbCoords.YMax = portStopY
                         bbCoords.ZMax = portStopZ
                         genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
+                        genScript += "portStart = [k*fc_unit for k in portStart]  #dimension scaled by freecad unit to meters\n"
+                        genScript += "portStop = [k*fc_unit for k in portStop]  #dimension scaled by freecad unit to meters\n"
 
                         objNormalVector = obj.Shape.normalAt(0.5, 0.5)
                         genScript += f"portNormalVector = [{objNormalVector.x}, {objNormalVector.y}, {objNormalVector.z}]\n"
@@ -705,7 +706,7 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
 
                         self.portBoundaryConditionScriptLinesBuffer.append(f"helperFunctionsObj.setPortAsRectangularWaveguidePort('{PORT_NAME}')\n")
                         genScript += f'#portName: "{obj.Label}" -> portNumber: {genScriptPortCount}\n'
-                        genScript += f"helperFunctionsObj.addRectangularWaveguidePort(name='{PORT_NAME}', mode='{portModeType}', er={portPermittivity}, power={portExcitationAmplitude}, geometryObject={portGeometryObject})\n"
+                        genScript += f"helperFunctionsObj.addRectangularWaveguidePort(name='{PORT_NAME}', mode=({portModeNumbers[0]},{portModeNumbers[1]}), er={portPermittivity}, power={portExcitationAmplitude}, geometryObject={portGeometryObject})\n"
 
                         internalPortName = PORT_NAME    #this is freecad object label since they are unique (must be set in freecad settings itself)
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
@@ -882,6 +883,8 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
                     genScript += f"helperFunctionsObj.setSurfaceImpedanceBoundaryConditionToObject(name=\"{childName}\", surface_conductance={currentSetting.surfaceImpedance['conductance']}, surface_roughness={currentSetting.surfaceImpedance['roughness']}*{currentSetting.surfaceImpedance['roughnessUnits']}, thickness={currentSetting.surfaceImpedance['thickness']}*{currentSetting.surfaceImpedance['thicknessUnits']}, material=\"{currentSetting.surfaceImpedance['material']}\")\n"
                 elif currentSetting.getType() == 'thinConductor':
                     genScript += f"helperFunctionsObj.setThinConductorBoundaryConditionToObject(name=\"{childName}\", surface_conductance={currentSetting.surfaceImpedance['conductance']}, surface_roughness={currentSetting.surfaceImpedance['roughness']}*{currentSetting.surfaceImpedance['roughnessUnits']}, thickness={currentSetting.surfaceImpedance['thickness']}*{currentSetting.surfaceImpedance['thicknessUnits']}, material=\"{currentSetting.surfaceImpedance['material']}\")\n"
+                elif currentSetting.getType().lower() == 'userdefined':
+                    genScript += currentSetting.userDefined
                 else:
                     genScript += f"helperFunctionsObj.setBoundaryConditionToObject(name=\"{childName}\", type=\"{currentSetting.getType()}\")\n"
 
@@ -1351,6 +1354,7 @@ import emerge as em
 import numpy as np
 from emerge.plot import smith, plot_sp
 import os
+import emerge._emerge.geometry as emergeGeo
 
 simulationObj = em.Simulation("{self.cadHelpers.getCurrentDocumentFileName()}", load_file=True)
 simulationResult = simulationObj.data.mw
@@ -1368,10 +1372,12 @@ currDir = os.getcwd()
 boundary_selection = None
 for geometryObj in simulationObj.state.manager.geometry_list[simulationObj.modelname].values():
 	if geometryObj.name == '{boundaryConditionObjectName}' or geometryObj.name.startswith('{boundaryConditionObjectName}'):
-		boundary_selection = geometryObj.boundary()
+		if isinstance(geometryObj, emergeGeo.GeoSurface):
+		    boundary_selection = geometryObj
+		else:
+		    boundary_selection = geometryObj.boundary()
 
 simulationObj.mw.bc.AbsorbingBoundary(boundary_selection)
-
 
 # add model files into display
 for geoObj in simulationObj.state.manager.geometry_list[simulationObj.modelname].values():
@@ -1380,7 +1386,7 @@ for geoObj in simulationObj.state.manager.geometry_list[simulationObj.modelname]
 # display far field
 field = simulationResult.field.find(freq={self.form.boundaryNf2ffEmergeFreq.value()}*1e6)
 ff3d = field.farfield_3d(boundary_selection, origin=({self.form.diagramPlacementXNF2FFEmerge.value()}*{cadLengthUnit}, {self.form.diagramPlacementYNF2FFEmerge.value()}*{cadLengthUnit}, {self.form.diagramPlacementZNF2FFEmerge.value()}*{cadLengthUnit}))
-simulationObj.display.add_field(ff3d.surfplot('{self.form.polarizationNf2ffEmerge.currentText()}','{self.form.quantityNf2ffEmerge.currentText()}',True, dB=True, rmax={self.form.diagramRMaxNF2FFEmerge.value()}*{cadLengthUnit}, offset=({self.form.diagramPlacementXNF2FFEmerge.value()}*mm, {self.form.diagramPlacementYNF2FFEmerge.value()}*mm, {self.form.diagramPlacementZNF2FFEmerge.value()}*mm)))
+simulationObj.display.add_field(ff3d.surfplot('{self.form.polarizationNf2ffEmerge.currentText()}','{self.form.quantityNf2ffEmerge.currentText()}', dB=True, rmax={self.form.diagramRMaxNF2FFEmerge.value()}*{cadLengthUnit}, offset=({self.form.diagramPlacementXNF2FFEmerge.value()}*mm, {self.form.diagramPlacementYNF2FFEmerge.value()}*mm, {self.form.diagramPlacementZNF2FFEmerge.value()}*mm)))
 simulationObj.display.show()
 
 """
@@ -1496,10 +1502,7 @@ simulationObj.display.show()
                 portName = childName
 
                 # PORT openEMS GENERATION INTO VARIABLE
-                if (currSetting.getType() == 'lumped'):
-                    portNamesAndNumbersList[portName] = genScriptPortCount
-                    genScriptPortCount += 1
-                elif (currSetting.getType() == 'coaxial'):
+                if (currSetting.getType() in ['lumped', 'coaxial', 'rectangular waveguide', 'modal']):
                     portNamesAndNumbersList[portName] = genScriptPortCount
                     genScriptPortCount += 1
 
@@ -1617,7 +1620,7 @@ simulationObj.display.show()
                 portName = childName
 
                 # PORT openEMS GENERATION INTO VARIABLE
-                if (currSetting.getType() == 'lumped'):
+                if (currSetting.getType() in ['lumped', 'coaxial', 'rectangular waveguide', 'modal']):
                     portNamesAndNumbersList[portName] = genScriptPortCount
                     genScriptPortCount += 1
 
