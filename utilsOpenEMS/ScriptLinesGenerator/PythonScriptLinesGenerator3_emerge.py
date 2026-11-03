@@ -346,19 +346,24 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
 
         return genScript
 
-    def getObjectUsedInSomeCategoryStepImportScriptLines(self, items, outputDir=None, generateObjects=True, itemsCategoryName=""):
+    def getObjectUsedInSomeCategoryStepImportScriptLines(self, items, outputDir:str|None=None, generateObjects:bool=True, itemsCategoryName:str="", filterSettingCondition:str=''):
         genScript = ""
 
         genScript += f"# Imported objects used as {itemsCategoryName}\n"
-        genScript += "#\n"
-        genScript += "\n"
 
         if items == None:
             genScript += "# NO OBJECTS USED, NOTHING TO IMPORT\n"
             return genScript
 
+        genScript += "#\n"
+
         # now export material children, if it's object export as STL, if it's curve export as curve
         for [item, currSetting] in items:
+
+            # if there is filter condition provided evaluate it and when False skip objects
+            if filterSettingCondition != '':
+                if eval(f"currSetting.{filterSettingCondition}") == False:
+                    continue
 
             # first print all current material children names
             for k in range(item.childCount()):
@@ -634,7 +639,15 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
                             #
                             #   General method calculate u,v vectors using start stop poiint and normal of face using freecad normal vector
                             #
-                            objNormalVector = obj.Shape.normalAt(0.5, 0.5)  #returns face normal vector in center of mass (in the middle of face)
+                            # Safely extract the normal vector whether it's a direct Face or a Compound containing faces
+                            if hasattr(obj.Shape, "normalAt"):
+                                objNormalVector = obj.Shape.normalAt(0.5, 0.5)
+                            elif len(obj.Shape.Faces) > 0:
+                                objNormalVector = obj.Shape.Faces[0].normalAt(0.5, 0.5)
+                            else:
+                                raise ValueError(
+                                    f"The selected object '{obj.Label}' does not contain any faces to determine a normal vector.")
+
                             genScript += f"portNormalVector = [{objNormalVector.x}, {objNormalVector.y}, {objNormalVector.z}]\n"
                             genScript += f"portStart, portWidth, portHeight = helperFunctionsObj.create_emerge_plane_data(portStart, portStop, portNormalVector)\n"
 
@@ -656,22 +669,12 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
 
                         portExcitationAmplitude = str(currSetting.excitationAmplitude)
                         portModeType = currSetting.modalModeType
-                        portMixedMaterials = currSetting.modalMixedMaterials
+                        portMixedMaterials = "True" if currSetting.modalMixedMaterials else "False"
                         portImpedanceDefinition = currSetting.modalImpedanceDefinition
 
-                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
-                        genScript += "portStart = [k*fc_unit for k in portStart]  #dimension scaled by freecad unit to meters\n"
-                        genScript += "portStop = [k*fc_unit for k in portStop]  #dimension scaled by freecad unit to meters\n"
+                        genScript += "#modal port uses imported .step object as definition to calculate mode, imported .step is above and set it as boundary as port is below this comment\n"
 
-                        objNormalVector = obj.Shape.normalAt(0.5, 0.5)
-                        genScript += f"portNormalVector = [{objNormalVector.x}, {objNormalVector.y}, {objNormalVector.z}]\n"
-                        genScript += f"portStart, portWidth, portHeight = helperFunctionsObj.create_emerge_plane_data(portStart, portStop, portNormalVector)\n"
-
-                        portGeometryObject = f"em.geo.Plate(name='{PORT_NAME}', origin=portStart, u=portWidth, v=portHeight)"
-
-                        self.portBoundaryConditionScriptLinesBuffer.append(f"helperFunctionsObj.setPortAsModalPort('{PORT_NAME}')\n")
-                        genScript += f'#portName: "{obj.Label}" -> portNumber: {genScriptPortCount}\n'
-                        genScript += f"helperFunctionsObj.addModalPort(name='{PORT_NAME}', mode='{portModeType}', mixedMaterials={portMixedMaterials}, impedanceDefinition='{portImpedanceDefinition}', power={portExcitationAmplitude}, geometryObject={portGeometryObject})\n"
+                        self.portBoundaryConditionScriptLinesBuffer.append(f"simulationObj.mw.bc.ModalPort(face=helperFunctionsObj.getAllObjectByName('{PORT_NAME}')[0], port_number={genScriptPortCount}, modetype='{portModeType}')\n")
 
                         internalPortName = PORT_NAME    #this is freecad object label since they are unique (must be set in freecad settings itself)
                         self.internalPortIndexNamesList[internalPortName] = genScriptPortCount
@@ -698,7 +701,15 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
                         genScript += "portStart = [k*fc_unit for k in portStart]  #dimension scaled by freecad unit to meters\n"
                         genScript += "portStop = [k*fc_unit for k in portStop]  #dimension scaled by freecad unit to meters\n"
 
-                        objNormalVector = obj.Shape.normalAt(0.5, 0.5)
+                        # Safely extract the normal vector whether it's a direct Face or a Compound containing faces
+                        if hasattr(obj.Shape, "normalAt"):
+                            objNormalVector = obj.Shape.normalAt(0.5, 0.5)
+                        elif len(obj.Shape.Faces) > 0:
+                            objNormalVector = obj.Shape.Faces[0].normalAt(0.5, 0.5)
+                        else:
+                            raise ValueError(
+                                f"The selected object '{obj.Label}' does not contain any faces to determine a normal vector.")
+
                         genScript += f"portNormalVector = [{objNormalVector.x}, {objNormalVector.y}, {objNormalVector.z}]\n"
                         genScript += f"portStart, portWidth, portHeight = helperFunctionsObj.create_emerge_plane_data(portStart, portStop, portNormalVector)\n"
 
@@ -751,7 +762,14 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
                         genScript += 'r_o = ' + str(coaxialRadius - coaxialShellThickness) + '*unit\n'
                         genScript += 'r_os = ' + str(coaxialRadius) + '*unit\n'
 
-                        objNormalVector = obj.Shape.normalAt(0.5, 0.5)
+                        # Safely extract the normal vector whether it's a direct Face or a Compound containing faces
+                        if hasattr(obj.Shape, "normalAt"):
+                            objNormalVector = obj.Shape.normalAt(0.5, 0.5)
+                        elif len(obj.Shape.Faces) > 0:
+                            objNormalVector = obj.Shape.Faces[0].normalAt(0.5, 0.5)
+                        else:
+                            raise ValueError(f"The selected object '{obj.Label}' does not contain any faces to determine a normal vector.")
+
                         genScript += f"portNormalVector = [{objNormalVector.x}, {objNormalVector.y}, {objNormalVector.z}]\n"
                         genScript += f"portStart, portWidth, portHeight = helperFunctionsObj.create_emerge_plane_data(portStart, portStop, portNormalVector)\n"
                         genScript += f"er = helperFunctionsObj.getMaterial('{currSetting.coaxialMaterial}').er.value\n"
@@ -1107,16 +1125,6 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
         genScript += "print(currDir)\n"
         genScript += "\n"
 
-        # Write simulation settings.
-
-        genScript += "## prepare simulation folder, if dir exits remove and create new one to be empty\n"
-        genScript += "Sim_Path = os.path.join(currDir, 'simulation_output')\n"
-
-        genScript += "if os.path.exists(Sim_Path):\n"
-        genScript += "\tshutil.rmtree(Sim_Path)   # clear previous directory\n"
-        genScript += "\tos.mkdir(Sim_Path)    # create empty simulation folder\n"
-        genScript += "\n"
-
         print("======================== REPORT BEGIN ========================\n")
 
         genScript += "#######################################################################################################################################\n"
@@ -1187,7 +1195,10 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
         #    - lumped elements
         #
         genScript += self.getObjectUsedInSomeCategoryStepImportScriptLines(itemsByClassName.get("BoundaryConditionSettingsItem", None), outputDir, itemsCategoryName="boundary conditions")
+        genScript += "\n"
         genScript += self.getObjectUsedInSomeCategoryStepImportScriptLines(itemsByClassName.get("LumpedPartSettingsItem", None), outputDir, itemsCategoryName="lumped elements")
+        genScript += "\n"
+        genScript += self.getObjectUsedInSomeCategoryStepImportScriptLines(itemsByClassName.get("PortSettingsItem", None), outputDir, itemsCategoryName="port objects", filterSettingCondition='type == "modal"')
         genScript += "\n"
 
         # Write port definitions.
@@ -1220,9 +1231,10 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
         genScript += "simulationObj.generate_mesh()\n"
         genScript += "\n"
 
-        genScript += "#\n"
-        genScript += "# Now follows boundary condition definition\n"
-        genScript += "#\n"
+        genScript += "#######################################################################################################################################\n"
+        genScript += "# Additional boundary condition definitions needed for previously generated geometries\n"
+        genScript += "#   - set bc as ports\n"
+        genScript += "#######################################################################################################################################\n"
 
         #
         #   Port are added when geometry is created because they must be meshed but then there is also needed to create boundary condition for them
@@ -1334,7 +1346,7 @@ class PythonScriptLinesGenerator3_emerge(PythonScriptLinesGenerator2_openems):
         genScript += self.getInitScriptLines()
 
         genScript += "currDir = os.getcwd()\n"
-        genScript += "Sim_Path = os.path.join(currDir, r'simulation_output')\n"
+        genScript += "#Sim_Path = os.path.join(currDir, r'simulation_output')\n"
         genScript += "print(currDir)\n"
         genScript += "\n"
 
@@ -1421,7 +1433,7 @@ simulationObj.display.show()
         genScript += self.getInitScriptLines()
 
         genScript += "currDir = os.getcwd()\n"
-        genScript += "Sim_Path = os.path.join(currDir, r'simulation_output')\n"
+        genScript += "#Sim_Path = os.path.join(currDir, r'simulation_output')\n"
         genScript += "print(currDir)\n"
         genScript += "\n"
 
