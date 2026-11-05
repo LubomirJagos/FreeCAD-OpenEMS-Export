@@ -10567,7 +10567,7 @@ Transient use AMS</string>
                         <item>
                          <widget class="QGroupBox" name="groupBox_11">
                           <property name="title">
-                           <string>Cutplane (meters)</string>
+                           <string>Cutplane (mm)</string>
                           </property>
                           <layout class="QHBoxLayout" name="horizontalLayout_67">
                            <item>

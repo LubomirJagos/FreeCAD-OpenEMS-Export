@@ -782,7 +782,7 @@ class IniFile0v1:
                 elif (categorySettings.type == "modal"):
                     try:
                         categorySettings.modalModeType = settings.value('modeType')
-                        categorySettings.modalMixedMaterials = settings.value('mixedMaterials')
+                        categorySettings.modalMixedMaterials = _bool(settings.value('mixedMaterials'))
                         categorySettings.modalImpedanceDefinition = settings.value('impedanceDefinition')
                     except Exception as e:
                         print(f"There was error during reading modal port settings: {e}")

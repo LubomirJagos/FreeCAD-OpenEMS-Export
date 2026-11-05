@@ -2227,14 +2227,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.probesChanged.emit("update")
 		self.guiSignals.boundaryConditionChanged.emit("update")
 
-		# PORT select first item
-		topItem = self.form.portSettingsTreeView.itemAt(0,0)
-		self.form.portSettingsTreeView.setCurrentItem(topItem)
-
 		#
 		# Update UI based on FDTD solver or FEM solver type, some items could be disabled
 		#
 		self.updateUiBasedOnSolverType()
+
+		# PORT select first item
+		topItem = self.form.portSettingsTreeView.itemAt(1,0)
+		self.form.portSettingsTreeView.setCurrentItem(topItem)
+		self.portTreeWidgetItemChanged(topItem, topItem)
 
 		#
 		# Update window title with loaded filename
@@ -3397,6 +3398,10 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.modalMixedMaterials = self.form.modalPortMixedMaterials.isChecked()
 			portItem.modalImpedanceDefinition = self.form.modalPortImpedanceDefinition.currentText()
 
+			# modal port is for FEM solvers and they are direct solvers so they compute all port NxN combination always,
+			# isActive needs to be set to none to gui proper update combobox in Processing tab for write s21 script
+			portItem.isActive = None
+
 		if (self.form.userDefinedPortRadioButton.isChecked()):
 			portItem.type = "userdefined"
 			portItem.userDefinedData = self.form.userDefinedPortValue.toPlainText()
@@ -3596,10 +3601,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"@Slot portsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.updateComboboxWithAllowedItems(self.form.drawS11Port, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
+			self.updateComboboxWithAllowedItems(self.form.drawS11Port, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
 			self.updateComboboxWithAllowedItems(self.form.drawS21Source, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
 			self.updateComboboxWithAllowedItems(self.form.drawS21Target, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=False)
 			self.updateComboboxWithAllowedItems(self.form.portNf2ffInput, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
+
+			# method self.updateComboboxWithAllowedItems(...) overwrite all values in combobox, modal port has no isActive true/false therefore it must be called once more time here
+			# for FEM solver types with all allowed values but with no isActive
+			solverType = self.form.comboBox_solverType.currentText().lower()
+			if solverType.find("emerge") > -1 or solverType.find("palace") > -1:
+				self.updateComboboxWithAllowedItems(self.form.drawS21Source, "Port",["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
+				self.updateComboboxWithAllowedItems(self.form.drawS21Target, "Port",["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
 
 	@Slot(str)
 	def probesChanged(self, operation):
