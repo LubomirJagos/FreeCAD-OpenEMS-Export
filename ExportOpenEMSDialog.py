@@ -1,5 +1,5 @@
-from PySide2 import QtGui, QtCore, QtWidgets
-from PySide2.QtCore import Slot
+from PySide import QtGui, QtCore, QtWidgets
+from PySide.QtCore import Slot, QTimer
 import os, sys
 import re
 import random
@@ -10,14 +10,19 @@ import math
 import sys
 import traceback
 
+import webbrowser		#webbrowser is used to open help page and so
+
 APP_CONTEXT = "None"
 
 try:
 	import FreeCAD
-	import WebGui
-	import KiCADImporterToolDialog	#import for KiCAD Import Tool
+	#import WebGui	#this plugin was removed in 0.20 and later, it's used to display help
+	import KiCADImporterToolDialog			#import for KiCAD Import Tool
+	import MaterialConstantsCatalogDialog	#import for Material Constants Catalog
 	APP_CONTEXT = "FreeCAD"
-except:
+except Exception as e:
+	print(f"Error test if addon opened in FreeCAD")
+	print(e)
 	pass
 
 try:
@@ -34,10 +39,6 @@ print(f"APP_CONTEXT set to {APP_CONTEXT}")
 #
 APP_DIR = ''
 if APP_CONTEXT == 'Blender':
-	#
-	#	This here is because Blender pyhton is not providing right info about paths in __file__ when running from editor
-	#
-	import webbrowser
 
 	if hasattr(bpy.context, 'space_data') and bpy.context.space_data != None and bpy.context.space_data.type == "TEXT_EDITOR":
 		#this is when this file is run inside blender in text editor
@@ -51,7 +52,7 @@ else:
 	APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-path_to_ui = os.path.join(APP_DIR, "ui", "dialog.ui")
+path_to_ui = os.path.join(APP_DIR, "ui", "dialog_OpenEMS_Simulation_Creator.ui")
 
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.SettingsItem.PortSettingsItem import PortSettingsItem
@@ -61,13 +62,16 @@ from utilsOpenEMS.SettingsItem.LumpedPartSettingsItem import LumpedPartSettingsI
 from utilsOpenEMS.SettingsItem.MaterialSettingsItem import MaterialSettingsItem
 from utilsOpenEMS.SettingsItem.SimulationSettingsItem import SimulationSettingsItem
 from utilsOpenEMS.SettingsItem.GridSettingsItem import GridSettingsItem
+from utilsOpenEMS.SettingsItem.BoundaryConditionSettingsItem import BoundaryConditionSettingsItem
 from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
 from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator import OctaveScriptLinesGenerator
 from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator import PythonScriptLinesGenerator
 
-from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
-from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator2 import PythonScriptLinesGenerator2	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.OctaveScriptLinesGenerator2 import OctaveScriptLinesGenerator2					#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator2_openems import PythonScriptLinesGenerator2_openems	#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator3_emerge import PythonScriptLinesGenerator3_emerge		#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
+from utilsOpenEMS.ScriptLinesGenerator.PythonScriptLinesGenerator4_palace import PythonScriptLinesGenerator4_palace		#EXPERIMENTAL JUST FOR DEBUGGING TILL MOVE TO RELEASE
 
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
@@ -84,6 +88,8 @@ from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 #
 class ExportOpenEMSDialog(QtCore.QObject):
 
+	_constantWindowTitle: str = "OpenEMS Simulation Creator"
+
 	def finished(self):
 		"""
 		Finish observing CAD signals for add/remove/rename.
@@ -99,6 +105,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.KiCADImportTool.close()
 				del self.KiCADImportTool
 				print("Kicad Import Tool closed")
+
+			#if material constants catalog is opened close it
+			if hasattr(self, "MaterialConstantsCatalog"):
+				self.MaterialConstantsCatalog.close()
+				del self.MaterialConstantsCatalog
+				print("Material Constants Catalog closed")
 
 		elif self.cadInterfaceType == "Blender":
 			print(f"Thread killed.")
@@ -154,7 +166,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# EXPERIMENTAL using settings to short code and move auxiliary logic for diferent sutff into settings classes
 		# to be able do in python code generatr same stuff as in octave
 		self.octaveScriptGenerator = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
-		self.pythonScriptGenerator = PythonScriptLinesGenerator2(self.form, statusBar = self.statusBar)
+		self.pythonScriptGenerator = PythonScriptLinesGenerator2_openems(self.form, statusBar = self.statusBar)
 
 		self.scriptGenerator = self.octaveScriptGenerator													#variable which store current script generator
 		#self.scriptGenerator2 = OctaveScriptLinesGenerator2(self.form, statusBar=self.statusBar)
@@ -197,13 +209,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.initLeftColumnTopLevelItems()
 		self.form.objectAssignmentLeftTreeWidget.itemDoubleClicked.connect(self.objectAssignmentLeftTreeWidgetItemDoubleClicked)	
-		
+		self.form.objectAssignmentLeftTreeWidget.itemSelectionChanged.connect(self.objectAssignmentLeftTreeWidgetItemSelectionChanged)
+
 		#########################################################################################################
 		#	RIGHT COLUMN - Simulation Object Assignment
 		#########################################################################################################
 		
 		self.form.objectAssignmentRightTreeWidget.itemSelectionChanged.connect(self.objectAssignmentRightTreeWidgetItemSelectionChanged)
-		
+
 		self.form.objectAssignmentRightTreeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
 		self.form.objectAssignmentRightTreeWidget.customContextMenuRequested.connect(self.objectAssignmentRightTreeWidgetContextClicked)
 		self.form.objectAssignmentRightTreeWidget.itemDoubleClicked.connect(self.objectAssignmentRightTreeWidgetItemDoubleClicked)
@@ -242,10 +255,16 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.probeSettingsUpdateButton.clicked.connect(self.probeSettingsUpdateButtonClicked)
 		self.guiSignals.probesChanged.connect(self.probesChanged)
 
+		self.form.boundaryConditionSettingsAddButton.clicked.connect(self.boundaryConditionSettingsAddButtonClicked)
+		self.form.boundaryConditionSettingsRemoveButton.clicked.connect(self.boundaryConditionSettingsRemoveButtonClicked)
+		self.form.boundaryConditionSettingsUpdateButton.clicked.connect(self.boundaryConditionSettingsUpdateButtonClicked)
+		self.guiSignals.boundaryConditionChanged.connect(self.boundaryConditionChanged)
+
 		#
 		# Handle function for grid radio buttons click
 		#
 		self.form.userDefinedRadioButton.clicked.connect(self.userDefinedRadioButtonClicked)
+		self.form.femGridUserDefinedCheckbox.clicked.connect(self.userDefinedRadioButtonClicked)
 		self.form.fixedCountRadioButton.clicked.connect(self.fixedCountRadioButtonClicked)
 		self.form.fixedDistanceRadioButton.clicked.connect(self.fixedDistanceRadioButtonClicked)
 		self.form.smoothMeshRadioButton.clicked.connect(self.smoothMeshRadioButtonClicked)
@@ -279,6 +298,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.drawS11Button.clicked.connect(self.drawS11ButtonClicked)			# Clicked on "Write Draw S11 Script"
 		self.form.drawS21Button.clicked.connect(self.drawS21ButtonClicked)			# Clicked on "Write Draw S21 Script"
 		self.form.writeNf2ffButton.clicked.connect(self.writeNf2ffButtonClicked)	# Clicked on "Write NF2FF"
+		self.form.writeNf2ffEmergeButton.clicked.connect(self.writeNf2ffEmergeButtonClicked)				# Clicked on "Write NF2FF" for EMerge
+		self.form.writeFieldScriptEmergeButton.clicked.connect(self.writeFieldScriptEmergeButtonClicked)	# Clicked on "Write Field Display Script" for EMerge
+		self.form.writeNf2ffPalaceButton.clicked.connect(self.writeNf2ffPalaceButtonClicked)				# Clicked on "Write NF2FF" for Palace
 
 		#
 		# GRID
@@ -344,6 +366,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.portSettingsTreeView.currentItemChanged.connect(self.portTreeWidgetItemChanged)
 		self.form.lumpedPartTreeView.currentItemChanged.connect(self.lumpedPartTreeWidgetItemChanged)	
 		self.form.probeSettingsTreeView.currentItemChanged.connect(self.probeTreeWidgetItemChanged)
+		self.form.boundaryConditionSettingsTreeView.currentItemChanged.connect(self.boundaryConditionTreeWidgetItemChanged)
+
+		#
+		# EXCITATION tab settings event handlers
+		#
 
 		#
 		# PORT tab settings events handlers
@@ -356,6 +383,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.striplinePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 		self.form.curvePortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
+		self.form.modalPortRadioButton.toggled.connect(self.portSettingsTypeChoosed)
 
 		self.form.microstripPortDirection.activated.connect(self.microstripPortDirectionOnChange)
 		self.form.striplinePortDirection.activated.connect(self.striplinePortDirectionOnChange)
@@ -416,6 +444,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			[element.setEnabled(False) for element in [self.form.genParamMinGridSpacingX, self.form.genParamMinGridSpacingY, self.form.genParamMinGridSpacingZ]]
 		)
 
+		################################################################################################################
+		#	BOUNDARY CONDITIONS TAB
+		################################################################################################################
+		#use click event
+		self.form.boundaryConditionTypeOpenEMS_UserDefined.clicked.connect(self.boundaryConditionUserDefinedRadioButtonClicked)
+		self.form.boundaryConditionTypeUserDefinedRadio.clicked.connect(self.boundaryConditionUserDefinedRadioButtonClicked)
+
+		#userDefined radio toggled, this is used when leaved
+		self.form.boundaryConditionTypeOpenEMS_UserDefined.toggled.connect(self.boundaryConditionUserDefinedRadioButtonClicked)
+		self.form.boundaryConditionTypeUserDefinedRadio.toggled.connect(self.boundaryConditionUserDefinedRadioButtonClicked)
+
 		####################################################################################################
 		# GUI SAVE/LOAD from file
 		####################################################################################################
@@ -439,6 +478,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#	KiCAD Importer Tool
 		#
 		self.form.KiCADImportButton.clicked.connect(self.KiCADImportButtonClicked)
+
+		#
+		#	Material Constants Catalog
+		#
+		self.form.MaterialConstantsCatalogButton.clicked.connect(self.MaterialConstantsCatalogButtonClicked)
 
 		self.cadInterfaceType = APP_CONTEXT
 		print("Creating document handlers")
@@ -501,29 +545,301 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.guiSignals.portRenamed.connect(self.portRenamed)
 		self.guiSignals.lumpedPartRenamed.connect(self.lumpedPartRenamed)
 		self.guiSignals.probeRenamed.connect(self.probeRenamed)
+		self.guiSignals.boundaryConditionRenamed.connect(self.boundaryConditionRenamed)
+
+		#
+		#	Modify UI based on solver type
+		#		- this UI was originaly developed for openEMS but now I am going to add support for EMerge solver
+		#		- emerge have just python interface, it's FEM so different grid definition is used therefore some UI needs to be disabled to not confues user
+		#
+		self.form.comboBox_solverType.currentIndexChanged.connect(self.updateUiBasedOnSolverType)
+		self.form.radioButton_octaveType.clicked.connect(self.updateUiBasedOnSolverType)
+		self.form.radioButton_pythonType.clicked.connect(self.updateUiBasedOnSolverType)
+		QTimer.singleShot(0, self.updateUiBasedOnSolverType)	#update gui based on solver type after start
 
 		print(f"----> init finished")
+
+	def updateUiBasedOnSolverType(self):
+		solverTypeStr = self.form.comboBox_solverType.currentText()
+
+		#
+		#	First update simulation output directory
+		#
+		if self.simulationOutputDir:
+			self.simulationOutputDir = re.sub(
+				r'_[^_]+_simulation$',
+				f'_{self.getSolverType()}_simulation',
+				self.simulationOutputDir
+			)
+
+		#
+		#	Update UI - openEMS only part
+		#
+		if (solverTypeStr.lower() == "openems"):
+			self.form.generateOpenEMSScriptButton.setText("Generate OpenEMS Files")
+			self.form.radioButton_octaveType.setEnabled(True)
+			self.form.groupBox_gridTab_coordinateType.setEnabled(True)
+
+			self.form.gridTab_gridSettings_emerge.setEnabled(False)
+			self.form.gridTab_gridSettings_openems.setEnabled(True)
+			self.form.tabWidget_gridTab_gridSettings.setCurrentIndex(0)
+
+			if (self.form.materialUserDefinedRadioButton.isChecked()):
+				self.form.materialKappaNumberInput.setEnabled(True)
+				self.form.materialTanDeltaNumberInput.setEnabled(False)
+
+			self.form.materialConductingSheetPermeability.setEnabled(False)
+
+			self.form.lumpedPortDirectionCustomGroupBox.setEnabled(False)
+
+			self.form.simulationParamsTab_tabWidget.setCurrentIndex(0)
+			self.form.simulationParamsTab_tabWidget_openEMSTab.setEnabled(True)
+			self.form.simulationParamsTab_tabWidget_emergeTab.setEnabled(False)
+			self.form.simulationParamsTab_tabWidget_palaceTab.setEnabled(False)
+
+			#disable main BoundaryConditions tab, not applicable for FDTD simulation in openEMS
+			self.form.boundaryConditionTab.setEnabled(False)
+
+			self.pythonScriptGenerator = PythonScriptLinesGenerator2_openems(self.form, statusBar = self.statusBar)
+
+			#
+			# Boundary conditions in right tree widget:
+			#	- palace, emerge - support them, it's their main way how they are working
+			#	- openems - has limited support for localized MUR boundaries but just for python code
+			#		- python - enabled
+			#		- octave/matlab - disabled
+			#
+			if self.form.radioButton_pythonType.isChecked():
+				# self.guiHelpers.displayMessage("openEMS --> python interface")
+
+				self.form.boundaryConditionTab.setEnabled(True)
+
+				self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "BoundaryCondition", True)
+				self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentPriorityTreeView, "BoundaryCondition", True)
+				boundaryConditionTabIndex = self.form.openEMSTab.indexOf(self.form.boundaryConditionTab)
+				self.form.openEMSTab.setTabText(boundaryConditionTabIndex, "BoundaryCondition")
+
+				self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(1)
+
+				self.form.boundaryConditionsTab_openemsTab.setEnabled(True)
+				self.form.boundaryConditionsTab_femTab.setEnabled(False)
+
+			else:
+				# self.guiHelpers.displayMessage("openEMS --> octave interface")
+
+				self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "BoundaryCondition", False)
+				self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentPriorityTreeView, "BoundaryCondition", False)
+				boundaryConditionTabIndex = self.form.openEMSTab.indexOf(self.form.boundaryConditionTab)
+				self.form.openEMSTab.setTabText(boundaryConditionTabIndex, "")
+
+				self.form.boundaryConditionsTab_openemsTab.setEnabled(False)
+				self.form.boundaryConditionsTab_femTab.setEnabled(False)
+
+			#
+			# Display probe settings tab, this is applicable tab just for openEMS
+			#
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "Probe", True)
+			probeTabIndex = self.form.openEMSTab.indexOf(self.form.probeSettingsTab)
+			self.form.openEMSTab.setTabText(probeTabIndex, "Probe Settings")
+			self.form.probeSettingsTab.setEnabled(True)
+
+			#
+			# Display lumped part settings tab, this is applicable tab just for openEMS and palace
+			#
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "Lumped Part", True)
+			lumpedPartTabIndex = self.form.openEMSTab.indexOf(self.form.lumpedPartSettingsTab)
+			self.form.openEMSTab.setTabText(lumpedPartTabIndex, "Lumped Part")
+			self.form.lumpedPartSettingsTab.setEnabled(True)
+			#
+			# Display boundary conditions in right tree widget, applicable for FEM EMerge only
+			#
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "LumpedPart", True)
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentPriorityTreeView, "LumpedPart", True)
+
+			# post-processing tab nf2ff tab set
+			self.form.nf2ffProcessingTab.setCurrentIndex(0)
+			self.form.nf2ffProcessingTab_openemsTab.setEnabled(True)
+			self.form.nf2ffProcessingTab_emergeTab.setEnabled(False)
+
+			#
+			#	PortSettings Tab - enable all port types for openEMS
+			#
+			[radio.setEnabled(True) for radio in self.form.portSettingsTab_portTypeGroup.findChildren(QtWidgets.QRadioButton)]
+			[radio.setEnabled(False) for radio in self.form.portSettingsTab_portTypeGroup.findChildren(QtWidgets.QRadioButton) if radio.objectName() == "modalPortRadioButton"]
+
+			#
+			# EXCITATION TAB - excitation subtab enable/disable
+			#
+			self.form.excitationSettingsTab_tabWidget_emerge.setEnabled(False)
+			self.form.excitationSettingsTab_tabWidget_openems.setEnabled(True)
+			self.form.excitationSettingsTab_tabWidget.setCurrentIndex(0)
+
+			#
+			# Call method to update script generator for python or ocatve based on radio button
+			#
+			self.radioButtonOutputScriptsTypeClicked()
+
+		elif (solverTypeStr.lower() in ["emerge", "palace"]):
+
+			#
+			#	EMerge + Palace COMMON PART
+			#
+
+			tempSolverType = solverTypeStr.lower()
+
+			if tempSolverType == "emerge":
+				self.form.generateOpenEMSScriptButton.setText("Generate EMerge Files")
+			elif tempSolverType == "palace":
+				self.form.generateOpenEMSScriptButton.setText("Generate Palace Files")
+
+			self.form.radioButton_octaveType.setEnabled(False)
+			self.form.radioButton_pythonType.setChecked(True)
+			self.form.groupBox_gridTab_coordinateType.setEnabled(False)
+
+			self.form.gridTab_gridSettings_emerge.setEnabled(True)
+			self.form.gridTab_gridSettings_openems.setEnabled(False)
+			self.form.tabWidget_gridTab_gridSettings.setCurrentIndex(1)
+
+			if (self.form.materialUserDefinedRadioButton.isChecked()):
+				self.form.materialKappaNumberInput.setEnabled(False)
+				self.form.materialTanDeltaNumberInput.setEnabled(True)
+
+			if tempSolverType == "emerge":
+				self.form.materialConductingSheetPermeability.setEnabled(False)
+			elif tempSolverType == "palace" and self.form.materialConductingSheetRadioButton.isChecked():
+				self.form.materialConductingSheetPermeability.setEnabled(True)
+
+			self.form.lumpedPortDirectionCustomGroupBox.setEnabled(True)
+
+			#
+			# EXCITATION TAB - excitation subtab enable/disable
+			#
+			self.form.excitationSettingsTab_tabWidget_emerge.setEnabled(True)
+			self.form.excitationSettingsTab_tabWidget_openems.setEnabled(False)
+			self.form.excitationSettingsTab_tabWidget.setCurrentIndex(1)
+
+			#
+			# SIMULATION TAB
+			#
+			self.form.simulationParamsTab_tabWidget_openEMSTab.setEnabled(False)
+			self.form.simulationParamsTab_tabWidget_emergeTab.setEnabled(tempSolverType == "emerge")
+			self.form.simulationParamsTab_tabWidget_palaceTab.setEnabled(tempSolverType == "palace")
+			if tempSolverType == "emerge":
+				self.form.simulationParamsTab_tabWidget.setCurrentIndex(1)
+			elif tempSolverType == "palace":
+				self.form.simulationParamsTab_tabWidget.setCurrentIndex(2)
+
+			if tempSolverType == "emerge":
+				self.pythonScriptGenerator = PythonScriptLinesGenerator3_emerge(self.form, statusBar=self.statusBar)
+			elif tempSolverType == "palace":
+				self.pythonScriptGenerator = PythonScriptLinesGenerator4_palace(self.form, statusBar=self.statusBar)
+
+			#
+			# Display boundary conditions in right tree widget, applicable for FEM EMerge only
+			#
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "BoundaryCondition", True)
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentPriorityTreeView, "BoundaryCondition", True)
+			boundaryConditionTabIndex = self.form.openEMSTab.indexOf(self.form.boundaryConditionTab)
+			self.form.openEMSTab.setTabText(boundaryConditionTabIndex, "Boundary Conditions")
+			self.form.boundaryConditionTab.setEnabled(True)		# enable main BoundaryConditions tab, just for FEM simulations
+
+			#change item to update items since tab was disabled
+			if self.form.boundaryConditionSettingsTreeView.topLevelItemCount() > 0:
+				first_item = self.form.boundaryConditionSettingsTreeView.topLevelItem(0)
+				self.form.boundaryConditionSettingsTreeView.currentItemChanged.emit(first_item, first_item)	#emit signal that item changed
+
+			#
+			#	Boundary condition tab enable for palace and emerge
+			#
+			self.form.boundaryConditionsTab_openemsTab.setEnabled(False)
+			self.form.boundaryConditionsTab_femTab.setEnabled(True)
+
+			#
+			# Hide probe settings tab, not applicable for EMerge
+			#
+			self.guiHelpers.setVisibleTreeWidgetItem(self.form.objectAssignmentRightTreeWidget, "Probe", False)
+			probeTabIndex = self.form.openEMSTab.indexOf(self.form.probeSettingsTab)
+			self.form.openEMSTab.setTabText(probeTabIndex, "")
+			self.form.probeSettingsTab.setEnabled(False)
+
+			if tempSolverType == "emerge":
+
+				#
+				# Excitation tab, disable gaussian impulse, that is available just in palace
+				#
+				self.form.femSinusodialExcitationRadioButton.click()
+
+				self.form.femGaussianExcitationRadioButton.setEnabled(False)
+				self.form.femGaussianExcitationF0.setEnabled(False)
+				self.form.femGaussianExcitationFc.setEnabled(False)
+				self.form.femGaussianExcitationTimeOversampling.setEnabled(False)
+
+			elif tempSolverType == "palace":
+
+				#
+				# Excitation tab, enable gaussian impulse, that is available just in palace
+				#
+				self.form.femGaussianExcitationRadioButton.setEnabled(True)
+				self.form.femGaussianExcitationF0.setEnabled(True)
+				self.form.femGaussianExcitationFc.setEnabled(True)
+				self.form.femGaussianExcitationTimeOversampling.setEnabled(True)
+
+			# post-processing tab nf2ff tab set
+			self.form.nf2ffProcessingTab.setCurrentIndex(1)
+			self.form.nf2ffProcessingTab_openemsTab.setEnabled(False)
+			self.form.nf2ffProcessingTab_emergeTab.setEnabled(True)
+
+			#
+			#	PortSettings Tab - enable port types for EMerge
+			#		- enable just lumped port as it's now only one implemented in code generator (Mar2026)
+			#		+ enabled UI for rectangular waveguide, coax port and added modal port for EMerge
+			#
+			[radio.setEnabled(radio.objectName() in ["lumpedPortRadioButton", "userDefinedPortRadioButton"]) for radio in self.form.portSettingsTab_portTypeGroup.findChildren(QtWidgets.QRadioButton)]
+			[radio.click() for radio in self.form.portSettingsTab_portTypeGroup.findChildren(QtWidgets.QRadioButton) if radio.objectName() == "lumpedPortRadioButton"]
+
+			if tempSolverType == "emerge":
+				[radio.setEnabled(radio.objectName() in ["lumpedPortRadioButton", "coaxialPortRadioButton", "rectangularWaveguidePortRadioButton", "modalPortRadioButton", "userDefinedPortRadioButton"]) for radio in self.form.portSettingsTab_portTypeGroup.findChildren(QtWidgets.QRadioButton)]
+
+			#
+			#	Use python script generator for emerge and palace as they accept only python scripts
+			#
+			self.scriptGenerator = self.pythonScriptGenerator
+
+		else:
+			pass
 
 	def KiCADImportButtonClicked(self):
 		# if KiCAD import tool is not created create new one
 		if not hasattr(self, "KiCADImportTool"):
-			self.KiCADImportTool = KiCADImporterToolDialog.KiCADImporterToolDialog()
+			self.KiCADImportTool = KiCADImporterToolDialog.KiCADImporterToolDialog(parentForm=self.form)
 
 		self.KiCADImportTool.show()
+
+	def MaterialConstantsCatalogButtonClicked(self):
+		# if Material Constants Catalog is not created create new one
+		if not hasattr(self, "MaterialConstantsCatalog") or self.MaterialConstantsCatalog is None:
+			self.MaterialConstantsCatalog = MaterialConstantsCatalogDialog.MaterialConstantsCatalogDialog(self.form)
+
+		self.MaterialConstantsCatalog.show()
 
 	def openFreeCADWebGuiHelp(self):
 		"""
 		Open index help html webpage inside freecad window.
 		:return:
 		"""
-		WebGui.openBrowser(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html")
+		#deprecated in new FreeCAD 1.0.2
+		#WebGui.openBrowser(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html")
+
+		# webbrowser.open(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html")
+		webbrowser.open(os.path.join(os.path.dirname(__file__), 'documentation', 'help', 'index.html'))
 
 	def openBlenderWebGuiHelp(self):
 		"""
 		Open index help html webpage in OS webbrowser.
 		:return:
 		"""
-		webbrowser.open(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html", new=2)
+		# webbrowser.open(f"{os.path.dirname(__file__)}\\documentation\\help\\index.html", new=2)
+		webbrowser.open(os.path.join(os.path.dirname(__file__), 'documentation', 'help', 'index.html'))
 
 	def freecadObjectCreated(self, obj):
 		print("freecadObjectCreated :{} ('{}')".format(obj.FullName, obj.Label))
@@ -537,9 +853,6 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		#property label was changes, object was renamed in freecad
 		if prop == 'Label':
-			# The label (displayed name) of an object has changed.
-			# (TODO) Update all mentions in the ObjectAssigments panel.
-
 			#
 			#	Rename items in right column where objects are assigned to categories
 			#
@@ -565,11 +878,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				itemToRename.setText(0, newLabel)
 
 			#
-			#	TinitLeftCOlumnToLevelItems refill internalObjectNameLabelList, so when working in bulk this reinit must be supressed till last item
+			#	initLeftColumnToLevelItems refill internalObjectNameLabelList, so when working in bulk this reinit must be supressed till last item
 			#
 			if enableReInitLeftColumn:
 				filterStr = self.form.objectAssignmentFilterLeft.text()
 				self.initLeftColumnTopLevelItems(filterStr)
+
+			#
+			#	Update combobox with port and boundary names
+			#
+			self.portsChanged("update")
+			self.boundaryConditionChanged("update")
 
 	def freecadBeforeObjectDeleted(self,obj):
 		# event is generated before object is being removed, so observing instances have to 
@@ -611,6 +930,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		# remove object label from internal list
 		del self.internalObjectNameLabelList[obj.Name]
+
+		#
+		#	Update combobox with port and boundary names
+		#
+		self.portsChanged("update")
+		self.boundaryConditionChanged("update")
 
 	def blenderWindowActivatedHandler(self):
 		"""
@@ -846,13 +1171,29 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			item.setText(0, itemNewName)
 
 	def objectAssignmentRightTreeWidgetItemSelectionChanged(self):
-		currItemLabel = self.form.objectAssignmentRightTreeWidget.currentItem().text(0)
-		print(currItemLabel)
+		currItem = self.form.objectAssignmentRightTreeWidget.currentItem()
+		currItemLabel = None
+
+		#check if there is some current item due this function is trigered also during deleting all items in right assignment widget and then currItem is None
+		if currItem:
+			currItemLabel = currItem.text(0)
+
 		if (currItemLabel):
 			self.cadHelpers.clearSelection()
 			self.cadHelpers.selectObjectByLabel(currItemLabel)
 
-			
+	def objectAssignmentLeftTreeWidgetItemSelectionChanged(self):
+		currItem = self.form.objectAssignmentLeftTreeWidget.currentItem()
+		currItemLabel = None
+
+		#check if there is some current item due this function is trigered also during deleting all items in right assignment widget and then currItem is None
+		if currItem:
+			currItemLabel = currItem.text(0)
+
+		if (currItemLabel):
+			self.cadHelpers.clearSelection()
+			self.cadHelpers.selectObjectByLabel(currItemLabel)
+
 	def objectAssignmentRightTreeWidgetContextClicked(self, event):
 		self.objAssignCtxMenu = QtWidgets.QMenu(self.form.objectAssignmentRightTreeWidget)
 		action_expand   = self.objAssignCtxMenu.addAction("Expand all")
@@ -1038,7 +1379,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
-	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
+				#collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				zAuxGridCoordList = []
 				if (currSetting.zenabled):
 					if float(currSetting.getXYZ(refUnit)['z']) != 0:
@@ -1118,7 +1459,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	
 			elif (currSetting.getType() == 'Fixed Count'):
 	
-	            #collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
+				#collecting Z coordinates where grid will be drawn, grid will be drawn in XY plane
 				xAuxGridCoordList = []
 				if (currSetting.xenabled):
 					if float(currSetting.getXYZ(refUnit)['x']) != 0:
@@ -1299,23 +1640,40 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		if (self.form.materialUserDefinedRadioButton.isChecked()):
 			self.form.materialEpsilonNumberInput.setEnabled(True)
 			self.form.materialMueNumberInput.setEnabled(True)
-			self.form.materialKappaNumberInput.setEnabled(True)
 			self.form.materialSigmaNumberInput.setEnabled(True)
+
+			if (self.form.comboBox_solverType.currentText().lower().find("openems") > -1):
+				self.form.materialKappaNumberInput.setEnabled(True)
+				self.form.materialTanDeltaNumberInput.setEnabled(False)
+			if (self.form.comboBox_solverType.currentText().lower().find("emerge") > -1 or self.form.comboBox_solverType.currentText().lower().find("palace") > -1):
+				self.form.materialKappaNumberInput.setEnabled(False)
+				self.form.materialTanDeltaNumberInput.setEnabled(True)
 		else:
 			self.form.materialEpsilonNumberInput.setEnabled(False)
 			self.form.materialMueNumberInput.setEnabled(False)
-			self.form.materialKappaNumberInput.setEnabled(False)
 			self.form.materialSigmaNumberInput.setEnabled(False)
+			self.form.materialKappaNumberInput.setEnabled(False)
+			self.form.materialTanDeltaNumberInput.setEnabled(False)
 
 	def materialConductingSheetRadioButtonToggled(self):
 		if (self.form.materialConductingSheetRadioButton.isChecked()):
 			self.form.materialConductingSheetThickness.setEnabled(True)
 			self.form.materialConductingSheetUnits.setEnabled(True)
 			self.form.materialConductingSheetConductivity.setEnabled(True)
+
+			#
+			#	conducting sheet permeability parameter is just for palace solver
+			#
+			if self.form.comboBox_solverType.currentText().lower().find("palace") > -1:
+				self.form.materialConductingSheetPermeability.setEnabled(True)
+			else:
+				self.form.materialConductingSheetPermeability.setEnabled(False)
+
 		else:
 			self.form.materialConductingSheetThickness.setEnabled(False)
 			self.form.materialConductingSheetUnits.setEnabled(False)
 			self.form.materialConductingSheetConductivity.setEnabled(False)
+			self.form.materialConductingSheetPermeability.setEnabled(False)
 
 	def applyObjectAssignmentFilter(self):
 		print("Filter left column")
@@ -1385,6 +1743,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			probeObjectIsRemoved = True
 			self.guiSignals.probesChanged.emit("remove")
 
+		boundaryObjectIsRemoved = False
+		if (rightItem.parent().parent().text(0) == "BoundaryCondition"):
+			boundaryObjectIsRemoved = True
+			self.guiSignals.boundaryConditionChanged.emit("remove")
+
 		#
 		#	REMOVE ITEM FROM OpenEMS Simulation assignments tree view
 		#
@@ -1395,6 +1758,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiSignals.portsChanged.emit("remove")
 		if (probeObjectIsRemoved):
 			self.guiSignals.probesChanged.emit("remove")
+		if (boundaryObjectIsRemoved):
+			self.guiSignals.boundaryConditionChanged.emit("remove")
 
 		return
 
@@ -1426,18 +1791,32 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				isObjAlreadyInCategory = False
 				itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(leftItem.text(0), QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
 				for item in itemWithSameName:
-					#there must be check if item has parent, if pareent is None it means it's category name and categories ALWAYS HAVE SUBCATEGORIES
+					#there must be check if item has parent, if parent is None it means it's category name and categories ALWAYS HAVE SUBCATEGORIES
 					#case scenario:
 					#	- item freecad obj is named excitation
 					#	- there is excitation category
-					#	- in itemWithSameName Excitation category is inclucded so next condition filter it away
+					#	- in itemWithSameName Excitation category is included so next condition filter it away
 					#
 					if (item.parent() != None and item.parent() == rightItem):
 						print(f"Found parent {item.parent().text(0)} item {item.text(0)}")
 						isObjAlreadyInCategory = True
 
+				#
+				#	Check if object already exists in same category
+				#		- same object can't be assigned twice in same material group
+				#
 				if (isObjAlreadyInCategory):
 					self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in category {rightItem.text(0)}")
+					continue
+
+				#
+				#	Based on solver check if object is already assigned in other groups which can cause duplicity and therefore error.
+				#		- for palace lumped part, boundaries, ports and material conducting sheets are all using boundary condition inside solver therefore
+				#		  object can be only in one of these categories at same time
+				#
+				conflictingGroupList = self.checkTreeWidgetForDuplicityBasedOnSolverTypeOnAddingItem(leftItem.text(0), rightItem.parent().text(0), rightItem.text(0))
+				if len(conflictingGroupList) > 0:
+					self.guiHelpers.displayMessage(f"Object {leftItem.text(0)} already exists in some conflicting categories:\n{conflictingGroupList}")
 					continue
 
 				#
@@ -1511,6 +1890,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 					self.guiSignals.portsChanged.emit("add")
 				elif (reResult.group(1).lower() == 'probe'):
 					self.guiSignals.probesChanged.emit("add")
+				elif (reResult.group(1).lower() == 'boundarycondition'):
+					self.guiSignals.boundaryConditionChanged.emit("add")
 
 			#
 			# If grid settings is not set to be top priority lines, therefore it's disabled (because then it's not take into account when generate mesh lines and it's overlapping something)
@@ -1526,43 +1907,55 @@ class ExportOpenEMSDialog(QtCore.QObject):
 	#	PRIORITY OBJECT LIST move item UP
 	#
 	def moveupPriorityButtonClicked(self):
-		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
-		if currItemIndex > 0:
-			takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(currItemIndex)
-			self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(currItemIndex-1, takenItem)
-			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
+		selectedItems = self.form.objectAssignmentPriorityTreeView.selectedItems()
+		if selectedItems != None:
+			selectedItemTopIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(selectedItems[0])
+			selectedItemBottomIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(selectedItems[-1])
+
+			if selectedItemTopIndex > 0:
+				takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(selectedItemTopIndex - 1)
+				self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(selectedItemBottomIndex, takenItem)
 
 	#
 	#	PRIORITY OBJECT LIST move item DOWN
 	#
 	def movedownPriorityButtonClicked(self):
-		currItemIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(self.form.objectAssignmentPriorityTreeView.currentItem())
-		countAllItems = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
-		if currItemIndex < countAllItems-1:
-			takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(currItemIndex)
-			self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
-			self.form.objectAssignmentPriorityTreeView.setCurrentItem(takenItem)
+		selectedItems = self.form.objectAssignmentPriorityTreeView.selectedItems()
+		if selectedItems != None:
+			selectedItemTopIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(selectedItems[0])
+			selectedItemBottomIndex = self.form.objectAssignmentPriorityTreeView.indexOfTopLevelItem(selectedItems[-1])
+			countAllItems = self.form.objectAssignmentPriorityTreeView.topLevelItemCount()
+
+			if selectedItemBottomIndex < countAllItems-1:
+				takenItem = self.form.objectAssignmentPriorityTreeView.takeTopLevelItem(selectedItemBottomIndex+1)
+				self.form.objectAssignmentPriorityTreeView.insertTopLevelItem(selectedItemTopIndex, takenItem)
 
 	#
 	#	PRIORITY MESH LIST move item UP
 	#
 	def moveupPriorityMeshButtonClicked(self):
-		currItemIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(self.form.meshPriorityTreeView.currentItem())
-		if currItemIndex > 0:
-			takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(currItemIndex)
-			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex-1, takenItem)
-			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
+		selectedItems = self.form.meshPriorityTreeView.selectedItems()
+		if selectedItems != None:
+			selectedItemTopIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(selectedItems[0])
+			selectedItemBottomIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(selectedItems[-1])
+
+			if selectedItemTopIndex > 0:
+				takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(selectedItemTopIndex-1)
+				self.form.meshPriorityTreeView.insertTopLevelItem(selectedItemBottomIndex, takenItem)
 
 	#
 	#	PRIORITY MESH LIST move item DOWN
 	#
 	def movedownPriorityMeshButtonClicked(self):
-		currItemIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(self.form.meshPriorityTreeView.currentItem())
-		countAllItems = self.form.meshPriorityTreeView.topLevelItemCount()
-		if currItemIndex < countAllItems-1:
-			takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(currItemIndex)
-			self.form.meshPriorityTreeView.insertTopLevelItem(currItemIndex+1, takenItem)
-			self.form.meshPriorityTreeView.setCurrentItem(takenItem)
+		selectedItems = self.form.meshPriorityTreeView.selectedItems()
+		if selectedItems != None:
+			selectedItemTopIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(selectedItems[0])
+			selectedItemBottomIndex = self.form.meshPriorityTreeView.indexOfTopLevelItem(selectedItems[-1])
+			countAllItems = self.form.meshPriorityTreeView.topLevelItemCount()
+
+			if selectedItemBottomIndex < countAllItems-1:
+				takenItem = self.form.meshPriorityTreeView.takeTopLevelItem(selectedItemBottomIndex+1)
+				self.form.meshPriorityTreeView.insertTopLevelItem(selectedItemTopIndex, takenItem)
 
 	def checkTreeWidgetForDuplicityName(self, refTreeWidget, itemName, ignoreSelectedItem=True):
 		isDuplicityName = False
@@ -1574,6 +1967,222 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.guiHelpers.displayMessage("Please change name, item with this name already exists.", True)
 			iterator += 1
 		return isDuplicityName
+
+	def searchObjectNameInAllCategoriesGroups(self, objectName: str, searchCategoriesList: list[str]) -> list[tuple[str, str]]:
+		"""
+		Search for object name occurrence in specified categories.
+		:param objectName:
+		:return: list of tuples (categoryName, groupName)
+		"""
+		occurenceList:list[tuple[str, str]] = []
+
+		# CHECK FOR DUPLICATES OF object in category where object is added
+		itemWithSameName = self.form.objectAssignmentRightTreeWidget.findItems(objectName, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive)
+		for item in itemWithSameName:
+			if (item.parent() != None and item.parent().parent() != None and item.parent().parent().text(0) in searchCategoriesList):
+				occurenceList.append((item.parent().parent().text(0), item.parent().text(0)))
+
+		return occurenceList
+
+	def checkConflictingMaterialDuplicity(self, sourceCategoryName: str, sourceGroupName: str, targetCategoryName: str, targetGroupName: str):
+		"""
+		Check whether groups are in conflict, this is for Material, since "conducting sheet" is using boundary condition and other materials are
+		not using boundary condition, they are defined on mesh in volume.
+		:param sourceCategoryName:
+		:param sourceGroupName:
+		:param targetCategoryName:
+		:param targetGroupName:
+		:return:
+		"""
+
+		if self.getSolverType().lower().find("emerge") > -1 or self.getSolverType().lower().find("palace") > -1:
+			if sourceCategoryName == "Material":
+				simulationCategoryGroup = self.guiHelpers.getMaterialGroupObjectAssignmentTreeItem(sourceGroupName)
+				conflictingMaterialGroupSettings = simulationCategoryGroup.data(0, QtCore.Qt.UserRole)
+
+				if targetCategoryName == "Material":
+					simulationCategoryGroup = self.guiHelpers.getMaterialGroupObjectAssignmentTreeItem(targetGroupName)
+					targetMaterialGroupSettings = simulationCategoryGroup.data(0, QtCore.Qt.UserRole)
+
+					#
+					#	This case adding object to material when conflicting object is already in material group but object which
+					#	is going to be added or existing object is conducting sheet and other will be normal 3D volume, this is
+					#	not conflict as material defined on volume is not using boundary condition.
+					#
+					conductingSheetMaterialGroupCount = 0
+					conductingSheetMaterialGroupCount += int(targetMaterialGroupSettings.type == "conducting sheet")
+					conductingSheetMaterialGroupCount += int(conflictingMaterialGroupSettings.type == "conducting sheet")
+					if conductingSheetMaterialGroupCount == 1:
+						return True
+				else:
+					#
+					#	I duplicate material object is not type of conducting sheet it means it's not error as normal material is defined
+					#	on volume and is not using boundary conditions.
+					#
+					if conflictingMaterialGroupSettings.type != "conducting sheet":
+						return True
+			else:
+				#
+				#	Object is going to be moved to material group. If target material group is not using boundary conditions
+				#	in solver then there is no conflict.
+				#
+				if targetCategoryName == "Material":
+					simulationCategoryGroup = self.guiHelpers.getMaterialGroupObjectAssignmentTreeItem(targetGroupName)
+					targetMaterialGroupSettings = simulationCategoryGroup.data(0, QtCore.Qt.UserRole)
+					if targetMaterialGroupSettings.type != "conducting sheet":
+						return True
+
+		return False
+
+	def checkTreeWidgetForDuplicityBasedOnSolverTypeOnAddingItem(self, objectName: str, targetCategoryName: str, targetGroupName: str) -> list[tuple[str, str]]:
+		"""
+		Check if object is already assigned to some category and if added to category will cause error due duplicity. For FEM solvers (EMerge, Palace)
+		more categories are generated as boundaries and boundary can have just one definition i.e. same object cannot be used for port and boundary condition
+		category.
+		:return:
+		"""
+		conflictingGroupList: list[tuple[str, str]] = []
+
+		#
+		#	No check for conflicts for Grid category
+		#
+		if targetCategoryName == "Grid":
+			return []
+
+		if self.getSolverType().lower().find("openems") > -1:
+			# No check for conflicting categories for openEMS as for this there is priority system and object with higher priority
+			# defines final result which properties are assigned to nodes after meshing.
+			pass
+
+		elif self.getSolverType().lower().find("palace") > -1:
+			noDuplicateCategoriesList = ["LumpedPart", "Port", "BoundaryCondition", "Material"]
+			conflictingGroupList = self.searchObjectNameInAllCategoriesGroups(objectName, noDuplicateCategoriesList)
+
+		elif self.getSolverType().lower().find("emerge") > -1:
+			noDuplicateCategoriesList = ["Port", "BoundaryCondition", "Material"]
+			conflictingGroupList = self.searchObjectNameInAllCategoriesGroups(objectName, noDuplicateCategoriesList)
+
+		#
+		#	If object found in Material it's special case since material can contains object for 3D mesh, just conducting sheet
+		#	is using palace boundary definition. In EMerge conducting sheet is also defined as boundary condition.
+		#
+		#	Normal material object don't interfere with boundary conditions.
+		#
+		removeConflictingGroupList = []
+		if self.getSolverType().lower().find("emerge") > -1 or self.getSolverType().lower().find("palace") > -1:
+			for conflictingGroup in conflictingGroupList:
+				if self.checkConflictingMaterialDuplicity(conflictingGroup[0], conflictingGroup[1], targetCategoryName, targetGroupName):
+					removeConflictingGroupList.append(conflictingGroup)
+
+			#
+			#	Remove groups from confliting groups marked to be removed.
+			#
+			for groupToRemove in removeConflictingGroupList:
+				conflictingGroupList.remove(groupToRemove)
+
+		return conflictingGroupList
+
+	def checkTreeWidgetForConflictingObjects(self) -> list[tuple[tuple[str, str, str], tuple[str, str, str]]]:
+		conflictingObjectList:list[tuple[tuple[str, str, str], tuple[str, str, str]]] = []
+		conflictingCategoriesList = []
+
+		if self.getSolverType().lower().find("emerge") > -1 or self.getSolverType().lower().find("palace") > -1:
+			if self.getSolverType().lower().find("palace") > -1:
+				conflictingCategoriesList = ["LumpedPart", "Material", "Port", "BoundaryCondition"]
+			elif self.getSolverType().lower().find("emerge") > -1:
+				conflictingCategoriesList = ["Material", "Port", "BoundaryCondition"]
+
+			#
+			#	This does basic check if object is used in multiples categories which are using solver boundary condition definitions.
+			#	Multiple boundary condition definition for same object is not allowed, one object cannot represent PEC and Absorbing
+			#	boundary condition at same time.
+			#
+			allObjectList = self.guiHelpers.getAllItemsFromAssignmentTree(excludeCategoriesList=["Grid"])
+			for objectInfo in allObjectList:
+				objectNameToFind = objectInfo[2]
+				objectOccurenciesList = self.searchObjectNameInAllCategoriesGroups(objectNameToFind, searchCategoriesList=conflictingCategoriesList)
+				for objectOccurenceInfo in objectOccurenciesList:
+					differenciesCount = 0
+					differenciesCount += int(objectInfo[0] != objectOccurenceInfo[0])
+					differenciesCount += int(objectInfo[1] != objectOccurenceInfo[1])
+					if differenciesCount > 0:
+						conflictingObjectList.append((
+							(objectInfo[0], objectInfo[1], objectNameToFind),
+							(objectOccurenceInfo[0], objectOccurenceInfo[1], objectNameToFind)
+						))
+
+			# take every even item getting unique conflicting item list
+			conflictingObjectList = conflictingObjectList[::2]
+
+			#
+			#	Evaluate if Material object are really problem, since only "conducting sheet" is using boundary condition and this
+			#	must be checked.
+			#
+			removeConflictingGroupList = []
+			for conflictingObjectPair in conflictingObjectList:
+				sourceCategoryName = conflictingObjectPair[0][0]
+				sourceGroupName = conflictingObjectPair[0][1]
+				targetCategoryName = conflictingObjectPair[1][0]
+				targetGroupName = conflictingObjectPair[1][1]
+
+				removeConflictingPairFromList = False
+				if sourceCategoryName == "Material":
+					removeConflictingPairFromList = removeConflictingPairFromList or self.checkConflictingMaterialDuplicity(sourceCategoryName, sourceGroupName, targetCategoryName, targetGroupName)
+				if targetCategoryName == "Material":
+					removeConflictingPairFromList = removeConflictingPairFromList or self.checkConflictingMaterialDuplicity(targetCategoryName, targetGroupName, sourceCategoryName, sourceGroupName)
+
+				if removeConflictingPairFromList:
+					removeConflictingGroupList.append(conflictingObjectPair)
+
+			#
+			#	Remove groups from conflicting groups marked to be removed.
+			#
+			for groupToRemove in removeConflictingGroupList:
+				conflictingObjectList.remove(groupToRemove)
+
+			pass
+		elif self.getSolverType().lower().find("openems") > -1:
+			pass
+
+		return conflictingObjectList
+
+	def checkTreeWidgetForConflictingObjects_simplified(self) -> list[tuple[tuple[str, str, str], tuple[str, str, str]]]:
+		solver = self.getSolverType().lower()
+
+		conflictingCategoriesList = (
+			["LumpedPart", "Material", "Port", "BoundaryCondition"] if "palace" in solver else
+			["Material", "Port", "BoundaryCondition"] if "emerge" in solver else
+			None
+		)
+
+		if not conflictingCategoriesList:
+			return []
+
+		allObjectList = self.guiHelpers.getAllItemsFromAssignmentTree(excludeCategoriesList=["Grid"])
+
+		# Collect conflicting pairs (take every 2nd to deduplicate mirrored pairs)
+		conflictingObjectList = [
+			((objectInfo[0], objectInfo[1], objectInfo[2]), (occ[0], occ[1], objectInfo[2]))
+			for objectInfo in allObjectList
+			for occ in
+			self.searchObjectNameInAllCategoriesGroups(objectInfo[2], searchCategoriesList=conflictingCategoriesList)
+			if objectInfo[0] != occ[0] or objectInfo[1] != occ[1]
+		][::2]
+
+		# Remove pairs where Material conflict is not a real boundary condition conflict
+		return [
+			pair for pair in conflictingObjectList
+			if not (
+					(pair[0][0] == "Material" and self.checkConflictingMaterialDuplicity(pair[0][0], pair[0][1],
+																						 pair[1][0], pair[1][1])) or
+					(pair[1][0] == "Material" and self.checkConflictingMaterialDuplicity(pair[1][0], pair[1][1],
+																						 pair[0][0], pair[0][1]))
+			)
+		]
+
+	def getSolverType(self):
+		solverType = self.form.comboBox_solverType.currentText()
+		return solverType
 
 	#
 	#	Save button clicked
@@ -1587,7 +2196,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		programname = os.path.basename(outputFile)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
 		programbase.replace(" ", "_")					#replace whitespaces to underscores, ie. "some file name 1" -> "some_file_name_1", octave has problem from gui to run files with spaces in name
-		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_openEMS_simulation"
+
+		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_{self.getSolverType()}_simulation"
+
+		#
+		# Update window title with loaded filename
+		#
+		self.form.setWindowTitle(self._constantWindowTitle + " - " + programbase)
+
 		print(f"-----> saveToFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
 
 	def loadFromFileSettingsButtonClicked(self):
@@ -1598,7 +2214,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		programname = os.path.basename(outputFile)
 		programbase, ext = os.path.splitext(programname)  # extract basename and ext from filename
-		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_openEMS_simulation"
+		self.simulationOutputDir = f"{os.path.dirname(outputFile)}/{programbase}_{self.getSolverType()}_simulation"
 		print(f"-----> loadFromFileSettingsButtonClicked, setting simulationOutputDir: {self.simulationOutputDir}")
 
 		#
@@ -1609,10 +2225,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# Inform GUI that there are some ports updated
 		self.guiSignals.portsChanged.emit("update")
 		self.guiSignals.probesChanged.emit("update")
+		self.guiSignals.boundaryConditionChanged.emit("update")
+
+		#
+		# Update UI based on FDTD solver or FEM solver type, some items could be disabled
+		#
+		self.updateUiBasedOnSolverType()
 
 		# PORT select first item
-		topItem = self.form.portSettingsTreeView.itemAt(0,0)
+		topItem = self.form.portSettingsTreeView.itemAt(1,0)
 		self.form.portSettingsTreeView.setCurrentItem(topItem)
+		self.portTreeWidgetItemChanged(topItem, topItem)
+
+		#
+		# Update window title with loaded filename
+		#
+		self.form.setWindowTitle(self._constantWindowTitle + " - " + programbase)
 
 	#
 	#	Change current scripts type generator based on radiobutton from UI
@@ -1641,6 +2269,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		objListStr = ""
 
 		if APP_CONTEXT == "FreeCAD":
+
+			#
+			#	Don't do this check if material contains just 2D objects for EMerge as it is FEM solver and for FEM it's required to have these
+			#	2D objects.
+			#
+			if self.form.comboBox_solverType.currentText().lower().startswith("emerge"):
+				return ""
+
+			#
+			#	Do check for 2D objects for openEMS solver.
+			#
 			materialCategories = self.scriptGenerator.getItemsByClassName().get("MaterialSettingsItem", None)
 			for [materialItem, currSetting] in materialCategories:
 
@@ -1682,18 +2321,72 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.saveToFileSettingsButtonClicked()
 
 		#
-		#	WARNING: Check material categories for Face objects which casue error in metal generate for openEMS for FreeCAD
+		#	WARNING: Check material categories for Face objects which cause error in metal generate for openEMS for FreeCAD
 		#
 		faceObjectsWarning = self.checkMaterialForFaceObjects()
 		if len(faceObjectsWarning) > 0:
 			self.guiHelpers.displayMessage(faceObjectsWarning, forceModal=True)
 
-		#write result .m file into subfolder named after .ini file next to simulation settings .ini file
+		#
+		#	Check object assignment for conflicting object assignments.
+		#		- this is mostly for FEM solvers (EMerge, Palace) because more categories are using boundary conditions in solver
+		#		  and multiple different boundaries for same object are not allowed
+		#
+		conflictingObjectList = self.checkTreeWidgetForConflictingObjects()
+		if len(conflictingObjectList) > 0:
+			conflictingObjectListStr = ""
+			for conflictingObjectPair in conflictingObjectList:
+				conflictingObjectListStr += f"{conflictingObjectPair[0]} &lt;---&gt; {conflictingObjectPair[1]}\n"
+			self.guiHelpers.displayMessage(f"<font color='red'><b>There are multiple conflicting object between each other, please check:</b></font><br />\n{conflictingObjectListStr}", forceModal=True)
+
+		#
+		#	Check SIMULATION PARAM tab
+		#		- this is now just for palace solver as there are some combination of problem type and solver not working together
+		#
+		if self.form.comboBox_solverType.currentText().lower().find("palace") != -1:
+			errorMsg:str = ""
+			wasErrorDetected: bool = False
+
+			problemType = self.form.simParamsSimulationTypeList_palace.currentText()
+			solverType = self.form.simParamsLinearSolverType_palace.currentText()
+			solverKSPType = self.form.simParamsLinearSolverKSPType_palace.currentText()
+
+			if problemType == "Driven":
+				if solverType != "SuperLU":
+					wasErrorDetected = True
+					errorMsg += f"For Driven problem type <font color='red'>use <b>SuperLU</b> solver type</font><br />\n"
+
+				# KSP solver type is probably not important to check
+				# if solverKSPType != "GMRES":
+				# 	wasErrorDetected = True
+				# 	errorMsg += f"For Driven problem type <font color='red'>use <b>GMRES</b> solver KSP type</font><br />\n"
+
+			if  problemType == "Transient":
+				if solverType != "AMS":
+					wasErrorDetected = True
+					errorMsg += f"For Transient problem type <font color='red'>use <b>AMS</b> solver type</font><br />\n"
+
+			if wasErrorDetected:
+				self.guiHelpers.displayMessage(errorMsg, forceModal=True)
+
+		#check excitation type for emerge
+		if self.form.comboBox_solverType.currentText().lower().find("emerge") != -1:
+			excitationCategory = self.form.objectAssignmentRightTreeWidget.findItems("Excitation", QtCore.Qt.MatchFixedString)
+			if len(excitationCategory) >= 0:
+				if (excitationCategory[0].childCount() > 0):
+					item = excitationCategory[0].child(0)
+					excitationSetting = item.data(0, QtCore.Qt.UserRole)  # At index 0 is Default Excitation.
+					if excitationSetting.getType() != "sweep":
+						self.guiHelpers.displayMessage("<font color='red'><b>Excitation type error</b>, EMerge support just sinusodial sweep excitation type!</font>")
+
+		#
+		#	Write result .m file into subfolder named after .ini file next to simulation settings .ini file
+		#
 		print(f"----> start saving file into {self.simulationOutputDir}")
 
-		self.scriptGenerator.generateOpenEMSScript(self.simulationOutputDir)
-		#self.scriptGenerator2.generateOpenEMSScript(self.simulationOutputDir + "_2nd_generator")
-		#self.scriptGenerator3.generateOpenEMSScript(self.simulationOutputDir + "_3rd_generator")
+		self.scriptGenerator.generateSimulationScript(self.simulationOutputDir)
+		#self.scriptGenerator2.generateSimulationScript(self.simulationOutputDir + "_2nd_generator")
+		#self.scriptGenerator3.generateSimulationScript(self.simulationOutputDir + "_3rd_generator")
 
 	def drawS11ButtonClicked(self):
 		portName = self.form.drawS11Port.currentText()
@@ -1754,14 +2447,36 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		# display message that script was generated
 		self.guiHelpers.displayMessage("Script to display far field generated.")
 
-	# GRID SETTINGS
-	#   _____ _____  _____ _____     _____ ______ _______ _______ _____ _   _  _____  _____ 
-	#  / ____|  __ \|_   _|  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | |  __| |__) | | | | |  | | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	# | | |_ |  _  /  | | | |  | |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	# | |__| | | \ \ _| |_| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	#  \_____|_|  \_\_____|_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+	def writeNf2ffEmergeButtonClicked(self):
+		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir)
+
+		# display message that script was generated
+		self.guiHelpers.displayMessage("Script to display far field generated.")
+
+		return
+
+	def writeFieldScriptEmergeButtonClicked(self):
+		self.scriptGenerator.writeFieldButtonClicked(self.simulationOutputDir)
+
+		# display message that script was generated
+		self.guiHelpers.displayMessage("Script to display field generated.")
+
+		return
+
+	def writeNf2ffPalaceButtonClicked(self):
+		self.scriptGenerator.writeNf2ffButtonClicked(self.simulationOutputDir)
+
+		# display message that script was generated
+		self.guiHelpers.displayMessage("Script to display far field generated.")
+
+		return
+
+	#########################################################################################################################################
 	#
+	#	GRID TAB HANDLERS, GRID SETTINGS
+	#
+	#########################################################################################################################################
+
 	def fixedCountRadioButtonClicked(self):
 		self.form.userDefinedGridLinesTextInput.setEnabled(False)
 		self.form.gridTopPriorityLinesCheckbox.setEnabled(True)
@@ -1844,19 +2559,54 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			gridItem.smoothMesh['yMaxRes'] = self.form.smoothMeshYMaxRes.value()
 			gridItem.smoothMesh['zMaxRes'] = self.form.smoothMeshZMaxRes.value()
 
-		if (self.form.userDefinedRadioButton.isChecked()):
+		if (self.form.userDefinedRadioButton.isChecked() or self.form.femGridUserDefinedCheckbox.isChecked()):
 			gridItem.type = "User Defined"
 			gridItem.userDefined['data'] = self.form.userDefinedGridLinesTextInput.toPlainText()
 
-		gridItem.units = self.form.gridUnitsInput.currentText()
-		gridItem.unitsAngle = self.form.gridUnitsInput_2.currentText()
-		gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
-		gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
+		#
+		#	DEFAULT VALUES FOR GRID ITEM FOR openEMS
+		#
+		if (self.form.comboBox_solverType.currentText().lower().find("openems") > -1):
+			gridItem.units = self.form.gridUnitsInput.currentText()
+			gridItem.unitsAngle = self.form.gridUnitsInput_2.currentText()
+			gridItem.generateLinesInside = self.form.gridGenerateLinesInsideCheckbox.isChecked()
+			gridItem.topPriorityLines = self.form.gridTopPriorityLinesCheckbox.isChecked()
 
-		gridItem.gridOffset['x'] = self.form.gridOffsetX.value()
-		gridItem.gridOffset['y'] = self.form.gridOffsetY.value()
-		gridItem.gridOffset['z'] = self.form.gridOffsetZ.value()
-		gridItem.gridOffset['units'] = self.form.gridOffsetUnits.currentText()
+			gridItem.gridOffset['x'] = self.form.gridOffsetX.value()
+			gridItem.gridOffset['y'] = self.form.gridOffsetY.value()
+			gridItem.gridOffset['z'] = self.form.gridOffsetZ.value()
+			gridItem.gridOffset['units'] = self.form.gridOffsetUnits.currentText()
+
+		#
+		#	New items for FEM simulation (emerge)
+		#		- now there is just one only type for FEM grid and that's to specify max size of element, boundary, volume and domain
+		#
+		if (self.form.comboBox_solverType.currentText().lower().find("emerge") > -1 or self.form.comboBox_solverType.currentText().lower().find("palace") > -1):
+			gridItem.type = "FEM Max Size"
+
+			gridItem.femMesh = {}
+			gridItem.femMesh['femMaxSizeUnits'] = self.form.femGridMaxSizeUnits.currentText()
+
+			gridItem.femMesh['femMaxElementSize'] = self.form.femGridMaxElementSizeValue.value()
+			gridItem.femMesh['femMaxElementDistance'] = self.form.femGridMaxElementSizeDistanceValue.value()
+			gridItem.femMesh['femMaxBoundarySize'] = self.form.femGridMaxBoundarySizeValue.value()
+			gridItem.femMesh['femMaxFaceSize'] = self.form.femGridMaxFaceSizeValue.value()
+			gridItem.femMesh['femMaxDomainSize'] = self.form.femGridMaxDomainSizeValue.value()
+
+			gridItem.femMesh['femSurfaceMeshSizeSizeMin'] = self.form.femGridSurfaceMeshSize_sizeMin.value()
+			gridItem.femMesh['femSurfaceMeshSizeSizeMax'] = self.form.femGridSurfaceMeshSize_sizeMax.value()
+			gridItem.femMesh['femSurfaceMeshSizeDistanceMin'] = self.form.femGridSurfaceMeshSize_distanceMin.value()
+			gridItem.femMesh['femSurfaceMeshSizeDistanceMax'] = self.form.femGridSurfaceMeshSize_distanceMax.value()
+
+			gridItem.femMesh['femUseMaxElementSize'] = self.form.femGridMaxElementSizeCheckbox.isChecked()
+			gridItem.femMesh['femUseMaxBoundarySize'] = self.form.femGridMaxBoundarySizeCheckbox.isChecked()
+			gridItem.femMesh['femUseMaxFaceSize'] = self.form.femGridMaxFaceSizeCheckbox.isChecked()
+			gridItem.femMesh['femUseMaxDomainSize'] = self.form.femGridMaxDomainSizeCheckbox.isChecked()
+
+			gridItem.femMesh['femUseSurfaceMeshSize'] = self.form.femGridSurfaceMeshSizeCheckbox.isChecked()
+
+			gridItem.femMesh['femUseMaxUserDefined'] = self.form.femGridUserDefinedCheckbox.isChecked()
+			gridItem.femMesh['femMaxUserDefined'] = self.form.userDefinedGridLinesTextInput.toPlainText()
 
 		return gridItem
 		
@@ -1882,7 +2632,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				#set grid drawing plane to 'z' and disable chosing plane to draw grid
 				index = self.form.auxGridAxis.findText('z', QtCore.Qt.MatchFixedString)
 				if index >= 0:
-					 self.form.auxGridAxis.setCurrentIndex(index)
+					self.form.auxGridAxis.setCurrentIndex(index)
 				self.form.auxGridAxis.setEnabled(False)				
 
 			self.guiHelpers.addSettingsItemGui(settingsInst)	#add item into gui tree views
@@ -2055,15 +2805,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if self.form.gridZEnable.checkState() == QtCore.Qt.Checked:
 				self.form.gridOffsetZ.setEnabled(True)
 
+	#########################################################################################################################################
 	#
-	# MATERIAL SETTINGS
-	#  __  __       _______ ______ _____  _____          _         _____ ______ _______ _______ _____ _   _  _____  _____ 
-	# |  \/  |   /\|__   __|  ____|  __ \|_   _|   /\   | |       / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | \  / |  /  \  | |  | |__  | |__) | | |    /  \  | |      | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	# | |\/| | / /\ \ | |  |  __| |  _  /  | |   / /\ \ | |       \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	# | |  | |/ ____ \| |  | |____| | \ \ _| |_ / ____ \| |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	# |_|  |_/_/    \_\_|  |______|_|  \_\_____/_/    \_\______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#      
+	#	MATERIAL TAB HANDLERS, MATERIAL SETTINGS
+	#
+	#########################################################################################################################################
 
 	def getMaterialItemFromGui(self):
 		name = self.form.materialSettingsNameInput.text()
@@ -2071,12 +2817,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		mue = self.form.materialMueNumberInput.value()
 		kappa = self.form.materialKappaNumberInput.value()
 		sigma = self.form.materialSigmaNumberInput.value()
+		tand = self.form.materialTanDeltaNumberInput.value()
 
 		# LuboJ, added at March 2023 so this is here to prevent errors
 		try:
 			conductingSheetThicknessValue = self.form.materialConductingSheetThickness.value()
 			conductingSheetThicknessUnits = self.form.materialConductingSheetUnits.currentText()
 			conductingSheetConductivity = self.form.materialConductingSheetConductivity.value()
+			conductingSheetPermeability = self.form.materialConductingSheetPermeability.value()
 		except:
 			conductingSheetThicknessValue = 40.0
 			conductingSheetThicknessUnits = "um"
@@ -2089,10 +2837,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		materialItem.constants['mue'] = mue
 		materialItem.constants['kappa'] = kappa
 		materialItem.constants['sigma'] = sigma	
+		materialItem.constants['tand'] = tand
 
 		materialItem.constants['conductingSheetThicknessValue'] = conductingSheetThicknessValue
 		materialItem.constants['conductingSheetThicknessUnits'] = conductingSheetThicknessUnits
 		materialItem.constants['conductingSheetConductivity'] = conductingSheetConductivity
+		materialItem.constants['conductingSheetPermeability'] = conductingSheetPermeability
 
 		if (self.form.materialMetalRadioButton.isChecked() == 1):
 			materialItem.type = "metal"
@@ -2135,7 +2885,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		#		but if it has different params by random than it can be removed.
 		#
 		if (materialSettings.name.upper() == "PEC" and materialSettings.type == "metal"):
-			self.guiHelpers.displayMessage("Maaterial PEC which is metal cannot be removed.")
+			self.guiHelpers.displayMessage("Material PEC which is metal cannot be removed.")
 			return
 
 		materialGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
@@ -2245,6 +2995,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.updateMaterialComboBoxJustMetals(self.form.coplanarPortMaterialComboBox)				# update coplanar port material combobox
 			self.updateMaterialComboBoxJustUserdefined(self.form.coaxialPortMaterialComboBox)			# update coaxial port material combobox
 			self.updateMaterialComboBoxAllMaterials(self.form.coaxialPortConductorMaterialComboBox)		# update coaxial port material combobox
+			self.updateMaterialComboBoxAllMaterials(self.form.boundaryConditionTypeSurfaceImpedanceMaterial)		# update boundary condition surface impedance material combobox, just for EMerge
 
 	def materialAddPEC(self):
 		"""
@@ -2330,7 +3081,23 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				if (item.data(0, QtCore.Qt.UserRole).type == "coplanar" and item.data(0, QtCore.Qt.UserRole).coplanarMaterial == oldName):
 					item.data(0, QtCore.Qt.UserRole).coplanarMaterial = newName
 
+			#
+			# There are boundary condition surface impedance with material definition which must be also renamed
+			#
+			boundaryConditionGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+				"Material",
+				QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+			)[0]
+			for k in range(boundaryConditionGroupWidgetItems.childCount()):
+				item = boundaryConditionGroupWidgetItems.child(k)
+				if (item.data(0, QtCore.Qt.UserRole).type == "surfaceImpedance" and item.data(0, QtCore.Qt.UserRole).surfaceImpedance["material"] == oldName):
+					item.data(0, QtCore.Qt.UserRole).surfaceImpedance["material"] = newName
+
+			#
+			#	Show result message
+			#
 			self.guiHelpers.displayMessage("Material " + oldName + " renamed to " + newName, forceModal=False)
+
 		except Exception as e:
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
 			self.cadHelpers.printError(traceback.format_exc())
@@ -2377,14 +3144,22 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
 			self.cadHelpers.printError(traceback.format_exc())
 
-	# EXCITATION SETTINGS
-	#  ________   _______ _____ _______    _______ _____ ____  _   _    _____ ______ _______ _______ _____ _   _  _____  _____ 
-	# |  ____\ \ / / ____|_   _|__   __|/\|__   __|_   _/ __ \| \ | |  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | |__   \ V / |      | |    | |  /  \  | |    | || |  | |  \| | | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	# |  __|   > <| |      | |    | | / /\ \ | |    | || |  | | . ` |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	# | |____ / . \ |____ _| |_   | |/ ____ \| |   _| || |__| | |\  |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	# |______/_/ \_\_____|_____|  |_/_/    \_\_|  |_____\____/|_| \_| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#                                                                                                                          
+	@Slot(str, str)
+	def boundaryConditionRenamed(self, oldName, newName):
+		try:
+			self.renameObjectAssignmentRightTreeWidgetItem("BoundaryCondition", oldName, newName)
+			self.renameObjectAssignmentPriorityTreeViewItem("BoundaryCondition", oldName, newName)
+			self.renameTreeViewItem(self.form.boundaryConditionSettingsTreeView, oldName, newName)
+			self.guiHelpers.displayMessage("BoundaryCondition " + oldName + " renamed to " + newName, forceModal=False)
+		except Exception as e:
+			self.guiHelpers.displayMessage("ERROR: " + str(e), forceModal=False)
+			self.cadHelpers.printError(traceback.format_exc())
+
+	#########################################################################################################################################
+	#
+	#	EXCITATION TAB HANDLERS, EXCITATION SETTINGS
+	#
+	#########################################################################################################################################
 
 	def getExcitationItemFromGui(self):
 		name = self.form.excitationSettingsNameInput.text()
@@ -2393,24 +3168,49 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		excitationItem.name = name
 		excitationItem.units = self.form.excitationUnitsNumberInput.currentText()
 
-		if (self.form.sinusodialExcitationRadioButton.isChecked()):
-			excitationItem.type = 'sinusodial'
-			excitationItem.sinusodial = {}
-			excitationItem.sinusodial['f0'] = self.form.sinusodialExcitationF0NumberInput.value()
-		if (self.form.gaussianExcitationRadioButton.isChecked()):
-			excitationItem.type = 'gaussian'
-			excitationItem.gaussian = {}
-			excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
-			excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
-		if (self.form.diracExcitationRadioButton.isChecked()):
-			excitationItem.type = 'dirac'
-		if (self.form.stepExcitationRadioButton.isChecked()):
-			excitationItem.type = 'step'
-		if (self.form.customExcitationRadioButton.isChecked()):
-			excitationItem.type = 'custom'
-			excitationItem.custom = {}
-			excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
-			excitationItem.custom['f0'] = self.form.customExcitationF0NumberInput.value()
+		#
+		#	OpenEMS
+		#
+		if self.form.comboBox_solverType.currentText().lower().find("openems") > -1:
+			if (self.form.sinusodialExcitationRadioButton.isChecked()):
+				excitationItem.type = 'sinusodial'
+				excitationItem.sinusodial = {}
+				excitationItem.sinusodial['f0'] = self.form.sinusodialExcitationF0NumberInput.value()
+			if (self.form.gaussianExcitationRadioButton.isChecked()):
+				excitationItem.type = 'gaussian'
+				excitationItem.gaussian = {}
+				excitationItem.gaussian['fc'] = self.form.gaussianExcitationFcNumberInput.value()
+				excitationItem.gaussian['f0'] = self.form.gaussianExcitationF0NumberInput.value()
+			if (self.form.diracExcitationRadioButton.isChecked()):
+				excitationItem.type = 'dirac'
+			if (self.form.stepExcitationRadioButton.isChecked()):
+				excitationItem.type = 'step'
+			if (self.form.customExcitationRadioButton.isChecked()):
+				excitationItem.type = 'custom'
+				excitationItem.custom = {}
+				excitationItem.custom['functionStr'] = self.form.customExcitationTextInput.text()
+				excitationItem.custom['f0'] = self.form.customExcitationF0NumberInput.value()
+
+		#
+		#	EMerge + Palace
+		#		- emerge knows just frequency sweep
+		#		- palace knows both frequency sweep and transient analysis
+		#
+		if self.form.comboBox_solverType.currentText().lower().find("emerge") > -1 or self.form.comboBox_solverType.currentText().lower().find("palace") > -1:
+			if (self.form.femSinusodialExcitationRadioButton.isChecked()):
+				excitationItem.type = 'sweep'
+				excitationItem.sweep = {}
+				excitationItem.sweep['fmin'] = self.form.sweepExcitationFmin.value()
+				excitationItem.sweep['fmax'] = self.form.sweepExcitationFmax.value()
+				excitationItem.sweep['npoints'] = self.form.sweepExcitationNPoints.value()
+				excitationItem.sweep['resolution'] = self.form.sweepExcitationResolution.value()
+			if (self.form.femGaussianExcitationRadioButton.isChecked()):
+				excitationItem.type = 'fem_gaussian'
+				excitationItem.femGaussian = {}
+				excitationItem.femGaussian['f0'] = self.form.femGaussianExcitationF0.value()
+				excitationItem.femGaussian['fc'] = self.form.femGaussianExcitationFc.value()
+				excitationItem.femGaussian['timeOversampling'] = self.form.femGaussianExcitationTimeOversampling.value()
+
 		return excitationItem
 
 
@@ -2468,14 +3268,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.guiHelpers.displayMessage("Excitation updated.", forceModal=False)
 
-	# PORT SETTINGS
-	#  _____   ____  _____ _______    _____ ______ _______ _______ _____ _   _  _____  _____ 
-	# |  __ \ / __ \|  __ \__   __|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-	# | |__) | |  | | |__) | | |    | (___ | |__     | |     | |    | | |  \| | |  __| (___  
-	# |  ___/| |  | |  _  /  | |     \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
-	# | |    | |__| | | \ \  | |     ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-	# |_|     \____/|_|  \_\ |_|    |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
-	#    
+	#########################################################################################################################################
+	#
+	#	PORT TAB HANDLERS, PORT SETTINGS
+	#
+	#########################################################################################################################################
 
 	def getPortItemFromGui(self):
 		name = self.form.portSettingsNameInput.text()
@@ -2490,6 +3287,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.infiniteResistance = self.form.lumpedPortInfinitResistance.isChecked()
 			portItem.isActive = self.form.lumpedPortActive.isChecked()
 			portItem.direction = self.form.lumpedPortDirection.currentText()
+			portItem.directionCustomVector = [
+				self.form.lumpedPortDirectionCustomX.value(),
+				self.form.lumpedPortDirectionCustomY.value(),
+				self.form.lumpedPortDirectionCustomZ.value()
+			]
 			portItem.excitationAmplitude = self.form.lumpedPortExcitationAmplitude.value()
 
 		if (self.form.microstripPortRadioButton.isChecked()):
@@ -2589,6 +3391,21 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			portItem.isActive = self.form.curvePortActive.isChecked()
 			portItem.excitationAmplitude = self.form.curvePortExcitationAmplitude.value()
 
+		if (self.form.modalPortRadioButton.isChecked()):
+			portItem.type = "modal"
+			portItem.excitationAmplitude = self.form.modalPortExcitationAmplitude.value()
+			portItem.modalModeType = self.form.modalPortModeType.currentText()
+			portItem.modalMixedMaterials = self.form.modalPortMixedMaterials.isChecked()
+			portItem.modalImpedanceDefinition = self.form.modalPortImpedanceDefinition.currentText()
+
+			# modal port is for FEM solvers and they are direct solvers so they compute all port NxN combination always,
+			# isActive needs to be set to none to gui proper update combobox in Processing tab for write s21 script
+			portItem.isActive = None
+
+		if (self.form.userDefinedPortRadioButton.isChecked()):
+			portItem.type = "userdefined"
+			portItem.userDefinedData = self.form.userDefinedPortValue.toPlainText()
+
 		return portItem
 
 	def probeCheckCurrentSettings(self, currentSettings):
@@ -2646,7 +3463,7 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		priorityName = portGroupItem.parent().text(0) + ", " + portGroupItem.text(0);
 		self.guiHelpers.removePriorityName(priorityName)
 
-		# Removing from Object Assugnment Tree
+		# Removing from Object Assignment Tree
 		self.form.portSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
 		portGroupItem.parent().removeChild(portGroupItem)
 
@@ -2690,6 +3507,8 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.coplanarPortSettingsGroup.setEnabled(False)
 		self.form.striplinePortSettingsGroup.setEnabled(False)
 		self.form.curvePortSettingsGroup.setEnabled(False)
+		self.form.modalPortSettingsGroup.setEnabled(False)
+		self.form.userDefinedPortValue.setEnabled(False)
 
 		#for modes update here is some source on internet: https://arxiv.org/ftp/arxiv/papers/1201/1201.3202.pdf
 
@@ -2725,6 +3544,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (self.form.curvePortRadioButton.isChecked()):
 			self.form.curvePortSettingsGroup.setEnabled(True)
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Curve")
+
+		elif (self.form.modalPortRadioButton.isChecked()):
+			self.form.modalPortSettingsGroup.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("Modal")
+
+		elif (self.form.userDefinedPortRadioButton.isChecked()):
+			self.form.userDefinedPortValue.setEnabled(True)
+			self.guiHelpers.portSpecificSettingsTabSetActiveByName("UserDefined")
 
 		else:
 			self.guiHelpers.portSpecificSettingsTabSetActiveByName("")
@@ -2774,10 +3601,17 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		print(f"@Slot portsChanged: {operation}")
 
 		if (operation in ["add", "remove", "update"]):
-			self.updateComboboxWithAllowedItems(self.form.drawS11Port, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"])
+			self.updateComboboxWithAllowedItems(self.form.drawS11Port, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
 			self.updateComboboxWithAllowedItems(self.form.drawS21Source, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
 			self.updateComboboxWithAllowedItems(self.form.drawS21Target, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=False)
 			self.updateComboboxWithAllowedItems(self.form.portNf2ffInput, "Port", ["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve"], isActive=True)
+
+			# method self.updateComboboxWithAllowedItems(...) overwrite all values in combobox, modal port has no isActive true/false therefore it must be called once more time here
+			# for FEM solver types with all allowed values but with no isActive
+			solverType = self.form.comboBox_solverType.currentText().lower()
+			if solverType.find("emerge") > -1 or solverType.find("palace") > -1:
+				self.updateComboboxWithAllowedItems(self.form.drawS21Source, "Port",["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
+				self.updateComboboxWithAllowedItems(self.form.drawS21Target, "Port",["lumped", "microstrip", "circular waveguide", "rectangular waveguide", "coaxial", "coplanar", "stripline", "curve", "modal"])
 
 	@Slot(str)
 	def probesChanged(self, operation):
@@ -2791,6 +3625,14 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		if (operation in ["add", "remove", "update"]):
 			self.updateComboboxWithAllowedItems(self.form.portNf2ffObjectList, "Probe", ["nf2ff box"])
+
+	@Slot(str)
+	def boundaryConditionChanged(self, operation):
+		print(f"@Slot boundaryConditionChanged: {operation}")
+
+		if (operation in ["add", "remove", "update"]):
+			self.updateComboboxWithAllowedItems(self.form.portNf2ffEmergeObjectList, "BoundaryCondition", ["Absorbing"])
+			self.updateComboboxWithAllowedItems(self.form.portNf2ffPalaceObjectList, "BoundaryCondition", ["Absorbing"])
 
 	#########################################################################################################################################
 	#
@@ -2956,6 +3798,198 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		return
 
+	#########################################################################################################################################
+	#
+	#	BOUNDARY CONDITION TAB HANDLERS
+	#
+	#########################################################################################################################################
+
+	def getBoundaryConditionItemFromGui(self):
+		name = self.form.boundaryConditionSettingsNameInput.text()
+
+		boundaryConditionItem = BoundaryConditionSettingsItem()
+		boundaryConditionItem.name = name
+
+		#
+		#	Boundary condition for openEMS
+		#
+		if self.form.comboBox_solverType.currentText().lower().find("openems") > -1:
+			if (self.form.boundaryConditionTypeOpenEMS_Absorbing.isChecked()):
+				boundaryConditionItem.type = "openemsAbsorber"
+				boundaryConditionItem.openemsAbsorber["AbsorbingBoundaryType"] = self.form.boundaryConditionTypeOpenEMS_Absorbing_Type.currentText()
+				boundaryConditionItem.openemsAbsorber["NormalSignPositive"] = self.form.boundaryConditionTypeOpenEMS_Absorbing_NormalSignPositive.isChecked()
+				boundaryConditionItem.openemsAbsorber["PhaseVelocity_material_er"] = self.form.boundaryConditionTypeOpenEMS_Absorbing_PhaseVelocity_Permittivity.value()
+				boundaryConditionItem.openemsAbsorber["PhaseVelocity_material_muer"] = self.form.boundaryConditionTypeOpenEMS_Absorbing_PhaseVelocity_Permeability.value()
+			if (self.form.boundaryConditionTypeOpenEMS_Unknown.isChecked()):
+				boundaryConditionItem.type = "openemsUnknown"
+				boundaryConditionItem.openemsAbsorber["AbsorbingBoundaryType"] = "UNKNOWN"
+			if (self.form.boundaryConditionTypeOpenEMS_UserDefined.isChecked()):
+				boundaryConditionItem.type = "userDefined"
+				boundaryConditionItem.userDefined = self.form.boundaryConditionTypeUserDefinedTextInput.toPlainText()
+
+		#
+		#	Boundary condition for emerge, palace solver
+		#
+		if self.form.comboBox_solverType.currentText().lower().find("emerge") > -1 or self.form.comboBox_solverType.currentText().lower().find("palace") > -1:
+			if (self.form.boundaryConditionTypePredefinedRadio.isChecked()):
+				boundaryConditionItem.type = self.form.boundaryConditionTypeCombobox.currentText()
+			elif (self.form.boundaryConditionTypeCustomRadio.isChecked()):
+				boundaryConditionItem.type = "custom"
+				boundaryConditionItem.customType = self.form.boundaryConditionTypeCustomTextInput.text()
+			elif (self.form.boundaryConditionTypeSurfaceImpedanceRadio.isChecked()):
+				boundaryConditionItem.type = "surfaceImpedance"
+				boundaryConditionItem.surfaceImpedance["material"] = self.form.boundaryConditionTypeSurfaceImpedanceMaterial.currentText()
+				boundaryConditionItem.surfaceImpedance["conductance"] = self.form.boundaryConditionTypeSurfaceImpedanceConductance.value()
+				boundaryConditionItem.surfaceImpedance["roughness"] = self.form.boundaryConditionTypeSurfaceImpedanceRoughness.value()
+				boundaryConditionItem.surfaceImpedance["roughnessUnits"] = self.form.boundaryConditionTypeSurfaceImpedanceRoughnessUnits.currentText()
+				boundaryConditionItem.surfaceImpedance["thickness"] = self.form.boundaryConditionTypeSurfaceImpedanceThickness.value()
+				boundaryConditionItem.surfaceImpedance["thicknessUnits"] = self.form.boundaryConditionTypeSurfaceImpedanceThicknessUnits.currentText()
+			elif (self.form.boundaryConditionTypeThinConductorRadio.isChecked()):
+				boundaryConditionItem.type = "thinConductor"
+				boundaryConditionItem.thinConductor["material"] = self.form.boundaryConditionTypeSurfaceImpedanceMaterial.currentText()
+				boundaryConditionItem.thinConductor["conductance"] = self.form.boundaryConditionTypeSurfaceImpedanceConductance.value()
+				boundaryConditionItem.thinConductor["roughness"] = self.form.boundaryConditionTypeSurfaceImpedanceRoughness.value()
+				boundaryConditionItem.thinConductor["roughnessUnits"] = self.form.boundaryConditionTypeSurfaceImpedanceRoughnessUnits.currentText()
+				boundaryConditionItem.thinConductor["thickness"] = self.form.boundaryConditionTypeSurfaceImpedanceThickness.value()
+				boundaryConditionItem.thinConductor["thicknessUnits"] = self.form.boundaryConditionTypeSurfaceImpedanceThicknessUnits.currentText()
+			elif (self.form.boundaryConditionTypeUserDefinedRadio.isChecked()):
+				boundaryConditionItem.type = "userDefined"
+				boundaryConditionItem.userDefined = self.form.boundaryConditionTypeUserDefinedTextInput.toPlainText()
+
+		return boundaryConditionItem
+
+	def boundaryConditionSettingsAddButtonClicked(self):
+		settingsInst = self.getBoundaryConditionItemFromGui()
+
+		# check for duplicity in names if there is some warning message displayed
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.boundaryConditionSettingsTreeView, settingsInst.name)
+
+		if (not isDuplicityName):
+			self.guiHelpers.addSettingsItemGui(settingsInst)
+			self.guiSignals.boundaryConditionChanged.emit("add")
+
+	def boundaryConditionSettingsRemoveButtonClicked(self, name=None):
+		# if there is no name it's called from UI, if there is name it's called as function this is done to have one function removing port properly for both cases
+		if (type(name) != "str"):
+			selectedItem = self.form.boundaryConditionSettingsTreeView.selectedItems()[0]
+			print("Selected boundaryCondition name: " + selectedItem.text(0))
+		else:
+			selectedItem = self.form.boundaryConditionSettingsTreeView.findItems(name, QtCore.Qt.MatchExactly)[0]
+			print("Called by name to remove boundaryCondition: " + selectedItem.text(0))
+
+		boundaryConditionGroupWidgetItems = self.form.objectAssignmentRightTreeWidget.findItems(
+			selectedItem.text(0),
+			QtCore.Qt.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+		)
+		boundaryConditionGroupItem = None
+		for item in boundaryConditionGroupWidgetItems:
+			if (item.parent().text(0) == "BoundaryCondition"):
+				boundaryConditionGroupItem = item
+		print("Currently removing boundaryCondition item: " + boundaryConditionGroupItem.text(0))
+
+		# Removing from Priority List
+		priorityName = boundaryConditionGroupItem.parent().text(0) + ", " + boundaryConditionGroupItem.text(0);
+		self.guiHelpers.removePriorityName(priorityName)
+
+		# Removing from Object Assignment Tree
+		self.form.probeSettingsTreeView.invisibleRootItem().removeChild(selectedItem)
+		boundaryConditionGroupItem.parent().removeChild(boundaryConditionGroupItem)
+
+	def boundaryConditionSettingsUpdateButtonClicked(self):
+		### capture UI settings
+		settingsInst = self.getBoundaryConditionItemFromGui()
+
+		### replace old with new settingsInst
+		selectedItems = self.form.boundaryConditionSettingsTreeView.selectedItems()
+		if len(selectedItems) != 1:
+			return
+
+		isDuplicityName = self.checkTreeWidgetForDuplicityName(self.form.boundaryConditionSettingsTreeView, settingsInst.name, ignoreSelectedItem=False)
+		if (not isDuplicityName):
+			selectedItems[0].setData(0, QtCore.Qt.UserRole, settingsInst)
+
+			### update other UI elements to propagate changes
+			# replace oudated copy of settingsInst
+			self.updateObjectAssignmentRightTreeWidgetItemData("BoundaryCondition", selectedItems[0].text(0), settingsInst)
+
+			# emit rename signal
+			if (selectedItems[0].text(0) != settingsInst.name):
+				self.guiSignals.boundaryConditionRenamed.emit(selectedItems[0].text(0), settingsInst.name)
+
+			# Display message to user
+			self.guiHelpers.displayMessage(f"BoundaryCondition {settingsInst.name} was updated", forceModal=False)
+
+	def boundaryConditionTreeWidgetItemChanged(self, current, previous):
+		print("BoundaryCondition item changed.")
+
+		#if last item was erased from port list do nothing
+		if not self.form.boundaryConditionSettingsTreeView.currentItem():
+			return
+
+		currSetting = self.form.boundaryConditionSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
+		self.form.boundaryConditionSettingsNameInput.setText(currSetting.name)
+		self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(0)
+
+		if (currSetting.type == "custom"):
+			self.form.boundaryConditionTypeCustomRadio.click()
+			self.form.boundaryConditionTypeCustomTextInput.setText(currSetting.customType)
+
+		elif (currSetting.type.lower() == "surfaceimpedance"):
+			self.form.boundaryConditionTypeSurfaceImpedanceRadio.click()
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceMaterial, text=currSetting.surfaceImpedance["material"])
+			self.form.boundaryConditionTypeSurfaceImpedanceConductance.setValue(currSetting.surfaceImpedance["conductance"])
+			self.form.boundaryConditionTypeSurfaceImpedanceRoughness.setValue(currSetting.surfaceImpedance["roughness"])
+			self.form.boundaryConditionTypeSurfaceImpedanceThickness.setValue(currSetting.surfaceImpedance["thickness"])
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceRoughnessUnits, text=currSetting.surfaceImpedance["roughnessUnits"])
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceThicknessUnits, text=currSetting.surfaceImpedance["thicknessUnits"])
+
+		elif (currSetting.type.lower() == "thinconductor"):
+			self.form.boundaryConditionTypeThinConductorRadio.click()
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceMaterial, text=currSetting.thinConductor["material"])
+			self.form.boundaryConditionTypeSurfaceImpedanceConductance.setValue(currSetting.thinConductor["conductance"])
+			self.form.boundaryConditionTypeSurfaceImpedanceRoughness.setValue(currSetting.thinConductor["roughness"])
+			self.form.boundaryConditionTypeSurfaceImpedanceThickness.setValue(currSetting.thinConductor["thickness"])
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceRoughnessUnits, text=currSetting.thinConductor["roughnessUnits"])
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeSurfaceImpedanceThicknessUnits, text=currSetting.thinConductor["thicknessUnits"])
+
+		elif (currSetting.type.lower() == "openemsabsorber"):
+			self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(1)
+
+			self.form.boundaryConditionTypeOpenEMS_Absorbing.setChecked(True)
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeOpenEMS_Absorbing_Type, text=currSetting.openemsAbsorber["AbsorbingBoundaryType"])
+			self.form.boundaryConditionTypeOpenEMS_Absorbing_NormalSignPositive.setChecked(currSetting.openemsAbsorber["NormalSignPositive"])
+			self.form.boundaryConditionTypeOpenEMS_Absorbing_PhaseVelocity_Permittivity.setValue(currSetting.openemsAbsorber["PhaseVelocity_material_er"])
+			self.form.boundaryConditionTypeOpenEMS_Absorbing_PhaseVelocity_Permeability.setValue(currSetting.openemsAbsorber["PhaseVelocity_material_muer"])
+
+		elif (currSetting.type.lower() == "openemsunknown"):
+			self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(1)
+			self.form.boundaryConditionTypeOpenEMS_Unknown.setChecked(True)
+
+		elif (currSetting.type.lower() == "userdefined"):
+			if any(x in self.form.comboBox_solverType.currentText().lower() for x in ['openems']):
+				self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(1)
+				self.form.boundaryConditionTypeOpenEMS_UserDefined.setChecked(True)
+			else:
+				self.form.boundaryConditionsTab_tabWidget.setCurrentIndex(0)
+				self.form.boundaryConditionTypeUserDefinedRadio.setChecked(True)
+
+			self.form.boundaryConditionTypeUserDefinedTextInput.setEnabled(True)
+			self.form.boundaryConditionTypeUserDefinedTextInput.setPlainText(currSetting.userDefined)
+
+		else:
+			self.form.boundaryConditionTypePredefinedRadio.click()
+			self.guiHelpers.setComboboxItem(self.form.boundaryConditionTypeCombobox, currSetting.type)
+
+		return
+
+	def boundaryConditionUserDefinedRadioButtonClicked(self):
+		if (
+			(any(x in self.form.comboBox_solverType.currentText().lower() for x in ['openems']) and self.form.boundaryConditionTypeOpenEMS_UserDefined.isChecked()) or
+			(any(x in self.form.comboBox_solverType.currentText().lower() for x in ['emerge','palace']) and self.form.boundaryConditionTypeUserDefinedRadio.isChecked())
+		):
+			self.form.boundaryConditionTypeUserDefinedTextInput.setEnabled(True)
+		else:
+			self.form.boundaryConditionTypeUserDefinedTextInput.setEnabled(False)
 
 	#########################################################################################################################################
 	#
@@ -3083,16 +4117,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 		self.guiHelpers.setComboboxItem(self.form.striplinePortPropagationComboBox, previousPropagationValue)
 
-	#  _     _    _ __  __ _____  ______ _____    _____        _____ _______            _   _   _
-	# | |   | |  | |  \/  |  __ \|  ____|  __ \  |  __ \ /\   |  __ \__   __|          | | | | (_)                
-	# | |   | |  | | \  / | |__) | |__  | |  | | | |__) /  \  | |__) | | |     ___  ___| |_| |_ _ _ __   __ _ ___ 
-	# | |   | |  | | |\/| |  ___/|  __| | |  | | |  ___/ /\ \ |  _  /  | |    / __|/ _ \ __| __| | '_ \ / _` / __|
-	# | |___| |__| | |  | | |    | |____| |__| | | |  / ____ \| | \ \  | |    \__ \  __/ |_| |_| | | | | (_| \__ \
-	# |______\____/|_|  |_|_|    |______|_____/  |_| /_/    \_\_|  \_\ |_|    |___/\___|\__|\__|_|_| |_|\__, |___/
-	#                                                                                                    __/ |    
-	#                                                                                                   |___/    
+	#########################################################################################################################################
 	#
-	
+	#	LUMPED PART TAB HANDLERS
+	#
+	#########################################################################################################################################
+
 	def getLumpedPartItemFromGui(self):
 		name = self.form.lumpedPartSettingsNameInput.text()
 
@@ -3176,12 +4206,12 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 			self.guiHelpers.displayMessage(f"LumpedPart {settingsInst.name} updated.", forceModal=False)
 
-	#   _____________   ____________  ___    __       _____ _______________________   _____________
-	#  / ____/ ____/ | / / ____/ __ \/   |  / /      / ___// ____/_  __/_  __/  _/ | / / ____/ ___/
-	# / / __/ __/ /  |/ / __/ / /_/ / /| | / /       \__ \/ __/   / /   / /  / //  |/ / / __ \__ \ 
-	#/ /_/ / /___/ /|  / /___/ _, _/ ___ |/ /___    ___/ / /___  / /   / / _/ // /|  / /_/ /___/ / 
-	#\____/_____/_/ |_/_____/_/ |_/_/  |_/_____/   /____/_____/ /_/   /_/ /___/_/ |_/\____//____/  
+	#########################################################################################################################################
 	#
+	#	GENERAL SETTINGS
+	#
+	#########################################################################################################################################
+
 	def materialTreeWidgetItemChanged(self, current, previous):
 		print("materialTreeWidgetItemChanged(): Material item changed.")
 
@@ -3198,10 +4228,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		elif (currSetting.type == 'userdefined'):
 			self.form.materialUserDefinedRadioButton.click()
 
-			self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
-			self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
-			self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
-			self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
+			try:
+				self.form.materialEpsilonNumberInput.setValue(float(currSetting.constants['epsilon']))
+				self.form.materialMueNumberInput.setValue(float(currSetting.constants['mue']))
+				self.form.materialKappaNumberInput.setValue(float(currSetting.constants['kappa']))
+				self.form.materialSigmaNumberInput.setValue(float(currSetting.constants['sigma']))
+				self.form.materialTanDeltaNumberInput.setValue(float(currSetting.constants['tand']))	#added for emerge solver
+			except:
+				pass
+
 		elif (currSetting.type == 'conducting sheet'):
 			self.form.materialConductingSheetRadioButton.click()
 
@@ -3221,6 +4256,15 @@ class ExportOpenEMSDialog(QtCore.QObject):
 						self.form.materialConductingSheetUnits.setCurrentIndex(0)
 
 				self.form.materialConductingSheetConductivity.setValue(float(currSetting.constants['conductingSheetConductivity']))
+
+				#
+				#	This feature is just for palace solver, due backward compatibility it's not in old files, so just silent error here
+				#
+				try:
+					self.form.materialConductingSheetPermeability.setValue(float(currSetting.constants['conductingSheetPermeability']))
+				except:
+					pass
+
 			except Exception as e:
 				print(f"materialTreeWidgetItemChanged() ERROR: {e}")
 
@@ -3253,6 +4297,9 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		self.form.gridOffsetY.setValue(0)
 		self.form.gridOffsetZ.setValue(0)
 		self.guiHelpers.setComboboxItem(self.form.gridOffsetUnits, 'um')
+
+		self.form.femGridMaxElementSizeValue.setValue(0)
+		self.form.femGridMaxSizeUnits.setCurrentIndex(2)
 
 		#set values in grid settings by actual selected item
 		currSetting = self.form.gridSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
@@ -3297,8 +4344,58 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			except:
 				pass
 
+		elif (currSetting.type == "FEM Max Size"):
+			try:
+				self.form.femGridMaxElementSizeCheckbox.click()
+
+				try:
+					self.guiHelpers.setComboboxItem(self.form.femGridMaxSizeUnits, currSetting.femMesh['femMaxSizeUnits'])
+				except:
+					pass
+
+				try:
+					self.form.femGridMaxElementSizeValue.setValue(currSetting.femMesh['femMaxElementSize'])
+					self.form.femGridMaxBoundarySizeValue.setValue(currSetting.femMesh['femMaxBoundarySize'])
+					self.form.femGridMaxFaceSizeValue.setValue(currSetting.femMesh['femMaxFaceSize'])
+					self.form.femGridMaxDomainSizeValue.setValue(currSetting.femMesh['femMaxDomainSize'])
+
+					self.form.femGridMaxElementSizeDistanceValue.setValue(currSetting.femMesh['femMaxElementDistance'])
+				except:
+					pass
+
+				try:
+					self.form.femGridMaxElementSizeCheckbox.setChecked(currSetting.femMesh['femUseMaxElementSize'])
+					self.form.femGridMaxBoundarySizeCheckbox.setChecked(currSetting.femMesh['femUseMaxBoundarySize'])
+					self.form.femGridMaxFaceSizeCheckbox.setChecked(currSetting.femMesh['femUseMaxFaceSize'])
+					self.form.femGridMaxDomainSizeCheckbox.setChecked(currSetting.femMesh['femUseMaxDomainSize'])
+				except:
+					pass
+
+				try:
+					self.form.femGridSurfaceMeshSizeCheckbox.setChecked(currSetting.femMesh['femUseSurfaceMeshSize'])
+					self.form.femGridSurfaceMeshSize_sizeMin.setValue(currSetting.femMesh['femSurfaceMeshSizeSizeMin'])
+					self.form.femGridSurfaceMeshSize_sizeMax.setValue(currSetting.femMesh['femSurfaceMeshSizeSizeMax'])
+					self.form.femGridSurfaceMeshSize_distanceMin.setValue(currSetting.femMesh['femSurfaceMeshSizeDistanceMin'])
+					self.form.femGridSurfaceMeshSize_distanceMax.setValue(currSetting.femMesh['femSurfaceMeshSizeDistanceMax'])
+				except:
+					pass
+
+				try:
+					self.form.femGridUserDefinedCheckbox.setChecked(currSetting.femMesh['femUseMaxUserDefined'])
+					self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.femMesh['femMaxUserDefined'])
+				except:
+					pass
+			except:
+				pass
+
 		elif (currSetting.type == "User Defined"):
-			self.form.userDefinedRadioButton.click()
+
+			# don't have to do any if due since on Grid Settings tab one of tabs "openEMS grid" or "FEM grid" is active at time,
+			# therefore if radiobutton is disabled then nothing happens when it's disabled
+			#
+			self.form.userDefinedRadioButton.click()	#when FDTD openEMS solver active this will be one which will be triggered
+			self.form.femGridUserDefinedCheckbox.click()	#when FEM EMerge solver active this will be one which will be triggered
+
 			self.form.userDefinedGridLinesTextInput.setPlainText(currSetting.userDefined['data'])
 
 		else:
@@ -3327,19 +4424,18 @@ class ExportOpenEMSDialog(QtCore.QObject):
 		currSetting = self.form.excitationSettingsTreeView.currentItem().data(0, QtCore.Qt.UserRole)
 		self.form.excitationSettingsNameInput.setText(currSetting.name)
 		if (currSetting.type == "sinusodial"):
-			self.form.sinusodialExcitationRadioButton.click()
+			self.form.sinusodialExcitationRadioButton.setChecked(True)
 			self.form.sinusodialExcitationF0NumberInput.setValue(currSetting.sinusodial['f0'])
 		elif (currSetting.type == "gaussian"):
-			self.form.gaussianExcitationRadioButton.click()
+			self.form.gaussianExcitationRadioButton.setChecked(True)
 			self.form.gaussianExcitationF0NumberInput.setValue(currSetting.gaussian['f0'])
 			self.form.gaussianExcitationFcNumberInput.setValue(currSetting.gaussian['fc'])
-			pass
 		elif (currSetting.type == "dirac"):
-			self.form.diracExcitationRadioButton.click()
+			self.form.diracExcitationRadioButton.setChecked(True)
 		elif (currSetting.type == "step"):
-			self.form.stepExcitationRadioButton.click()
+			self.form.stepExcitationRadioButton.setChecked(True)
 		elif (currSetting.type == "custom"):
-			self.form.customExcitationRadioButton.click()
+			self.form.customExcitationRadioButton.setChecked(True)
 			self.form.customExcitationTextInput.setText(currSetting.custom['functionStr'])
 			self.form.customExcitationF0NumberInput.setValue(currSetting.custom['f0'])
 			
@@ -3347,7 +4443,27 @@ class ExportOpenEMSDialog(QtCore.QObject):
 			if index >= 0:
 				self.form.excitationUnitsNumberInput.setCurrentIndex(index)
 			pass
+		elif (currSetting.type == "sweep"):
+			# self.form.femSinusodialExcitationRadioButton.click()	#can be disabled since it's just for fem solvers
+			self.form.femSinusodialExcitationRadioButton.setChecked(True)
+
+			self.form.sweepExcitationFmin.setValue(currSetting.sweep['fmin'])
+			self.form.sweepExcitationFmax.setValue(currSetting.sweep['fmax'])
+			self.form.sweepExcitationNPoints.setValue(currSetting.sweep['npoints'])
+			self.form.sweepExcitationResolution.setValue(currSetting.sweep['resolution'])
+
+			self.form.excitationSettingsTab_tabWidget.setCurrentIndex(1)
+		elif (currSetting.type == "fem_gaussian"):
+			# self.form.femGaussianExcitationRadioButton.click()	#can be disabled since it's just for fem solvers
+			self.form.femGaussianExcitationRadioButton.setChecked(True)
+
+			self.form.femGaussianExcitationF0.setValue(currSetting.femGaussian['f0'])
+			self.form.femGaussianExcitationFc.setValue(currSetting.femGaussian['fc'])
+			self.form.femGaussianExcitationTimeOversampling.setValue(currSetting.femGaussian['timeOversampling'])
+
+			self.form.excitationSettingsTab_tabWidget.setCurrentIndex(1)
 		else:
+			self.form.excitationSettingsTab_tabWidget.setCurrentIndex(0)
 			return #no gui update
 			
 		index = self.form.excitationUnitsNumberInput.findText(currSetting.units, QtCore.Qt.MatchFixedString)
@@ -3378,6 +4494,11 @@ class ExportOpenEMSDialog(QtCore.QObject):
 
 				self.form.lumpedPortInfinitResistance.setChecked(currSetting.infiniteResistance)
 				self.form.lumpedPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
+
+				self.form.lumpedPortDirectionCustomX.setValue(float(currSetting.directionCustomVector[0]))
+				self.form.lumpedPortDirectionCustomY.setValue(float(currSetting.directionCustomVector[1]))
+				self.form.lumpedPortDirectionCustomZ.setValue(float(currSetting.directionCustomVector[2]))
+
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update lumped current settings: {e}", forceModal=False)
 
@@ -3511,6 +4632,24 @@ class ExportOpenEMSDialog(QtCore.QObject):
 				self.form.curvePortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
 			except Exception as e:
 				self.guiHelpers.displayMessage(f"ERROR update curve port current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "modal"):
+			try:
+				self.form.modalPortRadioButton.click()
+
+				self.guiHelpers.setComboboxItem(self.form.modalPortModeType, currSetting.modalModeType)
+				self.form.modalPortExcitationAmplitude.setValue(currSetting.excitationAmplitude)
+				self.form.modalPortMixedMaterials.setChecked(currSetting.modalMixedMaterials)
+				self.guiHelpers.setComboboxItem(self.form.modalPortImpedanceDefinition, currSetting.modalImpedanceDefinition)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update modal port current settings: {e}", forceModal=False)
+
+		elif (currSetting.type.lower() == "userdefined"):
+			try:
+				self.form.userDefinedPortRadioButton.click()
+				self.form.userDefinedPortValue.setPlainText(currSetting.userDefinedData)
+			except Exception as e:
+				self.guiHelpers.displayMessage(f"ERROR update modal port current settings: {e}", forceModal=False)
 
 		else:
 			pass #no gui update

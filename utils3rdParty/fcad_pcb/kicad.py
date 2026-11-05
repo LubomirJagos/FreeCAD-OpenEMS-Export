@@ -23,6 +23,13 @@ if PY3:
 else:
     string_types = basestring,
 
+##############################################################################################################
+# Modified by LuboJ to work with KiCAD 8.0
+#
+import json
+import re
+
+
 def _disableElementMapping(_):
     pass
 
@@ -400,6 +407,33 @@ def unpack(obj):
     return obj
 
 
+def get_lowest_kicad_dir(parent_dir_path):
+    from pathlib import Path
+    parent_dir = Path(parent_dir_path)
+
+    # This regex looks for 'kicad' followed by a version number (e.g., 8.0, 10.0)
+    version_pattern = re.compile(r'(\d+\.\d+)', re.IGNORECASE)
+
+    kicad_dirs = []
+
+    # Scan the directory for subdirectories
+    for item in parent_dir.iterdir():
+        if item.is_dir():
+            match = version_pattern.search(item.name)
+            if match:
+                # Parse the version as a float (e.g., 8.0) so we can sort it accurately
+                version_num = float(match.group(1))
+                kicad_dirs.append((version_num, item))
+
+    if not kicad_dirs:
+        return None
+
+    # Sort by the version number (ascending) and pick the first one
+    kicad_dirs.sort(key=lambda x: x[0])
+    lowest_version, lowest_dir_path = kicad_dirs[0]
+
+    return lowest_dir_path
+
 def getKicadPath(env=''):
     confpath = ''
     if env:
@@ -415,21 +449,50 @@ def getKicadPath(env=''):
         else:
             confpath=os.path.expanduser('~/.config/kicad')
 
+    confpath = get_lowest_kicad_dir(confpath)
+
     import re
     kicad_common = os.path.join(confpath,'kicad_common')
     if not os.path.isfile(kicad_common):
         kicad_common += ".json"
         if not os.path.isfile(kicad_common):
             logger.warning('cannot find kicad_common')
-            return None
+            return None, []
+
     with open(kicad_common,'r') as f:
         content = f.read()
-    match = re.search(r'^\s*"*KISYS3DMOD"*\s*[:=]\s*([^\r\n]+)',content,re.MULTILINE)
-    if not match:
-        logger.warning('no KISYS3DMOD found')
-        return None
 
-    return match.group(1).rstrip(' "')
+    ## This is original way how to detect parts path, but it's not wroking anymore
+    # match = re.search(r'^\s*"*KISYS3DMOD"*\s*[:=]\s*([^\r\n]+)',content,re.MULTILINE)
+    # if not match:
+    #     logger.warning('no KISYS3DMOD found')
+    #     return None, []
+    #
+    # return match.group(1).rstrip(' "'), []
+
+
+
+
+
+    kicadCommonVariables = json.loads(content)
+    try:
+        resultPath = None
+
+        pathList = kicadCommonVariables["environment"]["vars"]
+        # pathList = kicadCommonVariables.get("environment", {}).get("vars", {})
+        print(f"--> KiCAD Importer: getKicadPath(): start iterate over user env vars: {pathList}")
+        for k,v in pathList.items():
+            if re.search(r'KICAD.*_3DMODEL_DIR', k):
+                resultPath = v
+
+        return resultPath, pathList
+
+    except:
+        return None, []
+
+
+
+
 
 _model_cache = {}
 
@@ -446,18 +509,20 @@ def loadModel(filename):
         mtime = os.path.getmtime(filename)
         obj = _model_cache[filename]
         if obj[2] == mtime:
-            logger.info('model cache hit');
+            logger.info('model cache hit')
             return obj
         else:
-            logger.info('model reload due to time stamp change');
+            logger.info('model reload due to time stamp change')
     except KeyError:
         pass
     except OSError:
+        logger.error(f"can't load file {filename}")
         return
 
     import ImportGui
     doc = getActiveDoc()
     if not os.path.isfile(filename):
+        logger.warning(f"KiCAD Importer loadModel: file {filename} not found")
         return
     count = len(doc.Objects)
     dobjs = []
@@ -476,6 +541,67 @@ def loadModel(filename):
     finally:
         for o in dobjs:
             doc.removeObject(o.Name)
+
+####################################################################################################################
+#   LuboJ custom functions
+####################################################################################################################
+
+def scale_object_freecad(target_obj_name, sx, sy, sz, placement):
+    """
+    Creates a parametric Part::Scale feature in FreeCAD.
+
+    :param doc_name: String, name of the document (e.g., 'Unnamed')
+    :param target_obj_name: String, name of the object to scale (e.g., 'part_combo005')
+    :param sx: Float, X scale factor
+    :param sy: Float, Y scale factor
+    :param sz: Float, Z scale factor
+
+    :return FreeCAD ScaleFeature object
+    """
+    doc = getActiveDoc()
+    # target_obj = doc.getObject(target_obj_name)
+    target_obj = doc.getObjectsByLabel(target_obj_name)[0]
+
+    if not target_obj:
+        print(f"Error: Scaling object '{target_obj_name}' not found.")
+        return None
+
+    # 1. Add the Part::Scale feature to the document
+    scale_feature = doc.addObject('Part::Scale', f'Scale_{target_obj_name}')
+
+    # 2. Link the original object as the base
+    scale_feature.Base = target_obj
+
+    # 3. Configure non-uniform scaling parameters
+    scale_feature.Uniform = False
+    scale_feature.XScale = float(sx)
+    scale_feature.YScale = float(sy)
+    scale_feature.ZScale = float(sz)
+
+    # 4. Hide the original object (so you don't see overlapping parts)
+    target_obj.Visibility = False
+
+    # set placement same as original object
+    scale_feature.Placement = placement
+
+    # 5. Sync the appearance colors (uncommenting your recorded GUI styling lines)
+    if hasattr(doc, "Gui"):
+        view_obj = scale_feature.ViewObject
+        target_view = target_obj.ViewObject
+
+        if hasattr(target_view, 'ShapeAppearance'):
+            view_obj.ShapeAppearance = target_view.ShapeAppearance
+        if hasattr(target_view, 'LineColor'):
+            view_obj.LineColor = target_view.LineColor
+
+    # 6. Recompute the document to render changes
+    doc.recompute()
+
+    return scale_feature
+
+####################################################################################################################
+#   KiCAD class itself
+####################################################################################################################
 
 class KicadFcad:
     def __init__(self,filename=None,debug=False,**kwds):
@@ -506,7 +632,7 @@ class KicadFcad:
 
         # set -1 to disable via in pads, 0 to enable as normal, >0 to use as
         # a ratio to via radius for creating a square to simplify via
-        self.via_bound = 0
+        self.via_bound = 1
 
         # whether to skip via hole if there is via_bound
         self.via_skip_hole = None
@@ -535,6 +661,15 @@ class KicadFcad:
         # Ending of user customizable parameters
         #############################################################
 
+        ##############################################################
+        #   LuboJ added environment variables
+        #
+        _, self.path_env_list = getKicadPath(self.path_env)
+        # logger.info(f'environment path list set to: {self.path_env_list}')
+        print(f'--> KiCAD Importer: environment path list set to: {self.path_env_list}')
+
+
+
         # checking user overridden parameters
         for key,value in kwds.items():
             if not hasattr(self,key):
@@ -542,7 +677,12 @@ class KicadFcad:
             setattr(self,key,value)
 
         if not self.part_path:
-            self.part_path = getKicadPath(self.path_env)
+            self.part_path, _ = getKicadPath(self.path_env)
+            # logger.info(f'part path set to: {self.part_path}')
+            if self.part_path is None:
+                self.part_path = ""
+            print(f'--> KiCAD Importer: part path set to: {self.part_path}')
+
         self.pcb = KicadPCB.load(self.filename, self.quote_no_parse)
 
         if self.pcb._key == 'footprint':
@@ -2180,6 +2320,9 @@ class KicadFcad:
 
     def loadParts(self,z=0,combo=False,prefix=''):
 
+        from pathlib import Path
+        listOfObjectLabelToScale = []
+
         if not os.path.isdir(self.part_path):
             raise Exception('cannot find kicad package3d directory')
 
@@ -2203,11 +2346,21 @@ class KicadFcad:
                 continue
             ref = '?'
             value = '?'
+
+            # this is old way not working now
             for t in m.fp_text:
                 if t[0] == 'reference':
                     ref = t[1]
                 if t[0] == 'value':
                     value = t[1]
+
+            #reference and value for parts are stored in property
+            try:
+                ref = m.property[0][1].strip('"')
+                value = m.property[1][1].strip('"')
+            except:
+                pass
+
 
             m_at,m_angle = getAt(m)
             m_at += Vector(0,0,z)
@@ -2217,11 +2370,31 @@ class KicadFcad:
                 self._log('loading model {}/{} {} {} {}...',
                         model_idx,len(m.model), ref,value,model[0])
                 for e in ('.stp','.STP','.step','.STEP'):
-                    filename = os.path.join(self.part_path,path+e)
+
+                    # filename = os.path.join(self.part_path,path+e)
+                    filename = path + e
+                    for env_path_key, env_path_value in self.path_env_list.items():
+                        filename = filename.replace('${'+env_path_key+'}', env_path_value)
+                    filename = filename.strip('"')
+                    filename = str(Path(filename))
+
                     mobj = loadModel(filename)
+
                     if not mobj:
                         continue
-                    at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
+
+                    print(f'--> Kicad Importer: loadParts(): file loaded getting its placement for {filename}')
+                    # at = product(Vector(*model.at.xyz),Vector(25.4,25.4,25.4))
+                    # at = product(Vector(*model.offset.xyz),Vector(25.4,25.4,25.4))  #this is working, checked in board file
+                    at = Vector(*model.offset.xyz)
+                    print(f'--> Kicad Importer: loadParts(): at: {at}')
+
+                    # Read scale factor
+                    # TODO: This is not used as you can simply scale object in freecad!!!
+                    #
+                    scale_factors = [float(v) for v in model.scale.xyz]
+                    sx, sy, sz = scale_factors
+
                     rot = [-float(v) for v in reversed(model.rotate.xyz)]
                     pln = Placement(at,Rotation(*rot))
                     if not self.add_feature:
@@ -2233,11 +2406,25 @@ class KicadFcad:
                             obj['shape'].Placement = pln
                         objs.append(obj)
                     else:
+                        objLabel = '{}#{}#{}#{}'.format(module_idx,model_idx,ref,value)
+
                         obj = self._makeObject('Part::Feature','model',
-                            label='{}#{}#{}'.format(module_idx,model_idx,ref),
+                            # label='{}#{}#{}'.format(module_idx,model_idx,ref),
+                            label=objLabel,
                             links='Shape',shape=mobj[0])
                         obj.ViewObject.DiffuseColor = mobj[1]
                         obj.Placement = pln
+
+                        # Pass variables as default arguments to capture their current state in the loop
+                        # TODO: Using part position from m_at no placement what is now relative offset only
+                        #       This way I can use additional information from KiCAD 3D model settings like its offset, rotation or scale
+                        #       Or I can use layer thickness to automatically create ports!!!
+                        #
+                        scaledObjectPlacement = Placement(m_at,Rotation(Vector(0,0,1),m_angle)) #I just used this fast to have this scaled object fast
+                        listOfObjectLabelToScale.append({
+                            "scaleObject": lambda label=obj.Label, x=sx, y=sy, z=sz, p=scaledObjectPlacement: scale_object_freecad(label, x, y, z, p)
+                        })
+
                         objs.append(obj)
                     self._log('loaded')
                     break
@@ -2250,7 +2437,9 @@ class KicadFcad:
                 pln = pln.multiply(Placement(Vector(),
                                     Rotation(Vector(1,0,0),180)))
 
-            label = '{}#{}'.format(module_idx,ref)
+            # label = '{}#{}'.format(module_idx,ref)
+            label = '{}#{}#{}'.format(module_idx, ref, value)
+
             if self.add_feature or combo:
                 obj = self._makeCompound(objs,'part',label,force=True)
                 obj.Placement = pln
@@ -2268,7 +2457,19 @@ class KicadFcad:
                 parts = grp
 
         self._popLog('done loading parts on layer {}',self.layer)
-        fitView();
+        fitView()
+
+
+        #
+        #   Scale objects
+        #       - perform scaling functiond stored in list
+        #       - add for each layer scaled parts to group
+        #
+        grp = self._makeObject('App::DocumentObjectGroup', 'scaled_parts')
+        for scaleMethodObj in listOfObjectLabelToScale:
+            scaledObj = scaleMethodObj["scaleObject"]()
+            grp.addObject(scaledObj)
+
         return parts
 
 

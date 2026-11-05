@@ -1,10 +1,11 @@
 from utilsOpenEMS.GuiHelpers.CadInterface import CadInterface
 
-from PySide2 import QtCore
+from PySide import QtCore
 import FreeCAD
 import FreeCADGui
 import Draft
 import Mesh
+import os
 
 class FreeCADHelpers(CadInterface):
 
@@ -127,5 +128,16 @@ class FreeCADHelpers(CadInterface):
     def recompute(self):
         FreeCAD.ActiveDocument.recompute()
 
-    def exportSTL(self, partToExport, exportFileName):
-        Mesh.export(partToExport, exportFileName)
+    def exportSTL(self, partToExportList, exportFileName):
+        Mesh.export(partToExportList, exportFileName)
+
+    def exportSTEP(self, partToExportList, exportFileName):
+        for partToExport in partToExportList:
+            partToExport.Shape.exportStep(exportFileName)
+
+    def getCurrentDocumentFileName(self):
+        '''
+        :return: FreeCAD filename without extension
+        '''
+        currentFileName = os.path.splitext(os.path.basename(FreeCAD.ActiveDocument.FileName))[0]
+        return currentFileName

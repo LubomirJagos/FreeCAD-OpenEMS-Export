@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math
@@ -11,6 +11,11 @@ from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 from utilsOpenEMS.SettingsItem.SettingsItem import SettingsItem
 from utilsOpenEMS.GuiHelpers.GuiHelpers import GuiHelpers
 from utilsOpenEMS.GuiHelpers.FactoryCadInterface import FactoryCadInterface
+
+try:
+	import FreeCAD
+except:
+    pass
 
 class CommonScriptLinesGenerator:
 
@@ -41,6 +46,14 @@ class CommonScriptLinesGenerator:
         # [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = App.Units.schemaTranslate( App.Units.Quantity("1.0 m"), App.Units.Scheme.SI2 )
         # return 1.0 / standardUnitsPerTargetUnit # standard unit is mm : return 1.0 / 1000 [m]
         return 0.001
+
+    def getFreeCADInternalUnitLengthStr(self):
+        try:
+            [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = FreeCAD.Units.schemaTranslate( FreeCAD.Units.Quantity("1.0 m"), FreeCAD.Units.Scheme.SI2 )
+        except:
+            [qtyStr, standardUnitsPerTargetUnit, targetUnitStr] = FreeCAD.Units.schemaTranslate( FreeCAD.Units.Quantity("1.0 m"), FreeCAD.Units.Scheme.MmMin )
+
+        return targetUnitStr
 
     def getItemsByClassName(self):
         categoryCount = self.form.objectAssignmentRightTreeWidget.invisibleRootItem().childCount()

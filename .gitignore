@@ -7,3 +7,7 @@ __pycache__
 sourcetrail_code_inspection
 .pyc
 reports
+/.ai/
+/examples
+TODO.txt
+/test/simulation*

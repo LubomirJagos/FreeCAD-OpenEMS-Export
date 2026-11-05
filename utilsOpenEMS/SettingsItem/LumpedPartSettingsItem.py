@@ -20,16 +20,22 @@ class LumpedPartSettingsItem(SettingsItem):
             typeStr += 'C'
         return typeStr
 
-    def getR(self):
+    def getR(self, unitsAsText=False):
         outStr = f"{self.params['R']}*{self.getUnitsAsNumber(self.params['RUnits'])}"
+        if unitsAsText:
+            outStr = f"{self.params['R']}*{self.params['RUnits']}"
         return outStr
 
-    def getL(self):
+    def getL(self, unitsAsText=False):
         outStr = f"{self.params['L']}*{self.getUnitsAsNumber(self.params['LUnits'])}"
+        if unitsAsText:
+            outStr = f"{self.params['L']}*{self.params['LUnits']}"
         return outStr
 
-    def getC(self):
+    def getC(self, unitsAsText=False):
         outStr = f"{self.params['C']}*{self.getUnitsAsNumber(self.params['CUnits'])}"
+        if unitsAsText:
+            outStr = f"{self.params['C']}*{self.params['CUnits']}"
         return outStr
 
     def getCapsEnabled(self):

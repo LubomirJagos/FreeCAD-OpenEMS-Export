@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math
@@ -1922,23 +1922,23 @@ class OctaveScriptLinesGenerator:
 
                 genScript += "\n"
             else:
-                self.guiHelpers.displayMessage("Missing excitation, please define one.")
+                self.guiHelpers.displayMessage("<font color='#FF0000'><b>Missing excitation, please define one.</b></font>")
                 pass
             pass
         return genScript
 
     #########################################################################################################################
-    #                                  _                       _       _          _ _      _            _
-    #                                 | |                     (_)     | |        | (_)    | |          | |
-    #   __ _  ___ _ __   ___ _ __ __ _| |_ ___   ___  ___ _ __ _ _ __ | |_    ___| |_  ___| | _____  __| |
-    #  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \ / __|/ __| '__| | '_ \| __|  / __| | |/ __| |/ / _ \/ _` |
-    # | (_| |  __/ | | |  __/ | | (_| | ||  __/ \__ \ (__| |  | | |_) | |_  | (__| | | (__|   <  __/ (_| |
-    #  \__, |\___|_| |_|\___|_|  \__,_|\__\___| |___/\___|_|  |_| .__/ \__|  \___|_|_|\___|_|\_\___|\__,_|
-    #   __/ |                                                   | |
-    #  |___/
-    #
     #	GENERATE SCRIPT CLICKED - go through object assignment tree categories, output child item data.
-    #
+    #########################################################################################################################
+
+    def generateSimulationScript(self, outputDir=None):
+        """
+        General method which should be used as interface in other objects. Generate simulation script.
+        :param outputDir:
+        :return:
+        """
+        self.generateOpenEMSScript(outputDir)
+
     def generateOpenEMSScript(self, outputDir=None):
 
         # Create outputDir relative to local FreeCAD file if output dir does not exists

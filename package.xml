@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+    <name>FreeCAD Microwave Simulation Creator</name> <!-- What the Addon Manager displays to users -->
+    <description>Creates python or matlab/octave scripts for microwave simulator openEMS and EMerge</description>
+    <version>0.5.0</version> <!-- Semantic versioning (1.2.3-beta) or CalVer-based, (2022.01.07), don't omit or non-git installations won't see your updates -->
+    <date>2026-02-04</date> <!-- Date of the last update to the version number -->
+    <maintainer email="lubomir.jagos@gmail.com">Your Name</maintainer>
+    <license file="LICENSE">GPL-3.0-or-later</license> <!-- Make sure you actually have this file in your Addon repo if the license requires it -->
+    <url type="repository" branch="main">https://github.com/LubomirJagos42/FreeCAD-OpenEMS-Export</url> <!-- Don't forget to update the branch name here -->
+    <url type="readme">https://github.com/LubomirJagos42/FreeCAD-OpenEMS-Export/README.md</url> <!-- Link to the HTML-rendered README page -->
+    <icon>Resources/icons/PackageIcon.svg</icon> <!-- If you include your icon here, you don't have to submit it to the main FreeCAD repo -->
+
+    <content>
+      <macro>
+        <name>FreeCAD Microwave Simulation Creator</name>
+        <version>0.5.0</version>
+        <url type="readme">https://github.com/LubomirJagos42/FreeCAD-OpenEMS-Export/Readme.md</url>
+<!--        <icon>sparkles.svg</icon>-->
+      </macro>
+    </content>
+
+</package>

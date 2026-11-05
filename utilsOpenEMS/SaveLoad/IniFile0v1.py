@@ -2,7 +2,7 @@ import os
 import re
 import json
 
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 
 from utilsOpenEMS.GuiHelpers.GuiSignals import GuiSignals
 
@@ -15,7 +15,8 @@ from utilsOpenEMS.SettingsItem.ProbeSettingsItem import ProbeSettingsItem
 from utilsOpenEMS.SettingsItem.ExcitationSettingsItem import ExcitationSettingsItem
 from utilsOpenEMS.SettingsItem.LumpedPartSettingsItem import LumpedPartSettingsItem
 from utilsOpenEMS.SettingsItem.MaterialSettingsItem import MaterialSettingsItem
-from utilsOpenEMS.SettingsItem.SimulationSettingsItem import SimulationSettingsItem
+from utilsOpenEMS.SettingsItem.SimulationSettingsItem import SimulationSettingsItem, SimulationPalaceSettingsItem
+from utilsOpenEMS.SettingsItem.BoundaryConditionSettingsItem import BoundaryConditionSettingsItem
 from utilsOpenEMS.SettingsItem.GridSettingsItem import GridSettingsItem
 from utilsOpenEMS.SettingsItem.FreeCADSettingsItem import FreeCADSettingsItem
 
@@ -52,12 +53,8 @@ class IniFile0v1:
 
         return None
 
-    #   _____    __      ________    _____ ______ _______ _______ _____ _   _  _____  _____
-    #  / ____|  /\ \    / /  ____|  / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-    # | (___   /  \ \  / /| |__    | (___ | |__     | |     | |    | | |  \| | |  __| (___
-    #  \___ \ / /\ \ \/ / |  __|    \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \
-    #  ____) / ____ \  /  | |____   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-    # |_____/_/    \_\/   |______| |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/
+    ##
+    #   SAVE SETTINGS METHOD
     #
     def write(self, filename=None):
 
@@ -84,7 +81,9 @@ class IniFile0v1:
         settings.setValue("version", "0.1")
         settings.endGroup()
 
+        #
         # SAVE MATERIAL SETTINGS
+        #
         materialList = self.cadHelpers.getAllTreeWidgetItems(self.form.materialSettingsTreeView)
         for k in range(len(materialList)):
             print("Save new MATERIAL constants into file: ")
@@ -98,21 +97,26 @@ class IniFile0v1:
                 settings.setValue("material_mue", materialList[k].constants['mue'])
                 settings.setValue("material_kappa", materialList[k].constants['kappa'])
                 settings.setValue("material_sigma", materialList[k].constants['sigma'])
+                settings.setValue("material_tand", materialList[k].constants['tand'])
+
             elif (materialList[k].type == "conducting sheet"):
                 try:
                     settings.setValue("conductingSheetThicknessValue", materialList[k].constants['conductingSheetThicknessValue'])
                     settings.setValue("conductingSheetThicknessUnits", materialList[k].constants['conductingSheetThicknessUnits'])
                     settings.setValue("conductingSheetConductivity", materialList[k].constants['conductingSheetConductivity'])
+                    settings.setValue("conductingSheetPermeability", materialList[k].constants['conductingSheetPermeability'])
                 except Exception as e:
                     settings.setValue("conductingSheetThicknessValue", 40.00)
                     settings.setValue("conductingSheetThicknessUnits", "um")
                     settings.setValue("conductingSheetConductivity", 50e6)
+                    settings.setValue("conductingSheetPermeability", 1.0)
                     print(f"IniFile.py > write(), ERROR, set default values for conductingSheetThicknessValue, conductingSheetThicknessUnits\n{e}")
 
             settings.endGroup()
 
+        #
         # SAVE GRID SETTINGS
-
+        #
         gridList = self.cadHelpers.getAllTreeWidgetItems(self.form.gridSettingsTreeView)
         for k in range(len(gridList)):
             print("Save new GRID constants into file: " + gridList[k].getName())
@@ -145,6 +149,8 @@ class IniFile0v1:
                 settings.setValue("yenabled", gridList[k].yenabled)
                 settings.setValue("zenabled", gridList[k].zenabled)
                 settings.setValue("userDefined", json.dumps(gridList[k].userDefined))
+            elif (gridList[k].type == "FEM Max Size"):
+                settings.setValue("femMesh", json.dumps(gridList[k].femMesh))
 
             try:
                 settings.setValue("gridOffset", json.dumps(gridList[k].gridOffset))
@@ -154,8 +160,9 @@ class IniFile0v1:
 
             settings.endGroup()
 
+        #
         # SAVE EXCITATION
-
+        #
         excitationList = self.cadHelpers.getAllTreeWidgetItems(self.form.excitationSettingsTreeView)
         for k in range(len(excitationList)):
             print("Save new EXCITATION constants into file: " + excitationList[k].getName())
@@ -165,6 +172,8 @@ class IniFile0v1:
             settings.setValue("sinusodial", json.dumps(excitationList[k].sinusodial))
             settings.setValue("gaussian", json.dumps(excitationList[k].gaussian))
             settings.setValue("custom", json.dumps(excitationList[k].custom))
+            settings.setValue("sweep", json.dumps(excitationList[k].sweep))
+            settings.setValue("fem_gaussian", json.dumps(excitationList[k].femGaussian))
             settings.setValue("units", excitationList[k].units)
             settings.endGroup()
 
@@ -186,6 +195,7 @@ class IniFile0v1:
                     settings.setValue("isActive", portList[k].isActive)
                     settings.setValue("infiniteResistance", portList[k].infiniteResistance)
                     settings.setValue("direction", portList[k].direction)
+                    settings.setValue("directionCustomVector", json.dumps(portList[k].directionCustomVector))
                 except Exception as e:
                     print(f"{__file__} > write() lumped ERROR: {e}")
 
@@ -285,6 +295,20 @@ class IniFile0v1:
                 except Exception as e:
                     print(f"{__file__} > write() curve ERROR: {e}")
 
+            elif (portList[k].type == "modal"):
+                try:
+                    settings.setValue("modeType", portList[k].modalModeType)
+                    settings.setValue("mixedMaterials", portList[k].modalMixedMaterials)
+                    settings.setValue("impedanceDefinition", portList[k].modalImpedanceDefinition)
+                except Exception as e:
+                    print(f"{__file__} > write() modal ERROR: {e}")
+
+            elif (portList[k].type == "userdefined"):
+                try:
+                    settings.setValue("userDefinedData", portList[k].userDefinedData)
+                except Exception as e:
+                    print(f"{__file__} > write() userdefined ERROR: {e}")
+
             settings.endGroup()
 
         #
@@ -322,6 +346,7 @@ class IniFile0v1:
         #
         simulationSettings = SimulationSettingsItem("Hardwired Name 1")
 
+        #write all settings from "Simulation Params" tab from openEMS tab
         simulationSettings.params['max_timestamps'] = self.form.simParamsMaxTimesteps.value()
         simulationSettings.params['min_decrement'] = self.form.simParamsMinDecrement.value()
 
@@ -346,16 +371,90 @@ class IniFile0v1:
         simulationSettings.params['min_gridspacing_x'] = self.form.genParamMinGridSpacingX.value()
         simulationSettings.params['min_gridspacing_y'] = self.form.genParamMinGridSpacingY.value()
         simulationSettings.params['min_gridspacing_z'] = self.form.genParamMinGridSpacingZ.value()
+        simulationSettings.params['OverSampling'] = self.form.simParamsOverSampling.value()
+
+        simulationSettings.params['useGPU'] = self.form.simParamsUseGPU.isChecked()
+
+        #write all settings from "Simulation Params" tab from EMerge tab
+        simulationSettings.params['base_length_unit_m_emerge'] = self.form.simParamsDeltaUnitList_emerge.currentText()
+        simulationSettings.params['solverEngine_emerge'] = self.form.simParamsSolverEngine_emerge.currentText()
+        simulationSettings.params['disableRAMCheck_emerge'] = self.form.simParamsDisableRAMCheck_emerge.isChecked()
+        simulationSettings.params['generateTouchstoneFile_emerge'] = self.form.simParamsGenerateTouchstoneFile_emerge.isChecked()
+        simulationSettings.params['generateTouchstoneFileDense_emerge'] = self.form.simParamsGenerateTouchstoneFileDense_emerge.isChecked()
+        simulationSettings.params['generateTouchstoneFileDenseNPoints_emerge'] = self.form.simParamsGenerateTouchstoneFileDenseNPoints_emerge.value()
+        simulationSettings.params['useFrequencyGroups_emerge'] = self.form.simParamsUseFrequencyGroups_emerge.isChecked()
+        simulationSettings.params['frequencyGroupCount_emerge'] = self.form.simParamsNumberOfFrequencyGroups_emerge.value()
 
         simulationSettings.params['outputScriptType'] = 'octave'
         if self.form.radioButton_pythonType.isChecked():
             simulationSettings.params['outputScriptType'] = 'python'
 
-        # write parameters frp, above into JSON
+        #
+        #   Save simulation params for Palace tab
+        #
+        simulationPalaceSettings = SimulationPalaceSettingsItem("Palace_Simulation_Settings_1")
+        simulationPalaceSettings.palaceParams["problemType"] = self.form.simParamsSimulationTypeList_palace.currentText()
+        simulationPalaceSettings.palaceParams["problemVerbose"] = self.form.simParamsVerbose_palace.value()
+        simulationPalaceSettings.palaceParams["problemOutput"] = self.form.simParamsOutputDirectory_palace.text()
+        simulationPalaceSettings.palaceParams["modelMeshName"] = self.form.simParamsModelMeshName_palace.text()
+        simulationPalaceSettings.palaceParams["modelMeshBaseUnits"] = self.form.simParamsModelMeshBaseUnits_palace.currentText()
+        simulationPalaceSettings.palaceParams["linearSolverType"] = self.form.simParamsLinearSolverType_palace.currentText()
+        simulationPalaceSettings.palaceParams["linearSolverKSPType"] = self.form.simParamsLinearSolverKSPType_palace.currentText()
+        simulationPalaceSettings.palaceParams["linearSolverTolerance"] = self.form.simParamsLinearSolverTolerance_palace.value()
+        simulationPalaceSettings.palaceParams["linearSolverMaxIterationCount"] = self.form.simParamsLinearSolverMaximumIterationCount_palace.value()
+        simulationPalaceSettings.palaceParams["solverOrder"] = self.form.simParamsLinearSolverOrder_palace.value()
+        simulationPalaceSettings.palaceParams["solverDevice"] = self.form.simParamsSolverDevice_palace.currentText()
+        simulationPalaceSettings.palaceParams["saveStep"] = self.form.simParamsSaveStep_palace.value()
+        simulationPalaceSettings.palaceParams['useNf2ff'] = self.form.simParamsUseNf2ff_palace.isChecked()
+        simulationPalaceSettings.palaceParams["nf2ffBoundaryConditionName"] = self.form.portNf2ffPalaceObjectList.currentText()
+        simulationPalaceSettings.palaceParams["nf2ffFreqMHz"] = self.form.boundaryNf2ffPalaceFreq.value()
+        simulationPalaceSettings.palaceParams["nf2ffTheta"] = self.form.boundaryNf2ffPalaceTheta.value()
+        simulationPalaceSettings.palaceParams["nf2ffPhi"] = self.form.boundaryNf2ffPalacePhi.value()
+        simulationPalaceSettings.palaceParams["nf2ffNSample"] = self.form.boundaryNf2ffPalaceNSample.value()
+
+        #
+        #   Write parameters from, above into JSON
+        #
         settings.beginGroup("SIMULATION-" + simulationSettings.name)
         settings.setValue("name", simulationSettings.name)
         settings.setValue("params", json.dumps(simulationSettings.params))
+        settings.setValue("paramsPalace", json.dumps(simulationPalaceSettings.palaceParams))
         settings.endGroup()
+
+        #
+        #   SOLVER section
+        #
+        settings.beginGroup("SOLVER-settings1")
+        settings.setValue("solver", self.form.comboBox_solverType.currentText())
+        settings.setValue("engine", self.form.simParamsSolverEngine_emerge.currentText())
+        settings.endGroup()
+
+        # SAVE LUMPED PART SETTINGS
+
+        lumpedPartList = self.cadHelpers.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
+        print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
+        for k in range(len(lumpedPartList)):
+            print("Saving new LUMPED PART " + lumpedPartList[k].getName())
+
+            settings.beginGroup("LUMPEDPART-" + lumpedPartList[k].getName())
+            settings.setValue("params", json.dumps(lumpedPartList[k].params))
+            settings.endGroup()
+
+        # SAVE BOUNDARY CONDITION SETTINGS
+
+        boundaryConditionList = self.cadHelpers.getAllTreeWidgetItems(self.form.boundaryConditionSettingsTreeView)
+        print("Boundary condition list contains " + str(len(boundaryConditionList)) + " items.")
+        for k in range(len(boundaryConditionList)):
+            print("Saving new BOUNDARY CONDITION " + boundaryConditionList[k].getName())
+
+            settings.beginGroup("BOUNDARYCONDITION-" + boundaryConditionList[k].getName())
+            settings.setValue("type", boundaryConditionList[k].type)
+            settings.setValue("customType", boundaryConditionList[k].customType)
+            settings.setValue("surfaceImpedance", json.dumps(boundaryConditionList[k].surfaceImpedance))
+            settings.setValue("thinConductor", json.dumps(boundaryConditionList[k].thinConductor))
+            settings.setValue("openemsAbsorber", json.dumps(boundaryConditionList[k].openemsAbsorber))
+            settings.setValue("userDefined", boundaryConditionList[k].userDefined)
+            settings.endGroup()
 
         # SAVE OBJECT ASSIGNMENTS
 
@@ -386,17 +485,6 @@ class IniFile0v1:
 
                     objCounter += 1
 
-        # SAVE LUMPED PART SETTINGS
-
-        lumpedPartList = self.cadHelpers.getAllTreeWidgetItems(self.form.lumpedPartTreeView)
-        print("Lumped part list contains " + str(len(lumpedPartList)) + " items.")
-        for k in range(len(lumpedPartList)):
-            print("Saving new LUMPED PART " + lumpedPartList[k].getName())
-
-            settings.beginGroup("LUMPEDPART-" + lumpedPartList[k].getName())
-            settings.setValue("params", json.dumps(lumpedPartList[k].params))
-            settings.endGroup()
-
         # SAVE PRIORITY OBJECT LIST SETTINGS
 
         settings.beginGroup("PRIORITYLIST-OBJECTS")
@@ -421,8 +509,9 @@ class IniFile0v1:
             settings.setValue(priorityMeshObjName, str(k*10))          #multiply priority by 10 to left there some numbers between
         settings.endGroup()
 
+        #
         # SAVE POSTPROCESSING OPTIONS
-
+        #
         settings.beginGroup("POSTPROCESSING-DefaultName")
         settings.setValue("nf2ffObject", self.form.portNf2ffObjectList.currentText())
         settings.setValue("nf2ffInputPort", self.form.portNf2ffInput.currentText())
@@ -436,18 +525,45 @@ class IniFile0v1:
         settings.setValue("nf2ffPhiStep", self.form.portNf2ffPhiStep.value())
         settings.endGroup()
 
+        #
+        # SAVE EMERGE NF2FF FIELDS
+        #
+        nf2ffEmergeSettings = {}
+        nf2ffEmergeSettings["portNf2ffEmergeObjectList"] = self.form.portNf2ffEmergeObjectList.currentText()
+        nf2ffEmergeSettings["boundaryNf2ffEmergeFreq"] = self.form.boundaryNf2ffEmergeFreq.value()
+        nf2ffEmergeSettings["polarizationNf2ffEmerge"] = self.form.polarizationNf2ffEmerge.currentText()
+        nf2ffEmergeSettings["quantityNf2ffEmerge"] = self.form.quantityNf2ffEmerge.currentText()
+        nf2ffEmergeSettings["useDecibelsNf2ffEmerge"] = self.form.useDecibelsNf2ffEmerge.isChecked()
+        nf2ffEmergeSettings["dBFloorNf2ffEmerge"] = self.form.dBFloorNf2ffEmerge.value()
+        nf2ffEmergeSettings["diagramRMaxNF2FFEmerge"] = self.form.diagramRMaxNF2FFEmerge.value()
+        nf2ffEmergeSettings["diagramPlacementXNF2FFEmerge"] = self.form.diagramPlacementXNF2FFEmerge.value()
+        nf2ffEmergeSettings["diagramPlacementYNF2FFEmerge"] = self.form.diagramPlacementYNF2FFEmerge.value()
+        nf2ffEmergeSettings["diagramPlacementZNF2FFEmerge"] = self.form.diagramPlacementZNF2FFEmerge.value()
+        nf2ffEmergeSettings["diagramIsotropicNF2FFEmerge"] = self.form.diagramIsotropicNF2FFEmerge.isChecked()
+
+        fieldProbeEmergeSettings = {}
+        fieldProbeEmergeSettings["frequencyFieldProcessingEmerge"] = self.form.frequencyFieldProcessingEmerge.value()
+        fieldProbeEmergeSettings["typeFieldProcessingEmerge"] = self.form.typeFieldProcessingEmerge.currentText()
+        fieldProbeEmergeSettings["metricFieldProcessingEmerge"] = self.form.metricFieldProcessingEmerge.currentText()
+        fieldProbeEmergeSettings["discretizationStepSizeFieldProcessingEmerge"] = self.form.discretizationStepSizeFieldProcessingEmerge.value()
+        fieldProbeEmergeSettings["animateFieldProcessingEmerge"] = self.form.animateFieldProcessingEmerge.isChecked()
+        fieldProbeEmergeSettings["cutplaneXFieldProcessingEmerge"] = self.form.cutplaneXFieldProcessingEmerge.value()
+        fieldProbeEmergeSettings["cutplaneYFieldProcessingEmerge"] = self.form.cutplaneYFieldProcessingEmerge.value()
+        fieldProbeEmergeSettings["cutplaneZFieldProcessingEmerge"] = self.form.cutplaneZFieldProcessingEmerge.value()
+
+        settings.beginGroup("POSTPROCESSING-EmergePlotFields")
+        settings.setValue("plotFieldSettings", json.dumps(fieldProbeEmergeSettings))
+        settings.setValue("plotNF2FFSettings", json.dumps(nf2ffEmergeSettings))
+        settings.endGroup()
+
         # sys.exit()  # prevents second call
         print("Current settings saved to file: " + outFile)
         self.guiHelpers.displayMessage("Settings saved to file: " + outFile, forceModal=False)
         return
 
 
-    #  _      ____          _____     _____ ______ _______ _______ _____ _   _  _____  _____
-    # | |    / __ \   /\   |  __ \   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
-    # | |   | |  | | /  \  | |  | | | (___ | |__     | |     | |    | | |  \| | |  __| (___
-    # | |   | |  | |/ /\ \ | |  | |  \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \
-    # | |___| |__| / ____ \| |__| |  ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
-    # |______\____/_/    \_\_____/  |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/
+    ##
+    #   LOAD SETTINGS METHOD
     #
     def read(self, filename=None):
         print("Load current values from file.")
@@ -495,6 +611,16 @@ class IniFile0v1:
                 categorySettings.gaussian = json.loads(settings.value('gaussian'))
                 categorySettings.custom = json.loads(settings.value('custom'))
                 categorySettings.units = settings.value('units')
+
+                #
+                #   Jan2026 - added for emerge solver, therefore it's not present in old ini files
+                #
+                try:
+                    categorySettings.sweep = json.loads(settings.value('sweep'))
+                    categorySettings.femGaussian = json.loads(settings.value('fem_gaussian'))
+                except:
+                    pass
+
                 settings.endGroup()
                 print(f"loading EXCITATION - {categorySettings.name} - {categorySettings.type}")
 
@@ -525,6 +651,11 @@ class IniFile0v1:
                         categorySettings.smoothMesh = json.loads(settings.value('smoothMesh'))
                     except Exception as e:
                         print(f"Error during load reading smooth mesh: {e}")
+                elif (categorySettings.type == "FEM Max Size"):
+                    try:
+                        categorySettings.femMesh = json.loads(settings.value('femMesh'))
+                    except Exception as e:
+                        print(f"Error during load reading fem mesh: {e}")
                 else:
                     print(f"Grid reading {categorySettings.type} cannot find aditional infor needed for settings, default values left set.")
 
@@ -549,10 +680,15 @@ class IniFile0v1:
                     print(f"There was error during reading excitation or infiniteResistance port settings: {e}")
 
                 if (categorySettings.type == "lumped"):
-                    categorySettings.R = settings.value('R')
-                    categorySettings.RUnits = settings.value('RUnits')
-                    categorySettings.isActive = _bool(settings.value('isActive'))
-                    categorySettings.direction = settings.value('direction')
+                    try:
+                        categorySettings.R = settings.value('R')
+                        categorySettings.RUnits = settings.value('RUnits')
+                        categorySettings.isActive = _bool(settings.value('isActive'))
+                        categorySettings.direction = settings.value('direction')
+                        categorySettings.directionCustomVector = json.loads(settings.value('directionCustomVector'))
+                    except Exception as e:
+                        print(f"There was error during reading resistance and port direction related info for port settings: {e}")
+                        pass
 
                 elif (categorySettings.type == "circular waveguide"):
                     categorySettings.isActive = _bool(settings.value('isActive'))
@@ -643,6 +779,20 @@ class IniFile0v1:
                     except Exception as e:
                         print(f"There was error during reading curve port settings: {e}")
 
+                elif (categorySettings.type == "modal"):
+                    try:
+                        categorySettings.modalModeType = settings.value('modeType')
+                        categorySettings.modalMixedMaterials = _bool(settings.value('mixedMaterials'))
+                        categorySettings.modalImpedanceDefinition = settings.value('impedanceDefinition')
+                    except Exception as e:
+                        print(f"There was error during reading modal port settings: {e}")
+
+                elif (categorySettings.type == "userdefined"):
+                    try:
+                        categorySettings.userDefinedData = settings.value('userDefinedData')
+                    except Exception as e:
+                        print(f"There was error during reading modal port settings: {e}")
+
                 settings.endGroup()
 
             elif (re.compile("PROBE").search(settingsGroup)):
@@ -685,17 +835,24 @@ class IniFile0v1:
                 categorySettings = MaterialSettingsItem()
                 categorySettings.name = itemName
                 categorySettings.type = settings.value('type')
-                categorySettings.constants = {}
-                categorySettings.constants['epsilon'] = settings.value('material_epsilon')
-                categorySettings.constants['mue'] = settings.value('material_mue')
-                categorySettings.constants['kappa'] = settings.value('material_kappa')
-                categorySettings.constants['sigma'] = settings.value('material_sigma')
+                categorySettings.constants = {'epsilon': 1.0, 'mue': 1.0, 'kappa': 0.0, 'sigma': 0.0, 'tand': 0.0}  #default values if there is error during load
+
+                try:
+                    categorySettings.constants['epsilon'] = settings.value('material_epsilon')
+                    categorySettings.constants['mue'] = settings.value('material_mue')
+                    categorySettings.constants['kappa'] = settings.value('material_kappa')
+                    categorySettings.constants['sigma'] = settings.value('material_sigma')
+                    categorySettings.constants['tand'] = settings.value('material_tand')
+                except:
+                    pass
+
                 print(f"loading MATERIAL - {categorySettings.name} - {categorySettings.type} - {categorySettings.constants}")
 
                 try:
                     categorySettings.constants['conductingSheetThicknessValue'] = settings.value('conductingSheetThicknessValue')
                     categorySettings.constants['conductingSheetThicknessUnits'] = settings.value('conductingSheetThicknessUnits')
                     categorySettings.constants['conductingSheetConductivity'] = settings.value('conductingSheetConductivity')
+                    categorySettings.constants['conductingSheetPermeability'] = settings.value('conductingSheetPermeability')
                 except:
                     print(f"There was error during loading conductive sheet material params for '{itemName}'")
                     pass
@@ -708,18 +865,25 @@ class IniFile0v1:
                 simulationSettings.name = itemName
                 simulationSettings.type = settings.value('type')
                 simulationSettings.params = json.loads(settings.value('params'))
+
+                #
+                #   Backward compatibility - try/except load params for palace simulation settings tab
+                #
+                simulationPalaceSettings = SimulationPalaceSettingsItem()
+                try:
+                    simulationPalaceSettings.palaceParams = json.loads(settings.value('paramsPalace'))
+                except:
+                    pass
+
                 settings.endGroup()
                 print(f'loading SIMULATION PARAMS: {(simulationSettings.params)}')
 
                 self.form.simParamsMaxTimesteps.setValue(simulationSettings.params['max_timestamps'])
                 self.form.simParamsMinDecrement.setValue(simulationSettings.params['min_decrement'])
                 self.form.generateJustPreviewCheckbox.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('generateJustPreview',False) else QtCore.Qt.Unchecked)
-                self.form.generateDebugPECCheckbox.setCheckState(
-                    QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC', False) else QtCore.Qt.Unchecked)
-                self.form.octaveExecCommandList.setCurrentText(
-                    simulationSettings.params.get("mFileExecCommand", self.form.octaveExecCommandList.itemData(0)))
-                self.form.simParamsDeltaUnitList.setCurrentText(
-                    simulationSettings.params.get("base_length_unit_m", self.form.simParamsDeltaUnitList.itemData(0)))
+                self.form.generateDebugPECCheckbox.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('generateDebugPEC', False) else QtCore.Qt.Unchecked)
+                self.form.octaveExecCommandList.setCurrentText(simulationSettings.params.get("mFileExecCommand", self.form.octaveExecCommandList.itemData(0)))
+                self.form.simParamsDeltaUnitList.setCurrentText(simulationSettings.params.get("base_length_unit_m", self.form.simParamsDeltaUnitList.itemData(0)))
 
                 self.guiHelpers.setSimlationParamBC(self.form.BCxmin, simulationSettings.params['BCxmin'])
                 self.guiHelpers.setSimlationParamBC(self.form.BCxmax, simulationSettings.params['BCxmax'])
@@ -735,20 +899,84 @@ class IniFile0v1:
                 self.form.PMLzmincells.setValue(simulationSettings.params['PMLzmincells'])
                 self.form.PMLzmaxcells.setValue(simulationSettings.params['PMLzmaxcells'])
 
+                #newly added params for emerge solver
+                try:
+                    self.form.simParamsDeltaUnitList_emerge.setCurrentText(simulationSettings.params['base_length_unit_m_emerge'])
+                    self.form.simParamsSolverEngine_emerge.setCurrentText(simulationSettings.params['solverEngine_emerge'])
+                    self.form.simParamsDisableRAMCheck_emerge.setChecked(simulationSettings.params['disableRAMCheck_emerge'])
+                    self.form.simParamsGenerateTouchstoneFile_emerge.setChecked(simulationSettings.params['generateTouchstoneFile_emerge'])
+                    self.form.simParamsGenerateTouchstoneFileDense_emerge.setChecked(simulationSettings.params['generateTouchstoneFileDense_emerge'])
+                    self.form.simParamsGenerateTouchstoneFileDenseNPoints_emerge.setValue(simulationSettings.params['generateTouchstoneFileDenseNPoints_emerge'])
+                    self.form.simParamsUseFrequencyGroups_emerge.setChecked(simulationSettings.params['useFrequencyGroups_emerge'])
+                    self.form.simParamsNumberOfFrequencyGroups_emerge.setValue(simulationSettings.params['frequencyGroupCount_emerge'])
+                except:
+                    pass
+
                 #
                 #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
+                #   this is for min_gridspacing settings
                 #
                 try:
                     self.form.genParamMinGridSpacingEnable.setCheckState(QtCore.Qt.Checked if simulationSettings.params.get('min_gridspacing_enable',False) else QtCore.Qt.Unchecked)
                     self.form.genParamMinGridSpacingX.setValue(simulationSettings.params['min_gridspacing_x'])
                     self.form.genParamMinGridSpacingY.setValue(simulationSettings.params['min_gridspacing_y'])
                     self.form.genParamMinGridSpacingZ.setValue(simulationSettings.params['min_gridspacing_z'])
+                except:
+                    pass
 
+                #
+                #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
+                #   this is for simulation type setting
+                #
+                try:
                     self.form.radioButton_octaveType.setChecked(True)                                                       # by default octave type is checked
                     self.form.radioButton_octaveType.setChecked(simulationSettings.params['outputScriptType'] == 'octave')
                     if simulationSettings.params['outputScriptType'] == 'python':
                         self.form.radioButton_pythonType.setChecked(simulationSettings.params['outputScriptType'] == 'python')
                         self.form.radioButton_pythonType.clicked.emit()
+                except:
+                    pass
+
+                #
+                #   try catch block here due backward compatibility, if error don't do anything about it and left default values set
+                #   this is for simulation oversampling setting
+                #
+                try:
+                    self.form.simParamsOverSampling.setValue(simulationSettings.params['OverSampling'])
+                except:
+                    pass
+
+                #   option use GPU for openEMS on simulation params tab
+                try:
+                    self.form.simParamsUseGPU.setChecked(simulationSettings.params['useGPU'])
+                except:
+                    pass
+
+
+                #
+                #   try catch block here due backward compatibility, loading simulation settings for palace solver tab
+                #
+                try:
+                    self.guiHelpers.setComboboxItem(self.form.simParamsSimulationTypeList_palace, simulationPalaceSettings.palaceParams["problemType"])
+                    self.form.simParamsVerbose_palace.setValue(simulationPalaceSettings.palaceParams["problemVerbose"])
+                    self.form.simParamsOutputDirectory_palace.setText(simulationPalaceSettings.palaceParams["problemOutput"])
+                    self.form.simParamsModelMeshName_palace.setText(simulationPalaceSettings.palaceParams["modelMeshName"])
+                    self.guiHelpers.setComboboxItem(self.form.simParamsModelMeshBaseUnits_palace, simulationPalaceSettings.palaceParams["modelMeshBaseUnits"])
+                    self.guiHelpers.setComboboxItem(self.form.simParamsLinearSolverType_palace, simulationPalaceSettings.palaceParams["linearSolverType"])
+                    self.guiHelpers.setComboboxItem(self.form.simParamsLinearSolverKSPType_palace, simulationPalaceSettings.palaceParams["linearSolverKSPType"])
+                    self.form.simParamsLinearSolverTolerance_palace.setValue(simulationPalaceSettings.palaceParams["linearSolverTolerance"])
+                    self.form.simParamsLinearSolverMaximumIterationCount_palace.setValue(simulationPalaceSettings.palaceParams["linearSolverMaxIterationCount"])
+                    self.form.simParamsLinearSolverOrder_palace.setValue(simulationPalaceSettings.palaceParams["solverOrder"])
+                    self.guiHelpers.setComboboxItem(self.form.simParamsSolverDevice_palace, simulationPalaceSettings.palaceParams["solverDevice"])
+
+                    self.form.simParamsUseNf2ff_palace.setChecked(simulationPalaceSettings.palaceParams['useNf2ff'])
+                    self.guiHelpers.setComboboxItem(self.form.portNf2ffPalaceObjectList, simulationPalaceSettings.palaceParams["nf2ffBoundaryConditionName"])
+                    self.form.boundaryNf2ffPalaceFreq.setValue(simulationPalaceSettings.palaceParams["nf2ffFreqMHz"])
+                    self.form.boundaryNf2ffPalaceTheta.setValue(simulationPalaceSettings.palaceParams["nf2ffTheta"])
+                    self.form.boundaryNf2ffPalacePhi.setValue(simulationPalaceSettings.palaceParams["nf2ffPhi"])
+                    self.form.boundaryNf2ffPalaceNSample.setValue(simulationPalaceSettings.palaceParams["nf2ffNSample"])
+
+                    self.form.simParamsSaveStep_palace.setValue(simulationPalaceSettings.palaceParams["saveStep"])
                 except:
                     pass
 
@@ -866,6 +1094,24 @@ class IniFile0v1:
 
                 settings.endGroup()
 
+            elif (re.compile("BOUNDARYCONDITION").search(settingsGroup)):
+                print("BoundaryCondition item settings found.")
+                settings.beginGroup(settingsGroup)
+                categorySettings = BoundaryConditionSettingsItem()
+                categorySettings.name = itemName
+                categorySettings.type = settings.value('type')
+                categorySettings.customType = settings.value('customType')
+
+                try:
+                    categorySettings.surfaceImpedance = json.loads(settings.value('surfaceImpedance'))
+                    categorySettings.thinConductor = json.loads(settings.value('thinConductor'))
+                    categorySettings.openemsAbsorber = json.loads(settings.value('openemsAbsorber'))
+                    categorySettings.userDefined = settings.value('userDefined')
+                except:
+                    pass
+
+                settings.endGroup()
+
             elif (re.compile("PRIORITYLIST-OBJECTS").search(settingsGroup)):
                 print("PriorityList group settings found.")
 
@@ -954,6 +1200,45 @@ class IniFile0v1:
 
                 continue
 
+            elif (re.compile("POSTPROCESSING-EmergePlotFields").search(settingsGroup)):
+
+                #
+                #   This parameters were added into .ini file just now recently (March 2026) therefore it's wrapped in try/except
+                #   to not cause error when older .ini files are opened and don't have these params inside
+                #
+                try:
+                    settings.beginGroup(settingsGroup)
+                    plotNF2FFSettings = json.loads(settings.value('plotNF2FFSettings'))
+                    plotFieldSettings = json.loads(settings.value('plotFieldSettings'))
+
+                    self.guiHelpers.setComboboxItem(self.form.portNf2ffEmergeObjectList, plotNF2FFSettings["portNf2ffEmergeObjectList"])
+                    self.form.boundaryNf2ffEmergeFreq.setValue(plotNF2FFSettings["boundaryNf2ffEmergeFreq"])
+                    self.guiHelpers.setComboboxItem(self.form.polarizationNf2ffEmerge, plotNF2FFSettings["polarizationNf2ffEmerge"])
+                    self.guiHelpers.setComboboxItem(self.form.quantityNf2ffEmerge, plotNF2FFSettings["quantityNf2ffEmerge"])
+                    self.form.useDecibelsNf2ffEmerge.setChecked(plotNF2FFSettings["useDecibelsNf2ffEmerge"])
+                    self.form.dBFloorNf2ffEmerge.setValue(plotNF2FFSettings["dBFloorNf2ffEmerge"])
+                    self.form.diagramRMaxNF2FFEmerge.setValue(plotNF2FFSettings["diagramRMaxNF2FFEmerge"])
+                    self.form.diagramPlacementXNF2FFEmerge.setValue(plotNF2FFSettings["diagramPlacementXNF2FFEmerge"])
+                    self.form.diagramPlacementYNF2FFEmerge.setValue(plotNF2FFSettings["diagramPlacementYNF2FFEmerge"])
+                    self.form.diagramPlacementZNF2FFEmerge.setValue(plotNF2FFSettings["diagramPlacementZNF2FFEmerge"])
+                    self.form.diagramIsotropicNF2FFEmerge.setChecked(plotNF2FFSettings["diagramIsotropicNF2FFEmerge"])
+
+                    self.form.frequencyFieldProcessingEmerge.setValue(plotFieldSettings["frequencyFieldProcessingEmerge"])
+                    self.guiHelpers.setComboboxItem(self.form.typeFieldProcessingEmerge, plotFieldSettings["typeFieldProcessingEmerge"])
+                    self.guiHelpers.setComboboxItem(self.form.metricFieldProcessingEmerge, plotFieldSettings["metricFieldProcessingEmerge"])
+                    self.form.discretizationStepSizeFieldProcessingEmerge.setValue(plotFieldSettings["discretizationStepSizeFieldProcessingEmerge"])
+                    self.form.animateFieldProcessingEmerge.setChecked(plotFieldSettings["animateFieldProcessingEmerge"])
+                    self.form.cutplaneXFieldProcessingEmerge.setValue(plotFieldSettings["cutplaneXFieldProcessingEmerge"])
+                    self.form.cutplaneYFieldProcessingEmerge.setValue(plotFieldSettings["cutplaneYFieldProcessingEmerge"])
+                    self.form.cutplaneZFieldProcessingEmerge.setValue(plotFieldSettings["cutplaneZFieldProcessingEmerge"])
+
+                    settings.endGroup()
+
+                except Exception as e:
+                    print(e)
+
+                continue
+
             elif (re.compile("POSTPROCESSING").search(settingsGroup)):
                 print("POSTPROCESSING item settings found.")
                 settings.beginGroup(settingsGroup)
@@ -972,6 +1257,20 @@ class IniFile0v1:
 
                     self.guiHelpers.setComboboxItem(self.form.portNf2ffInput, settings.value("nf2ffInputPort"))
                     self.form.portNf2ffFreq.setValue(float(settings.value("nf2ffFreqValue")))
+                except:
+                    pass
+
+                settings.endGroup()
+                continue
+
+            elif (re.compile("SOLVER").search(settingsGroup)):
+                print("SOLVER item settings found.")
+                settings.beginGroup(settingsGroup)
+                #
+                #	In case of error just continue and do nothing to correct values
+                #
+                try:
+                    self.guiHelpers.setComboboxItem(self.form.comboBox_solverType, settings.value("solver"))
                 except:
                     pass
 

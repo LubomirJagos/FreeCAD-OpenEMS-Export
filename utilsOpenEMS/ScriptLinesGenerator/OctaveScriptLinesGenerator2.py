@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 import numpy as np
 import re
 import math
@@ -302,7 +302,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
         return genScript
 
     def getCartesianOrCylindricalScriptLinesFromStartStop(self, bbCoords, startPointName=None, stopPointName=None):
-        genScript = "";
+        genScript = ""
         refUnit = self.getUnitLengthFromUI_m()  # Coordinates need to be given in drawing units
         sf = self.getFreeCADUnitLength_m() / refUnit  # scaling factor for FreeCAD units to drawing units
 
@@ -357,7 +357,10 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     #       +pi for stop point
                     #   therefore to correct this since theta is in range -pi..+pi I have to add 360deg so +2*pi for start point will get it right as it should be
                     #
-                    genScript += f"portStart(1) += 2*pi\n"
+
+                    #18th June - LuboJ - commented this hack, it's causing problems, theta mas be <-2*pi. 2*pi> if it's more there is some positioning problem, for now disabled, need to be RETHINK AGAIN!
+                    #genScript += f"portStart(1) += 2*pi\n"
+                    pass
 
         else:
             # CARTESIAN GRID USED
@@ -669,11 +672,11 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                         measPlaneStr = {False: "", True: ", 'MeasPlaneShift', " + str(_r(currSetting.coplanarMeasPlaneShiftValue / self.getUnitLengthFromUI_m() * currSetting.getUnitsAsNumber(currSetting.coplanarMeasPlaneShiftUnits)))}
                         genScript_R = ", 'Feed_R', portR*portUnits"
 
-                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCPWPort(CSX," + \
-                                     str(priorityIndex) + "," + \
-                                     str(genScriptPortCount) + "," + \
-                                     "'" + currSetting.coplanarMaterial + "'," + \
-                                     "portStart,portStop,gap_width,coplanarDir, coplanarEVec" + \
+                        genScript += "[CSX port{" + str(genScriptPortCount) + "}] = AddCPWPort(CSX, " + \
+                                     str(priorityIndex) + ", " + \
+                                     str(genScriptPortCount) + ", " + \
+                                     "'" + currSetting.coplanarMaterial + "', " + \
+                                     "portStart, portStop, gap_width, coplanarDir, coplanarEVec" + \
                                      isActiveStr.get(currSetting.isActive) + \
                                      feedShiftStr.get(currSetting.coplanarFeedpointShiftValue > 0) + \
                                      measPlaneStr.get(currSetting.coplanarMeasPlaneShiftValue > 0) + \
@@ -761,6 +764,12 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                         genScript += f'portNamesAndNumbersList("{obj.Label}") = {genScriptPortCount};\n'
                         genScriptPortCount += 1
 
+                    elif (currSetting.getType() == 'userdefined'):
+                        genScript += self.getCartesianOrCylindricalScriptLinesFromStartStop(bbCoords)
+                        genScript += "portExcitationAmplitude = " + str(currSetting.excitationAmplitude) + ";\n"
+                        genScript += "portPriorityIndex = " + str(priorityIndex) + ";\n"
+
+                        genScript += currSetting.userDefinedData
                     else:
                         genScript += '% Unknown port type. Nothing was generated. \n'
 
@@ -1002,6 +1011,14 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     priorityItemName = item.parent().text(0) + ", " + item.text(0) + ", " + childName
                     priorityIndex = self.getItemPriority(priorityItemName)
 
+                    #
+                    #   in octave interface there can't be two lumped part with same name, so if one category like 22nH there are more
+                    #   inductors add to their name index like:
+                    #       22nH, 22nH (2), ...
+                    #
+                    if k > 0:
+                        lumpedPartName += f" ({k+1})"
+
                     # WARNING: Caps param has hardwired value 1, will be generated small metal caps to connect part with circuit !!!
                     genScript += f"[CSX] = AddLumpedElement(CSX, '{lumpedPartName}', {lumpedPartParams});\n"
                     genScript += f"[CSX] = AddBox(CSX, '{lumpedPartName}', {priorityIndex}, lumpedPartStart, lumpedPartStop);\n"
@@ -1124,10 +1141,15 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                 if gridSettingsInst.generateLinesInside:
                     gridOffset = gridSettingsInst.getGridOffset()
                     unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
-                    deltaX = gridOffset['x'] * unitsAsNumber
-                    deltaY = gridOffset['y'] * unitsAsNumber
-                    deltaZ = gridOffset['z'] * unitsAsNumber
-                    print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
+                    if gridSettingsInst.xenabled:
+                        deltaX = gridOffset['x'] * unitsAsNumber * (1/self.getUnitLengthFromUI_m())
+                        print(f"GRID generateLinesInside object detected, delta in X: {deltaX}")
+                    if gridSettingsInst.yenabled:
+                        deltaY = gridOffset['y'] * unitsAsNumber * (1/self.getUnitLengthFromUI_m())
+                        print(f"GRID generateLinesInside object detected, delta in Y: {deltaY}")
+                    if gridSettingsInst.zenabled:
+                        deltaZ = gridOffset['z'] * unitsAsNumber * (1/self.getUnitLengthFromUI_m())
+                        print(f"GRID generateLinesInside object detected, delta in Z: {deltaZ}")
 
                 xmax = sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX
                 ymax = sf * bbCoords.YMax - np.sign(bbCoords.YMax - bbCoords.YMin) * deltaY
@@ -1170,10 +1192,15 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
                     if gridSettingsInst.generateLinesInside:
                         gridOffset = gridSettingsInst.getGridOffset()
                         unitsAsNumber = gridSettingsInst.getUnitsAsNumber(gridOffset['units'])
-                        deltaX = gridOffset['x'] * unitsAsNumber
-                        deltaY = gridOffset['y'] * unitsAsNumber
-                        deltaZ = gridOffset['z'] * unitsAsNumber
-                        print(f"GRID generateLinesInside object detected, delta in X,Y,Z: {deltaX}, {deltaY}, {deltaZ}")
+                        if gridSettingsInst.xenabled:
+                            deltaX = gridOffset['x'] * unitsAsNumber * (1 / self.getUnitLengthFromUI_m())
+                            print(f"GRID generateLinesInside object detected, delta in X: {deltaX}")
+                        if gridSettingsInst.yenabled:
+                            deltaY = gridOffset['y'] * unitsAsNumber * (1 / self.getUnitLengthFromUI_m())
+                            print(f"GRID generateLinesInside object detected, delta in Y: {deltaY}")
+                        if gridSettingsInst.zenabled:
+                            deltaZ = gridOffset['z'] * unitsAsNumber * (1 / self.getUnitLengthFromUI_m())
+                            print(f"GRID generateLinesInside object detected, delta in Z: {deltaZ}")
 
                     #append boundary coordinates into list
                     xList.append(sf * bbCoords.XMax - np.sign(bbCoords.XMax - bbCoords.XMin) * deltaX)
@@ -1470,23 +1497,23 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
 
                 genScript += "\n"
             else:
-                self.guiHelpers.displayMessage("Missing excitation, please define one.")
+                self.guiHelpers.displayMessage("<font color='#FF0000'><b>Missing excitation, please define one.</b></font>")
                 pass
             pass
         return genScript
 
     #########################################################################################################################
-    #                                  _                       _       _          _ _      _            _
-    #                                 | |                     (_)     | |        | (_)    | |          | |
-    #   __ _  ___ _ __   ___ _ __ __ _| |_ ___   ___  ___ _ __ _ _ __ | |_    ___| |_  ___| | _____  __| |
-    #  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \ / __|/ __| '__| | '_ \| __|  / __| | |/ __| |/ / _ \/ _` |
-    # | (_| |  __/ | | |  __/ | | (_| | ||  __/ \__ \ (__| |  | | |_) | |_  | (__| | | (__|   <  __/ (_| |
-    #  \__, |\___|_| |_|\___|_|  \__,_|\__\___| |___/\___|_|  |_| .__/ \__|  \___|_|_|\___|_|\_\___|\__,_|
-    #   __/ |                                                   | |
-    #  |___/
-    #
     #	GENERATE SCRIPT CLICKED - go through object assignment tree categories, output child item data.
-    #
+    #########################################################################################################################
+
+    def generateSimulationScript(self, outputDir=None):
+        """
+        General method which should be used as interface in other objects. Generate simulation script.
+        :param outputDir:
+        :return:
+        """
+        self.generateOpenEMSScript(outputDir)
+
     def generateOpenEMSScript(self, outputDir=None):
 
         # Create outputDir relative to local FreeCAD file if output dir does not exists
@@ -1553,6 +1580,7 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
         #genScript += "Sim_CSX = '" + os.path.splitext(os.path.basename(self.cadHelpers.getCurrDocumentFileName()))[0] + ".xml';\n"
         genScript += "Sim_CSX = '" + nameBase + ".xml';\n"
 
+        genScript += "%%confirm_recursive_rmdir(0); %auto confirm remove simulation directory, when run once in octave IDE it will be applied till IDE is running, when run with 1 it will start asks again\n"
         genScript += "[status, message, messageid] = rmdir( Sim_Path, 's' ); % clear previous directory\n"
         genScript += "[status, message, messageid] = mkdir( Sim_Path ); % create empty simulation folder\n"
         genScript += "\n"
@@ -1561,12 +1589,18 @@ class OctaveScriptLinesGenerator2(CommonScriptLinesGenerator):
         genScript += "max_timesteps = " + str(self.form.simParamsMaxTimesteps.value()) + ";\n"
         genScript += "min_decrement = " + str(self.form.simParamsMinDecrement.value()) + "; % 10*log10(min_decrement) dB  (i.e. 1E-5 means -50 dB)\n"
 
-        if (self.getModelCoordsType() == "cylindrical"):
-            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement, 'CoordSystem', 1);\n"
-        else:
-            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement);\n"
+        if self.form.simParamsOverSampling.value() > 1:
+            genScript += "simulation_oversampling = " + str(self.form.simParamsOverSampling.value()) + ";\n"
 
-        genScript += "\n"
+        if (self.getModelCoordsType() == "cylindrical"):
+            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement, 'CoordSystem', 1"
+        else:
+            genScript += "FDTD = InitFDTD( 'NrTS', max_timesteps, 'EndCriteria', min_decrement"
+
+        if self.form.simParamsOverSampling.value() > 1:
+            genScript += ", 'OverSampling', simulation_oversampling"
+
+        genScript += ");\n\n"
 
         print("======================== REPORT BEGIN ========================\n")
 

@@ -27,7 +27,7 @@ class GridSettingsItem(SettingsItem):
         ("YZ plane", "z-theta plane"),                          #cylindrical has just 2 independent planes so this is repeating
     ]
 
-    lumpedPortCartesianExcitationDirection = ["z", "x", "y"]
+    lumpedPortCartesianExcitationDirection = ["z", "x", "y", "custom"]
     multilayeredPortCartesianLayerDirection = ["XY plane, top layer", "XY plane, bottom layer", "XZ plane, front layer", "XZ plane, back layer", "YZ plane, right layer", "YZ plane, left layer"]
     multilayeredPortCartesianPropagationDirection = ["x+", "x-", "y+", "y-", "z+", "z-"]
 
@@ -41,7 +41,8 @@ class GridSettingsItem(SettingsItem):
     def __init__(self, name="", type="", gridOffset=None, fixedCount=None, fixedDistance=None,
                  userDefined=None, units="mm", unitsAngle="deg", xenabled=False, yenabled=False, zenabled=False,
                  smoothMeshDefault=None,
-                 coordsType='rectangular'):
+                 coordsType='rectangular',
+                 femMeshDefault=None):
 
         self.name = name
         self.type = type
@@ -56,6 +57,24 @@ class GridSettingsItem(SettingsItem):
         self.fixedDistance = {'x': 0, 'y': 0, 'z': 0} if fixedDistance is None else fixedDistance
         self.smoothMesh = {'xMaxRes': 0, 'yMaxRes': 0, 'zMaxRes': 0} if smoothMeshDefault is None else smoothMeshDefault
         self.userDefined = {'data': ""} if userDefined is None else userDefined
+        self.femMesh = {
+            'femMaxSizeUnits': 'mm',
+            'femMaxElementSize': 1.0,
+            'femMaxBoundarySize': 1.0,
+            'femMaxFaceSize': 1.0,
+            'femMaxDomainSize': 1.0,
+            'femMaxUserDefined': "",
+            'femSurfaceMeshSizeSizeMin': 0.1,
+            'femSurfaceMeshSizeSizeMax': 10.0,
+            'femSurfaceMeshSizeDistanceMin': 0.0,
+            'femSurfaceMeshSizeDistanceMax': 10.0,
+            'femUseMaxElementSize': False,
+            'femUseMaxBoundarySize': False,
+            'femUseMaxFaceSize': False,
+            'femUseMaxDomainSize': False,
+            'femUseMaxUserDefined': False,
+            'femUseSurfaceMeshSize': False
+        } if femMeshDefault is None else femMeshDefault
 
         self.generateLinesInside = False
         self.gridOffset = {'x': 0, 'y': 0, 'z': 0, 'units': 'um'} if gridOffset is None else gridOffset
@@ -146,8 +165,15 @@ class GridSettingsItem(SettingsItem):
             ymin = polarTheta4 if np.sign(bbCoords.YMin) < 0 else polarTheta3
             ymax = polarTheta2 if np.sign(bbCoords.YMin) < 0 else polarTheta1
         else:
-            # just for safety to have it right
-            genScript += f"%WARNING there is some speecial case like objects are placed on grid and some solution for cylindrical coords for this object was chosen but PROBABLY IS WRONG! check this gridlines manualy please\n"
+
+            #
+            #   LuboJ 23Jan - found this here seems to be wrong as this here doesn't generate script code so putting it into try/except
+            #
+            try:
+                # just for safety to have it right
+                genScript += f"%WARNING there is some speecial case like objects are placed on grid and some solution for cylindrical coords for this object was chosen but PROBABLY IS WRONG! check this gridlines manualy please\n"
+            except:
+                pass
 
             xmin = min(polarR1, polarR2, polarR3, polarR4)
             xmax = max(polarR1, polarR2, polarR3, polarR4)

@@ -2,7 +2,7 @@
 #
 #
 import os
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 import numpy as np
 
 from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
@@ -709,7 +709,7 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
                     genScript += "f0 = " + str(currSetting.sinusodial['f0']) + "*" + str(
                         currSetting.getUnitsAsNumber(currSetting.units)) + "\n"
                     if not definitionsOnly:
-                        genScript += "FDTD.SetSinusExcite(fc);\n"
+                        genScript += "FDTD.SetSinusExcite(f0);\n"
                     genScript += "max_res = C0 / f0 / 20\n"
                     self.maxGridResolution_m = 3e8 / (
                                 currSetting.sinusodial['f0'] * currSetting.getUnitsAsNumber(currSetting.units) * 20)
@@ -736,11 +736,20 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
                     genScript += "max_res = 0\n"
                     self.maxGridResolution_m = 0
                     pass
+                elif (currSetting.getType() == 'dirac'):
+                    if not definitionsOnly:
+                        # genScript += "FDTD.SetDiracExcite(FDTD);\n"
+                        genScript += "# DIRAC EXCITATION USING PYTHON SCRIPT NOT IMPLEMENTED IN GUI YET\n"
+                    pass
+                elif (currSetting.getType() == 'step'):
+                    if not definitionsOnly:
+                        genScript += 'FDTD.SetStepExcite(1)\n'
+                    pass
                 pass
 
                 genScript += "\n"
             else:
-                self.guiHelpers.displayMessage("Missing excitation, please define one.")
+                self.guiHelpers.displayMessage("<font color='#FF0000'><b>Missing excitation, please define one.</b></font>")
                 pass
             pass
         return genScript
@@ -768,17 +777,17 @@ class PythonScriptLinesGenerator(OctaveScriptLinesGenerator):
         return genScript
 
     #########################################################################################################################
-    #                                  _                       _       _          _ _      _            _
-    #                                 | |                     (_)     | |        | (_)    | |          | |
-    #   __ _  ___ _ __   ___ _ __ __ _| |_ ___   ___  ___ _ __ _ _ __ | |_    ___| |_  ___| | _____  __| |
-    #  / _` |/ _ \ '_ \ / _ \ '__/ _` | __/ _ \ / __|/ __| '__| | '_ \| __|  / __| | |/ __| |/ / _ \/ _` |
-    # | (_| |  __/ | | |  __/ | | (_| | ||  __/ \__ \ (__| |  | | |_) | |_  | (__| | | (__|   <  __/ (_| |
-    #  \__, |\___|_| |_|\___|_|  \__,_|\__\___| |___/\___|_|  |_| .__/ \__|  \___|_|_|\___|_|\_\___|\__,_|
-    #   __/ |                                                   | |
-    #  |___/
-    #
     #	GENERATE SCRIPT CLICKED - go through object assignment tree categories, output child item data.
-    #
+    #########################################################################################################################
+
+    def generateSimulationScript(self, outputDir=None):
+        """
+        General method which should be used as interface in other objects. Generate simulation script.
+        :param outputDir:
+        :return:
+        """
+        self.generateOpenEMSScript(outputDir)
+
     def generateOpenEMSScript(self, outputDir=None):
 
         # Create outputDir relative to local FreeCAD file if output dir does not exists

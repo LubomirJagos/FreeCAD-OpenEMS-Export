@@ -2,7 +2,7 @@ import os
 import re
 import json
 
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore, QtWidgets
 #from utilsOpenEMS.GlobalFunctions.GlobalFunctions import _bool, _r
 
 def _bool(s):
@@ -595,6 +595,10 @@ class IniValidator0v1:
                             },
                             'PMLzmaxcells': {
                                 'mandatory': True,
+                                'allowedValues': "int"
+                            },
+                            'OverSampling': {
+                                'mandatory': False,
                                 'allowedValues': "int"
                             },
                             'generateJustPreview': {
