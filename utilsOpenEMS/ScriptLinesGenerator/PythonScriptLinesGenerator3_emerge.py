@@ -1385,9 +1385,9 @@ boundary_selection = None
 for geometryObj in simulationObj.state.manager.geometry_list[simulationObj.modelname].values():
 	if geometryObj.name == '{boundaryConditionObjectName}' or geometryObj.name.startswith('{boundaryConditionObjectName}'):
 		if isinstance(geometryObj, emergeGeo.GeoSurface):
-		    boundary_selection = geometryObj
+\t\t\tboundary_selection = geometryObj
 		else:
-		    boundary_selection = geometryObj.boundary()
+\t\t\tboundary_selection = geometryObj.boundary()
 
 simulationObj.mw.bc.AbsorbingBoundary(boundary_selection)
 

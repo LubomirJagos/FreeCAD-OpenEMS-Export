@@ -10288,6 +10288,9 @@ Transient use AMS</string>
                             <property name="maximum">
                              <double>100000000000.000000000000000</double>
                             </property>
+                            <property name="value">
+                             <double>40.000000000000000</double>
+                            </property>
                            </widget>
                           </item>
                           <item row="6" column="0">
